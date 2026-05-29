@@ -42,6 +42,26 @@ export function buildFilter(target: RunTarget): string | undefined {
 }
 
 /**
+ * Combines multiple run targets into a single `dotnet test --filter` value by
+ * OR-joining their clauses with `|`. Returns `undefined` (run everything) when
+ * there are no targets or any target is "all". Used by the native Test Explorer
+ * integration where an arbitrary set of items can be selected.
+ */
+export function buildCombinedFilter(targets: RunTarget[]): string | undefined {
+  if (targets.length === 0 || targets.some((t) => t.kind === "all")) {
+    return undefined;
+  }
+  const clauses: string[] = [];
+  for (const target of targets) {
+    const clause = buildFilter(target);
+    if (clause && !clauses.includes(clause)) {
+      clauses.push(clause);
+    }
+  }
+  return clauses.length > 0 ? clauses.join("|") : undefined;
+}
+
+/**
  * The generated xUnit test class name for a feature. Reqnroll appends the
  * literal "Feature" suffix to the sanitized feature title (e.g. "Login" ->
  * "LoginFeature", "Stocks" -> "StocksFeature"). Guards against feature titles

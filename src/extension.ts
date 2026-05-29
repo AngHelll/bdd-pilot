@@ -1,25 +1,26 @@
-import * as fs from "fs";
-import * as vscode from "vscode";
 import * as path from "path";
+import * as vscode from "vscode";
+import { ExecutionProfile } from "./core/config/profiles";
 import { resolveProjectDir } from "./core/config/projectLocator";
 import { loadStageEnv } from "./core/config/envFile";
 import {
   ALL_MODES,
   ALL_STAGES,
   DEFAULT_SETTINGS,
-  MODE_PROFILES,
   ParallelismMode,
   RunnerSettings,
   Stage,
   isMode,
   isStage,
 } from "./core/config/types";
-import { RunTarget, buildFilter } from "./core/runner/filterBuilder";
-import { runDotnetTest } from "./core/runner/dotnetTest";
-import { parseTrx } from "./core/results/trxParser";
+import { RunHistoryEntry } from "./core/results/runHistory";
+import { RunTarget } from "./core/runner/filterBuilder";
 import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
-import { evaluateRun } from "./security/envGuard";
-import { sanitize } from "./security/sanitizer";
+import { registerFeatureCodeLens } from "./providers/codeLensProvider";
+import { DashboardPanel } from "./providers/dashboardPanel";
+import { ProfileStore } from "./providers/profileStore";
+import { RunService } from "./providers/runService";
+import { StatusBar } from "./providers/statusBar";
 import {
   DomainNode,
   FeatureNode,
@@ -27,40 +28,98 @@ import {
   TestTreeProvider,
   TreeNode,
 } from "./providers/testTreeProvider";
-import { StatusBar } from "./providers/statusBar";
+import { buildRerunFailedFilter, createManagedController } from "./providers/testController";
 
 const STAGE_KEY = "bddPilot.stage";
 const MODE_KEY = "bddPilot.mode";
+const HISTORY_KEY = "bddPilot.runHistory";
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("BDD Pilot");
   const statusBar = new StatusBar();
+  const profileStore = new ProfileStore(context);
+  const dashboard = new DashboardPanel();
 
   let currentStage: Stage = readStoredStage(context) ?? readSettings().defaultStage;
   let currentMode: ParallelismMode = readStoredMode(context) ?? readSettings().defaultMode;
   let activeRun: AbortController | undefined;
+
+  const runService = new RunService(() =>
+    context.workspaceState.get<RunHistoryEntry[]>(HISTORY_KEY, []),
+  );
 
   const treeProvider = new TestTreeProvider(() => getProjectDir());
   const treeView = vscode.window.createTreeView("bddPilot.tests", {
     treeDataProvider: treeProvider,
   });
 
+  const persistHistory = () => {
+    void context.workspaceState.update(HISTORY_KEY, runService.getHistory());
+    dashboard.update(runService.getHistory());
+  };
+
+  runService.onHistoryChanged(() => persistHistory());
+
+  const managed = createManagedController({
+    getProjectDir: () => getProjectDir(),
+    getStage: () => currentStage,
+    getMode: () => currentMode,
+    getSettings: () => readSettings(),
+    output,
+    runService,
+    onResultsApplied: (summary) => treeProvider.applyResults(summary),
+    acquireRunLock: () => {
+      if (activeRun) {
+        return false;
+      }
+      activeRun = new AbortController();
+      refreshUi();
+      return true;
+    },
+    releaseRunLock: () => {
+      activeRun = undefined;
+      refreshUi();
+    },
+    abortActiveRun: () => activeRun?.abort(),
+  });
+
+  const refreshAll = () => {
+    treeProvider.refresh();
+    managed.refresh();
+  };
+
   const refreshUi = () => {
     statusBar.update(currentStage, currentMode);
     void vscode.commands.executeCommand("setContext", "bddPilot.running", !!activeRun);
   };
 
-  treeProvider.refresh();
+  refreshAll();
   refreshUi();
 
   context.subscriptions.push(
     output,
     statusBar,
     treeView,
+    managed.controller,
+    registerFeatureCodeLens(),
 
-    vscode.commands.registerCommand("bddPilot.refresh", () => treeProvider.refresh()),
+    vscode.commands.registerCommand("bddPilot.refresh", () => refreshAll()),
 
     vscode.commands.registerCommand("bddPilot.showOutput", () => output.show(true)),
+
+    vscode.commands.registerCommand("bddPilot.showDashboard", () => {
+      dashboard.show(runService.getHistory());
+    }),
+
+    vscode.commands.registerCommand("bddPilot.searchTests", async () => {
+      const query = await vscode.window.showInputBox({
+        placeHolder: "Filter by name, tag (@Smoke), or path…",
+        prompt: "Leave empty to clear the filter",
+      });
+      if (query !== undefined) {
+        treeProvider.setSearchQuery(query);
+      }
+    }),
 
     vscode.commands.registerCommand("bddPilot.selectStage", async () => {
       const picked = await vscode.window.showQuickPick(ALL_STAGES, {
@@ -94,25 +153,90 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand("bddPilot.runAll", async () => {
-      await run({ kind: "all" });
+      await executeRun({ kind: "all" });
     }),
 
     vscode.commands.registerCommand("bddPilot.runNode", async (node: TreeNode) => {
       const target = toRunTarget(node);
       if (target) {
-        await run(target);
+        await executeRun(target);
+      }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.runFromCodeLens", async (target: RunTarget, debug?: boolean) => {
+      await executeRun(target, { debug: !!debug });
+    }),
+
+    vscode.commands.registerCommand("bddPilot.rerunFailed", async () => {
+      const filter = buildRerunFailedFilter(runService);
+      if (!filter) {
+        void vscode.window.showInformationMessage("No failed tests from the last run to re-run.");
+        return;
+      }
+      await executeRun({ kind: "all" }, { rawFilter: filter });
+    }),
+
+    vscode.commands.registerCommand("bddPilot.saveProfile", async () => {
+      const name = await vscode.window.showInputBox({ prompt: "Profile name" });
+      if (!name) {
+        return;
+      }
+      const filter = await vscode.window.showInputBox({
+        prompt: "Filter expression",
+        placeHolder: "Category=Smoke or FullyQualifiedName~LoginFeature",
+      });
+      if (!filter) {
+        return;
+      }
+      const profile: ExecutionProfile = {
+        id: `profile-${Date.now()}`,
+        name,
+        filter,
+      };
+      await profileStore.save(profile);
+      void vscode.window.showInformationMessage(`Saved profile "${name}".`);
+    }),
+
+    vscode.commands.registerCommand("bddPilot.runProfile", async () => {
+      const profiles = profileStore.list();
+      if (profiles.length === 0) {
+        void vscode.window.showInformationMessage("No saved profiles. Use 'Save Execution Profile' first.");
+        return;
+      }
+      const picked = await vscode.window.showQuickPick(
+        profiles.map((p) => ({ label: p.name, description: p.filter, profile: p })),
+        { placeHolder: "Select an execution profile" },
+      );
+      if (picked) {
+        await executeRun({ kind: "all" }, { rawFilter: picked.profile.filter });
+      }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.manageProfiles", async () => {
+      const profiles = profileStore.list();
+      if (profiles.length === 0) {
+        void vscode.window.showInformationMessage("No saved profiles.");
+        return;
+      }
+      const picked = await vscode.window.showQuickPick(
+        profiles.map((p) => ({ label: p.name, description: p.filter, id: p.id })),
+        { placeHolder: "Select a profile to delete" },
+      );
+      if (picked) {
+        await profileStore.remove(picked.id);
+        void vscode.window.showInformationMessage(`Removed profile "${picked.label}".`);
       }
     }),
 
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("bddPilot")) {
-        treeProvider.refresh();
+        refreshAll();
       }
     }),
 
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.fileName.toLowerCase().endsWith(".feature")) {
-        treeProvider.refresh();
+        refreshAll();
       }
     }),
   );
@@ -134,8 +258,11 @@ export function activate(context: vscode.ExtensionContext): void {
     };
   }
 
-  async function run(target: RunTarget): Promise<void> {
-    if (activeRun) {
+  async function executeRun(
+    target: RunTarget,
+    opts?: { debug?: boolean; rawFilter?: string },
+  ): Promise<void> {
+    if (activeRun && !opts?.debug) {
       void vscode.window.showWarningMessage("A test run is already in progress.");
       return;
     }
@@ -149,95 +276,91 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    const decision = evaluateRun(currentStage, settings.requireConfirmationForStages);
-    if (decision.requiresConfirmation) {
-      const choice = await vscode.window.showWarningMessage(
-        decision.message,
-        { modal: true },
-        "Run",
-      );
-      if (choice !== "Run") {
-        return;
-      }
-    }
+    const runTargets = opts?.rawFilter ? [] : normalizeTargets(target);
 
-    const loadedEnv = loadStageEnv(projectDir, currentStage);
-    const filter = buildFilter(target);
-    const trxFileName = `bdd-pilot-${Date.now()}.trx`;
     const controller = new AbortController();
-    activeRun = controller;
-    refreshUi();
+    if (!opts?.debug) {
+      activeRun = controller;
+      refreshUi();
+      output.clear();
+      output.show(true);
+      treeProvider.clearResults();
 
-    output.clear();
-    output.show(true);
-    treeProvider.clearResults();
-
-    if (loadedEnv.loadedFiles.length > 0) {
-      const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
-      const count = Object.keys(loadedEnv.vars).length;
-      output.appendLine(`[bdd-pilot] Loaded environment from ${names} (${count} variables, values hidden).`);
-    } else {
-      output.appendLine(
-        `[bdd-pilot] No config/.env.${currentStage} found. Tests will rely on the current process environment.`,
-      );
+      const loadedEnv = loadStageEnv(projectDir, currentStage);
+      if (loadedEnv.loadedFiles.length > 0) {
+        const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
+        output.appendLine(
+          `[bdd-pilot] Loaded environment from ${names} (${Object.keys(loadedEnv.vars).length} variables, values hidden).`,
+        );
+      } else {
+        output.appendLine(
+          `[bdd-pilot] No config/.env.${currentStage} found. Tests will rely on the current process environment.`,
+        );
+      }
     }
 
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Running tests (${currentStage}/${currentMode})`,
-        cancellable: true,
+        title: opts?.debug
+          ? `Debugging tests (${currentStage})`
+          : `Running tests (${currentStage}/${currentMode})`,
+        cancellable: !opts?.debug,
       },
       async (_progress, token) => {
         token.onCancellationRequested(() => controller.abort());
-        let buffer = "";
-        const capture = (chunk: string): string => {
-          const clean = sanitize(chunk);
-          buffer += clean;
-          return clean;
-        };
         try {
-          const result = await runDotnetTest(
-            {
-              dotnetPath: settings.dotnetPath,
-              projectDir,
-              filter,
-              stage: currentStage,
-              mode: MODE_PROFILES[currentMode],
-              resultsDir: "TestResults",
-              trxFileName,
-              extraEnv: loadedEnv.vars,
-            },
-            {
-              onStart: (cmd) => output.appendLine(`[bdd-pilot] ${sanitize(cmd)}\n`),
-              onStdout: (chunk) => output.append(capture(chunk)),
-              onStderr: (chunk) => output.append(capture(chunk)),
-            },
-            controller.signal,
-          );
+          const result = await runService.run({
+            targets: runTargets,
+            rawFilter: opts?.rawFilter,
+            stage: currentStage,
+            mode: currentMode,
+            settings,
+            projectDir,
+            debug: opts?.debug,
+            signal: controller.signal,
+            onOutput: (chunk) => output.append(chunk),
+            onStart: (cmd) => output.appendLine(`[bdd-pilot] ${cmd}\n`),
+          });
 
           if (result.canceled) {
             output.appendLine("\n[bdd-pilot] Run canceled.");
             return;
           }
 
-          output.appendLine(`\n[bdd-pilot] Process exited with code ${result.exitCode}.`);
-          if (result.exitCode === 0) {
-            loadResults(result.trxPath);
-          } else {
-            loadResults(result.trxPath);
-            reportDiagnostics(buffer);
+          if (opts?.debug) {
+            return;
           }
+
+          output.appendLine(`\n[bdd-pilot] Process exited with code ${result.exitCode}.`);
+          if (result.summary) {
+            treeProvider.applyResults(result.summary);
+            output.appendLine(
+              `[bdd-pilot] Results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
+            );
+          }
+          if (result.exitCode !== 0) {
+            reportDiagnostics(result.outputBuffer);
+          }
+          persistHistory();
         } catch (err) {
-          const text = sanitize(String(err));
-          output.appendLine(`\n[bdd-pilot] Error: ${text}`);
-          reportDiagnostics(`${buffer}\n${text}`, `BDD Pilot: ${text}`);
+          output.appendLine(`\n[bdd-pilot] Error: ${String(err)}`);
+          reportDiagnostics(String(err), `BDD Pilot: ${String(err)}`);
         } finally {
-          activeRun = undefined;
-          refreshUi();
+          if (!opts?.debug) {
+            activeRun = undefined;
+            refreshUi();
+          }
         }
       },
     );
+  }
+
+  function normalizeTargets(target: RunTarget): RunTarget[] {
+    if (target.kind === "all") {
+      return [{ kind: "all" }];
+    }
+    return [target];
   }
 
   function reportDiagnostics(text: string, fallbackMessage?: string): void {
@@ -251,8 +374,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     output.appendLine("\n[bdd-pilot] Diagnostics:");
     for (const d of diagnostics) {
-      const parts = [`  • [${d.code}] ${d.title}`, d.detail ? `    ${d.detail}` : "", `    → ${d.hint}`];
-      output.appendLine(parts.filter((p) => p.length > 0).join("\n"));
+      output.appendLine(`  • [${d.code}] ${d.title}${d.detail ? `\n    ${d.detail}` : ""}\n    → ${d.hint}`);
     }
 
     const top = diagnostics[0];
@@ -267,23 +389,6 @@ export function activate(context: vscode.ExtensionContext): void {
         output.show(true);
       }
     });
-  }
-
-  function loadResults(trxPath: string): void {
-    try {
-      if (!fs.existsSync(trxPath)) {
-        output.appendLine(`[bdd-pilot] No TRX file found at ${trxPath}.`);
-        return;
-      }
-      const xml = fs.readFileSync(trxPath, "utf8");
-      const summary = parseTrx(xml);
-      treeProvider.applyResults(summary);
-      output.appendLine(
-        `[bdd-pilot] Results: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped (${summary.total} total).`,
-      );
-    } catch (err) {
-      output.appendLine(`[bdd-pilot] Failed to parse TRX: ${sanitize(String(err))}`);
-    }
   }
 
   function getProjectDir(): string | undefined {

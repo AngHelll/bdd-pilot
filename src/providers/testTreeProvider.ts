@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { discoverDomains } from "../core/gherkin/discovery";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 import { TestOutcome, TrxSummary, matchesScenario } from "../core/results/trxParser";
+import { UnifiedSummary } from "../core/results/resultLoader";
 
 export type TreeNode = DomainNode | FeatureNode | ScenarioNode;
 
@@ -27,6 +28,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private domains: DomainGroup[] = [];
+  private allDomains: DomainGroup[] = [];
+  private searchQuery = "";
   private outcomes = new Map<string, TestOutcome>();
   private durations = new Map<string, number>();
 
@@ -38,12 +41,39 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   refresh(): void {
     const dir = this.projectDir();
-    this.domains = dir ? discoverDomains(dir) : [];
+    this.allDomains = dir ? discoverDomains(dir) : [];
+    this.applySearch();
+  }
+
+  setSearchQuery(query: string): void {
+    this.searchQuery = query.trim().toLowerCase();
+    this.applySearch();
+  }
+
+  private applySearch(): void {
+    if (!this.searchQuery) {
+      this.domains = this.allDomains;
+    } else {
+      this.domains = this.allDomains
+        .map((domain) => ({
+          name: domain.name,
+          features: domain.features
+            .map((feature) => ({
+              ...feature,
+              scenarios: feature.scenarios.filter((s) => matchesSearch(this.searchQuery, feature, s)),
+            }))
+            .filter(
+              (feature) =>
+                matchesSearch(this.searchQuery, feature) || feature.scenarios.length > 0,
+            ),
+        }))
+        .filter((domain) => domain.features.length > 0 || domain.name.toLowerCase().includes(this.searchQuery));
+    }
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  /** Applies TRX results, decorating scenarios with pass/fail/skip. */
-  applyResults(summary: TrxSummary): void {
+  /** Applies TRX/Cucumber results, decorating scenarios with pass/fail/skip. */
+  applyResults(summary: TrxSummary | UnifiedSummary): void {
     for (const domain of this.domains) {
       for (const feature of domain.features) {
         for (const scenario of feature.scenarios) {
@@ -156,4 +186,17 @@ function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vsco
 
 export function scenarioKey(feature: FeatureInfo, scenario: ScenarioInfo): string {
   return `${feature.filePath}::${scenario.line}::${scenario.name}`;
+}
+
+function matchesSearch(query: string, feature: FeatureInfo, scenario?: ScenarioInfo): boolean {
+  const haystack = [
+    feature.name,
+    feature.filePath,
+    ...feature.tags.map((t) => `@${t}`),
+    scenario?.name ?? "",
+    ...(scenario?.tags.map((t) => `@${t}`) ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(query);
 }

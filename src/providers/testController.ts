@@ -1,0 +1,261 @@
+import * as vscode from "vscode";
+import { ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
+import { discoverDomains } from "../core/gherkin/discovery";
+import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
+import { UnifiedSummary } from "../core/results/resultLoader";
+import { matchesScenario } from "../core/results/trxParser";
+import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
+import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import { RunService } from "./runService";
+
+export interface ControllerDeps {
+  getProjectDir(): string | undefined;
+  getStage(): Stage;
+  getMode(): ParallelismMode;
+  getSettings(): RunnerSettings;
+  output: vscode.OutputChannel;
+  runService: RunService;
+  onResultsApplied?: (summary: UnifiedSummary) => void;
+  acquireRunLock(): boolean;
+  releaseRunLock(): void;
+  abortActiveRun(): void;
+}
+
+interface ItemData {
+  kind: "feature" | "scenario";
+  feature: FeatureInfo;
+  scenario?: ScenarioInfo;
+}
+
+export interface ManagedController {
+  controller: vscode.TestController;
+  refresh(): void;
+}
+
+export function createManagedController(deps: ControllerDeps): ManagedController {
+  const controller = vscode.tests.createTestController("bddPilot.testController", "BDD Pilot");
+  const itemData = new WeakMap<vscode.TestItem, ItemData>();
+
+  const refresh = () => buildTree();
+  controller.refreshHandler = async () => buildTree();
+  buildTree();
+
+  controller.createRunProfile(
+    "Run",
+    vscode.TestRunProfileKind.Run,
+    (request, token) => void runHandler(request, token, false),
+    true,
+  );
+
+  controller.createRunProfile(
+    "Debug",
+    vscode.TestRunProfileKind.Debug,
+    (request, token) => void runHandler(request, token, true),
+    false,
+  );
+
+  function buildTree(): void {
+    controller.items.replace([]);
+    const dir = deps.getProjectDir();
+    if (!dir) {
+      return;
+    }
+    for (const domain of discoverDomains(dir)) {
+      const domainItem = controller.createTestItem(`domain:${domain.name}`, domain.name);
+      for (const feature of domain.features) {
+        const featureUri = vscode.Uri.file(feature.filePath);
+        const featureItem = controller.createTestItem(
+          `feature:${feature.filePath}`,
+          feature.name,
+          featureUri,
+        );
+        itemData.set(featureItem, { kind: "feature", feature });
+        for (const scenario of feature.scenarios) {
+          const scenarioItem = controller.createTestItem(
+            `scenario:${feature.filePath}:${scenario.line}`,
+            scenario.name,
+            featureUri,
+          );
+          scenarioItem.range = new vscode.Range(scenario.line - 1, 0, scenario.line - 1, 0);
+          itemData.set(scenarioItem, { kind: "scenario", feature, scenario });
+          featureItem.children.add(scenarioItem);
+        }
+        domainItem.children.add(featureItem);
+      }
+      controller.items.add(domainItem);
+    }
+  }
+
+  async function runHandler(
+    request: vscode.TestRunRequest,
+    token: vscode.CancellationToken,
+    debug: boolean,
+  ): Promise<void> {
+    const run = controller.createTestRun(request);
+    const projectDir = deps.getProjectDir();
+    const scenarioItems = collectScenarioItems(request, controller, itemData);
+
+    if (!projectDir) {
+      scenarioItems.forEach((i) =>
+        run.errored(i, new vscode.TestMessage("Project directory not found.")),
+      );
+      run.end();
+      return;
+    }
+
+    if (!deps.acquireRunLock()) {
+      scenarioItems.forEach((i) =>
+        run.errored(i, new vscode.TestMessage("Another test run is already in progress.")),
+      );
+      run.end();
+      return;
+    }
+
+    scenarioItems.forEach((i) => run.started(i));
+
+    const runningAll = !request.include;
+    const targets = buildTargets(scenarioItems, itemData, runningAll);
+    const signal = new AbortController();
+    token.onCancellationRequested(() => {
+      signal.abort();
+      deps.abortActiveRun();
+    });
+
+    try {
+      const result = await deps.runService.run({
+        targets,
+        stage: deps.getStage(),
+        mode: deps.getMode(),
+        settings: deps.getSettings(),
+        projectDir,
+        debug,
+        signal: signal.signal,
+        onOutput: (chunk) => {
+          deps.output.append(chunk);
+          run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
+        },
+      });
+
+      if (result.canceled) {
+        scenarioItems.forEach((i) => run.skipped(i));
+        run.end();
+        return;
+      }
+
+      if (debug) {
+        run.end();
+        return;
+      }
+
+      applyResults(run, scenarioItems, itemData, projectDir, result.summary, deps.runService);
+      if (result.summary) {
+        deps.onResultsApplied?.(result.summary);
+      }
+
+      if (result.exitCode !== 0) {
+        for (const d of analyzeDotnetOutput(result.outputBuffer)) {
+          deps.output.appendLine(`[bdd-pilot] [${d.code}] ${d.title} → ${d.hint}`);
+        }
+      }
+    } catch (err) {
+      const message = new vscode.TestMessage(String(err));
+      scenarioItems.forEach((i) => run.errored(i, message));
+    } finally {
+      deps.releaseRunLock();
+      run.end();
+    }
+  }
+
+  return { controller, refresh };
+}
+
+function collectScenarioItems(
+  request: vscode.TestRunRequest,
+  controller: vscode.TestController,
+  itemData: WeakMap<vscode.TestItem, ItemData>,
+): vscode.TestItem[] {
+  const roots: vscode.TestItem[] = [];
+  if (request.include) {
+    request.include.forEach((i) => roots.push(i));
+  } else {
+    controller.items.forEach((i) => roots.push(i));
+  }
+
+  const excluded = new Set(request.exclude ?? []);
+  const leaves: vscode.TestItem[] = [];
+  const visit = (item: vscode.TestItem) => {
+    if (excluded.has(item)) {
+      return;
+    }
+    const data = itemData.get(item);
+    if (data?.kind === "scenario") {
+      leaves.push(item);
+    }
+    item.children.forEach(visit);
+  };
+  roots.forEach(visit);
+  return leaves;
+}
+
+function buildTargets(
+  scenarioItems: vscode.TestItem[],
+  itemData: WeakMap<vscode.TestItem, ItemData>,
+  runningAll: boolean,
+): RunTarget[] {
+  if (runningAll) {
+    return [{ kind: "all" }];
+  }
+  const targets: RunTarget[] = [];
+  for (const item of scenarioItems) {
+    const data = itemData.get(item);
+    if (data?.kind === "scenario" && data.scenario) {
+      targets.push({ kind: "scenario", feature: data.feature, scenario: data.scenario });
+    }
+  }
+  return targets;
+}
+
+function applyResults(
+  run: vscode.TestRun,
+  scenarioItems: vscode.TestItem[],
+  itemData: WeakMap<vscode.TestItem, ItemData>,
+  projectDir: string,
+  summary: UnifiedSummary | undefined,
+  runService: RunService,
+): void {
+  if (!summary) {
+    const msg = new vscode.TestMessage("No test results were produced.");
+    scenarioItems.forEach((i) => run.errored(i, msg));
+    return;
+  }
+
+  for (const item of scenarioItems) {
+    const data = itemData.get(item);
+    const name = data?.scenario?.name ?? item.label;
+    const match = summary.results.find((r) => matchesScenario(r.testName, name));
+    if (!match) {
+      run.skipped(item);
+      continue;
+    }
+    switch (match.outcome) {
+      case "passed":
+        run.passed(item, match.durationMs);
+        break;
+      case "failed":
+        run.failed(item, runService.buildFailureMessage(projectDir, match.errorMessage), match.durationMs);
+        break;
+      default:
+        run.skipped(item);
+    }
+  }
+}
+
+/** Re-run only scenarios that failed in the last run (Test Explorer helper). */
+export function buildRerunFailedFilter(runService: RunService): string | undefined {
+  const filter = runService.getLastFailedFilter();
+  if (filter) {
+    return filter;
+  }
+  const targets = runService.getLastFailedTargets();
+  return targets.length > 0 ? buildCombinedFilter(targets) : undefined;
+}

@@ -1,6 +1,11 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
-import { buildFilter, featureClassName, sanitizeIdentifier } from "../core/runner/filterBuilder";
+import {
+  buildCombinedFilter,
+  buildFilter,
+  featureClassName,
+  sanitizeIdentifier,
+} from "../core/runner/filterBuilder";
 import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 
 const feature: FeatureInfo = {
@@ -46,6 +51,22 @@ describe("filterBuilder", () => {
     assert.strictEqual(featureClassName("Buying Power"), "BuyingPowerFeature");
     // Already ends with Feature -> not doubled.
     assert.strictEqual(featureClassName("Login Feature"), "LoginFeature");
+  });
+
+  it("buildCombinedFilter ORs unique clauses and treats empty/all as run-all", () => {
+    assert.strictEqual(buildCombinedFilter([]), undefined);
+    assert.strictEqual(buildCombinedFilter([{ kind: "all" }, { kind: "tag", tag: "P0" }]), undefined);
+
+    const scenario2: ScenarioInfo = { name: "Another scenario", tags: [], line: 20, isOutline: false };
+    const combined = buildCombinedFilter([
+      { kind: "scenario", feature, scenario },
+      { kind: "scenario", feature, scenario: scenario2 },
+      { kind: "scenario", feature, scenario },
+    ]);
+    assert.strictEqual(
+      combined,
+      "FullyQualifiedName~BuyingPowerFeature.RetrieveBuyingPowerForValidAccount|FullyQualifiedName~BuyingPowerFeature.AnotherScenario",
+    );
   });
 
   it("sanitizeIdentifier pascal-cases and strips symbols", () => {

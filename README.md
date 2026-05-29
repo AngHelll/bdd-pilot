@@ -12,23 +12,36 @@ project- or vendor-specific assumptions are baked in.
 
 ## Features
 
-- **Test tree**: Domain → Feature → Scenario, parsed from `.feature` files, with
-  tag badges. Domain grouping is derived from a `Feature/` or `Features/` folder.
-- **One-click run**: run a domain, a whole feature, or a single scenario; the
-  correct `dotnet test --filter` is built automatically.
+### Discovery & run
+- **Native Test Explorer** (`TestController`): Run and Debug profiles with results
+  mapped back to scenarios, including rich failure messages.
+- **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
+  with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
+- **CodeLens** on Feature and Scenario lines in `.feature` files (Run / Debug).
+- **One-click run**: domain, feature, scenario, or tag — the correct
+  `dotnet test --filter` is built automatically.
   - Feature → `FullyQualifiedName~<Feature>Feature`
   - Scenario → `FullyQualifiedName~<Feature>Feature.<Scenario>`
   - Tag → `Category=<tag>`
+- **Tree search** to filter by name, tag, or path.
+- **Re-run failed** from the last run's filter.
+- **Saved execution profiles** for common filters.
+
+### Environment & execution
 - **Environment selector** (`dev`/`test`/`stg`/`prod`) in the status bar — sets
   `STAGE` for the run.
 - **Parallelism mode** (`debug`/`parallel`/`ci`) passed as xUnit RunSettings, so
   the project's `xunit.runner.json` is never mutated on disk.
 - **Reliable execution**: progress UI, cancellation, and live streaming to the
   *BDD Pilot* output channel.
-- **TRX results**: scenarios are decorated with pass / fail / skip and duration.
-- **Actionable diagnostics**: turns cryptic failures (missing SDK from
-  `global.json`, private NuGet feed/auth errors, vulnerability-as-error, missing
-  filter matches, broken Playwright drivers) into clear, actionable hints.
+- **Debug** launches `dotnet test` under the .NET debugger (`coreclr`).
+
+### Results & diagnostics
+- **TRX + Cucumber JSON**: scenarios decorated with pass / fail / skip and duration.
+- **Webview dashboard**: run history, totals, and flaky scenario table.
+- **Evidence links** on failures (screenshots, traces, videos when present).
+- **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
+  errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, etc.
 
 ## Security
 
@@ -48,10 +61,10 @@ src/
 ├── core/          # Pure logic, no VS Code API — unit tested
 │   ├── gherkin/   # .feature parser, grouping, discovery
 │   ├── runner/    # dotnet test arg/env building + spawn
-│   ├── results/   # TRX parser
+│   ├── results/   # TRX + Cucumber parsers, evidence, run history
 │   ├── diagnostics/ # error-output analyzer
-│   └── config/    # stages, modes, project locator, .env loader
-├── providers/     # TreeDataProvider + status bar (VS Code layer)
+│   └── config/    # stages, modes, profiles, project locator, .env loader
+├── providers/     # Tree, TestController, CodeLens, dashboard, RunService
 ├── security/      # env guard policy + output sanitizer
 └── extension.ts   # activation + commands wiring
 ```
@@ -90,10 +103,8 @@ Press `F5` in VS Code to launch the Extension Development Host.
 
 ## Roadmap
 
-- Webview dashboard (run history, flaky rate, trends).
-- CodeLens "Run scenario" inside `.feature` files.
-- Native `TestController` (Test Explorer) integration.
-- Saved filters / execution profiles.
+See [ROADMAP.md](./ROADMAP.md). **Phase B (v0.3.0)** is complete; **Phase C**
+(diagnostics hardening, CI, marketplace) is next.
 
 ## Contributing
 

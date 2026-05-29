@@ -2,15 +2,15 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "publisher": "bdd-pilot",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bdd-pilot/bdd-pilot.git"
+    "url": "https://github.com/AngHelll/bdd-pilot.git"
   },
   "bugs": {
-    "url": "https://github.com/bdd-pilot/bdd-pilot/issues"
+    "url": "https://github.com/AngHelll/bdd-pilot/issues"
   },
   "engines": {
     "vscode": "^1.90.0"
@@ -83,6 +83,37 @@
       {
         "command": "bddPilot.showOutput",
         "title": "BDD Pilot: Show Test Output"
+      },
+      {
+        "command": "bddPilot.showDashboard",
+        "title": "BDD Pilot: Show Dashboard",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "bddPilot.searchTests",
+        "title": "BDD Pilot: Search Tests",
+        "icon": "$(search)"
+      },
+      {
+        "command": "bddPilot.rerunFailed",
+        "title": "BDD Pilot: Re-run Failed Tests",
+        "icon": "$(debug-rerun)"
+      },
+      {
+        "command": "bddPilot.runFromCodeLens",
+        "title": "BDD Pilot: Run from CodeLens"
+      },
+      {
+        "command": "bddPilot.saveProfile",
+        "title": "BDD Pilot: Save Execution Profile"
+      },
+      {
+        "command": "bddPilot.runProfile",
+        "title": "BDD Pilot: Run Execution Profile"
+      },
+      {
+        "command": "bddPilot.manageProfiles",
+        "title": "BDD Pilot: Manage Execution Profiles"
       }
     ],
     "menus": {
@@ -101,6 +132,26 @@
           "command": "bddPilot.cancel",
           "when": "view == bddPilot.tests",
           "group": "navigation@3"
+        },
+        {
+          "command": "bddPilot.searchTests",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@4"
+        },
+        {
+          "command": "bddPilot.rerunFailed",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@5"
+        },
+        {
+          "command": "bddPilot.showDashboard",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@6"
+        },
+        {
+          "command": "bddPilot.runProfile",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@7"
         }
       ],
       "view/item/context": [
