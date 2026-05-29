@@ -10,6 +10,20 @@ It is framework-agnostic: it works with any .NET BDD project that runs through
 `dotnet test`, regardless of domain (API tests, web/Playwright tests, etc.). No
 project- or vendor-specific assumptions are baked in.
 
+## BDD extension family
+
+BDD Pilot focuses on **running** tests. For **navigation and step bindings**, use
+[**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) — they complement each
+other and can be installed side by side:
+
+| Extension | Role |
+|-----------|------|
+| [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) | Go to Definition, CodeLens on steps, binding diagnostics, Coach mode |
+| **BDD Pilot** (this repo) | Test tree, `dotnet test` execution, TRX/Cucumber results, run history |
+
+Guardian answers *“where is this step implemented?”* — Pilot answers *“run this
+scenario and show me what failed.”*
+
 ## Features
 
 ### Discovery & run
@@ -103,8 +117,9 @@ Press `F5` in VS Code to launch the Extension Development Host.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). **Phase B (v0.3.0)** is complete; **Phase C**
-(diagnostics hardening, CI, marketplace) is next.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.1.0** (pre-marketplace beta).
+**Next up: Phase A** (Scenario Outline filters, tag inheritance), then Phase C
+(marketplace, i18n, cross-links with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)).
 
 ## Contributing
 
