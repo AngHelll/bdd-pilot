@@ -95,6 +95,11 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.defaultMode` | `debug` | Default parallelism mode. |
 | `bddPilot.requireConfirmationForStages` | `["stg","prod"]` | Stages that require confirmation. |
 | `bddPilot.dotnetPath` | `dotnet` | Path to the `dotnet` executable. |
+| `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
+| `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |
+
+Tree items use **label = name only**; tags and run metadata appear in a short
+**description** (e.g. `6 tags`, `450 ms`) and the full detail in the **hover tooltip**.
 
 ## Requirements
 

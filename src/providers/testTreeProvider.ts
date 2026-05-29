@@ -2,6 +2,15 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { discoverDomains } from "../core/gherkin/discovery";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
+import {
+  DEFAULT_COMPACT_TAG_LIMIT,
+  DEFAULT_TAG_DISPLAY,
+  TagDisplayMode,
+  buildFeatureDescription,
+  buildFeatureTooltipMarkdown,
+  buildScenarioDescription,
+  buildScenarioTooltipMarkdown,
+} from "../core/gherkin/treeLabels";
 import { TestOutcome, TrxSummary, matchesScenario } from "../core/results/trxParser";
 import { UnifiedSummary } from "../core/results/resultLoader";
 
@@ -98,13 +107,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
+    const display = readTreeDisplaySettings();
     switch (node.kind) {
       case "domain":
         return this.domainItem(node);
       case "feature":
-        return this.featureItem(node);
+        return this.featureItem(node, display);
       case "scenario":
-        return this.scenarioItem(node);
+        return this.scenarioItem(node, display);
     }
   }
 
@@ -134,28 +144,65 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     return item;
   }
 
-  private featureItem(node: FeatureNode): vscode.TreeItem {
+  private featureItem(
+    node: FeatureNode,
+    display: TreeDisplaySettings,
+  ): vscode.TreeItem {
+    const scenarioCount = node.feature.scenarios.length;
     const item = new vscode.TreeItem(node.feature.name, vscode.TreeItemCollapsibleState.Collapsed);
-    if (node.feature.tags.length > 0) {
-      item.description = node.feature.tags.map((t) => `@${t}`).join(" ");
-    }
-    item.tooltip = path.basename(node.feature.filePath);
+    item.description = buildFeatureDescription(
+      scenarioCount,
+      node.feature.tags,
+      display.tagDisplay,
+      display.compactTagLimit,
+    );
+    const tooltip = new vscode.MarkdownString(
+      buildFeatureTooltipMarkdown(
+        node.feature.name,
+        path.basename(node.feature.filePath),
+        scenarioCount,
+        node.feature.tags,
+      ),
+    );
+    tooltip.isTrusted = false;
+    item.tooltip = tooltip;
     item.iconPath = new vscode.ThemeIcon("file-code");
     item.contextValue = "bddRunnableFeature";
     item.resourceUri = vscode.Uri.file(node.feature.filePath);
     return item;
   }
 
-  private scenarioItem(node: ScenarioNode): vscode.TreeItem {
+  private scenarioItem(
+    node: ScenarioNode,
+    display: TreeDisplaySettings,
+  ): vscode.TreeItem {
     const key = scenarioKey(node.feature, node.scenario);
     const outcome = this.outcomes.get(key);
-    const item = new vscode.TreeItem(node.scenario.name, vscode.TreeItemCollapsibleState.None);
-
-    const tagText = node.scenario.tags.map((t) => `@${t}`).join(" ");
     const durationMs = this.durations.get(key);
-    item.description = [tagText, durationMs !== undefined ? `${durationMs} ms` : ""]
-      .filter((s) => s.length > 0)
-      .join("  ");
+
+    const item = new vscode.TreeItem(node.scenario.name, vscode.TreeItemCollapsibleState.None);
+    item.description = buildScenarioDescription(
+      node.scenario.tags,
+      display.tagDisplay,
+      display.compactTagLimit,
+      durationMs,
+    );
+
+    const tooltip = new vscode.MarkdownString(
+      buildScenarioTooltipMarkdown({
+        scenarioName: node.scenario.name,
+        featureName: node.feature.name,
+        fileName: path.basename(node.feature.filePath),
+        line: node.scenario.line,
+        featureTags: node.feature.tags,
+        scenarioTags: node.scenario.tags,
+        isOutline: node.scenario.isOutline,
+        outcome,
+        durationMs,
+      }),
+    );
+    tooltip.isTrusted = false;
+    item.tooltip = tooltip;
 
     item.iconPath = outcomeIcon(outcome, node.scenario.isOutline);
     item.contextValue = "bddRunnableScenario";
@@ -169,6 +216,20 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     };
     return item;
   }
+}
+
+interface TreeDisplaySettings {
+  tagDisplay: TagDisplayMode;
+  compactTagLimit: number;
+}
+
+function readTreeDisplaySettings(): TreeDisplaySettings {
+  const cfg = vscode.workspace.getConfiguration("bddPilot");
+  const raw = cfg.get<string>("tree.tagDisplay", DEFAULT_TAG_DISPLAY);
+  const tagDisplay: TagDisplayMode =
+    raw === "hidden" || raw === "count" || raw === "compact" || raw === "full" ? raw : DEFAULT_TAG_DISPLAY;
+  const compactTagLimit = Math.max(1, cfg.get<number>("tree.compactTagLimit", DEFAULT_COMPACT_TAG_LIMIT));
+  return { tagDisplay, compactTagLimit };
 }
 
 function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vscode.ThemeIcon {
