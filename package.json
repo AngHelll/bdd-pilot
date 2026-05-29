@@ -3,7 +3,8 @@
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
   "version": "0.2.0",
-  "publisher": "bdd-pilot",
+  "publisher": "anghelll",
+  "icon": "media/icon.png",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -38,7 +39,7 @@
         {
           "id": "bddPilot",
           "title": "BDD Pilot",
-          "icon": "media/flask.svg"
+          "icon": "media/pilot.svg"
         }
       ]
     },
@@ -47,7 +48,7 @@
         {
           "id": "bddPilot.tests",
           "name": "Tests",
-          "icon": "media/flask.svg"
+          "icon": "media/pilot.svg"
         }
       ]
     },
