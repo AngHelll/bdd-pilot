@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { formatDuration } from "../core/results/durationFormat";
 import { RunHistoryEntry, flakyRate, scenarioHistoryKey } from "../core/results/runHistory";
 
 export class DashboardPanel {
@@ -83,7 +84,7 @@ function recentRunsTable(runs: RunHistoryEntry[]): string {
   const rows = runs
     .map(
       (r) =>
-        `<tr><td>${new Date(r.timestamp).toLocaleString()}</td><td>${r.stage}/${r.mode}</td><td class="pass">${r.passed}</td><td class="fail">${r.failed}</td><td>${r.skipped}</td><td>${r.durationMs ?? "—"} ms</td></tr>`,
+        `<tr><td>${new Date(r.timestamp).toLocaleString()}</td><td>${r.stage}/${r.mode}</td><td class="pass">${r.passed}</td><td class="fail">${r.failed}</td><td>${r.skipped}</td><td title="${r.durationMs ?? ""} ms">${r.durationMs !== undefined ? formatDuration(r.durationMs, "auto") : "—"}</td></tr>`,
     )
     .join("");
   return `<table><thead><tr><th>When</th><th>Env</th><th>Pass</th><th>Fail</th><th>Skip</th><th>Duration</th></tr></thead><tbody>${rows}</tbody></table>`;

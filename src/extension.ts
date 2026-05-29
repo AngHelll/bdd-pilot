@@ -24,6 +24,7 @@ import { StatusBar } from "./providers/statusBar";
 import {
   DomainNode,
   FeatureNode,
+  OutlineRowNode,
   ScenarioNode,
   TestTreeProvider,
   TreeNode,
@@ -250,6 +251,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     if (node.kind === "feature") {
       return { kind: "feature", feature: (node as FeatureNode).feature };
+    }
+    if (node.kind === "outlineRow") {
+      const row = node as OutlineRowNode;
+      return { kind: "scenario", feature: row.feature, scenario: row.scenario };
     }
     return {
       kind: "scenario",

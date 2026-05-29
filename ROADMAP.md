@@ -1,98 +1,191 @@
 # BDD Pilot — Roadmap
 
-> **Phase B (UX) — complete.** Current release: **v0.1.0** (pre-marketplace beta).
+> Living document: what shipped, what is in progress, and what comes next.  
+> **Current release: v0.2.0** (Phase A partial) · **61 unit tests**
+
+---
+
+## At a glance
+
+| Status | Item |
+|--------|------|
+| ✅ Shipped | v0.1.0 beta + **v0.2.0** Phase A partial (see [Changelog](#changelog)) |
+| 🎯 Next | Phase A remainder → filter mapping, `env.example`, per-row run (xUnit Theory) |
+| 📦 Then | Phase C → **v0.3.0** (marketplace, i18n, CI sample project) |
+| 🏁 Goal | **v1.0.0** — stable public release |
+
+**Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
+
+---
 
 ## Versioning (0.x)
 
-We keep semver conservative until the extension is on the Marketplace and stable:
+Semver stays conservative until Marketplace + stable API:
 
 | Version | Milestone |
 |---------|-----------|
-| **0.1.0** | First usable beta — tree, run/debug, dashboard, profiles (MVP + Phase B) |
-| **0.2.0** | Phase A — outline filters, tag inheritance, runner robustness |
+| **0.1.0** | First usable beta — tree, run/debug, dashboard, profiles, compact tree labels |
+| **0.2.0** | Phase A partial — outline rows in tree, tag inheritance, result roll-up on folders |
 | **0.3.0** | Phase C — marketplace, i18n, CI sample project, polish |
-| **1.0.0** | Stable public release; breaking changes follow semver strictly |
+| **1.0.0** | Stable public release |
 
-Internal phase labels (A/B/C) track *scope*, not the published version number.
+Internal labels **Phase A / B / C** track *scope*, not the published version number.
+
+---
+
+## Changelog
+
+### Unreleased *(main branch)*
+
+_None — see v0.2.0 below._
+
+### v0.2.0 — Phase A (partial)
+
+| Area | Change |
+|------|--------|
+| **Tree roll-up** | Domain/feature folders tint pass/fail; description shows `2 failed · 17 passed` |
+| **Scenario Outline** | Parser reads `Examples` tables; outline rows as child nodes (`parameter=invalid-guid`) |
+| **Results mapping** | TRX/Cucumber matched per outline row via example cell values |
+| **Tag inheritance** | Feature tags included in search + effective tag counts (`effectiveScenarioTags`) |
+| **Test Explorer** | Outline rows appear as children in native Testing panel |
+
+**Known limit:** clicking Run on a single outline row still filters to the whole Theory method (all example rows). Per-row execution needs xUnit `DisplayName` or similar — backlog.
+
+### v0.1.0 — first beta (post–0.1.0 tag tree UX)
+
+| Commit theme | Delivered |
+|--------------|-----------|
+| **MVP** | Domain → Feature → Scenario tree from `.feature` files |
+| **MVP** | `dotnet test --filter` (feature / scenario / tag / domain) |
+| **MVP** | STAGE selector + parallelism modes (`debug` / `parallel` / `ci`) |
+| **MVP** | Optional `config/.env.<stage>` load (in memory, never logged) |
+| **MVP** | TRX parsing + pass/fail/skip decoration |
+| **MVP** | Diagnostics analyzer (SDK, NuGet, Playwright, no-tests-matched, …) |
+| **MVP** | Output sanitizer; pure `core/` + 43+ unit tests |
+| **Phase B** | Native **Test Explorer** (`TestController`) — Run + Debug |
+| **Phase B** | **CodeLens** on Feature/Scenario lines |
+| **Phase B** | **RunService** — shared orchestration, history, re-run failed |
+| **Phase B** | **Dashboard** webview — run history, flaky table |
+| **Phase B** | **Cucumber JSON** + unified result loader (TRX preferred) |
+| **Phase B** | **Evidence** links on failures (screenshots/traces/videos) |
+| **Phase B** | **Execution profiles** + tree search |
+| **Docs** | MIT LICENSE (`AngHelll`), README ecosystem with BDD Guardian |
+| **Docs** | ROADMAP versioning table; semver reset to **0.1.0** |
+
+### Ecosystem (cross-repo, no code coupling)
+
+| Repo | Done |
+|------|------|
+| **bdd-pilot** | README “BDD extension family” section → links Guardian |
+| **bdd-guardian** | README “BDD extension family” section → links Pilot |
+
+---
 
 ## Recommended next (priority order)
 
-Work that delivers the most value before marketplace polish:
+| # | Version | Track | Item | Why |
+|---|---------|-------|------|-----|
+| **1** | 0.2.x | Phase A | **Per-row outline run filter** | xUnit Theory: run single InlineData row when filter supports it |
+| **2** | 0.2.x | Phase A | **`env.example` + docs** | Document optional `config/.env.<stage>` convention |
+| **3** | 0.2.x | Phase A | **Configurable filter mapping** | SpecFlow/NUnit naming via settings |
+| **4** | 0.3.0 | Phase C | **Publish to Marketplace** | List 0.2.0+ with GitHub release `.vsix` |
+| **5** | 0.3.0 | Phase C | **i18n EN/ES** | Port Guardian i18n for status bar, dashboard, diagnostics |
+| **6** | 0.3.0 | Phase C | **CI sample project** | Integration smoke test against minimal Reqnroll + xUnit repo |
 
-| Priority | Track | Item | Why |
-|----------|-------|------|-----|
-| **1** | Phase A | **Scenario Outline row filters** | Outlines appear as one node today; xUnit runs each example as a separate test — filters often miss or over-run. Adapt outline expansion logic (similar to [BDD Guardian](https://github.com/AngHelll/bdd-guardian)) for filter building. |
-| **2** | Phase A | **Tag inheritance** (feature → scenario) | Tag-based runs and search should include scenarios that inherit `@Smoke` from the Feature line. |
-| **3** | Phase A | **`env.example` + docs** | Document the optional `config/.env.<stage>` convention so adopters know how to wire secrets without the extension storing them. |
-| **4** | Phase C | **Cross-link + publish** | Add BDD Pilot link in Guardian README; publish **0.1.0** to VS Marketplace (private beta or public). |
-| **5** | Phase C | **i18n EN/ES** | Port the lightweight i18n pattern from Guardian for status bar, dashboard, and diagnostics hints. |
-| **6** | Phase A | **Configurable filter mapping** | Support SpecFlow/NUnit naming differences via settings when projects don't follow Reqnroll's `Feature` class suffix. |
+### Backlog (nice-to-have, not scheduled)
 
----
-
-## Phases
-
-- **Phase A — Multi-framework stability** *(foundation)*: areas 1 + 2.
-- **Phase B — UX that delights** ✅ *in v0.1.0*: areas 3 + 4.
-- **Phase C — Product**: areas 5 + 6 + 7 + 8.
+- Tree view grouped **by tag** (e.g. `@smoke` → scenarios)
+- Custom stage names per project
+- Runtime toggles in UI (`HEADLESS_MODE`, …)
+- Optional shared `@anghelll/bdd-gherkin-lite` if Pilot + Guardian parsers converge
 
 ---
 
-## Phase B — UX that delights ✅
+## Phases (detail)
 
-### 3. User experience
-- ✅ **Native Test Explorer** (`TestController`): Run + Debug profiles, TRX/Cucumber
-  results mapped back with rich failure messages.
-- ✅ **CodeLens** on Feature/Scenario lines (`Run` / `Debug`).
-- ✅ **Saved execution profiles** + **tree search** filter.
-- ✅ **Re-run failed** from the last run's filter.
-- ✅ **Debug** via `coreclr` launch of `dotnet test`.
+### Phase B — UX that delights ✅ *(in v0.1.0)*
 
-### 4. Results & reporting
-- ✅ **Webview dashboard**: run history, pass/fail totals, flaky scenario table.
-- ✅ **Cucumber JSON** parser + unified result loader (TRX preferred, Cucumber fallback).
-- ✅ **Rich failure detail**: error text + recent evidence file links (screenshots/traces).
+#### 3. User experience
+- ✅ Native Test Explorer (`TestController`): Run + Debug, TRX/Cucumber → tree
+- ✅ CodeLens on Feature/Scenario lines (Run / Debug)
+- ✅ Saved execution profiles + tree search
+- ✅ Re-run failed from last run filter
+- ✅ Debug via `coreclr` + `dotnet test`
+- ✅ **Compact tree labels** + tooltips (`tree.tagDisplay` settings)
+- ✅ **Result roll-up** on domain/feature folders after a run
+
+#### 4. Results & reporting
+- ✅ Webview dashboard (history, totals, flaky table)
+- ✅ Cucumber JSON parser + unified loader (TRX preferred)
+- ✅ Rich failures: error text + evidence file links
 
 ---
 
-## Phase A — Multi-framework stability *(planned)*
+### Phase A — Multi-framework stability *(→ v0.2.0)*
 
-### 1. Runner robustness & multi-framework compatibility
-- [ ] Scenario Outline: expand Examples rows in tree and filters.
-- [ ] Tag inheritance from Feature/Background onto scenarios.
+#### 1. Runner robustness & multi-framework compatibility
+- [x] Scenario Outline: expand Examples rows in **tree**; map TRX results per row.
+- [ ] Scenario Outline: **per-row** dotnet filter (Theory / InlineData).
+- [x] Tag inheritance from Feature onto search and effective tag display.
 - [ ] Configurable filter mapping (Reqnroll vs SpecFlow vs NUnit/MSTest).
 - [ ] Project/solution selection for multi-project layouts.
 
-### 2. Configuration & environments
-- [ ] Custom stage names per project.
-- [ ] Documented `.env` convention + `env.example`.
-- [ ] Runtime toggles in UI (`HEADLESS_MODE`, etc.).
+#### 2. Configuration & environments
+- [ ] Custom stage names per project
+- [ ] Documented `.env` convention + `env.example` template
+- [ ] Runtime toggles in UI (`HEADLESS_MODE`, etc.)
 
 ---
 
-## Phase C — Product *(planned)*
+### Phase C — Product *(→ v0.3.0)*
 
-### 5. Diagnostics & reliability
-- [ ] More build/runtime patterns (timeout, port in use, test host crash).
-- [ ] Integration smoke tests against a minimal sample .NET BDD project in CI.
+#### 5. Diagnostics & reliability
+- [ ] More build/runtime patterns (timeout, port in use, test host crash)
+- [ ] Integration smoke tests against minimal sample .NET BDD project in CI
 
-### 6. Security hardening
-- [ ] Audit sanitizer patterns; optional strict mode (block run if env file missing for prod).
+#### 6. Security hardening
+- [ ] Audit sanitizer patterns
+- [ ] Optional strict mode (block run if env file missing for prod)
 
-### 7. Distribution
-- [ ] VS Marketplace listing + icon/banner.
-- [ ] GitHub release with `.vsix` artifact.
-- [ ] Reciprocal README link with [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
+#### 7. Distribution
+- [ ] VS Marketplace listing + icon/banner
+- [ ] GitHub release with `.vsix` artifact
+- ✅ Reciprocal README link with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)
 
-### 8. Community
-- [ ] Issue templates, changelog (`CHANGELOG.md`).
-- [ ] Optional shared `@anghelll/bdd-gherkin-lite` package if Pilot + Guardian parsers converge.
+#### 8. Community
+- [ ] Issue templates
+- [ ] `CHANGELOG.md` (extract from this roadmap on each release)
+- [ ] Contributing guide refresh after 1.0.0
 
 ---
 
-## Shipped (v0.1.0)
+## Architecture (reference)
 
-- ✅ Domain/Feature/Scenario tree, filters, env loading, TRX decoration.
-- ✅ Diagnostics analyzer (SDK, NuGet, Playwright, etc.).
-- ✅ Pure unit-tested `core/`; MIT licensed; framework-agnostic.
-- ✅ BDD extension family documented alongside BDD Guardian.
+```
+src/
+├── core/           # Pure logic — unit tested, no VS Code API
+│   ├── gherkin/    # parser, grouping, discovery, treeLabels
+│   ├── runner/     # dotnet test args, filterBuilder, spawn
+│   ├── results/    # TRX, Cucumber, evidence, runHistory, resultLoader
+│   ├── diagnostics/
+│   └── config/     # types, profiles, projectLocator, envFile
+├── providers/      # Tree, TestController, CodeLens, RunService, dashboard
+├── security/       # envGuard, sanitizer
+└── extension.ts
+```
+
+**Principles:** framework-agnostic · no credentials stored/logged · optional `.env` in memory only · Reqnroll `Feature` suffix in filters (configurable in Phase A).
+
+---
+
+## Shipped checklist (v0.2.0)
+
+- ✅ Everything in v0.1.0 (tree, run, dashboard, profiles, compact labels)
+- ✅ Folder/feature **result roll-up** (icon tint + `N failed · M passed`)
+- ✅ **Scenario Outline** example rows in tree + Test Explorer
+- ✅ **Tag inheritance** in search and tag counts
+- ✅ 61 unit tests on `core/`
+
+---
+
+*Last updated: v0.2.0 — roll-up, outline rows, tag inheritance.*

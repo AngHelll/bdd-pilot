@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { discoverDomains } from "../core/gherkin/discovery";
-import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
+import { FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
 import { UnifiedSummary } from "../core/results/resultLoader";
-import { matchesScenario } from "../core/results/trxParser";
+import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
 import { RunService } from "./runService";
@@ -22,9 +22,10 @@ export interface ControllerDeps {
 }
 
 interface ItemData {
-  kind: "feature" | "scenario";
+  kind: "feature" | "scenario" | "outlineRow";
   feature: FeatureInfo;
   scenario?: ScenarioInfo;
+  example?: OutlineExample;
 }
 
 export interface ManagedController {
@@ -71,6 +72,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         );
         itemData.set(featureItem, { kind: "feature", feature });
         for (const scenario of feature.scenarios) {
+          const hasExamples = scenario.examples && scenario.examples.length > 0;
           const scenarioItem = controller.createTestItem(
             `scenario:${feature.filePath}:${scenario.line}`,
             scenario.name,
@@ -78,6 +80,19 @@ export function createManagedController(deps: ControllerDeps): ManagedController
           );
           scenarioItem.range = new vscode.Range(scenario.line - 1, 0, scenario.line - 1, 0);
           itemData.set(scenarioItem, { kind: "scenario", feature, scenario });
+
+          if (hasExamples) {
+            for (const example of scenario.examples ?? []) {
+              const rowItem = controller.createTestItem(
+                `outline:${feature.filePath}:${scenario.line}:${example.rowIndex}`,
+                example.label,
+                featureUri,
+              );
+              itemData.set(rowItem, { kind: "outlineRow", feature, scenario, example });
+              scenarioItem.children.add(rowItem);
+            }
+          }
+
           featureItem.children.add(scenarioItem);
         }
         domainItem.children.add(featureItem);
@@ -188,8 +203,14 @@ function collectScenarioItems(
       return;
     }
     const data = itemData.get(item);
-    if (data?.kind === "scenario") {
+    if (data?.kind === "outlineRow") {
       leaves.push(item);
+      return;
+    }
+    if (data?.kind === "scenario") {
+      if (item.children.size === 0) {
+        leaves.push(item);
+      }
     }
     item.children.forEach(visit);
   };
@@ -209,6 +230,8 @@ function buildTargets(
   for (const item of scenarioItems) {
     const data = itemData.get(item);
     if (data?.kind === "scenario" && data.scenario) {
+      targets.push({ kind: "scenario", feature: data.feature, scenario: data.scenario });
+    } else if (data?.kind === "outlineRow" && data.scenario) {
       targets.push({ kind: "scenario", feature: data.feature, scenario: data.scenario });
     }
   }
@@ -231,8 +254,14 @@ function applyResults(
 
   for (const item of scenarioItems) {
     const data = itemData.get(item);
-    const name = data?.scenario?.name ?? item.label;
-    const match = summary.results.find((r) => matchesScenario(r.testName, name));
+    const scenarioName = data?.scenario?.name;
+    const match = scenarioName
+      ? data?.kind === "outlineRow" && data.example
+        ? summary.results.find((r) =>
+            findOutlineExampleMatch(r.testName, scenarioName, [data.example!]),
+          )
+        : summary.results.find((r) => matchesScenario(r.testName, scenarioName))
+      : undefined;
     if (!match) {
       run.skipped(item);
       continue;

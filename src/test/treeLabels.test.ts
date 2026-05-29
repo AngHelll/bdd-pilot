@@ -23,11 +23,8 @@ describe("treeLabels", () => {
     assert.strictEqual(formatTagDescription(tags, "hidden"), "");
   });
 
-  it("buildScenarioDescription prioritizes duration", () => {
-    assert.strictEqual(
-      buildScenarioDescription(tags, "count", 2, 450),
-      "450 ms · 6 tags",
-    );
+  it("buildScenarioDescription prioritizes duration label", () => {
+    assert.strictEqual(buildScenarioDescription(tags, "count", 2, "2.3 s"), "2.3 s · 6 tags");
     assert.strictEqual(buildScenarioDescription([], "count", 2), "");
   });
 

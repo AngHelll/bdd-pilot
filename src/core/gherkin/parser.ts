@@ -1,17 +1,23 @@
-import { FeatureInfo, ScenarioInfo } from "./model";
+import { FeatureInfo, OutlineExample, ScenarioInfo } from "./model";
 
 const FEATURE_RE = /^\s*(?:Feature|Característica|Funcionalidad)\s*:\s*(.*)$/i;
 const SCENARIO_RE = /^\s*(?:Scenario|Escenario)\s*:\s*(.*)$/i;
 const OUTLINE_RE =
   /^\s*(?:Scenario Outline|Scenario Template|Esquema del escenario)\s*:\s*(.*)$/i;
+const EXAMPLES_RE = /^\s*Examples:\s*(.*)?$/i;
 const TAG_RE = /(^|\s)@[^\s@]+/g;
+
+interface OutlineParseState {
+  scenario: ScenarioInfo;
+  headers: string[] | null;
+}
 
 /**
  * Lightweight, dependency-free Gherkin parser.
  *
- * It extracts the feature name + tags and each scenario / scenario outline with
- * its own tags and line number. Tags are accumulated until a non-tag, non-blank,
- * non-comment line is reached, then attached to whatever block follows.
+ * Extracts feature name + tags, scenarios / outlines (with Examples rows), and
+ * line numbers. Tags on a Feature block are *not* merged into scenarios here —
+ * use {@link effectiveScenarioTags} when inheritance is needed.
  */
 export function parseFeature(filePath: string, content: string): FeatureInfo {
   const lines = content.split(/\r?\n/);
@@ -25,6 +31,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
 
   let pendingTags: string[] = [];
   let featureSeen = false;
+  let outlineState: OutlineParseState | undefined;
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -45,25 +52,46 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
       feature.tags = pendingTags;
       pendingTags = [];
       featureSeen = true;
+      outlineState = undefined;
       continue;
     }
 
     const outlineMatch = OUTLINE_RE.exec(raw);
     if (outlineMatch) {
+      outlineState = undefined;
       feature.scenarios.push(makeScenario(outlineMatch[1], pendingTags, i + 1, true));
       pendingTags = [];
+      outlineState = { scenario: feature.scenarios[feature.scenarios.length - 1], headers: null };
       continue;
     }
 
     const scenarioMatch = SCENARIO_RE.exec(raw);
     if (scenarioMatch) {
+      outlineState = undefined;
       feature.scenarios.push(makeScenario(scenarioMatch[1], pendingTags, i + 1, false));
       pendingTags = [];
       continue;
     }
 
-    // Any other keyword line (Given/When/Then/Background/Examples...) clears
-    // pending tags that were not consumed by a feature or scenario.
+    if (outlineState && EXAMPLES_RE.test(line)) {
+      outlineState.headers = null;
+      const inline = EXAMPLES_RE.exec(line)?.[1]?.trim();
+      if (inline && inline.includes("|")) {
+        parseExampleRow(outlineState, inline);
+      }
+      continue;
+    }
+
+    if (outlineState && line.includes("|")) {
+      parseExampleRow(outlineState, line);
+      continue;
+    }
+
+    // Steps, Background, etc. — stop Examples parsing for this outline.
+    if (outlineState && outlineState.headers !== null) {
+      outlineState = undefined;
+    }
+
     pendingTags = [];
   }
 
@@ -72,6 +100,61 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
   }
 
   return feature;
+}
+
+function parseExampleRow(state: OutlineParseState, line: string): void {
+  const cells = parseTableRow(line);
+  if (cells.length === 0) {
+    return;
+  }
+
+  if (!state.headers) {
+    state.headers = cells;
+    return;
+  }
+
+  const headers = state.headers;
+  const values = cells;
+  const rowIndex = state.scenario.examples?.length ?? 0;
+  const example: OutlineExample = {
+    rowIndex,
+    headers: [...headers],
+    values: headers.map((_, idx) => values[idx] ?? ""),
+    label: buildExampleLabel(headers, values),
+  };
+
+  if (!state.scenario.examples) {
+    state.scenario.examples = [];
+  }
+  state.scenario.examples.push(example);
+}
+
+export function parseTableRow(line: string): string[] {
+  if (!line.includes("|")) {
+    return [];
+  }
+  const parts = line.split("|").map((cell) => cell.trim());
+  if (parts.length >= 2 && parts[0] === "" && parts[parts.length - 1] === "") {
+    return parts.slice(1, -1);
+  }
+  return parts.filter((cell) => cell.length > 0);
+}
+
+export function buildExampleLabel(headers: string[], values: string[]): string {
+  const pairs = headers
+    .map((header, idx) => ({ header, value: (values[idx] ?? "").trim() }))
+    .filter((pair) => pair.header.length > 0 && pair.value.length > 0);
+
+  if (pairs.length === 0) {
+    return "row";
+  }
+  if (pairs.length === 1) {
+    return `${pairs[0].header}=${pairs[0].value}`;
+  }
+  if (pairs.length === 2) {
+    return `${pairs[0].header}=${pairs[0].value}, ${pairs[1].header}=${pairs[1].value}`;
+  }
+  return `${pairs[0].header}=${pairs[0].value}, ${pairs[1].header}=${pairs[1].value} +${pairs.length - 2}`;
 }
 
 function makeScenario(

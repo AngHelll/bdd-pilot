@@ -91,16 +91,5 @@ function extractError(r: any): string | undefined {
   return message !== undefined ? String(message) : undefined;
 }
 
-/**
- * Heuristic match between a TRX testName (a fully qualified method name) and a
- * scenario display name, used to decorate the tree.
- */
-export function matchesScenario(testName: string, scenarioName: string): boolean {
-  const normalizedTest = normalizeName(testName);
-  const normalizedScenario = normalizeName(scenarioName);
-  return normalizedTest.includes(normalizedScenario);
-}
-
-function normalizeName(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
+/** @deprecated Import from scenarioMatch.ts — kept for existing imports. */
+export { matchesScenario } from "./scenarioMatch";

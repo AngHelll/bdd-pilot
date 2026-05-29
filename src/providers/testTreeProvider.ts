@@ -1,7 +1,14 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { discoverDomains } from "../core/gherkin/discovery";
-import { DomainGroup, FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
+import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
+import {
+  computeRollup,
+  formatRollupDescription,
+  prependRollup,
+  rollupSeverity,
+} from "../core/gherkin/outcomeRollup";
+import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
   DEFAULT_COMPACT_TAG_LIMIT,
   DEFAULT_TAG_DISPLAY,
@@ -11,10 +18,20 @@ import {
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
 } from "../core/gherkin/treeLabels";
-import { TestOutcome, TrxSummary, matchesScenario } from "../core/results/trxParser";
+import {
+  DEFAULT_DURATION_DISPLAY,
+  DurationDisplayMode,
+  formatDuration,
+  formatDurationTooltip,
+} from "../core/results/durationFormat";
 import { UnifiedSummary } from "../core/results/resultLoader";
+import {
+  findOutlineExampleMatch,
+  matchesScenario,
+} from "../core/results/scenarioMatch";
+import { TestOutcome, TrxSummary } from "../core/results/trxParser";
 
-export type TreeNode = DomainNode | FeatureNode | ScenarioNode;
+export type TreeNode = DomainNode | FeatureNode | ScenarioNode | OutlineRowNode;
 
 export interface DomainNode {
   kind: "domain";
@@ -30,6 +47,13 @@ export interface ScenarioNode {
   kind: "scenario";
   feature: FeatureInfo;
   scenario: ScenarioInfo;
+}
+
+export interface OutlineRowNode {
+  kind: "outlineRow";
+  feature: FeatureInfo;
+  scenario: ScenarioInfo;
+  example: OutlineExample;
 }
 
 export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
@@ -81,17 +105,32 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  /** Applies TRX/Cucumber results, decorating scenarios with pass/fail/skip. */
+  /** Applies TRX/Cucumber results, decorating scenarios and outline rows. */
   applyResults(summary: TrxSummary | UnifiedSummary): void {
-    for (const domain of this.domains) {
+    for (const domain of this.allDomains) {
       for (const feature of domain.features) {
         for (const scenario of feature.scenarios) {
-          const match = summary.results.find((r) => matchesScenario(r.testName, scenario.name));
-          if (match) {
-            const key = scenarioKey(feature, scenario);
-            this.outcomes.set(key, match.outcome);
-            if (match.durationMs !== undefined) {
-              this.durations.set(key, match.durationMs);
+          if (scenario.examples && scenario.examples.length > 0) {
+            for (const example of scenario.examples) {
+              const match = summary.results.find((r) =>
+                findOutlineExampleMatch(r.testName, scenario.name, [example]),
+              );
+              if (match) {
+                const key = outlineRowKey(feature, scenario, example.rowIndex);
+                this.outcomes.set(key, match.outcome);
+                if (match.durationMs !== undefined) {
+                  this.durations.set(key, match.durationMs);
+                }
+              }
+            }
+          } else {
+            const match = summary.results.find((r) => matchesScenario(r.testName, scenario.name));
+            if (match) {
+              const key = scenarioKey(feature, scenario);
+              this.outcomes.set(key, match.outcome);
+              if (match.durationMs !== undefined) {
+                this.durations.set(key, match.durationMs);
+              }
             }
           }
         }
@@ -115,6 +154,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         return this.featureItem(node, display);
       case "scenario":
         return this.scenarioItem(node, display);
+      case "outlineRow":
+        return this.outlineRowItem(node, display);
     }
   }
 
@@ -132,61 +173,75 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         scenario,
       }));
     }
+    if (node.kind === "scenario" && node.scenario.examples && node.scenario.examples.length > 0) {
+      return node.scenario.examples.map((example) => ({
+        kind: "outlineRow",
+        feature: node.feature,
+        scenario: node.scenario,
+        example,
+      }));
+    }
     return [];
   }
 
   private domainItem(node: DomainNode): vscode.TreeItem {
     const scenarioCount = node.group.features.reduce((n, f) => n + f.scenarios.length, 0);
+    const rollup = this.rollupFeatureOutcomes(node.group.features);
+    const base = `${node.group.features.length} features · ${scenarioCount} scenarios`;
     const item = new vscode.TreeItem(node.group.name, vscode.TreeItemCollapsibleState.Collapsed);
-    item.description = `${node.group.features.length} features · ${scenarioCount} scenarios`;
-    item.iconPath = new vscode.ThemeIcon("folder");
+    item.description = prependRollup(base, rollup);
+    item.iconPath = containerIcon("folder", rollup);
     item.contextValue = "bddRunnableDomain";
     return item;
   }
 
-  private featureItem(
-    node: FeatureNode,
-    display: TreeDisplaySettings,
-  ): vscode.TreeItem {
+  private featureItem(node: FeatureNode, display: TreeDisplaySettings): vscode.TreeItem {
     const scenarioCount = node.feature.scenarios.length;
-    const item = new vscode.TreeItem(node.feature.name, vscode.TreeItemCollapsibleState.Collapsed);
-    item.description = buildFeatureDescription(
+    const rollup = this.rollupFeatureOutcomes([node.feature]);
+    const base = buildFeatureDescription(
       scenarioCount,
       node.feature.tags,
       display.tagDisplay,
       display.compactTagLimit,
     );
+    const item = new vscode.TreeItem(node.feature.name, vscode.TreeItemCollapsibleState.Collapsed);
+    item.description = prependRollup(base, rollup);
     const tooltip = new vscode.MarkdownString(
       buildFeatureTooltipMarkdown(
         node.feature.name,
         path.basename(node.feature.filePath),
         scenarioCount,
         node.feature.tags,
+        formatRollupDescription(rollup),
       ),
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
-    item.iconPath = new vscode.ThemeIcon("file-code");
+    item.iconPath = containerIcon("file-code", rollup);
     item.contextValue = "bddRunnableFeature";
     item.resourceUri = vscode.Uri.file(node.feature.filePath);
     return item;
   }
 
-  private scenarioItem(
-    node: ScenarioNode,
-    display: TreeDisplaySettings,
-  ): vscode.TreeItem {
+  private scenarioItem(node: ScenarioNode, display: TreeDisplaySettings): vscode.TreeItem {
+    const hasExamples = !!node.scenario.examples && node.scenario.examples.length > 0;
+    const rollup = hasExamples ? this.rollupScenarioOutcomes(node.feature, node.scenario) : undefined;
     const key = scenarioKey(node.feature, node.scenario);
-    const outcome = this.outcomes.get(key);
-    const durationMs = this.durations.get(key);
+    const outcome = hasExamples ? rollupToOutcome(rollup) : this.outcomes.get(key);
+    const durationMs = hasExamples ? undefined : this.durations.get(key);
+    const tags = effectiveScenarioTags(node.feature, node.scenario);
 
-    const item = new vscode.TreeItem(node.scenario.name, vscode.TreeItemCollapsibleState.None);
-    item.description = buildScenarioDescription(
-      node.scenario.tags,
+    const item = new vscode.TreeItem(
+      node.scenario.name,
+      hasExamples ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+    );
+    const base = buildScenarioDescription(
+      tags,
       display.tagDisplay,
       display.compactTagLimit,
-      durationMs,
+      formatDurationLabel(durationMs, display.durationDisplay),
     );
+    item.description = rollup && rollup.withResults > 0 ? prependRollup(base, rollup) : base;
 
     const tooltip = new vscode.MarkdownString(
       buildScenarioTooltipMarkdown({
@@ -197,14 +252,16 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         featureTags: node.feature.tags,
         scenarioTags: node.scenario.tags,
         isOutline: node.scenario.isOutline,
-        outcome,
+        outcome: outcome,
         durationMs,
+        exampleCount: node.scenario.examples?.length,
+        rollupSummary: rollup ? formatRollupDescription(rollup) : undefined,
       }),
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
 
-    item.iconPath = outcomeIcon(outcome, node.scenario.isOutline);
+    item.iconPath = outcomeIcon(outcome, node.scenario.isOutline && !hasExamples);
     item.contextValue = "bddRunnableScenario";
     item.command = {
       command: "vscode.open",
@@ -216,11 +273,71 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     };
     return item;
   }
+
+  private outlineRowItem(node: OutlineRowNode, display: TreeDisplaySettings): vscode.TreeItem {
+    const key = outlineRowKey(node.feature, node.scenario, node.example.rowIndex);
+    const outcome = this.outcomes.get(key);
+    const durationMs = this.durations.get(key);
+    const tags = effectiveScenarioTags(node.feature, node.scenario);
+
+    const item = new vscode.TreeItem(node.example.label, vscode.TreeItemCollapsibleState.None);
+    item.description = buildScenarioDescription(
+      tags,
+      display.tagDisplay,
+      display.compactTagLimit,
+      formatDurationLabel(durationMs, display.durationDisplay),
+    );
+
+    const tooltip = new vscode.MarkdownString(
+      [
+        `**${node.scenario.name}**`,
+        "",
+        `Example row: \`${node.example.label}\``,
+        "",
+        `Feature: ${node.feature.name}`,
+        `File: \`${path.basename(node.feature.filePath)}\` · line ${node.scenario.line}`,
+        outcome ? `\nLast run: **${outcome}**` : "",
+        durationMs !== undefined ? `\n${formatDurationTooltip(durationMs)}` : "",
+      ].join("\n"),
+    );
+    tooltip.isTrusted = false;
+    item.tooltip = tooltip;
+    item.iconPath = outcomeIcon(outcome, false);
+    item.contextValue = "bddRunnableScenario";
+    return item;
+  }
+
+  private rollupFeatureOutcomes(features: FeatureInfo[]) {
+    const values: Array<TestOutcome | undefined> = [];
+    for (const feature of features) {
+      for (const scenario of feature.scenarios) {
+        values.push(...this.collectScenarioOutcomeValues(feature, scenario));
+      }
+    }
+    return computeRollup(values);
+  }
+
+  private rollupScenarioOutcomes(feature: FeatureInfo, scenario: ScenarioInfo) {
+    return computeRollup(this.collectScenarioOutcomeValues(feature, scenario));
+  }
+
+  private collectScenarioOutcomeValues(
+    feature: FeatureInfo,
+    scenario: ScenarioInfo,
+  ): Array<TestOutcome | undefined> {
+    if (scenario.examples && scenario.examples.length > 0) {
+      return scenario.examples.map((ex) =>
+        this.outcomes.get(outlineRowKey(feature, scenario, ex.rowIndex)),
+      );
+    }
+    return [this.outcomes.get(scenarioKey(feature, scenario))];
+  }
 }
 
 interface TreeDisplaySettings {
   tagDisplay: TagDisplayMode;
   compactTagLimit: number;
+  durationDisplay: DurationDisplayMode;
 }
 
 function readTreeDisplaySettings(): TreeDisplaySettings {
@@ -229,7 +346,46 @@ function readTreeDisplaySettings(): TreeDisplaySettings {
   const tagDisplay: TagDisplayMode =
     raw === "hidden" || raw === "count" || raw === "compact" || raw === "full" ? raw : DEFAULT_TAG_DISPLAY;
   const compactTagLimit = Math.max(1, cfg.get<number>("tree.compactTagLimit", DEFAULT_COMPACT_TAG_LIMIT));
-  return { tagDisplay, compactTagLimit };
+  const durationRaw = cfg.get<string>("tree.durationDisplay", DEFAULT_DURATION_DISPLAY);
+  const durationDisplay: DurationDisplayMode =
+    durationRaw === "auto" || durationRaw === "ms" || durationRaw === "seconds" || durationRaw === "compact"
+      ? durationRaw
+      : DEFAULT_DURATION_DISPLAY;
+  return { tagDisplay, compactTagLimit, durationDisplay };
+}
+
+function formatDurationLabel(durationMs: number | undefined, mode: DurationDisplayMode): string | undefined {
+  return durationMs !== undefined ? formatDuration(durationMs, mode) : undefined;
+}
+
+function containerIcon(baseIcon: string, rollup: ReturnType<typeof computeRollup>): vscode.ThemeIcon {
+  const severity = rollupSeverity(rollup);
+  switch (severity) {
+    case "failed":
+      return new vscode.ThemeIcon(baseIcon, new vscode.ThemeColor("testing.iconFailed"));
+    case "passed":
+      return new vscode.ThemeIcon(baseIcon, new vscode.ThemeColor("testing.iconPassed"));
+    case "skipped":
+      return new vscode.ThemeIcon(baseIcon, new vscode.ThemeColor("testing.iconSkipped"));
+    default:
+      return new vscode.ThemeIcon(baseIcon);
+  }
+}
+
+function rollupToOutcome(rollup: ReturnType<typeof computeRollup> | undefined): TestOutcome | undefined {
+  if (!rollup || rollup.withResults === 0) {
+    return undefined;
+  }
+  if (rollup.failed > 0) {
+    return "failed";
+  }
+  if (rollup.passed === rollup.withResults) {
+    return "passed";
+  }
+  if (rollup.skipped > 0) {
+    return "skipped";
+  }
+  return undefined;
 }
 
 function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vscode.ThemeIcon {
@@ -249,13 +405,18 @@ export function scenarioKey(feature: FeatureInfo, scenario: ScenarioInfo): strin
   return `${feature.filePath}::${scenario.line}::${scenario.name}`;
 }
 
+export function outlineRowKey(feature: FeatureInfo, scenario: ScenarioInfo, rowIndex: number): string {
+  return `${scenarioKey(feature, scenario)}::row${rowIndex}`;
+}
+
 function matchesSearch(query: string, feature: FeatureInfo, scenario?: ScenarioInfo): boolean {
   const haystack = [
     feature.name,
     feature.filePath,
     ...feature.tags.map((t) => `@${t}`),
     scenario?.name ?? "",
-    ...(scenario?.tags.map((t) => `@${t}`) ?? []),
+    ...(scenario ? effectiveScenarioTags(feature, scenario).map((t) => `@${t}`) : []),
+    ...(scenario?.examples?.map((ex) => ex.label) ?? []),
   ]
     .join(" ")
     .toLowerCase();

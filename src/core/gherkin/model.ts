@@ -1,3 +1,14 @@
+export interface OutlineExample {
+  /** 0-based index among data rows (excluding the header). */
+  rowIndex: number;
+  /** Column headers from the Examples table. */
+  headers: string[];
+  /** Cell values aligned with headers. */
+  values: string[];
+  /** Short label for tree rows, e.g. `contract_id=invalid-guid`. */
+  label: string;
+}
+
 export interface ScenarioInfo {
   /** Scenario or Scenario Outline name. */
   name: string;
@@ -6,6 +17,8 @@ export interface ScenarioInfo {
   /** 1-based line number where the scenario keyword appears. */
   line: number;
   isOutline: boolean;
+  /** Populated for Scenario Outlines that declare an Examples table. */
+  examples?: OutlineExample[];
 }
 
 export interface FeatureInfo {

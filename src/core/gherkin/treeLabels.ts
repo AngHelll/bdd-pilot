@@ -1,3 +1,5 @@
+import { formatDurationTooltip } from "../results/durationFormat";
+
 /** How tags appear in the tree view description (muted text to the right of the label). */
 export type TagDisplayMode = "hidden" | "count" | "compact" | "full";
 
@@ -48,11 +50,10 @@ export function buildScenarioDescription(
   tags: readonly string[],
   tagMode: TagDisplayMode,
   compactLimit: number,
-  durationMs?: number,
+  durationLabel?: string,
 ): string {
-  const durationPart = durationMs !== undefined ? `${durationMs} ms` : undefined;
   const tagPart = formatTagDescription(tags, tagMode, compactLimit);
-  return joinDescriptionParts(durationPart, tagPart || undefined);
+  return joinDescriptionParts(durationLabel, tagPart || undefined);
 }
 
 export function formatTagsMarkdown(tags: readonly string[]): string {
@@ -72,6 +73,8 @@ export interface ScenarioTooltipParts {
   isOutline: boolean;
   outcome?: string;
   durationMs?: number;
+  exampleCount?: number;
+  rollupSummary?: string;
 }
 
 /** Multi-line tooltip content (Markdown). Full tag lists live here, not in the label. */
@@ -80,6 +83,9 @@ export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts): strin
 
   if (parts.isOutline) {
     lines.push("_Scenario Outline_", "");
+    if (parts.exampleCount !== undefined && parts.exampleCount > 0) {
+      lines.push(`${parts.exampleCount} example row${parts.exampleCount === 1 ? "" : "s"}`, "");
+    }
   }
 
   lines.push(`Feature: ${parts.featureName}`);
@@ -92,13 +98,16 @@ export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts): strin
     lines.push("", `Scenario tags: ${formatTagsMarkdown(parts.scenarioTags)}`);
   }
 
-  if (parts.outcome || parts.durationMs !== undefined) {
+  if (parts.outcome || parts.durationMs !== undefined || parts.rollupSummary) {
     lines.push("");
+    if (parts.rollupSummary) {
+      lines.push(`Results: ${parts.rollupSummary}`);
+    }
     if (parts.outcome) {
       lines.push(`Last run: **${parts.outcome}**`);
     }
     if (parts.durationMs !== undefined) {
-      lines.push(`Duration: ${parts.durationMs} ms`);
+      lines.push(formatDurationTooltip(parts.durationMs));
     }
   }
 
@@ -110,6 +119,7 @@ export function buildFeatureTooltipMarkdown(
   fileName: string,
   scenarioCount: number,
   tags: readonly string[],
+  rollupSummary?: string,
 ): string {
   const lines = [
     `**${featureName}**`,
@@ -117,6 +127,9 @@ export function buildFeatureTooltipMarkdown(
     `File: \`${fileName}\``,
     scenarioCount === 1 ? "1 scenario" : `${scenarioCount} scenarios`,
   ];
+  if (rollupSummary) {
+    lines.push("", `Last run: ${rollupSummary}`);
+  }
   if (tags.length > 0) {
     lines.push("", `Tags: ${formatTagsMarkdown(tags)}`);
   }

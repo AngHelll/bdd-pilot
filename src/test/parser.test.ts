@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
-import { parseFeature, extractTags } from "../core/gherkin/parser";
+import { buildExampleLabel, extractTags, parseFeature, parseTableRow } from "../core/gherkin/parser";
+import { effectiveScenarioTags } from "../core/gherkin/tags";
 
 describe("gherkin parser", () => {
   it("parses feature name, feature tags and scenarios", () => {
@@ -34,6 +35,26 @@ describe("gherkin parser", () => {
 
     assert.strictEqual(feature.scenarios[1].isOutline, true);
     assert.deepStrictEqual(feature.scenarios[1].tags, ["P1", "Level2"]);
+    assert.strictEqual(feature.scenarios[1].examples?.length, 1);
+    assert.strictEqual(feature.scenarios[1].examples?.[0].label, "user=bad");
+  });
+
+  it("parses multi-column Examples rows", () => {
+    const content = [
+      "Feature: Trading Buying Power",
+      "  Scenario Outline: Reject invalid GUID values in path parameters",
+      "    When I use <parameter> with <value>",
+      "    Examples:",
+      "      | parameter   | value        | expected_message |",
+      "      | contract_id | invalid-guid | Guid contractId  |",
+      "      | account_id  | 3            | Guid accountId   |",
+    ].join("\n");
+
+    const feature = parseFeature("/x/BuyingPower.feature", content);
+    const outline = feature.scenarios[0];
+    assert.strictEqual(outline.examples?.length, 2);
+    assert.strictEqual(outline.examples?.[0].label, "parameter=contract_id, value=invalid-guid +1");
+    assert.deepStrictEqual(outline.examples?.[1].values, ["account_id", "3", "Guid accountId"]);
   });
 
   it("ignores comments and does not leak tags across blocks", () => {
@@ -59,5 +80,27 @@ describe("gherkin parser", () => {
 
   it("extractTags strips '@' and whitespace", () => {
     assert.deepStrictEqual(extractTags("  @a   @b-c @d_e "), ["a", "b-c", "d_e"]);
+  });
+
+  it("effectiveScenarioTags merges feature and scenario tags", () => {
+    const feature = parseFeature("/x/F.feature", "@Smoke @P1\nFeature: F\n@P1\nScenario: S\n  Then ok");
+    const scenario = feature.scenarios[0];
+    assert.deepStrictEqual(effectiveScenarioTags(feature, scenario), ["Smoke", "P1"]);
+  });
+});
+
+describe("parseTableRow", () => {
+  it("splits pipe-delimited rows", () => {
+    assert.deepStrictEqual(parseTableRow("| a | b |"), ["a", "b"]);
+  });
+});
+
+describe("buildExampleLabel", () => {
+  it("formats one and two column labels", () => {
+    assert.strictEqual(buildExampleLabel(["user"], ["bad"]), "user=bad");
+    assert.strictEqual(
+      buildExampleLabel(["a", "b"], ["1", "2"]),
+      "a=1, b=2",
+    );
   });
 });

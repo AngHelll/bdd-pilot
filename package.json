@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "bdd-pilot",
   "license": "MIT",
   "repository": {
@@ -230,6 +230,23 @@
           "minimum": 1,
           "maximum": 10,
           "description": "When tree.tagDisplay is \"compact\", maximum number of @tags shown before \"+N\"."
+        },
+        "bddPilot.tree.durationDisplay": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ms",
+            "seconds",
+            "compact"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "Readable unit by magnitude: 450 ms, 2.3 s, 2m 15s. Hover shows exact ms.",
+            "Always milliseconds (useful for benchmarks).",
+            "Always seconds with decimals.",
+            "Short form: 45s, 2m 30s (GitHub Actions style)."
+          ],
+          "description": "How test run durations appear in the tree description."
         }
       }
     }

@@ -97,9 +97,11 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.dotnetPath` | `dotnet` | Path to the `dotnet` executable. |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |
+| `bddPilot.tree.durationDisplay` | `auto` | Durations: `auto`, `ms`, `seconds`, or `compact`. Hover shows exact ms. |
 
 Tree items use **label = name only**; tags and run metadata appear in a short
-**description** (e.g. `6 tags`, `450 ms`) and the full detail in the **hover tooltip**.
+**description** (e.g. `6 tags`, `2.3 s`). **Hover** shows full tag lists and
+duration as `2.3 s (2341 ms)`.
 
 ## Requirements
 
