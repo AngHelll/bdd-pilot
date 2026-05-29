@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run compile
+      - run: npm run test:unit
+      - run: npm run build
+      - name: Package VSIX
+        run: npx @vscode/vsce package --no-dependencies -o bdd-pilot.vsix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bdd-pilot-vsix
+          path: bdd-pilot.vsix

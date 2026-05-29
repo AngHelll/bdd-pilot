@@ -1,0 +1,184 @@
+{
+  "name": "bdd-pilot",
+  "displayName": "BDD Pilot",
+  "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
+  "version": "0.1.0",
+  "publisher": "bdd-pilot",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bdd-pilot/bdd-pilot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bdd-pilot/bdd-pilot/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "bdd",
+    "reqnroll",
+    "specflow",
+    "xunit",
+    "gherkin",
+    "dotnet",
+    "test runner"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.feature"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "bddPilot",
+          "title": "BDD Pilot",
+          "icon": "media/flask.svg"
+        }
+      ]
+    },
+    "views": {
+      "bddPilot": [
+        {
+          "id": "bddPilot.tests",
+          "name": "Tests",
+          "icon": "media/flask.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "bddPilot.refresh",
+        "title": "BDD Pilot: Refresh Tests",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "bddPilot.runNode",
+        "title": "BDD Pilot: Run",
+        "icon": "$(run)"
+      },
+      {
+        "command": "bddPilot.runAll",
+        "title": "BDD Pilot: Run All Tests",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "bddPilot.cancel",
+        "title": "BDD Pilot: Cancel Test Run",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "bddPilot.selectStage",
+        "title": "BDD Pilot: Select Environment (STAGE)"
+      },
+      {
+        "command": "bddPilot.selectMode",
+        "title": "BDD Pilot: Select Parallelism Mode"
+      },
+      {
+        "command": "bddPilot.showOutput",
+        "title": "BDD Pilot: Show Test Output"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "bddPilot.runAll",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bddPilot.refresh",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@2"
+        },
+        {
+          "command": "bddPilot.cancel",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "bddPilot.runNode",
+          "when": "view == bddPilot.tests && viewItem =~ /^bddRunnable/",
+          "group": "inline@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "BDD Pilot",
+      "properties": {
+        "bddPilot.projectPath": {
+          "type": "string",
+          "default": "",
+          "description": "Relative or absolute path to the .NET test project directory. If empty, the extension auto-detects the folder containing the .feature files."
+        },
+        "bddPilot.defaultStage": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "test",
+            "stg",
+            "prod"
+          ],
+          "default": "test",
+          "description": "Default environment (STAGE) used when running tests."
+        },
+        "bddPilot.defaultMode": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "parallel",
+            "ci"
+          ],
+          "default": "debug",
+          "description": "Default xUnit parallelism mode."
+        },
+        "bddPilot.requireConfirmationForStages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "stg",
+            "prod"
+          ],
+          "description": "Environments that require explicit confirmation before running tests."
+        },
+        "bddPilot.dotnetPath": {
+          "type": "string",
+          "default": "dotnet",
+          "description": "Path to the dotnet executable."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "compile": "tsc -p ./ --noEmit",
+    "lint": "eslint src --ext ts",
+    "test:unit": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "@vscode/vsce": "^2.29.0",
+    "esbuild": "^0.21.5",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.4.0"
+  }
+}
