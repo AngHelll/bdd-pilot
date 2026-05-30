@@ -160,7 +160,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.4** (Marketplace dogfood gate, verify:local Capa A script).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.5** (`pilot analyze` CLI for agent/CI log triage; `npm run verify:local` Capa A gate).
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

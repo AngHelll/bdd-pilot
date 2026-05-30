@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -332,6 +332,7 @@
     "compile": "tsc -p ./ --noEmit",
     "lint": "eslint src --ext ts",
     "test:unit": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
+    "pilot": "node scripts/pilot-cli.js",
     "dogfood": "bash scripts/dogfood-smoke.sh",
     "verify:local": "bash scripts/verify-local.sh",
     "package": "vsce package --no-dependencies -o bdd-pilot.vsix"

@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.5] — 2026-05-30
+
+### Added
+- `npm run pilot -- analyze <log-file>` — headless CLI that returns JSON diagnostics for agents/CI (wraps `analyzer.ts`)
+
 ## [0.3.4] — 2026-05-30
 
 ### Added
