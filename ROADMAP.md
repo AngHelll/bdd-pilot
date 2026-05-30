@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.1** · **109 unit tests**
+> **Current release: v0.3.2** · **112 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.1** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | **v0.3.2** — tree grouped by tag (P2); more diagnostics |
+| ✅ Shipped | v0.1.0 → **v0.3.2** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | **v0.3.3** — diagnostics (timeout, port in use, test host crash) |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -127,7 +127,15 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-**v0.3.2** — tree grouped by tag; diagnostics for timeout / port in use.
+**v0.3.3** — diagnostics for timeout / port in use / test host crash.
+
+### v0.3.2 — tree grouped by tag
+
+| Area | Change |
+|------|--------|
+| **Tree** | `bddPilot.tree.groupBy`: domain (default) or `@tag`; toolbar toggle |
+| **Run** | Tag group nodes → `Category=<tag>`; case-insensitive tag matching |
+| **Roll-up** | Pass/fail counts on tag folders |
 
 ### v0.2.6 — runtime diagnostics
 

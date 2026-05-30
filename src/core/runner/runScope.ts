@@ -1,5 +1,6 @@
 import { discoverDomains } from "../gherkin/discovery";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "../gherkin/model";
+import { tagsMatch } from "../gherkin/groupByTag";
 import { effectiveScenarioTags } from "../gherkin/tags";
 import { RunTarget } from "./filterBuilder";
 
@@ -76,7 +77,7 @@ function appendKeysForTarget(target: RunTarget, domains: DomainGroup[], keys: Se
       for (const domain of domains) {
         for (const feature of domain.features) {
           for (const scenario of feature.scenarios) {
-            if (effectiveScenarioTags(feature, scenario).includes(target.tag)) {
+            if (effectiveScenarioTags(feature, scenario).some((t) => tagsMatch(t, target.tag))) {
               appendScenarioKeys(feature, scenario, keys);
             }
           }

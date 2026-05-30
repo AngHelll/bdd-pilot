@@ -8,6 +8,7 @@ import {
   prependRollup,
   rollupSeverity,
 } from "../core/gherkin/outcomeRollup";
+import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
 import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
   DEFAULT_COMPACT_TAG_LIMIT,
@@ -39,11 +40,18 @@ import {
 import { enrichFeaturesWithTheoryTests, scenarioNeedsTheoryDiscovery } from "../core/gherkin/theoryExamples";
 import { OutcomeStore } from "./outcomeStore";
 
-export type TreeNode = DomainNode | FeatureNode | ScenarioNode | OutlineRowNode;
+export type TreeGroupBy = "domain" | "tag";
+
+export type TreeNode = DomainNode | TagNode | FeatureNode | ScenarioNode | OutlineRowNode;
 
 export interface DomainNode {
   kind: "domain";
   group: DomainGroup;
+}
+
+export interface TagNode {
+  kind: "tag";
+  group: TagGroup;
 }
 
 export interface FeatureNode {
@@ -55,6 +63,8 @@ export interface ScenarioNode {
   kind: "scenario";
   feature: FeatureInfo;
   scenario: ScenarioInfo;
+  /** When true, description shows feature name (tag-grouped tree). */
+  underTagGroup?: boolean;
 }
 
 export interface OutlineRowNode {
@@ -69,6 +79,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private domains: DomainGroup[] = [];
+  private tagGroups: TagGroup[] = [];
   private allDomains: DomainGroup[] = [];
   private searchQuery = "";
   private refreshPending = false;
@@ -124,24 +135,15 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   private applySearch(): void {
-    if (!this.searchQuery) {
-      this.domains = this.allDomains;
-    } else {
-      this.domains = this.allDomains
-        .map((domain) => ({
-          name: domain.name,
-          features: domain.features
-            .map((feature) => ({
-              ...feature,
-              scenarios: feature.scenarios.filter((s) => matchesSearch(this.searchQuery, feature, s)),
-            }))
-            .filter(
-              (feature) =>
-                matchesSearch(this.searchQuery, feature) || feature.scenarios.length > 0,
-            ),
-        }))
-        .filter((domain) => domain.features.length > 0 || domain.name.toLowerCase().includes(this.searchQuery));
-    }
+    const filtered = filterDomainsBySearch(this.allDomains, this.searchQuery);
+    this.domains = filtered;
+    this.tagGroups = groupByTag(filtered).filter(
+      (group) =>
+        !this.searchQuery ||
+        group.tag.toLowerCase().includes(this.searchQuery) ||
+        `@${group.tag}`.toLowerCase().includes(this.searchQuery) ||
+        group.scenarios.length > 0,
+    );
     this._onDidChangeTreeData.fire(undefined);
   }
 
@@ -234,6 +236,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     switch (node.kind) {
       case "domain":
         return this.domainItem(node);
+      case "tag":
+        return this.tagItem(node);
       case "feature":
         return this.featureItem(node, display);
       case "scenario":
@@ -245,7 +249,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   getChildren(node?: TreeNode): TreeNode[] {
     if (!node) {
+      if (readTreeGroupBy() === "tag") {
+        return this.tagGroups.map((group) => ({ kind: "tag", group }));
+      }
       return this.domains.map((group) => ({ kind: "domain", group }));
+    }
+    if (node.kind === "tag") {
+      return node.group.scenarios.map((ref) => ({
+        kind: "scenario",
+        feature: ref.feature,
+        scenario: ref.scenario,
+        underTagGroup: true,
+      }));
     }
     if (node.kind === "domain") {
       return node.group.features.map((feature) => ({ kind: "feature", feature }));
@@ -266,6 +281,22 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       }));
     }
     return [];
+  }
+
+  private tagItem(node: TagNode): vscode.TreeItem {
+    const refs = node.group.scenarios;
+    const rollup = computeRollup(
+      refs.flatMap((ref) => this.collectScenarioOutcomeValues(ref.feature, ref.scenario)),
+    );
+    const base = `${refs.length} scenario${refs.length === 1 ? "" : "s"}`;
+    const item = new vscode.TreeItem(`@${node.group.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
+    item.description = prependRollup(base, rollup);
+    item.iconPath = containerIcon("tag", rollup);
+    item.contextValue = "bddRunnableTag";
+    item.tooltip = new vscode.MarkdownString(
+      [`**@${node.group.tag}**`, "", `${refs.length} scenario(s)`, formatRollupDescription(rollup)].join("\n"),
+    );
+    return item;
   }
 
   private domainItem(node: DomainNode): vscode.TreeItem {
@@ -319,11 +350,13 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       node.scenario.name,
       hasExamples ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
     );
+    const featureHint = node.underTagGroup ? node.feature.name : undefined;
     const base = buildScenarioDescription(
       tags,
       display.tagDisplay,
       display.compactTagLimit,
       formatDurationLabel(durationMs, display.durationDisplay),
+      featureHint,
     );
     item.description = rollup && rollup.withResults > 0 ? prependRollup(base, rollup) : base;
 
@@ -424,6 +457,11 @@ interface TreeDisplaySettings {
   durationDisplay: DurationDisplayMode;
 }
 
+function readTreeGroupBy(): TreeGroupBy {
+  const raw = vscode.workspace.getConfiguration("bddPilot").get<string>("tree.groupBy", "domain");
+  return raw === "tag" ? "tag" : "domain";
+}
+
 function readTreeDisplaySettings(): TreeDisplaySettings {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
   const raw = cfg.get<string>("tree.tagDisplay", DEFAULT_TAG_DISPLAY);
@@ -486,6 +524,23 @@ function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vsco
 }
 
 export { outlineRowKey, scenarioKey } from "../core/runner/runScope";
+
+function filterDomainsBySearch(allDomains: DomainGroup[], query: string): DomainGroup[] {
+  if (!query) {
+    return allDomains;
+  }
+  return allDomains
+    .map((domain) => ({
+      name: domain.name,
+      features: domain.features
+        .map((feature) => ({
+          ...feature,
+          scenarios: feature.scenarios.filter((s) => matchesSearch(query, feature, s)),
+        }))
+        .filter((feature) => matchesSearch(query, feature) || feature.scenarios.length > 0),
+    }))
+    .filter((domain) => domain.features.length > 0 || domain.name.toLowerCase().includes(query));
+}
 
 function matchesSearch(query: string, feature: FeatureInfo, scenario?: ScenarioInfo): boolean {
   const haystack = [

@@ -42,6 +42,7 @@ import {
   FeatureNode,
   OutlineRowNode,
   ScenarioNode,
+  TagNode,
   TestTreeProvider,
   TreeNode,
 } from "./providers/testTreeProvider";
@@ -287,6 +288,16 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
 
+    vscode.commands.registerCommand("bddPilot.cycleTreeGroupBy", async () => {
+      const cfg = vscode.workspace.getConfiguration("bddPilot");
+      const current = cfg.get<string>("tree.groupBy", "domain");
+      const next = current === "tag" ? "domain" : "tag";
+      await cfg.update("tree.groupBy", next, vscode.ConfigurationTarget.Workspace);
+      void vscode.window.showInformationMessage(
+        `BDD Pilot tree: group by ${next === "tag" ? "@tag" : "domain"}.`,
+      );
+    }),
+
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("bddPilot")) {
         refreshAll();
@@ -307,6 +318,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     if (node.kind === "domain") {
       return { kind: "domain", group: (node as DomainNode).group };
+    }
+    if (node.kind === "tag") {
+      return { kind: "tag", tag: (node as TagNode).group.tag };
     }
     if (node.kind === "feature") {
       return { kind: "feature", feature: (node as FeatureNode).feature };

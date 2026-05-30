@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -119,6 +119,11 @@
         "icon": "$(run-above)"
       },
       {
+        "command": "bddPilot.cycleTreeGroupBy",
+        "title": "BDD Pilot: Toggle Tree Grouping (Domain / Tag)",
+        "icon": "$(tag)"
+      },
+      {
         "command": "bddPilot.manageProfiles",
         "title": "BDD Pilot: Manage Execution Profiles",
         "icon": "$(settings-gear)"
@@ -163,9 +168,14 @@
           "group": "navigation@6"
         },
         {
+          "command": "bddPilot.cycleTreeGroupBy",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@8"
+        },
+        {
           "submenu": "bddPilot.profilesMenu",
           "when": "view == bddPilot.tests",
-          "group": "navigation@7"
+          "group": "navigation@9"
         }
       ],
       "bddPilot.profilesMenu": [
@@ -234,6 +244,19 @@
           "type": "string",
           "default": "dotnet",
           "description": "Path to the dotnet executable."
+        },
+        "bddPilot.tree.groupBy": {
+          "type": "string",
+          "enum": [
+            "domain",
+            "tag"
+          ],
+          "default": "domain",
+          "enumDescriptions": [
+            "Group by feature folder domain (Features/Trading/...).",
+            "Group by Gherkin @tag — QA smoke/regression suites."
+          ],
+          "description": "How scenarios are organized in the BDD Pilot test tree."
         },
         "bddPilot.tree.tagDisplay": {
           "type": "string",

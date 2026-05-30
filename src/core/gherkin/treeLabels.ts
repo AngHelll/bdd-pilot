@@ -51,9 +51,10 @@ export function buildScenarioDescription(
   tagMode: TagDisplayMode,
   compactLimit: number,
   durationLabel?: string,
+  contextLabel?: string,
 ): string {
-  const tagPart = formatTagDescription(tags, tagMode, compactLimit);
-  return joinDescriptionParts(durationLabel, tagPart || undefined);
+  const tagPart = contextLabel ?? (formatTagDescription(tags, tagMode, compactLimit) || undefined);
+  return joinDescriptionParts(durationLabel, tagPart);
 }
 
 export function formatTagsMarkdown(tags: readonly string[]): string {

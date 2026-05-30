@@ -8,6 +8,13 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.2] — 2026-05-30
+
+### Added
+- Tree grouped by `@tag` — setting `bddPilot.tree.groupBy` (`domain` | `tag`) and toolbar toggle (tag icon)
+- Run from tag group nodes maps to `Category=<tag>` filters (case-insensitive tag matching)
+- Outcome roll-up on tag group folders
+
 ## [0.3.1] — 2026-05-30
 
 ### Added
