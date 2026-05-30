@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.8] — 2026-05-30
+
+### Fixed
+- Execution Profiles submenu toolbar button — codicon `$(list-selection)` on `contributes.submenus` (was grey placeholder)
+
 ## [0.3.7] — 2026-05-30
 
 ### Added
