@@ -13,6 +13,9 @@ _Nothing yet._
 ### Added
 - `npm run pilot -- analyze <log-file>` — headless CLI that returns JSON diagnostics for agents/CI (wraps `analyzer.ts`)
 
+### Changed
+- Marketplace dogfood Capa B checklist closed on VSIX 0.3.5; GitHub Release ↔ Marketplace publish sync
+
 ## [0.3.4] — 2026-05-30
 
 ### Added

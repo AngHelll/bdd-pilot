@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.4** · **115 unit tests**
+> **Current release: v0.3.5** · **120 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.4** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Marketplace publish sync (v0.3.4 on VS Code Marketplace) |
+| ✅ Shipped | v0.1.0 → **v0.3.5** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | i18n EN/ES status bar + dashboard *(0.3.0-6 optional)* · watch issues 1–2 weeks post-publish |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -80,17 +80,17 @@ Must ship before listing. Low risk, high trust.
 Use before clicking **Publish** on Marketplace:
 
 #### Product
-- [x] Install from `.vsix` on clean VS Code (no dev dependencies) *(dogfood v0.3.4)*
+- [x] Install from `.vsix` on clean VS Code (no dev dependencies) *(dogfood v0.3.5)*
 - [x] Discover features in a repo with `Features/` **and** nested `.csproj` *(minimal-bdd; nested layout optional)*
 - [x] Run scenario, outline row (tree + CodeLens), feature, tag, Run All *(tag grouping: v0.3.2; @smoke verified)*
-- [ ] Partial run leaves prior pass/fail icons on other scenarios
-- [ ] Live progress notification updates during run
-- [ ] Dashboard shows history; profiles submenu separate from dashboard
-- [ ] `stg`/`prod` shows confirmation modal
-- [ ] Output channel has no raw secrets on intentional failure
+- [x] Partial run leaves prior pass/fail icons on other scenarios *(dogfood v0.3.5)*
+- [x] Live progress notification updates during run *(dogfood v0.3.5)*
+- [x] Dashboard shows history; profiles submenu separate from dashboard *(dogfood v0.3.5)*
+- [x] `stg`/`prod` shows confirmation modal *(dogfood v0.3.5)*
+- [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.4)
+- [x] `CHANGELOG.md` through current version (v0.3.5)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -100,12 +100,12 @@ Use before clicking **Publish** on Marketplace:
 #### Technical
 - [x] `npm run compile && npm run lint && npm run test:unit` pass in CI
 - [x] Sample BDD project smoke in CI (0.3.0-2)
-- [ ] `engines.vscode` matches tested version
+- [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [ ] Pin Marketplace version to tagged release
+- [ ] Pin Marketplace version to tagged release *(run `vsce publish` for v0.3.5)*
 - [ ] Open “good first issue” for tree-by-tag or i18n gaps
-- [ ] Watch issues 1–2 weeks; patch **0.3.1** if filter/outline regressions
+- [ ] Watch issues 1–2 weeks; patch **0.3.6** if filter/outline regressions
 
 ---
 
@@ -128,6 +128,13 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v0.3.5 — Marketplace publish sync
+
+| Area | Change |
+|------|--------|
+| **Tooling** | `npm run pilot -- analyze <log-file>` — JSON diagnostics CLI for agents/CI |
+| **Process** | Capa B dogfood on VSIX 0.3.5; Marketplace publish sync with GitHub Release |
 
 ### v0.3.4 — Marketplace dogfood gate
 
@@ -244,7 +251,7 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 
 - [x] Issue templates + CHANGELOG discipline
 - [x] CI sample BDD project
-- [ ] Marketplace listing + GitHub release automation *(publish + tag in progress)*
+- [x] Marketplace listing *(v0.3.5 publish manual; GitHub Release `v0.3.5` + VSIX)*
 - [ ] i18n EN/ES *(optional 0.3.0)*
 - [ ] Security audit sanitizer / strict prod mode *(post-0.3.0)*
 
@@ -269,4 +276,4 @@ src/
 
 ---
 
-*Last updated: v0.3.4 — Marketplace dogfood gate, verify:local (115 unit tests).*
+*Last updated: v0.3.5 — Marketplace publish sync, dogfood Capa B, pilot analyze CLI (120 unit tests).*
