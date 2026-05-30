@@ -106,15 +106,24 @@
       },
       {
         "command": "bddPilot.saveProfile",
-        "title": "BDD Pilot: Save Execution Profile"
+        "title": "BDD Pilot: Save Execution Profile",
+        "icon": "$(save)"
       },
       {
         "command": "bddPilot.runProfile",
-        "title": "BDD Pilot: Run Execution Profile"
+        "title": "BDD Pilot: Run Execution Profile",
+        "icon": "$(run-above)"
       },
       {
         "command": "bddPilot.manageProfiles",
-        "title": "BDD Pilot: Manage Execution Profiles"
+        "title": "BDD Pilot: Manage Execution Profiles",
+        "icon": "$(settings-gear)"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "bddPilot.profilesMenu",
+        "label": "Execution Profiles"
       }
     ],
     "menus": {
@@ -150,9 +159,23 @@
           "group": "navigation@6"
         },
         {
-          "command": "bddPilot.runProfile",
+          "submenu": "bddPilot.profilesMenu",
           "when": "view == bddPilot.tests",
           "group": "navigation@7"
+        }
+      ],
+      "bddPilot.profilesMenu": [
+        {
+          "command": "bddPilot.runProfile",
+          "group": "1_profiles@1"
+        },
+        {
+          "command": "bddPilot.saveProfile",
+          "group": "1_profiles@2"
+        },
+        {
+          "command": "bddPilot.manageProfiles",
+          "group": "1_profiles@3"
         }
       ],
       "view/item/context": [

@@ -109,7 +109,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("bddPilot.showOutput", () => output.show(true)),
 
     vscode.commands.registerCommand("bddPilot.showDashboard", () => {
-      dashboard.show(runService.getHistory());
+      const history = runService.getHistory();
+      dashboard.show(history);
+      if (history.length === 0) {
+        void vscode.window.showInformationMessage(
+          "Dashboard opened. Run tests from the BDD Pilot tree to record history here.",
+        );
+      }
     }),
 
     vscode.commands.registerCommand("bddPilot.searchTests", async () => {
@@ -201,7 +207,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("bddPilot.runProfile", async () => {
       const profiles = profileStore.list();
       if (profiles.length === 0) {
-        void vscode.window.showInformationMessage("No saved profiles. Use 'Save Execution Profile' first.");
+        void vscode.window.showInformationMessage(
+          "No saved execution profiles. Use Command Palette → 'BDD Pilot: Save Execution Profile'. " +
+            "For run history and flaky stats, use the graph icon (Show Dashboard).",
+        );
         return;
       }
       const picked = await vscode.window.showQuickPick(

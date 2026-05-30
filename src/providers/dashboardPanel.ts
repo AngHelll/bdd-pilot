@@ -61,6 +61,7 @@ export class DashboardPanel {
     th { opacity: 0.8; }
     .fail { color: var(--vscode-errorForeground); }
     .pass { color: var(--vscode-testing-iconPassed); }
+    .hint { opacity: 0.85; font-size: 0.9em; max-width: 560px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -72,7 +73,7 @@ export class DashboardPanel {
     <div class="stat"><strong class="fail">${totals.failed}</strong> failed (all runs)</div>
   </div>
   <h2>Recent runs</h2>
-  ${recent.length === 0 ? "<p>No runs recorded yet.</p>" : recentRunsTable(recent)}
+  ${recent.length === 0 ? `<p>No runs recorded yet.</p><p class="hint">Run tests from the <strong>BDD Pilot</strong> sidebar (play icon on a feature or scenario). History is stored per workspace — not related to execution profiles.</p>` : recentRunsTable(recent)}
   <h2>Flaky scenarios (recent window)</h2>
   ${flaky.length === 0 ? "<p>Not enough data yet (need 2+ runs per scenario).</p>" : flakyTable(flaky)}
 </body>
