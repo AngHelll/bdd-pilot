@@ -6,7 +6,12 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 ## [Unreleased]
 
-_Nothing yet — see [0.2.6] below._
+_Nothing yet._
+
+## [0.2.7] — 2026-05-29
+
+### Changed
+- Sync `ROADMAP.md` and `README.md` with v0.2.6 feature set, test count (96), and Marketplace readiness checklist
 
 ## [0.2.6] — 2026-05-29
 
@@ -69,7 +74,8 @@ _Nothing yet — see [0.2.6] below._
 - Test Explorer, CodeLens, dashboard, execution profiles, diagnostics, output sanitizer
 - MIT license; ecosystem link with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)
 
-[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.7...HEAD
+[0.2.7]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.3...v0.2.4

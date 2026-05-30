@@ -142,9 +142,10 @@ Press `F5` in VS Code to launch the Extension Development Host.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.2.2** (Phase A partial).
-**Next up:** Phase C (marketplace, i18n, cross-links with
-[BDD Guardian](https://github.com/AngHelll/bdd-guardian)).
+See [ROADMAP.md](./ROADMAP.md). Current codebase release is **v0.2.6** (Phase A
+complete; runtime diagnostics). **Next up:** **v0.2.7** Marketplace/GitHub Release,
+then Phase C (CI sample project, README screenshot, i18n). Works alongside
+[BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 
 ## Contributing
 

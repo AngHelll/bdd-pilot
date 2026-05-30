@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.2.5** · **92 unit tests**
+> **Current release: v0.2.6** · **96 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.2.5** (see [Changelog](#changelog)) |
-| 🎯 Next | **GitHub Release v0.2.5** + dogfood → then **v0.3.0** Marketplace |
+| ✅ Shipped | v0.1.0 → **v0.2.6** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | **v0.2.7** — docs sync + Marketplace/GitHub Release tag |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -30,7 +30,9 @@ Semver stays conservative until Marketplace + stable API:
 | **0.2.3** | CodeLens **Run row** on Examples table lines |
 | **0.2.4** | Partial runs **preserve** prior tree results (scoped clear) |
 | **0.2.5** | Project/solution picker, CHANGELOG, issue templates |
-| **0.3.0** | Phase C — Marketplace, CI sample project, issue templates |
+| **0.2.6** | Runtime diagnostics (pending steps, API/AWS/users); FEED_AUTH scoped to NuGet restore |
+| **0.2.7** | ROADMAP/README sync; Marketplace release packaging |
+| **0.3.0** | Phase C — CI sample project, README assets, full Marketplace gate |
 | **1.0.0** | Stable public release |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
@@ -41,16 +43,16 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 
 Concrete path from **v0.2.4** → public Marketplace listing. Work in **small PRs**; dogfood each step on a real Reqnroll repo before merging.
 
-### Milestone 0.2.5 — Stabilization gate *(before Marketplace)*
+### Milestone 0.2.5 — Stabilization gate *(before Marketplace)* ✅
 
 Must ship before listing. Low risk, high trust.
 
-| # | Issue title | Scope | Done when |
-|---|-------------|-------|-----------|
-| **0.2.5-1** | `docs: CHANGELOG + ROADMAP sync for 0.2.x` | `CHANGELOG.md`, this file | Every release 0.2.1–0.2.4 documented |
-| **0.2.5-2** | `release: GitHub Release 0.2.4 with .vsix` | Manual / workflow | Tag `v0.2.4`, asset `bdd-pilot-0.2.4.vsix`, release notes |
-| **0.2.5-3** | `feat: project and solution selection` | `projectLocator`, settings UI | User picks `.csproj`/`.sln` when auto-detect is ambiguous; tree + run work |
-| **0.2.5-4** | `dogfood: checklist death-star + sample layout` | Issue checklist only | Outline row, CodeLens row, partial run merge, multi-env — all pass |
+| # | Issue title | Scope | Status |
+|---|-------------|-------|--------|
+| **0.2.5-1** | `docs: CHANGELOG + ROADMAP sync for 0.2.x` | `CHANGELOG.md`, this file | ✅ through v0.2.6 |
+| **0.2.5-2** | `release: GitHub Release with .vsix` | Manual / workflow | 🎯 tag **v0.2.7** + `.vsix` (pending) |
+| **0.2.5-3** | `feat: project and solution selection` | `projectLocator`, settings UI | ✅ shipped v0.2.5 |
+| **0.2.5-4** | `dogfood: checklist death-star + sample layout` | Issue checklist only | 🎯 validate before Marketplace publish |
 
 **PR order:** 0.2.5-1 → 0.2.5-3 → 0.2.5-4 (validate) → 0.2.5-2 (tag after merge).
 
@@ -62,11 +64,11 @@ Must ship before listing. Low risk, high trust.
 
 | # | Issue title | Scope | Done when |
 |---|-------------|-------|-----------|
-| **0.3.0-1** | `community: issue templates + PR template` | `.github/ISSUE_TEMPLATE/` | Bug report + feature request |
-| **0.3.0-2** | `ci: sample Reqnroll + xUnit project smoke` | `samples/minimal-bdd/` or separate repo | CI runs `dotnet test` on sample; extension unit tests stay green |
-| **0.3.0-3** | `docs: README marketplace assets` | README, `media/` | 1 screenshot or short GIF: tree + run + progress |
-| **0.3.0-4** | `docs: privacy / data handling statement` | README section | States: no credential storage, optional `.env` in memory, sanitizer |
-| **0.3.0-5** | `release: Marketplace publish anghelll.bdd-pilot` | `package.json`, vsce | Extension installable from VS Code Marketplace |
+| **0.3.0-1** | `community: issue templates + PR template` | `.github/ISSUE_TEMPLATE/` | ✅ bug + feature + PR template |
+| **0.3.0-2** | `ci: sample Reqnroll + xUnit project smoke` | `samples/minimal-bdd/` or separate repo | ❌ not started |
+| **0.3.0-3** | `docs: README marketplace assets` | README, `media/` | ❌ screenshot/GIF pending |
+| **0.3.0-4** | `docs: privacy / data handling statement` | README section | ✅ Security section in README |
+| **0.3.0-5** | `release: Marketplace publish anghelll.bdd-pilot` | `package.json`, vsce | 🎯 in progress (`anghelll`, icon.png, pilot.svg) |
 | **0.3.0-6** | `feat(i18n): EN/ES status bar + dashboard` *(optional for 0.3.0)* | Port from Guardian pattern | Core commands readable in ES; can slip to 0.3.1 |
 
 **PR order:** 0.3.0-1 → 0.3.0-2 → 0.3.0-3 + 0.3.0-4 (parallel) → 0.3.0-5 → 0.3.0-6 if time.
@@ -88,15 +90,15 @@ Use before clicking **Publish** on Marketplace:
 - [ ] Output channel has no raw secrets on intentional failure
 
 #### Repo & brand
-- [ ] `CHANGELOG.md` through current version
+- [x] `CHANGELOG.md` through current version (v0.2.6)
 - [ ] GitHub Release for latest tag with `.vsix`
-- [ ] README links BDD Guardian; Guardian links back
-- [ ] Issue templates exist
-- [ ] License MIT, publisher `anghelll`, icon + pilot.svg
-- [ ] No company-specific references in repo
+- [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
+- [x] Issue templates exist
+- [x] License MIT, publisher `anghelll`, icon + pilot.svg
+- [x] No company-specific references in repo
 
 #### Technical
-- [ ] `npm run compile && npm run lint && npm run test:unit` pass in CI
+- [x] `npm run compile && npm run lint && npm run test:unit` pass in CI
 - [ ] Sample BDD project smoke in CI (0.3.0-2)
 - [ ] `engines.vscode` matches tested version
 
@@ -125,7 +127,23 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-_None — see v0.2.4 below. Next: v0.2.5 stabilization._
+**v0.2.7** — ROADMAP/README sync; package for Marketplace/GitHub Release.
+
+### v0.2.6 — runtime diagnostics
+
+| Area | Change |
+|------|--------|
+| **Diagnostics** | Post-run hints: pending/ambiguous steps, test users, AWS, X-Ray, API HTTP errors, run summary |
+| **FEED_AUTH** | NuGet restore auth hint only on restore failures (not API 401 during tests) |
+
+*See [CHANGELOG.md](./CHANGELOG.md) for full 0.2.5–0.2.6 notes.*
+
+### v0.2.5 — stabilization gate
+
+| Area | Change |
+|------|--------|
+| **Project picker** | Status bar / command to select `.csproj` or `.sln` |
+| **Community** | `CHANGELOG.md`, GitHub issue + PR templates |
 
 ### v0.2.4 — partial run result merge
 
@@ -203,9 +221,9 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 
 ### Phase C — Product *(→ v0.3.0)*
 
-- [ ] Issue templates + CHANGELOG discipline
+- [x] Issue templates + CHANGELOG discipline
 - [ ] CI sample BDD project
-- [ ] Marketplace listing + GitHub release automation
+- [ ] Marketplace listing + GitHub release automation *(publish + tag in progress)*
 - [ ] i18n EN/ES *(optional 0.3.0)*
 - [ ] Security audit sanitizer / strict prod mode *(post-0.3.0)*
 
@@ -230,4 +248,4 @@ src/
 
 ---
 
-*Last updated: v0.2.4 — plan v0.3.0, changelog sync, stabilization gate 0.2.5.*
+*Last updated: v0.2.7 — sync with v0.2.6 ship status, Marketplace checklist, 96 unit tests.*
