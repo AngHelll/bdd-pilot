@@ -312,7 +312,10 @@ export function activate(context: vscode.ExtensionContext): void {
       refreshUi();
       output.clear();
       output.show(true);
-      treeProvider.clearResults();
+      if (!opts?.rawFilter) {
+        const scopeTargets = runTargets.length > 0 ? runTargets : [{ kind: "all" as const }];
+        treeProvider.clearResultsForRunScope(scopeTargets);
+      }
 
       const loadedEnv = loadStageEnv(projectDir, currentStage);
       if (loadedEnv.loadedFiles.length > 0) {

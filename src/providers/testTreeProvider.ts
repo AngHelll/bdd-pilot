@@ -30,6 +30,12 @@ import {
   matchesScenario,
 } from "../core/results/scenarioMatch";
 import { TestOutcome, TrxSummary } from "../core/results/trxParser";
+import { RunTarget } from "../core/runner/filterBuilder";
+import {
+  collectOutcomeKeysForTargets,
+  outlineRowKey,
+  scenarioKey,
+} from "../core/runner/runScope";
 
 export type TreeNode = DomainNode | FeatureNode | ScenarioNode | OutlineRowNode;
 
@@ -142,6 +148,26 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   clearResults(): void {
     this.outcomes.clear();
     this.durations.clear();
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  /**
+   * Clears decorations only for tests in the current run scope so results from
+   * prior runs remain visible for everything else.
+   */
+  clearResultsForRunScope(targets: RunTarget[]): void {
+    const scope = collectOutcomeKeysForTargets(targets, this.allDomains);
+    if (scope === "all") {
+      this.clearResults();
+      return;
+    }
+    if (scope.size === 0) {
+      return;
+    }
+    for (const key of scope) {
+      this.outcomes.delete(key);
+      this.durations.delete(key);
+    }
     this._onDidChangeTreeData.fire(undefined);
   }
 
@@ -441,13 +467,7 @@ function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vsco
   }
 }
 
-export function scenarioKey(feature: FeatureInfo, scenario: ScenarioInfo): string {
-  return `${feature.filePath}::${scenario.line}::${scenario.name}`;
-}
-
-export function outlineRowKey(feature: FeatureInfo, scenario: ScenarioInfo, rowIndex: number): string {
-  return `${scenarioKey(feature, scenario)}::row${rowIndex}`;
-}
+export { outlineRowKey, scenarioKey } from "../core/runner/runScope";
 
 function matchesSearch(query: string, feature: FeatureInfo, scenario?: ScenarioInfo): boolean {
   const haystack = [
