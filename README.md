@@ -160,7 +160,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.1** (theory row discovery, Test Explorer partial-run parity).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.4** (Marketplace dogfood gate, verify:local Capa A script).
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

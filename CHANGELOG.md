@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.4] — 2026-05-30
+
+### Added
+- `npm run verify:local` — Capa A gate (compile, lint, unit tests, VSIX package)
+
+### Changed
+- Marketplace dogfood gate completed on v0.3.3 codebase; release sync through v0.3.4
+
 ## [0.3.3] — 2026-05-30
 
 ### Added

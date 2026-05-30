@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.3** · **115 unit tests**
+> **Current release: v0.3.4** · **115 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.3** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | **v0.3.4** — Marketplace dogfood gate + checklist closure |
+| ✅ Shipped | v0.1.0 → **v0.3.4** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Marketplace publish sync (v0.3.4 on VS Code Marketplace) |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -80,9 +80,9 @@ Must ship before listing. Low risk, high trust.
 Use before clicking **Publish** on Marketplace:
 
 #### Product
-- [ ] Install from `.vsix` on clean VS Code (no dev dependencies)
-- [ ] Discover features in a repo with `Features/` **and** nested `.csproj`
-- [ ] Run scenario, outline row (tree + CodeLens), feature, tag, Run All *(tag grouping: v0.3.2)*
+- [x] Install from `.vsix` on clean VS Code (no dev dependencies) *(dogfood v0.3.4)*
+- [x] Discover features in a repo with `Features/` **and** nested `.csproj` *(minimal-bdd; nested layout optional)*
+- [x] Run scenario, outline row (tree + CodeLens), feature, tag, Run All *(tag grouping: v0.3.2; @smoke verified)*
 - [ ] Partial run leaves prior pass/fail icons on other scenarios
 - [ ] Live progress notification updates during run
 - [ ] Dashboard shows history; profiles submenu separate from dashboard
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [ ] Output channel has no raw secrets on intentional failure
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.3)
+- [x] `CHANGELOG.md` through current version (v0.3.4)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -127,7 +127,14 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-**v0.3.4** — Marketplace dogfood gate completion; publish sync.
+_Nothing yet._
+
+### v0.3.4 — Marketplace dogfood gate
+
+| Area | Change |
+|------|--------|
+| **Process** | Capa A `verify:local`; Capa B dogfood on VSIX; release v0.3.4 |
+| **Tooling** | `scripts/verify-local.sh`, `npm run verify:local` |
 
 ### v0.3.3 — runtime diagnostics (infra)
 
@@ -262,4 +269,4 @@ src/
 
 ---
 
-*Last updated: v0.3.0 — sample CI, dogfood script, README assets (102 unit tests).*
+*Last updated: v0.3.4 — Marketplace dogfood gate, verify:local (115 unit tests).*

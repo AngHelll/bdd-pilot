@@ -6,6 +6,9 @@ out-test/
 .DS_Store
 *.log
 
+# Internal docs (not published)
+docs-internal/
+
 # .NET (samples/minimal-bdd)
 **/bin/
 **/obj/
