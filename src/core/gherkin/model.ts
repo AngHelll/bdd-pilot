@@ -1,6 +1,8 @@
 export interface OutlineExample {
   /** 0-based index among data rows (excluding the header). */
   rowIndex: number;
+  /** 1-based line number of this Examples row in the .feature file. */
+  line: number;
   /** Column headers from the Examples table. */
   headers: string[];
   /** Cell values aligned with headers. */

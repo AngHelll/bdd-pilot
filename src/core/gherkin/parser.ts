@@ -77,13 +77,13 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
       outlineState.headers = null;
       const inline = EXAMPLES_RE.exec(line)?.[1]?.trim();
       if (inline && inline.includes("|")) {
-        parseExampleRow(outlineState, inline);
+        parseExampleRow(outlineState, inline, i + 1);
       }
       continue;
     }
 
     if (outlineState && line.includes("|")) {
-      parseExampleRow(outlineState, line);
+      parseExampleRow(outlineState, line, i + 1);
       continue;
     }
 
@@ -102,7 +102,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
   return feature;
 }
 
-function parseExampleRow(state: OutlineParseState, line: string): void {
+function parseExampleRow(state: OutlineParseState, line: string, lineNumber: number): void {
   const cells = parseTableRow(line);
   if (cells.length === 0) {
     return;
@@ -118,6 +118,7 @@ function parseExampleRow(state: OutlineParseState, line: string): void {
   const rowIndex = state.scenario.examples?.length ?? 0;
   const example: OutlineExample = {
     rowIndex,
+    line: lineNumber,
     headers: [...headers],
     values: headers.map((_, idx) => values[idx] ?? ""),
     label: buildExampleLabel(headers, values),

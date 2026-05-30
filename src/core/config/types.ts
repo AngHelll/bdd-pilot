@@ -1,3 +1,5 @@
+import { FilterMappingConfig, DEFAULT_FILTER_MAPPING } from "../runner/filterMapping";
+
 export type Stage = "dev" | "test" | "stg" | "prod";
 
 export type ParallelismMode = "debug" | "parallel" | "ci";
@@ -44,6 +46,7 @@ export interface RunnerSettings {
   defaultMode: ParallelismMode;
   requireConfirmationForStages: Stage[];
   dotnetPath: string;
+  filterMapping: FilterMappingConfig;
 }
 
 export const DEFAULT_SETTINGS: RunnerSettings = {
@@ -52,6 +55,7 @@ export const DEFAULT_SETTINGS: RunnerSettings = {
   defaultMode: "debug",
   requireConfirmationForStages: ["stg", "prod"],
   dotnetPath: "dotnet",
+  filterMapping: DEFAULT_FILTER_MAPPING,
 };
 
 export function isStage(value: string): value is Stage {

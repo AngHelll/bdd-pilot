@@ -145,6 +145,46 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     this._onDidChangeTreeData.fire(undefined);
   }
 
+  /**
+   * Updates tree decorations as individual tests finish (parsed from stdout).
+   * Uses throttled refresh to stay light on large parallel runs.
+   */
+  applyLiveResult(testName: string, outcome: TestOutcome): void {
+    let matched = false;
+    for (const domain of this.allDomains) {
+      for (const feature of domain.features) {
+        for (const scenario of feature.scenarios) {
+          if (scenario.examples && scenario.examples.length > 0) {
+            const example = findOutlineExampleMatch(testName, scenario.name, scenario.examples);
+            if (example) {
+              this.outcomes.set(outlineRowKey(feature, scenario, example.rowIndex), outcome);
+              matched = true;
+            }
+          } else if (matchesScenario(testName, scenario.name)) {
+            this.outcomes.set(scenarioKey(feature, scenario), outcome);
+            matched = true;
+          }
+        }
+      }
+    }
+    if (matched) {
+      this.scheduleRefresh();
+    }
+  }
+
+  private scheduleRefresh(): void {
+    if (this.refreshPending) {
+      return;
+    }
+    this.refreshPending = true;
+    setTimeout(() => {
+      this.refreshPending = false;
+      this._onDidChangeTreeData.fire(undefined);
+    }, 120);
+  }
+
+  private refreshPending = false;
+
   getTreeItem(node: TreeNode): vscode.TreeItem {
     const display = readTreeDisplaySettings();
     switch (node.kind) {

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.2.0** (Phase A partial) · **61 unit tests**
+> **Current release: v0.2.2** (Phase A partial) · **77+ unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 beta + **v0.2.0** Phase A partial (see [Changelog](#changelog)) |
-| 🎯 Next | Phase A remainder → filter mapping, `env.example`, per-row run (xUnit Theory) |
-| 📦 Then | Phase C → **v0.3.0** (marketplace, i18n, CI sample project) |
+| ✅ Shipped | v0.1.0 beta + **v0.2.x** Phase A partial (see [Changelog](#changelog)) |
+| 🎯 Next | Phase C → **v0.3.0** (marketplace, i18n, CI sample project) |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -26,6 +25,8 @@ Semver stays conservative until Marketplace + stable API:
 |---------|-----------|
 | **0.1.0** | First usable beta — tree, run/debug, dashboard, profiles, compact tree labels |
 | **0.2.0** | Phase A partial — outline rows in tree, tag inheritance, result roll-up on folders |
+| **0.2.1** | Live execution progress — notification bar + tree/Test Explorer update during `dotnet test` |
+| **0.2.2** | Per-row outline run filter, configurable filter mapping, `config/env.example` |
 | **0.3.0** | Phase C — marketplace, i18n, CI sample project, polish |
 | **1.0.0** | Stable public release |
 
@@ -37,7 +38,27 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 
 ### Unreleased *(main branch)*
 
-_None — see v0.2.0 below._
+_None — see v0.2.2 below._
+
+### v0.2.2 — Phase A (remainder)
+
+| Area | Change |
+|------|--------|
+| **Outline row run** | Single Examples row via VSTest `DisplayName~` (Reqnroll/xUnit Theory) |
+| **Filter mapping** | Settings: `filter.featureClassSuffix`, `filter.tagTraitName`, `filter.outlineRowFilter` |
+| **Environment docs** | `config/env.example` + README section for optional `config/.env.<stage>` |
+
+### v0.2.1 — live execution progress
+
+| Area | Change |
+|------|--------|
+| **Progress notification** | `withProgress` shows `7/19 · 5 passed, 2 failed` while tests run |
+| **Live tree** | Pass/fail/skip icons update on scenarios as xUnit stdout reports completions |
+| **Test Explorer** | Native test items reflect live outcomes during the run |
+| **Parser** | `LiveProgressParser` reads xUnit/VSTest `Passed`/`Failed`/`Skipped` lines incrementally |
+| **Estimate** | Expected test count from feature files drives progress bar when total is known |
+
+**Known limits:** progress depends on xUnit stdout format; parallel runs update counts but order is non-deterministic. Single outline-row Run still executes the whole Theory.
 
 ### v0.2.0 — Phase A (partial)
 
@@ -85,12 +106,9 @@ _None — see v0.2.0 below._
 
 | # | Version | Track | Item | Why |
 |---|---------|-------|------|-----|
-| **1** | 0.2.x | Phase A | **Per-row outline run filter** | xUnit Theory: run single InlineData row when filter supports it |
-| **2** | 0.2.x | Phase A | **`env.example` + docs** | Document optional `config/.env.<stage>` convention |
-| **3** | 0.2.x | Phase A | **Configurable filter mapping** | SpecFlow/NUnit naming via settings |
-| **4** | 0.3.0 | Phase C | **Publish to Marketplace** | List 0.2.0+ with GitHub release `.vsix` |
-| **5** | 0.3.0 | Phase C | **i18n EN/ES** | Port Guardian i18n for status bar, dashboard, diagnostics |
-| **6** | 0.3.0 | Phase C | **CI sample project** | Integration smoke test against minimal Reqnroll + xUnit repo |
+| **1** | 0.3.0 | Phase C | **Publish to Marketplace** | List 0.2.x+ with GitHub release `.vsix` |
+| **2** | 0.3.0 | Phase C | **i18n EN/ES** | Port Guardian i18n for status bar, dashboard, diagnostics |
+| **3** | 0.3.0 | Phase C | **CI sample project** | Integration smoke test against minimal Reqnroll + xUnit repo |
 
 ### Backlog (nice-to-have, not scheduled)
 
@@ -125,14 +143,14 @@ _None — see v0.2.0 below._
 
 #### 1. Runner robustness & multi-framework compatibility
 - [x] Scenario Outline: expand Examples rows in **tree**; map TRX results per row.
-- [ ] Scenario Outline: **per-row** dotnet filter (Theory / InlineData).
+- [x] Scenario Outline: **per-row** dotnet filter (Theory / DisplayName).
 - [x] Tag inheritance from Feature onto search and effective tag display.
-- [ ] Configurable filter mapping (Reqnroll vs SpecFlow vs NUnit/MSTest).
+- [x] Configurable filter mapping (feature class suffix, tag trait, outline strategy).
 - [ ] Project/solution selection for multi-project layouts.
 
 #### 2. Configuration & environments
 - [ ] Custom stage names per project
-- [ ] Documented `.env` convention + `env.example` template
+- [x] Documented `.env` convention + `env.example` template
 - [ ] Runtime toggles in UI (`HEADLESS_MODE`, etc.)
 
 ---
@@ -188,4 +206,4 @@ src/
 
 ---
 
-*Last updated: v0.2.0 — roll-up, outline rows, tag inheritance.*
+*Last updated: v0.2.2 — per-row outline run, filter mapping, env.example.*

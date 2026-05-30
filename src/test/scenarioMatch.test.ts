@@ -17,6 +17,7 @@ describe("outcomeRollup", () => {
 describe("scenarioMatch outline", () => {
   const example = {
     rowIndex: 0,
+    line: 38,
     headers: ["parameter", "value"],
     values: ["contract_id", "invalid-guid"],
     label: "parameter=contract_id, value=invalid-guid",

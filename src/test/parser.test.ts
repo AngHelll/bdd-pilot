@@ -37,6 +37,7 @@ describe("gherkin parser", () => {
     assert.deepStrictEqual(feature.scenarios[1].tags, ["P1", "Level2"]);
     assert.strictEqual(feature.scenarios[1].examples?.length, 1);
     assert.strictEqual(feature.scenarios[1].examples?.[0].label, "user=bad");
+    assert.strictEqual(feature.scenarios[1].examples?.[0].line, 15);
   });
 
   it("parses multi-column Examples rows", () => {
@@ -54,7 +55,9 @@ describe("gherkin parser", () => {
     const outline = feature.scenarios[0];
     assert.strictEqual(outline.examples?.length, 2);
     assert.strictEqual(outline.examples?.[0].label, "parameter=contract_id, value=invalid-guid +1");
+    assert.strictEqual(outline.examples?.[0].line, 6);
     assert.deepStrictEqual(outline.examples?.[1].values, ["account_id", "3", "Guid accountId"]);
+    assert.strictEqual(outline.examples?.[1].line, 7);
   });
 
   it("ignores comments and does not leak tags across blocks", () => {

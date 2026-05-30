@@ -6,6 +6,9 @@ import { UnifiedSummary } from "../core/results/resultLoader";
 import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import { DEFAULT_FILTER_MAPPING } from "../core/runner/filterMapping";
+import { estimateTestCount } from "../core/runner/runEstimate";
+import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { RunService } from "./runService";
 
 export interface ControllerDeps {
@@ -130,6 +133,10 @@ export function createManagedController(deps: ControllerDeps): ManagedController
 
     const runningAll = !request.include;
     const targets = buildTargets(scenarioItems, itemData, runningAll);
+    const totalExpected = estimateTestCount(
+      runningAll ? [{ kind: "all" }] : targets,
+      projectDir,
+    );
     const signal = new AbortController();
     token.onCancellationRequested(() => {
       signal.abort();
@@ -145,6 +152,13 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         projectDir,
         debug,
         signal: signal.signal,
+        totalExpected,
+        onProgress: (_state: LiveProgressState, event?: TestCompletionEvent) => {
+          if (!event) {
+            return;
+          }
+          applyLiveTestRunResult(run, scenarioItems, itemData, event, projectDir, deps.runService);
+        },
         onOutput: (chunk) => {
           deps.output.append(chunk);
           run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
@@ -231,11 +245,51 @@ function buildTargets(
     const data = itemData.get(item);
     if (data?.kind === "scenario" && data.scenario) {
       targets.push({ kind: "scenario", feature: data.feature, scenario: data.scenario });
-    } else if (data?.kind === "outlineRow" && data.scenario) {
-      targets.push({ kind: "scenario", feature: data.feature, scenario: data.scenario });
+    } else if (data?.kind === "outlineRow" && data.scenario && data.example) {
+      targets.push({
+        kind: "outlineRow",
+        feature: data.feature,
+        scenario: data.scenario,
+        example: data.example,
+      });
     }
   }
   return targets;
+}
+
+function applyLiveTestRunResult(
+  run: vscode.TestRun,
+  scenarioItems: vscode.TestItem[],
+  itemData: WeakMap<vscode.TestItem, ItemData>,
+  event: TestCompletionEvent,
+  projectDir: string,
+  runService: RunService,
+): void {
+  for (const item of scenarioItems) {
+    const data = itemData.get(item);
+    const scenarioName = data?.scenario?.name;
+    if (!scenarioName) {
+      continue;
+    }
+    const matched =
+      data?.kind === "outlineRow" && data.example
+        ? !!findOutlineExampleMatch(event.testName, scenarioName, [data.example])
+        : matchesScenario(event.testName, scenarioName);
+    if (!matched) {
+      continue;
+    }
+    switch (event.outcome) {
+      case "passed":
+        run.passed(item);
+        break;
+      case "failed":
+        run.failed(item, runService.buildFailureMessage(projectDir));
+        break;
+      default:
+        run.skipped(item);
+        break;
+    }
+  }
 }
 
 function applyResults(
@@ -280,11 +334,14 @@ function applyResults(
 }
 
 /** Re-run only scenarios that failed in the last run (Test Explorer helper). */
-export function buildRerunFailedFilter(runService: RunService): string | undefined {
+export function buildRerunFailedFilter(
+  runService: RunService,
+  mapping = DEFAULT_FILTER_MAPPING,
+): string | undefined {
   const filter = runService.getLastFailedFilter();
   if (filter) {
     return filter;
   }
   const targets = runService.getLastFailedTargets();
-  return targets.length > 0 ? buildCombinedFilter(targets) : undefined;
+  return targets.length > 0 ? buildCombinedFilter(targets, mapping) : undefined;
 }

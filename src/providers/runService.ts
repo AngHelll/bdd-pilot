@@ -10,7 +10,9 @@ import {
   trimHistory,
 } from "../core/results/runHistory";
 import { matchesScenario } from "../core/results/trxParser";
-import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import { findOutlineExampleMatch } from "../core/results/scenarioMatch";
+import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filterBuilder";
+import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { runDotnetTest } from "../core/runner/dotnetTest";
 import { evaluateRun } from "../security/envGuard";
 import { sanitize } from "../security/sanitizer";
@@ -27,6 +29,10 @@ export interface RunRequest {
   signal?: AbortSignal;
   onOutput?: (chunk: string) => void;
   onStart?: (cmd: string) => void;
+  /** Expected test count for progress UI (outline rows included). */
+  totalExpected?: number;
+  /** Fired as stdout is parsed; includes per-test completion events. */
+  onProgress?: (state: LiveProgressState, event?: TestCompletionEvent) => void;
 }
 
 export interface RunServiceResult {
@@ -89,7 +95,7 @@ export class RunService {
       req.rawFilter?.trim() ||
       (req.targets.length === 0 || req.targets.some((t) => t.kind === "all")
         ? undefined
-        : buildCombinedFilter(req.targets));
+        : buildCombinedFilter(req.targets, req.settings.filterMapping));
 
     if (req.debug) {
       return this.runDebug(req, filter);
@@ -98,12 +104,16 @@ export class RunService {
     const loadedEnv = loadStageEnv(req.projectDir, req.stage);
     const trxFileName = `bdd-pilot-${Date.now()}.trx`;
     this.runStartedAt = Date.now();
+    const progressParser = new LiveProgressParser(req.totalExpected);
 
     let buffer = "";
     const capture = (chunk: string): string => {
       const clean = sanitize(chunk);
       buffer += clean;
       req.onOutput?.(clean);
+      for (const event of progressParser.feed(clean)) {
+        req.onProgress?.(progressParser.getState(), event);
+      }
       return clean;
     };
 
@@ -200,11 +210,7 @@ export class RunService {
           errorMessage: r.errorMessage,
         });
         if (r.outcome === "failed") {
-          failedTargets.push({
-            kind: "scenario",
-            feature: match.feature,
-            scenario: match.scenario,
-          });
+          failedTargets.push(match.target);
         }
       }
     }
@@ -216,7 +222,17 @@ export class RunService {
     const failedResults = summary.results.filter((r) => r.outcome === "failed");
     if (failedResults.length > 0) {
       this.lastFailedFilter = failedResults
-        .map((r) => `FullyQualifiedName~${shortTestName(r.testName)}`)
+        .map((r) => {
+          const match = matchTarget(req.targets, r.testName);
+          if (match) {
+            const clause = buildFilter(match.target, req.settings.filterMapping);
+            if (clause) {
+              return clause;
+            }
+          }
+          return `FullyQualifiedName~${shortTestName(r.testName)}`;
+        })
+        .filter((clause, i, arr) => arr.indexOf(clause) === i)
         .join("|");
     } else {
       this.lastFailedFilter = undefined;
@@ -280,17 +296,30 @@ export class RunService {
 function matchTarget(
   targets: RunTarget[],
   testName: string,
-): { feature: FeatureInfo; scenario: ScenarioInfo } | undefined {
+): { target: RunTarget; feature: FeatureInfo; scenario: ScenarioInfo } | undefined {
+  for (const t of targets) {
+    if (t.kind === "outlineRow") {
+      if (
+        findOutlineExampleMatch(testName, t.scenario.name, [t.example])
+      ) {
+        return { target: t, feature: t.feature, scenario: t.scenario };
+      }
+    }
+  }
   for (const t of targets) {
     if (t.kind === "scenario" && matchesScenario(testName, t.scenario.name)) {
-      return { feature: t.feature, scenario: t.scenario };
+      return { target: t, feature: t.feature, scenario: t.scenario };
     }
   }
   for (const t of targets) {
     if (t.kind === "feature") {
       for (const s of t.feature.scenarios) {
         if (matchesScenario(testName, s.name)) {
-          return { feature: t.feature, scenario: s };
+          return {
+            target: { kind: "scenario", feature: t.feature, scenario: s },
+            feature: t.feature,
+            scenario: s,
+          };
         }
       }
     }

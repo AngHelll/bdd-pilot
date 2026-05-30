@@ -1,10 +1,21 @@
-import { DomainGroup, FeatureInfo, ScenarioInfo } from "../gherkin/model";
+import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../gherkin/model";
+import {
+  DEFAULT_FILTER_MAPPING,
+  FilterMappingConfig,
+  buildOutlineRowFilter,
+} from "./filterMapping";
 
 export type RunTarget =
   | { kind: "all" }
   | { kind: "domain"; group: DomainGroup }
   | { kind: "feature"; feature: FeatureInfo }
   | { kind: "scenario"; feature: FeatureInfo; scenario: ScenarioInfo }
+  | {
+      kind: "outlineRow";
+      feature: FeatureInfo;
+      scenario: ScenarioInfo;
+      example: OutlineExample;
+    }
   | { kind: "tag"; tag: string };
 
 /**
@@ -12,33 +23,50 @@ export type RunTarget =
  *
  * Reqnroll/xUnit expose Gherkin tags as `Category` traits and the generated
  * test class/method names via `FullyQualifiedName`. Reqnroll names the generated
- * test class `<SanitizedFeatureName>Feature`, so we anchor on that suffix:
- *   - feature   -> FullyQualifiedName~<SanitizedFeatureName>Feature
- *   - scenario  -> FullyQualifiedName~<SanitizedFeatureName>Feature.<SanitizedScenarioName>
- *   - tag       -> Category=<tag>
+ * test class `<SanitizedFeatureName>Feature` by default — configurable via
+ * `FilterMappingConfig.featureClassSuffix`.
+ *
+ * Scenario Outline rows use VSTest `DisplayName~` when
+ * `outlineRowFilter` is `displayName` (Reqnroll/xUnit Theory rows).
  *
  * Returns `undefined` for "run all" (no filter needed).
  */
-export function buildFilter(target: RunTarget): string | undefined {
+export function buildFilter(
+  target: RunTarget,
+  mapping: FilterMappingConfig = DEFAULT_FILTER_MAPPING,
+): string | undefined {
   switch (target.kind) {
     case "all":
       return undefined;
     case "tag":
-      return `Category=${target.tag}`;
+      return `${mapping.tagTraitName}=${target.tag}`;
     case "domain": {
       const clauses = target.group.features
-        .map((f) => `FullyQualifiedName~${featureClassName(f.name)}`)
+        .map((f) => `FullyQualifiedName~${featureClassName(f.name, mapping)}`)
         .filter((c, i, arr) => arr.indexOf(c) === i);
       return clauses.length > 0 ? clauses.join("|") : undefined;
     }
     case "feature":
-      return `FullyQualifiedName~${featureClassName(target.feature.name)}`;
-    case "scenario": {
-      const cls = featureClassName(target.feature.name);
-      const scenario = sanitizeIdentifier(target.scenario.name);
-      return `FullyQualifiedName~${cls}.${scenario}`;
+      return `FullyQualifiedName~${featureClassName(target.feature.name, mapping)}`;
+    case "scenario":
+      return buildScenarioFilter(target.feature, target.scenario, mapping);
+    case "outlineRow": {
+      if (mapping.outlineRowFilter === "scenarioOnly") {
+        return buildScenarioFilter(target.feature, target.scenario, mapping);
+      }
+      return buildOutlineRowFilter(target.example) ?? buildScenarioFilter(target.feature, target.scenario, mapping);
     }
   }
+}
+
+function buildScenarioFilter(
+  feature: FeatureInfo,
+  scenario: ScenarioInfo,
+  mapping: FilterMappingConfig,
+): string {
+  const cls = featureClassName(feature.name, mapping);
+  const scenarioId = sanitizeIdentifier(scenario.name);
+  return `FullyQualifiedName~${cls}.${scenarioId}`;
 }
 
 /**
@@ -47,13 +75,16 @@ export function buildFilter(target: RunTarget): string | undefined {
  * there are no targets or any target is "all". Used by the native Test Explorer
  * integration where an arbitrary set of items can be selected.
  */
-export function buildCombinedFilter(targets: RunTarget[]): string | undefined {
+export function buildCombinedFilter(
+  targets: RunTarget[],
+  mapping: FilterMappingConfig = DEFAULT_FILTER_MAPPING,
+): string | undefined {
   if (targets.length === 0 || targets.some((t) => t.kind === "all")) {
     return undefined;
   }
   const clauses: string[] = [];
   for (const target of targets) {
-    const clause = buildFilter(target);
+    const clause = buildFilter(target, mapping);
     if (clause && !clauses.includes(clause)) {
       clauses.push(clause);
     }
@@ -63,13 +94,18 @@ export function buildCombinedFilter(targets: RunTarget[]): string | undefined {
 
 /**
  * The generated xUnit test class name for a feature. Reqnroll appends the
- * literal "Feature" suffix to the sanitized feature title (e.g. "Login" ->
- * "LoginFeature", "Stocks" -> "StocksFeature"). Guards against feature titles
- * that already end in "Feature" to avoid a doubled suffix.
+ * configured suffix (default `Feature`) to the sanitized feature title.
  */
-export function featureClassName(featureName: string): string {
+export function featureClassName(
+  featureName: string,
+  mapping: FilterMappingConfig = DEFAULT_FILTER_MAPPING,
+): string {
   const sanitized = sanitizeIdentifier(featureName);
-  return /Feature$/.test(sanitized) ? sanitized : `${sanitized}Feature`;
+  const suffix = mapping.featureClassSuffix;
+  if (!suffix) {
+    return sanitized;
+  }
+  return sanitized.endsWith(suffix) ? sanitized : `${sanitized}${suffix}`;
 }
 
 /**

@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -271,6 +271,29 @@
             "Short form: 45s, 2m 30s (GitHub Actions style)."
           ],
           "description": "How test run durations appear in the tree description."
+        },
+        "bddPilot.filter.featureClassSuffix": {
+          "type": "string",
+          "default": "Feature",
+          "description": "Suffix appended to the sanitized feature title for FullyQualifiedName filters. Reqnroll/SpecFlow default is \"Feature\". Set to empty when the generated class has no suffix."
+        },
+        "bddPilot.filter.tagTraitName": {
+          "type": "string",
+          "default": "Category",
+          "description": "xUnit trait name used for Gherkin @tags in dotnet test --filter (default Category)."
+        },
+        "bddPilot.filter.outlineRowFilter": {
+          "type": "string",
+          "enum": [
+            "displayName",
+            "scenarioOnly"
+          ],
+          "default": "displayName",
+          "enumDescriptions": [
+            "Run a single Scenario Outline row via VSTest DisplayName~ (Reqnroll/xUnit Theory).",
+            "Run the whole Scenario Outline / Theory method (all example rows)."
+          ],
+          "description": "How clicking Run on an outline row builds the dotnet test filter."
         }
       }
     }

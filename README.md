@@ -31,11 +31,12 @@ scenario and show me what failed.”*
   mapped back to scenarios, including rich failure messages.
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
-- **CodeLens** on Feature and Scenario lines in `.feature` files (Run / Debug).
-- **One-click run**: domain, feature, scenario, or tag — the correct
-  `dotnet test --filter` is built automatically.
+- **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
+- **One-click run**: domain, feature, scenario, tag, or **Scenario Outline row** —
+  the correct `dotnet test --filter` is built automatically.
   - Feature → `FullyQualifiedName~<Feature>Feature`
   - Scenario → `FullyQualifiedName~<Feature>Feature.<Scenario>`
+  - Outline row → `DisplayName~parameter: %22…%22, value: %22…%22` (single Theory row)
   - Tag → `Category=<tag>`
 - **Tree search** to filter by name, tag, or path.
 - **Re-run failed** from the last run's filter.
@@ -68,6 +69,20 @@ scenario and show me what failed.”*
 - Running against `stg`/`prod` requires an **explicit modal confirmation**
   (configurable).
 
+### Optional `config/.env.<stage>` files
+
+BDD Pilot can merge stage-specific variables into the test process when you run
+from VS Code. This is **optional** — your project may already load its own
+`.env` files inside hooks or step definitions.
+
+1. Create a `config/` folder next to (or above) your test `.csproj`.
+2. Copy [`config/env.example`](./config/env.example) to `config/.env.test`
+   (or `.env.dev`, `.env.stg`, `.env.prod`).
+3. Select the matching **STAGE** in the status bar before running.
+
+Load order: `config/.env.<stage>` then `config/.env.local` (overrides). Values
+are merged in memory only; see [Security](#security) above.
+
 ## Architecture
 
 ```
@@ -98,6 +113,9 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |
 | `bddPilot.tree.durationDisplay` | `auto` | Durations: `auto`, `ms`, `seconds`, or `compact`. Hover shows exact ms. |
+| `bddPilot.filter.featureClassSuffix` | `Feature` | Suffix for `FullyQualifiedName` filters (Reqnroll/SpecFlow default). |
+| `bddPilot.filter.tagTraitName` | `Category` | xUnit trait name for `@tags` in `--filter`. |
+| `bddPilot.filter.outlineRowFilter` | `displayName` | `displayName` = one outline row; `scenarioOnly` = whole Theory. |
 
 Tree items use **label = name only**; tags and run metadata appear in a short
 **description** (e.g. `6 tags`, `2.3 s`). **Hover** shows full tag lists and
@@ -124,9 +142,9 @@ Press `F5` in VS Code to launch the Extension Development Host.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.1.0** (pre-marketplace beta).
-**Next up: Phase A** (Scenario Outline filters, tag inheritance), then Phase C
-(marketplace, i18n, cross-links with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.2.2** (Phase A partial).
+**Next up:** Phase C (marketplace, i18n, cross-links with
+[BDD Guardian](https://github.com/AngHelll/bdd-guardian)).
 
 ## Contributing
 

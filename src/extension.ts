@@ -13,8 +13,15 @@ import {
   isMode,
   isStage,
 } from "./core/config/types";
+import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
 import { RunHistoryEntry } from "./core/results/runHistory";
 import { RunTarget } from "./core/runner/filterBuilder";
+import {
+  formatProgressMessage,
+  LiveProgressState,
+  TestCompletionEvent,
+} from "./core/runner/liveProgress";
+import { estimateTestCount } from "./core/runner/runEstimate";
 import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardPanel } from "./providers/dashboardPanel";
@@ -175,7 +182,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand("bddPilot.rerunFailed", async () => {
-      const filter = buildRerunFailedFilter(runService);
+      const filter = buildRerunFailedFilter(runService, readSettings().filterMapping);
       if (!filter) {
         void vscode.window.showInformationMessage("No failed tests from the last run to re-run.");
         return;
@@ -263,7 +270,12 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     if (node.kind === "outlineRow") {
       const row = node as OutlineRowNode;
-      return { kind: "scenario", feature: row.feature, scenario: row.scenario };
+      return {
+        kind: "outlineRow",
+        feature: row.feature,
+        scenario: row.scenario,
+        example: row.example,
+      };
     }
     return {
       kind: "scenario",
@@ -291,6 +303,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const runTargets = opts?.rawFilter ? [] : normalizeTargets(target);
+    const totalExpected =
+      opts?.rawFilter || opts?.debug ? undefined : estimateTestCount(runTargets, projectDir);
 
     const controller = new AbortController();
     if (!opts?.debug) {
@@ -321,8 +335,25 @@ export function activate(context: vscode.ExtensionContext): void {
           : `Running tests (${currentStage}/${currentMode})`,
         cancellable: !opts?.debug,
       },
-      async (_progress, token) => {
+      async (progress, token) => {
         token.onCancellationRequested(() => controller.abort());
+        const progressIncrement = totalExpected && totalExpected > 0 ? 100 / totalExpected : 0;
+        let lastMessage = "";
+
+        const onProgress = (state: LiveProgressState, event?: TestCompletionEvent) => {
+          const message = formatProgressMessage(state);
+          if (event && progressIncrement > 0) {
+            lastMessage = message;
+            progress.report({ message, increment: progressIncrement });
+          } else if (message !== lastMessage) {
+            lastMessage = message;
+            progress.report({ message });
+          }
+          if (event) {
+            treeProvider.applyLiveResult(event.testName, event.outcome);
+          }
+        };
+
         try {
           const result = await runService.run({
             targets: runTargets,
@@ -333,6 +364,8 @@ export function activate(context: vscode.ExtensionContext): void {
             projectDir,
             debug: opts?.debug,
             signal: controller.signal,
+            totalExpected,
+            onProgress,
             onOutput: (chunk) => output.append(chunk),
             onStart: (cmd) => output.appendLine(`[bdd-pilot] ${cmd}\n`),
           });
@@ -429,6 +462,20 @@ function readSettings(): RunnerSettings {
     defaultMode: isMode(mode) ? mode : DEFAULT_SETTINGS.defaultMode,
     requireConfirmationForStages: confirmStages as Stage[],
     dotnetPath: cfg.get<string>("dotnetPath", DEFAULT_SETTINGS.dotnetPath),
+    filterMapping: readFilterMapping(cfg),
+  };
+}
+
+function readFilterMapping(cfg: vscode.WorkspaceConfiguration): FilterMappingConfig {
+  const outlineRow = cfg.get<string>("filter.outlineRowFilter", DEFAULT_FILTER_MAPPING.outlineRowFilter);
+  return {
+    featureClassSuffix: cfg.get<string>(
+      "filter.featureClassSuffix",
+      DEFAULT_FILTER_MAPPING.featureClassSuffix,
+    ),
+    tagTraitName: cfg.get<string>("filter.tagTraitName", DEFAULT_FILTER_MAPPING.tagTraitName),
+    outlineRowFilter:
+      outlineRow === "scenarioOnly" ? "scenarioOnly" : DEFAULT_FILTER_MAPPING.outlineRowFilter,
   };
 }
 
