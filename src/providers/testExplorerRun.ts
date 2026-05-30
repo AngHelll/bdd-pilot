@@ -4,7 +4,7 @@ import { RunTarget } from "../core/runner/filterBuilder";
 export type TestExplorerItemData =
   | { kind: "tag"; tag: string }
   | { kind: "feature"; feature: FeatureInfo }
-  | { kind: "scenario"; feature: FeatureInfo; scenario: ScenarioInfo }
+  | { kind: "scenario"; feature: FeatureInfo; scenario: ScenarioInfo; underTagGroup: boolean }
   | { kind: "outlineRow"; feature: FeatureInfo; scenario: ScenarioInfo; example: OutlineExample };
 
 export interface TestExplorerNode {

@@ -462,12 +462,14 @@ interface TreeDisplaySettings {
   durationDisplay: DurationDisplayMode;
 }
 
+export type { TreeDisplaySettings };
+
 export function readTreeGroupBy(): TreeGroupBy {
   const raw = vscode.workspace.getConfiguration("bddPilot").get<string>("tree.groupBy", "domain");
   return raw === "tag" ? "tag" : "domain";
 }
 
-function readTreeDisplaySettings(): TreeDisplaySettings {
+export function readTreeDisplaySettings(): TreeDisplaySettings {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
   const raw = cfg.get<string>("tree.tagDisplay", DEFAULT_TAG_DISPLAY);
   const tagDisplay: TagDisplayMode =

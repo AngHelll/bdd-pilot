@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.9] — 2026-05-30
+
+### Changed
+- Test Explorer visual parity with BDD tree — localized outcome and roll-up descriptions, duration in leaf descriptions (`bddPilot.tree.durationDisplay`), domain/feature container roll-ups; state rehydrated from `OutcomeStore` on refresh
+
 ## [0.3.8] — 2026-05-30
 
 ### Fixed

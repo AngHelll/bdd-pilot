@@ -81,6 +81,14 @@ const EN = {
   "action.showOutput": "Show Output",
 
   "quickPick.solution": "Solution",
+
+  "outcome.passed": "passed",
+  "outcome.failed": "failed",
+  "outcome.skipped": "skipped",
+  "rollup.failed": "{count} failed",
+  "rollup.passed": "{count} passed",
+  "rollup.skipped": "{count} skipped",
+  "rollup.separator": " · ",
 } as const;
 
 const ES: Record<keyof typeof EN, string> = {
@@ -164,6 +172,14 @@ const ES: Record<keyof typeof EN, string> = {
   "action.showOutput": "Mostrar salida",
 
   "quickPick.solution": "Solución",
+
+  "outcome.passed": "correcto",
+  "outcome.failed": "fallido",
+  "outcome.skipped": "omitido",
+  "rollup.failed": "{count} fallidos",
+  "rollup.passed": "{count} correctos",
+  "rollup.skipped": "{count} omitidos",
+  "rollup.separator": " · ",
 };
 
 export type MessageKey = keyof typeof EN;

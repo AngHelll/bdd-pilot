@@ -1,4 +1,6 @@
 import { TestOutcome } from "../results/trxParser";
+import { PilotLocale } from "../i18n/locale";
+import { t } from "../i18n/messages";
 
 export interface OutcomeRollup {
   passed: number;
@@ -69,4 +71,39 @@ export function prependRollup(baseDescription: string, rollup: OutcomeRollup): s
     return baseDescription;
   }
   return baseDescription.length > 0 ? `${summary} · ${baseDescription}` : summary;
+}
+
+/** Localized roll-up summary for Test Explorer descriptions. */
+export function formatRollupDescriptionLocalized(
+  rollup: OutcomeRollup,
+  locale: PilotLocale,
+): string | undefined {
+  if (rollup.withResults === 0) {
+    return undefined;
+  }
+  const sep = t(locale, "rollup.separator");
+  const parts: string[] = [];
+  if (rollup.failed > 0) {
+    parts.push(t(locale, "rollup.failed", { count: rollup.failed }));
+  }
+  if (rollup.passed > 0) {
+    parts.push(t(locale, "rollup.passed", { count: rollup.passed }));
+  }
+  if (rollup.skipped > 0) {
+    parts.push(t(locale, "rollup.skipped", { count: rollup.skipped }));
+  }
+  return parts.length > 0 ? parts.join(sep) : undefined;
+}
+
+export function prependRollupLocalized(
+  baseDescription: string,
+  rollup: OutcomeRollup,
+  locale: PilotLocale,
+): string {
+  const summary = formatRollupDescriptionLocalized(rollup, locale);
+  if (!summary) {
+    return baseDescription;
+  }
+  const sep = t(locale, "rollup.separator");
+  return baseDescription.length > 0 ? `${summary}${sep}${baseDescription}` : summary;
 }

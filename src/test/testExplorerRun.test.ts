@@ -40,10 +40,15 @@ describe("testExplorerRun", () => {
     const s = scenario("Ready", 5);
     const row = { rowIndex: 0, line: 10, headers: ["a"], values: ["1"], label: "a=1" };
     const root = new MockNode();
-    const scenarioNode = new MockNode({ kind: "scenario", feature: f, scenario: s });
+    const scenarioNode = new MockNode({ kind: "scenario", feature: f, scenario: s, underTagGroup: false });
     const rowNode = new MockNode({ kind: "outlineRow", feature: f, scenario: s, example: row });
     scenarioNode.addChild(rowNode);
-    const leafScenario = new MockNode({ kind: "scenario", feature: f, scenario: scenario("Other", 8) });
+    const leafScenario = new MockNode({
+      kind: "scenario",
+      feature: f,
+      scenario: scenario("Other", 8),
+      underTagGroup: false,
+    });
     root.addChild(scenarioNode);
     root.addChild(leafScenario);
 
@@ -63,7 +68,7 @@ describe("testExplorerRun", () => {
     const f = feature("Smoke");
     const s = scenario("Ready", 5);
     const tag = new MockNode({ kind: "tag", tag: "smoke" });
-    tag.addChild(new MockNode({ kind: "scenario", feature: f, scenario: s }));
+    tag.addChild(new MockNode({ kind: "scenario", feature: f, scenario: s, underTagGroup: true }));
 
     const data = new Map<MockNode, TestExplorerItemData>();
     data.set(tag, tag.data!);
@@ -100,8 +105,8 @@ describe("testExplorerRun", () => {
     const f = feature("Smoke");
     const s = scenario("Ready", 5);
     const targets = resolveTestExplorerRunTargets(
-      [{ kind: "tag", tag: "smoke" }, { kind: "scenario", feature: f, scenario: s }],
-      [{ kind: "scenario", feature: f, scenario: s }],
+      [{ kind: "tag", tag: "smoke" }, { kind: "scenario", feature: f, scenario: s, underTagGroup: false }],
+      [{ kind: "scenario", feature: f, scenario: s, underTagGroup: false }],
       false,
     );
     assert.strictEqual(targets.length, 1);

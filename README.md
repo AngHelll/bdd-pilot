@@ -38,8 +38,7 @@ scenario and show me what failed.”*
 ## Features
 
 ### Discovery & run
-- **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`)
-  mapped back to scenarios, including rich failure messages.
+- **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`); descriptions mirror BDD tree settings (`tree.durationDisplay`, `tree.tagDisplay`) and locale for outcomes/roll-ups.
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
