@@ -58,9 +58,50 @@ describe("diagnostics analyzer", () => {
     assert.ok(codes("Error: spawn dotnet ENOENT").includes("DOTNET_NOT_FOUND"));
   });
 
-  it("detects feed authorization failures", () => {
+  it("detects feed authorization failures during restore", () => {
     assert.ok(codes("Unable to load the service index for source https://feed").includes("FEED_AUTH"));
-    assert.ok(codes("Response status code does not indicate success: 401 (Unauthorized).").includes("FEED_AUTH"));
+    assert.ok(codes("error NU1301: Unable to load the service index for source https://feed").includes("FEED_AUTH"));
+  });
+
+  it("does not treat API 401 as NuGet feed auth when tests ran", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Failed Successfully authenticate [FAIL]",
+      "Refit.ApiException : Response status code does not indicate success: 401 (Unauthorized).",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    const found = codes(out);
+    assert.ok(!found.includes("FEED_AUTH"), "API 401 should not trigger FEED_AUTH");
+    assert.ok(found.includes("API_HTTP_ERRORS"));
+  });
+
+  it("detects pending step definitions after test run", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Reqnroll.xUnit.ReqnrollPlugin.XUnitPendingStepException : Test pending: No matching step definition",
+      "Failed!  - Failed:   6, Passed:     0, Skipped:     0, Total:     6",
+    ].join("\n");
+    const found = codes(out);
+    assert.ok(found.includes("PENDING_STEPS"));
+    assert.ok(found.includes("TEST_RUN_FAILED"));
+  });
+
+  it("detects missing UserProfileTracking users", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "System.InvalidOperationException : No available users found in UserProfileTracking CSV for BDD tests",
+      "Failed!  - Failed:   2, Passed:     0, Skipped:     0, Total:     2",
+    ].join("\n");
+    assert.ok(codes(out).includes("NO_TEST_USERS"));
+  });
+
+  it("detects invalid AWS credentials for DynamoDB", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Amazon.DynamoDBv2.AmazonDynamoDBException : The security token included in the request is invalid.",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    assert.ok(codes(out).includes("AWS_CREDENTIALS"));
   });
 
   it("detects an incomplete Playwright driver (Cannot find module in .playwright)", () => {

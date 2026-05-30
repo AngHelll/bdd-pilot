@@ -6,7 +6,15 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 ## [Unreleased]
 
-_Nothing yet — see [0.2.5] below._
+_Nothing yet — see [0.2.6] below._
+
+## [0.2.6] — 2026-05-29
+
+### Fixed
+- **FEED_AUTH** only triggers on NuGet restore failures, not API HTTP 401 during test execution
+
+### Added
+- Runtime diagnostics after test runs: pending/ambiguous steps, missing test users, AWS credentials, X-Ray config, API HTTP errors, and test-run summary breakdown
 
 ## [0.2.5] — 2026-05-29
 
@@ -61,7 +69,8 @@ _Nothing yet — see [0.2.5] below._
 - Test Explorer, CodeLens, dashboard, execution profiles, diagnostics, output sanitizer
 - MIT license; ecosystem link with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)
 
-[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.2...v0.2.3
