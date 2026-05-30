@@ -10,3 +10,4 @@ out-test/
 **/bin/
 **/obj/
 samples/minimal-bdd/Features/*.feature.cs
+**/TestResults/

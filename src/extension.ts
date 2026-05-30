@@ -45,6 +45,9 @@ import {
   TestTreeProvider,
   TreeNode,
 } from "./providers/testTreeProvider";
+import { listDotnetTests } from "./core/runner/listTests";
+import { OutcomeStore } from "./providers/outcomeStore";
+import { UnifiedSummary } from "./core/results/resultLoader";
 import { buildRerunFailedFilter, createManagedController, ProjectContext } from "./providers/testController";
 
 const STAGE_KEY = "bddPilot.stage";
@@ -66,7 +69,8 @@ export function activate(context: vscode.ExtensionContext): void {
     context.workspaceState.get<RunHistoryEntry[]>(HISTORY_KEY, []),
   );
 
-  const treeProvider = new TestTreeProvider(() => getDiscoveryRoot());
+  const outcomeStore = new OutcomeStore();
+  const treeProvider = new TestTreeProvider(() => getDiscoveryRoot(), outcomeStore);
   const treeView = vscode.window.createTreeView("bddPilot.tests", {
     treeDataProvider: treeProvider,
   });
@@ -85,7 +89,12 @@ export function activate(context: vscode.ExtensionContext): void {
     getSettings: () => readSettings(),
     output,
     runService,
-    onResultsApplied: (summary) => treeProvider.applyResults(summary),
+    outcomeStore,
+    getDomains: () => treeProvider.getDomains(),
+    onResultsApplied: (summary: UnifiedSummary) => {
+      treeProvider.applyResults(summary);
+      managed.refresh();
+    },
     acquireRunLock: () => {
       if (activeRun) {
         return false;
@@ -104,6 +113,25 @@ export function activate(context: vscode.ExtensionContext): void {
   const refreshAll = () => {
     treeProvider.refresh();
     managed.refresh();
+    void enrichTheoryRows();
+  };
+
+  const enrichTheoryRows = async (): Promise<void> => {
+    const ctx = getProjectContext();
+    if (!ctx) {
+      return;
+    }
+    const settings = readSettings();
+    const enriched = await treeProvider.enrichTheoryRows(() =>
+      listDotnetTests({
+        dotnetPath: settings.dotnetPath,
+        projectDir: ctx.projectDir,
+        testTarget: ctx.testTarget,
+      }),
+    );
+    if (enriched) {
+      managed.refresh();
+    }
   };
 
   const refreshUi = () => {

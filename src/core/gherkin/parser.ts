@@ -1,15 +1,18 @@
 import { FeatureInfo, OutlineExample, ScenarioInfo } from "./model";
+import { extractStepParams } from "./stepParams";
 
 const FEATURE_RE = /^\s*(?:Feature|Característica|Funcionalidad)\s*:\s*(.*)$/i;
 const SCENARIO_RE = /^\s*(?:Scenario|Escenario)\s*:\s*(.*)$/i;
 const OUTLINE_RE =
   /^\s*(?:Scenario Outline|Scenario Template|Esquema del escenario)\s*:\s*(.*)$/i;
-const EXAMPLES_RE = /^\s*Examples:\s*(.*)?$/i;
+const EXAMPLES_RE =
+  /^\s*(?:Examples|Scenarios|Ejemplos|Escenarios)\s*:\s*(.*)?$/i;
 const TAG_RE = /(^|\s)@[^\s@]+/g;
 
 interface OutlineParseState {
   scenario: ScenarioInfo;
   headers: string[] | null;
+  stepLines: string[];
 }
 
 /**
@@ -32,6 +35,18 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
   let pendingTags: string[] = [];
   let featureSeen = false;
   let outlineState: OutlineParseState | undefined;
+  let activeScenario: ScenarioInfo | undefined;
+  let activeStepLines: string[] = [];
+
+  const finalizeScenario = (scenario: ScenarioInfo | undefined, stepLines: string[]): void => {
+    if (!scenario) {
+      return;
+    }
+    const params = extractStepParams(scenario.name, ...stepLines);
+    if (params.length > 0) {
+      scenario.stepParams = params;
+    }
+  };
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -58,19 +73,36 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
 
     const outlineMatch = OUTLINE_RE.exec(raw);
     if (outlineMatch) {
+      finalizeScenario(activeScenario, activeStepLines);
+      activeStepLines = [];
       outlineState = undefined;
       feature.scenarios.push(makeScenario(outlineMatch[1], pendingTags, i + 1, true));
+      activeScenario = feature.scenarios[feature.scenarios.length - 1];
       pendingTags = [];
-      outlineState = { scenario: feature.scenarios[feature.scenarios.length - 1], headers: null };
+      outlineState = {
+        scenario: activeScenario,
+        headers: null,
+        stepLines: activeStepLines,
+      };
       continue;
     }
 
     const scenarioMatch = SCENARIO_RE.exec(raw);
     if (scenarioMatch) {
+      finalizeScenario(activeScenario, activeStepLines);
+      activeStepLines = [];
       outlineState = undefined;
       feature.scenarios.push(makeScenario(scenarioMatch[1], pendingTags, i + 1, false));
+      activeScenario = feature.scenarios[feature.scenarios.length - 1];
       pendingTags = [];
       continue;
+    }
+
+    if (outlineState) {
+      outlineState.stepLines = activeStepLines;
+    }
+    if (isStepLine(raw)) {
+      activeStepLines.push(line);
     }
 
     if (outlineState && EXAMPLES_RE.test(line)) {
@@ -94,6 +126,8 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
 
     pendingTags = [];
   }
+
+  finalizeScenario(activeScenario, activeStepLines);
 
   if (feature.name.length === 0) {
     feature.name = fileBaseName(filePath);
@@ -156,6 +190,10 @@ export function buildExampleLabel(headers: string[], values: string[]): string {
     return `${pairs[0].header}=${pairs[0].value}, ${pairs[1].header}=${pairs[1].value}`;
   }
   return `${pairs[0].header}=${pairs[0].value}, ${pairs[1].header}=${pairs[1].value} +${pairs.length - 2}`;
+}
+
+function isStepLine(raw: string): boolean {
+  return /^\s*(?:Given|When|Then|And|But|\*|Dado|Cuando|Entonces|Y|Pero)\s+/i.test(raw);
 }
 
 function makeScenario(

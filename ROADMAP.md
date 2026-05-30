@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.0** · **102 unit tests**
+> **Current release: v0.3.1** · **109 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | **v0.3.1** — dogfood on second repo layout; P1 backlog |
+| ✅ Shipped | v0.1.0 → **v0.3.1** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | **v0.3.2** — tree grouped by tag (P2); more diagnostics |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [ ] Output channel has no raw secrets on intentional failure
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.0)
+- [x] `CHANGELOG.md` through current version (v0.3.1)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -113,8 +113,8 @@ Use before clicking **Publish** on Marketplace:
 
 | Priority | Item | Rationale |
 |----------|------|-----------|
-| P1 | Scenarios with `<param>` but **no** Outline table (Theory rows in tree) | Seen in real features; Reqnroll generates InlineData anyway |
-| P1 | Test Explorer result parity with BDD tree (accumulated partial runs) | Same UX expectation as 0.2.4 tree fix |
+| P1 | Scenarios with `<param>` but **no** Outline table (Theory rows in tree) | ✅ list-tests inference + `Scenarios:` keyword |
+| P1 | Test Explorer result parity with BDD tree (accumulated partial runs) | ✅ shared `OutcomeStore` |
 | P2 | Tree grouped **by tag** (`@smoke` → scenarios) | QA workflows |
 | P2 | More diagnostics (timeout, port in use, test host crash) | Support burden reduction |
 | P3 | Custom stage names | Only if users ask |
@@ -127,7 +127,7 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-**v0.3.1** — dogfood on nested layout; Test Explorer parity; Theory-without-Outline (P1).
+**v0.3.2** — tree grouped by tag; diagnostics for timeout / port in use.
 
 ### v0.2.6 — runtime diagnostics
 

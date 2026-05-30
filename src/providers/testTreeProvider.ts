@@ -36,6 +36,8 @@ import {
   outlineRowKey,
   scenarioKey,
 } from "../core/runner/runScope";
+import { enrichFeaturesWithTheoryTests, scenarioNeedsTheoryDiscovery } from "../core/gherkin/theoryExamples";
+import { OutcomeStore } from "./outcomeStore";
 
 export type TreeNode = DomainNode | FeatureNode | ScenarioNode | OutlineRowNode;
 
@@ -69,10 +71,12 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private domains: DomainGroup[] = [];
   private allDomains: DomainGroup[] = [];
   private searchQuery = "";
-  private outcomes = new Map<string, TestOutcome>();
-  private durations = new Map<string, number>();
+  private refreshPending = false;
 
-  constructor(private projectDir: () => string | undefined) {}
+  constructor(
+    private projectDir: () => string | undefined,
+    private readonly outcomeStore: OutcomeStore,
+  ) {}
 
   setProjectDir(): void {
     this.refresh();
@@ -82,6 +86,36 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const dir = this.projectDir();
     this.allDomains = dir ? discoverDomains(dir) : [];
     this.applySearch();
+  }
+
+  getDomains(): DomainGroup[] {
+    return this.allDomains;
+  }
+
+  /** Fills missing outline rows from `dotnet test --list-tests` when needed. */
+  enrichTheoryRows(listTests: () => Promise<string[]>): Promise<boolean> {
+    const needsDiscovery = this.allDomains.some((domain) =>
+      domain.features.some((feature) =>
+        feature.scenarios.some((scenario) => scenarioNeedsTheoryDiscovery(scenario)),
+      ),
+    );
+    if (!needsDiscovery) {
+      return Promise.resolve(false);
+    }
+
+    return listTests()
+      .then((testNames) => {
+        let enriched = 0;
+        for (const domain of this.allDomains) {
+          enriched += enrichFeaturesWithTheoryTests(domain.features, testNames);
+        }
+        if (enriched > 0) {
+          this.applySearch();
+          return true;
+        }
+        return false;
+      })
+      .catch(() => false);
   }
 
   setSearchQuery(query: string): void {
@@ -123,20 +157,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
               );
               if (match) {
                 const key = outlineRowKey(feature, scenario, example.rowIndex);
-                this.outcomes.set(key, match.outcome);
-                if (match.durationMs !== undefined) {
-                  this.durations.set(key, match.durationMs);
-                }
+                this.outcomeStore.set(key, match.outcome, match.durationMs);
               }
             }
           } else {
             const match = summary.results.find((r) => matchesScenario(r.testName, scenario.name));
             if (match) {
               const key = scenarioKey(feature, scenario);
-              this.outcomes.set(key, match.outcome);
-              if (match.durationMs !== undefined) {
-                this.durations.set(key, match.durationMs);
-              }
+              this.outcomeStore.set(key, match.outcome, match.durationMs);
             }
           }
         }
@@ -146,15 +174,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   clearResults(): void {
-    this.outcomes.clear();
-    this.durations.clear();
+    this.outcomeStore.clearAll();
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  /**
-   * Clears decorations only for tests in the current run scope so results from
-   * prior runs remain visible for everything else.
-   */
   clearResultsForRunScope(targets: RunTarget[]): void {
     const scope = collectOutcomeKeysForTargets(targets, this.allDomains);
     if (scope === "all") {
@@ -164,10 +187,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (scope.size === 0) {
       return;
     }
-    for (const key of scope) {
-      this.outcomes.delete(key);
-      this.durations.delete(key);
-    }
+    this.outcomeStore.clearForRunScope(targets, this.allDomains);
     this._onDidChangeTreeData.fire(undefined);
   }
 
@@ -183,11 +203,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
           if (scenario.examples && scenario.examples.length > 0) {
             const example = findOutlineExampleMatch(testName, scenario.name, scenario.examples);
             if (example) {
-              this.outcomes.set(outlineRowKey(feature, scenario, example.rowIndex), outcome);
+              this.outcomeStore.set(outlineRowKey(feature, scenario, example.rowIndex), outcome);
               matched = true;
             }
           } else if (matchesScenario(testName, scenario.name)) {
-            this.outcomes.set(scenarioKey(feature, scenario), outcome);
+            this.outcomeStore.set(scenarioKey(feature, scenario), outcome);
             matched = true;
           }
         }
@@ -208,8 +228,6 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       this._onDidChangeTreeData.fire(undefined);
     }, 120);
   }
-
-  private refreshPending = false;
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
     const display = readTreeDisplaySettings();
@@ -293,8 +311,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const hasExamples = !!node.scenario.examples && node.scenario.examples.length > 0;
     const rollup = hasExamples ? this.rollupScenarioOutcomes(node.feature, node.scenario) : undefined;
     const key = scenarioKey(node.feature, node.scenario);
-    const outcome = hasExamples ? rollupToOutcome(rollup) : this.outcomes.get(key);
-    const durationMs = hasExamples ? undefined : this.durations.get(key);
+    const outcome = hasExamples ? rollupToOutcome(rollup) : this.outcomeStore.get(key);
+    const durationMs = hasExamples ? undefined : this.outcomeStore.getDuration(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const item = new vscode.TreeItem(
@@ -342,8 +360,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   private outlineRowItem(node: OutlineRowNode, display: TreeDisplaySettings): vscode.TreeItem {
     const key = outlineRowKey(node.feature, node.scenario, node.example.rowIndex);
-    const outcome = this.outcomes.get(key);
-    const durationMs = this.durations.get(key);
+    const outcome = this.outcomeStore.get(key);
+    const durationMs = this.outcomeStore.getDuration(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const item = new vscode.TreeItem(node.example.label, vscode.TreeItemCollapsibleState.None);
@@ -393,10 +411,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   ): Array<TestOutcome | undefined> {
     if (scenario.examples && scenario.examples.length > 0) {
       return scenario.examples.map((ex) =>
-        this.outcomes.get(outlineRowKey(feature, scenario, ex.rowIndex)),
+        this.outcomeStore.get(outlineRowKey(feature, scenario, ex.rowIndex)),
       );
     }
-    return [this.outcomes.get(scenarioKey(feature, scenario))];
+    return [this.outcomeStore.get(scenarioKey(feature, scenario))];
   }
 }
 

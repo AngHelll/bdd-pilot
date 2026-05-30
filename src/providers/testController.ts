@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
-import { discoverDomains } from "../core/gherkin/discovery";
-import { FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
+import { FeatureInfo, OutlineExample, ScenarioInfo, DomainGroup } from "../core/gherkin/model";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
@@ -9,7 +8,9 @@ import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
 import { DEFAULT_FILTER_MAPPING } from "../core/runner/filterMapping";
 import { estimateTestCount } from "../core/runner/runEstimate";
 import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
+import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { RunService } from "./runService";
+import { OutcomeStore, outcomeDescription } from "./outcomeStore";
 
 export interface ProjectContext {
   projectDir: string;
@@ -25,6 +26,8 @@ export interface ControllerDeps {
   getSettings(): RunnerSettings;
   output: vscode.OutputChannel;
   runService: RunService;
+  outcomeStore: OutcomeStore;
+  getDomains: () => DomainGroup[];
   onResultsApplied?: (summary: UnifiedSummary) => void;
   acquireRunLock(): boolean;
   releaseRunLock(): void;
@@ -71,7 +74,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     if (!ctx) {
       return;
     }
-    for (const domain of discoverDomains(ctx.discoveryRoot)) {
+    for (const domain of deps.getDomains()) {
       const domainItem = controller.createTestItem(`domain:${domain.name}`, domain.name);
       for (const feature of domain.features) {
         const featureUri = vscode.Uri.file(feature.filePath);
@@ -91,6 +94,12 @@ export function createManagedController(deps: ControllerDeps): ManagedController
           scenarioItem.range = new vscode.Range(scenario.line - 1, 0, scenario.line - 1, 0);
           itemData.set(scenarioItem, { kind: "scenario", feature, scenario });
 
+          const scenarioOutcomeKey = scenarioKey(feature, scenario);
+          const scenarioDesc = outcomeDescription(deps.outcomeStore.get(scenarioOutcomeKey));
+          if (scenarioDesc) {
+            scenarioItem.description = scenarioDesc;
+          }
+
           if (hasExamples) {
             for (const example of scenario.examples ?? []) {
               const rowItem = controller.createTestItem(
@@ -98,6 +107,11 @@ export function createManagedController(deps: ControllerDeps): ManagedController
                 example.label,
                 featureUri,
               );
+              const rowKey = outlineRowKey(feature, scenario, example.rowIndex);
+              const rowDesc = outcomeDescription(deps.outcomeStore.get(rowKey));
+              if (rowDesc) {
+                rowItem.description = rowDesc;
+              }
               itemData.set(rowItem, { kind: "outlineRow", feature, scenario, example });
               scenarioItem.children.add(rowItem);
             }
@@ -140,6 +154,13 @@ export function createManagedController(deps: ControllerDeps): ManagedController
 
     const runningAll = !request.include;
     const targets = buildTargets(scenarioItems, itemData, runningAll);
+    if (!debug) {
+      deps.outcomeStore.clearForRunScope(
+        runningAll ? [{ kind: "all" }] : targets,
+        deps.getDomains(),
+      );
+      clearDescriptionsForScope(scenarioItems, itemData, runningAll ? "all" : targets, deps.getDomains());
+    }
     const totalExpected = estimateTestCount(
       runningAll ? [{ kind: "all" }] : targets,
       project.discoveryRoot,
@@ -172,6 +193,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
             event,
             project.projectDir,
             deps.runService,
+            deps.outcomeStore,
           );
         },
         onOutput: (chunk) => {
@@ -191,7 +213,15 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         return;
       }
 
-      applyResults(run, scenarioItems, itemData, project.projectDir, result.summary, deps.runService);
+      applyResults(
+        run,
+        scenarioItems,
+        itemData,
+        project.projectDir,
+        result.summary,
+        deps.runService,
+        deps.outcomeStore,
+      );
       if (result.summary) {
         deps.onResultsApplied?.(result.summary);
       }
@@ -272,6 +302,57 @@ function buildTargets(
   return targets;
 }
 
+function storeOutcomeForItem(
+  store: OutcomeStore,
+  data: ItemData | undefined,
+  outcome: import("../core/results/trxParser").TestOutcome,
+  durationMs?: number,
+): string | undefined {
+  if (!data?.feature || !data.scenario) {
+    return undefined;
+  }
+  const key =
+    data.kind === "outlineRow" && data.example
+      ? outlineRowKey(data.feature, data.scenario, data.example.rowIndex)
+      : scenarioKey(data.feature, data.scenario);
+  store.set(key, outcome, durationMs);
+  return key;
+}
+
+function clearDescriptionsForScope(
+  scenarioItems: vscode.TestItem[],
+  itemData: WeakMap<vscode.TestItem, ItemData>,
+  targets: RunTarget[] | "all",
+  domains: DomainGroup[],
+): void {
+  if (targets === "all") {
+    for (const item of scenarioItems) {
+      item.description = undefined;
+    }
+    return;
+  }
+  const scope = collectOutcomeKeysForTargets(targets, domains);
+  if (scope === "all") {
+    for (const item of scenarioItems) {
+      item.description = undefined;
+    }
+    return;
+  }
+  for (const item of scenarioItems) {
+    const data = itemData.get(item);
+    if (!data?.feature || !data.scenario) {
+      continue;
+    }
+    const key =
+      data.kind === "outlineRow" && data.example
+        ? outlineRowKey(data.feature, data.scenario, data.example.rowIndex)
+        : scenarioKey(data.feature, data.scenario);
+    if (scope.has(key)) {
+      item.description = undefined;
+    }
+  }
+}
+
 function applyLiveTestRunResult(
   run: vscode.TestRun,
   scenarioItems: vscode.TestItem[],
@@ -279,6 +360,7 @@ function applyLiveTestRunResult(
   event: TestCompletionEvent,
   projectDir: string,
   runService: RunService,
+  outcomeStore: OutcomeStore,
 ): void {
   for (const item of scenarioItems) {
     const data = itemData.get(item);
@@ -293,6 +375,8 @@ function applyLiveTestRunResult(
     if (!matched) {
       continue;
     }
+    storeOutcomeForItem(outcomeStore, data, event.outcome);
+    item.description = outcomeDescription(event.outcome);
     switch (event.outcome) {
       case "passed":
         run.passed(item);
@@ -314,6 +398,7 @@ function applyResults(
   projectDir: string,
   summary: UnifiedSummary | undefined,
   runService: RunService,
+  outcomeStore: OutcomeStore,
 ): void {
   if (!summary) {
     const msg = new vscode.TestMessage("No test results were produced.");
@@ -338,12 +423,18 @@ function applyResults(
     switch (match.outcome) {
       case "passed":
         run.passed(item, match.durationMs);
+        storeOutcomeForItem(outcomeStore, data, "passed", match.durationMs);
+        item.description = "passed";
         break;
       case "failed":
         run.failed(item, runService.buildFailureMessage(projectDir, match.errorMessage), match.durationMs);
+        storeOutcomeForItem(outcomeStore, data, "failed", match.durationMs);
+        item.description = "failed";
         break;
       default:
         run.skipped(item);
+        storeOutcomeForItem(outcomeStore, data, "skipped", match.durationMs);
+        item.description = "skipped";
     }
   }
 }

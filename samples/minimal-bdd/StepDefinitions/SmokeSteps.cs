@@ -19,6 +19,20 @@ public sealed class SmokeSteps
     {
         Assert.True(_ready);
     }
+
+    private string _greetingName = "";
+
+    [Given("^the greeting target is (.+)$")]
+    public void GivenTheGreetingTargetIs(string name)
+    {
+        _greetingName = name;
+    }
+
+    [Then("^the greeting should be Hello (.+)$")]
+    public void ThenTheGreetingShouldBeHello(string expected)
+    {
+        Assert.Equal(expected, _greetingName);
+    }
 }
 
 [Binding]

@@ -8,6 +8,17 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.1] — 2026-05-30
+
+### Added
+- Theory row discovery from `dotnet test --list-tests` when scenarios have `<params>` but no Examples table in the feature file
+- Parser support for `Scenarios` / localized Examples keywords and `stepParams` extraction from steps
+- Shared `OutcomeStore` so Test Explorer keeps pass/fail across partial runs (scoped clear, like the BDD tree)
+- Sample `Greetings.feature` using the `Scenarios:` keyword (Reqnroll + xUnit theory rows)
+
+### Changed
+- Test Explorer rebuilds from enriched domains and shows stored outcome descriptions between runs
+
 ## [0.3.0] — 2026-05-30
 
 ### Added
@@ -84,7 +95,8 @@ _Nothing yet._
 - Test Explorer, CodeLens, dashboard, execution profiles, diagnostics, output sanitizer
 - MIT license; ecosystem link with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)
 
-[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/AngHelll/bdd-pilot/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.7...v0.3.0
 [0.2.7]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.5...v0.2.6

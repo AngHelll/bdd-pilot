@@ -19,6 +19,8 @@ export interface ScenarioInfo {
   /** 1-based line number where the scenario keyword appears. */
   line: number;
   isOutline: boolean;
+  /** Angle-bracket parameter names from the scenario title and steps. */
+  stepParams?: string[];
   /** Populated for Scenario Outlines that declare an Examples table. */
   examples?: OutlineExample[];
 }
