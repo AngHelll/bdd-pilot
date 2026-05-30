@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.6** · **126 unit tests**
+> **Current release: v0.3.7** · **131 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.6** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | i18n EN/ES status bar + dashboard *(0.3.0-6 optional)* · watch issues post-publish |
+| ✅ Shipped | v0.1.0 → **v0.3.7** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 (tree roll-ups, settings descriptions) optional |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -69,7 +69,7 @@ Must ship before listing. Low risk, high trust.
 | **0.3.0-3** | `docs: README marketplace assets` | README, `media/` | ✅ Install section + tree preview PNG |
 | **0.3.0-4** | `docs: privacy / data handling statement` | README section | ✅ Security section in README |
 | **0.3.0-5** | `release: Marketplace publish anghelll.bdd-pilot` | `package.json`, vsce | ✅ v0.2.7 on Marketplace |
-| **0.3.0-6** | `feat(i18n): EN/ES status bar + dashboard` *(optional for 0.3.0)* | Port from Guardian pattern | Core commands readable in ES; can slip to 0.3.1 |
+| **0.3.0-6** | `feat(i18n): EN/ES status bar + dashboard` *(optional for 0.3.0)* | Port from Guardian pattern | ✅ v0.3.7 (Capa B) |
 
 **PR order:** 0.3.0-1 → 0.3.0-2 → 0.3.0-3 + 0.3.0-4 (parallel) → 0.3.0-5 → 0.3.0-6 if time.
 
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.6)
+- [x] `CHANGELOG.md` through current version (v0.3.7)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -103,8 +103,8 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [ ] Pin Marketplace version to tagged release *(run `vsce publish` for v0.3.6)*
-- [ ] Open “good first issue” for i18n gaps *(tree/Test Explorer tag parity shipped v0.3.2/v0.3.6)*
+- [ ] Pin Marketplace version to tagged release *(run `vsce publish` for v0.3.7)*
+- [ ] Open “good first issue” for Capa C i18n extras *(tree roll-ups, setting descriptions)*
 - [ ] Watch issues 1–2 weeks; patch **0.3.7** if filter/outline regressions
 
 ---
@@ -129,6 +129,13 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v0.3.7 — i18n EN/ES (Capa B)
+
+| Area | Change |
+|------|--------|
+| **i18n** | `bddPilot.locale` (`auto` \| `en` \| `es`); status bar, dashboard, CodeLens, palette (nls), dialogs, stg/prod confirmation |
+| **Tooling** | Marketplace publish version gate (`marketplace-version.sh`) |
 
 ### v0.3.6 — Test Explorer grouped by tag
 
@@ -259,7 +266,7 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 - [x] Issue templates + CHANGELOG discipline
 - [x] CI sample BDD project
 - [x] Marketplace listing *(v0.3.5 publish manual; GitHub Release `v0.3.5` + VSIX)*
-- [ ] i18n EN/ES *(optional 0.3.0)*
+- [x] i18n EN/ES *(0.3.0-6, Capa B in v0.3.7)*
 - [ ] Security audit sanitizer / strict prod mode *(post-0.3.0)*
 
 ---
@@ -283,4 +290,4 @@ src/
 
 ---
 
-*Last updated: v0.3.6 — Test Explorer tag grouping parity (126 unit tests).*
+*Last updated: v0.3.7 — i18n EN/ES Capa B, Marketplace version gate (131 unit tests).*

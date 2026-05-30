@@ -11,9 +11,10 @@ describe("envGuard", () => {
 
   it("requires confirmation for stg and prod", () => {
     assert.strictEqual(evaluateRun("stg", ["stg", "prod"]).requiresConfirmation, true);
+    assert.strictEqual(evaluateRun("stg", ["stg", "prod"]).messageKey, "envGuard.stageConfirm");
     const prod = evaluateRun("prod", ["stg", "prod"]);
     assert.strictEqual(prod.requiresConfirmation, true);
-    assert.match(prod.message, /PRODUCTION/);
+    assert.strictEqual(prod.messageKey, "envGuard.prodConfirm");
   });
 });
 

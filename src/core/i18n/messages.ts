@@ -1,0 +1,189 @@
+import { PilotLocale } from "./locale";
+
+const EN = {
+  "statusBar.stageTooltip": "BDD Pilot: select environment",
+  "statusBar.modeTooltip": "BDD Pilot: select parallelism mode",
+  "statusBar.projectTooltip": "BDD Pilot: select test project or solution",
+  "statusBar.projectMissingTooltip":
+    "BDD Pilot: select test project — multiple or none detected",
+  "statusBar.stageLabel": "STAGE",
+  "statusBar.modeLabel": "mode",
+  "statusBar.projectNotSet": "project: (not set)",
+
+  "dashboard.panelTitle": "BDD Pilot Dashboard",
+  "dashboard.title": "BDD Pilot Dashboard",
+  "dashboard.subtitle": "Run history and quality signals for your BDD test suite.",
+  "dashboard.statRuns": "runs",
+  "dashboard.statPassed": "passed (all runs)",
+  "dashboard.statFailed": "failed (all runs)",
+  "dashboard.recentRuns": "Recent runs",
+  "dashboard.noRuns": "No runs recorded yet.",
+  "dashboard.emptyHint":
+    "Run tests from the <strong>BDD Pilot</strong> sidebar (play icon on a feature or scenario). History is stored per workspace — not related to execution profiles.",
+  "dashboard.flakyTitle": "Flaky scenarios (recent window)",
+  "dashboard.flakyEmpty": "Not enough data yet (need 2+ runs per scenario).",
+  "dashboard.colWhen": "When",
+  "dashboard.colEnv": "Env",
+  "dashboard.colPass": "Pass",
+  "dashboard.colFail": "Fail",
+  "dashboard.colSkip": "Skip",
+  "dashboard.colDuration": "Duration",
+  "dashboard.colScenario": "Scenario",
+  "dashboard.colFailureRate": "Failure rate",
+
+  "codeLens.run": "$(play) Run",
+  "codeLens.debug": "$(debug) Debug",
+  "codeLens.runRow": "$(play) Run row",
+  "codeLens.debugRow": "$(debug) Debug row",
+  "codeLens.runAllRows": "$(play) Run all rows",
+  "codeLens.debugAllRows": "$(debug) Debug all rows",
+
+  "toast.dashboardEmpty":
+    "Dashboard opened. Run tests from the BDD Pilot tree to record history here.",
+  "toast.noActiveRun": "No test run is currently active.",
+  "toast.noFailedRerun": "No failed tests from the last run to re-run.",
+  "toast.profileSaved": 'Saved profile "{name}".',
+  "toast.profileRemoved": 'Removed profile "{name}".',
+  "toast.noProfilesRun":
+    "No saved execution profiles. Use Command Palette → 'BDD Pilot: Save Execution Profile'. For run history and flaky stats, use the graph icon (Show Dashboard).",
+  "toast.noProfilesManage": "No saved profiles.",
+  "toast.treeGroupByTag": "BDD Pilot tree: group by @tag.",
+  "toast.treeGroupByDomain": "BDD Pilot tree: group by domain.",
+  "toast.runInProgress": "A test run is already in progress.",
+  "toast.projectNotFound":
+    "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
+  "toast.noProjectsFound":
+    "No .NET test projects found. Add .feature files and a .csproj, or set bddPilot.projectPath.",
+  "toast.multiProjectPrompt": "BDD Pilot found multiple test projects. Select which one to use.",
+
+  "prompt.searchFilter": "Filter by name, tag (@Smoke), or path…",
+  "prompt.searchClear": "Leave empty to clear the filter",
+  "prompt.selectStage": "Current: {current}. Select environment (STAGE)",
+  "prompt.selectMode": "Current: {current}. Select parallelism mode",
+  "prompt.profileName": "Profile name",
+  "prompt.profileFilter": "Filter expression",
+  "prompt.profileFilterExample": "Category=Smoke or FullyQualifiedName~LoginFeature",
+  "prompt.selectProfileRun": "Select an execution profile",
+  "prompt.selectProfileDelete": "Select a profile to delete",
+  "prompt.selectProject": "Select test project or solution for BDD Pilot",
+
+  "progress.running": "Running tests ({stage}/{mode})",
+  "progress.debugging": "Debugging tests ({stage})",
+
+  "envGuard.prodConfirm":
+    "You are about to run tests against PRODUCTION. This may affect live data and trigger external reporting. Continue?",
+  "envGuard.stageConfirm":
+    "You are about to run tests against '{stage}', which reports to X-Ray. Continue?",
+
+  "action.run": "Run",
+  "action.debug": "Debug",
+  "action.selectProject": "Select Project",
+  "action.showOutput": "Show Output",
+
+  "quickPick.solution": "Solution",
+} as const;
+
+const ES: Record<keyof typeof EN, string> = {
+  "statusBar.stageTooltip": "BDD Pilot: seleccionar entorno",
+  "statusBar.modeTooltip": "BDD Pilot: seleccionar modo de paralelismo",
+  "statusBar.projectTooltip": "BDD Pilot: seleccionar proyecto o solución de tests",
+  "statusBar.projectMissingTooltip":
+    "BDD Pilot: seleccionar proyecto — varios detectados o ninguno",
+  "statusBar.stageLabel": "STAGE",
+  "statusBar.modeLabel": "modo",
+  "statusBar.projectNotSet": "proyecto: (sin asignar)",
+
+  "dashboard.panelTitle": "Panel BDD Pilot",
+  "dashboard.title": "Panel BDD Pilot",
+  "dashboard.subtitle": "Historial de ejecuciones y señales de calidad de tu suite BDD.",
+  "dashboard.statRuns": "ejecuciones",
+  "dashboard.statPassed": "correctos (total)",
+  "dashboard.statFailed": "fallidos (total)",
+  "dashboard.recentRuns": "Ejecuciones recientes",
+  "dashboard.noRuns": "Aún no hay ejecuciones registradas.",
+  "dashboard.emptyHint":
+    "Ejecuta tests desde la barra lateral <strong>BDD Pilot</strong> (icono play en feature o escenario). El historial es por workspace — no está ligado a perfiles de ejecución.",
+  "dashboard.flakyTitle": "Escenarios inestables (ventana reciente)",
+  "dashboard.flakyEmpty": "Datos insuficientes (se necesitan 2+ ejecuciones por escenario).",
+  "dashboard.colWhen": "Cuándo",
+  "dashboard.colEnv": "Entorno",
+  "dashboard.colPass": "OK",
+  "dashboard.colFail": "Fallo",
+  "dashboard.colSkip": "Omit.",
+  "dashboard.colDuration": "Duración",
+  "dashboard.colScenario": "Escenario",
+  "dashboard.colFailureRate": "Tasa de fallo",
+
+  "codeLens.run": "$(play) Ejecutar",
+  "codeLens.debug": "$(debug) Depurar",
+  "codeLens.runRow": "$(play) Ejecutar fila",
+  "codeLens.debugRow": "$(debug) Depurar fila",
+  "codeLens.runAllRows": "$(play) Ejecutar todas las filas",
+  "codeLens.debugAllRows": "$(debug) Depurar todas las filas",
+
+  "toast.dashboardEmpty":
+    "Panel abierto. Ejecuta tests desde el árbol BDD Pilot para registrar historial aquí.",
+  "toast.noActiveRun": "No hay ninguna ejecución de tests activa.",
+  "toast.noFailedRerun": "No hay tests fallidos en la última ejecución para reintentar.",
+  "toast.profileSaved": 'Perfil "{name}" guardado.',
+  "toast.profileRemoved": 'Perfil "{name}" eliminado.',
+  "toast.noProfilesRun":
+    "No hay perfiles de ejecución guardados. Paleta de comandos → 'BDD Pilot: Save Execution Profile'. Para historial e inestabilidad, usa el icono de gráfica (Show Dashboard).",
+  "toast.noProfilesManage": "No hay perfiles guardados.",
+  "toast.treeGroupByTag": "Árbol BDD Pilot: agrupado por @tag.",
+  "toast.treeGroupByDomain": "Árbol BDD Pilot: agrupado por dominio.",
+  "toast.runInProgress": "Ya hay una ejecución de tests en curso.",
+  "toast.projectNotFound":
+    "BDD Pilot: no se encontró el proyecto .NET de tests. Usa 'Select Test Project' o configura 'bddPilot.projectPath'.",
+  "toast.noProjectsFound":
+    "No se encontraron proyectos .NET de tests. Añade archivos .feature y un .csproj, o configura bddPilot.projectPath.",
+  "toast.multiProjectPrompt": "BDD Pilot encontró varios proyectos de tests. Elige cuál usar.",
+
+  "prompt.searchFilter": "Filtrar por nombre, tag (@Smoke) o ruta…",
+  "prompt.searchClear": "Deja vacío para quitar el filtro",
+  "prompt.selectStage": "Actual: {current}. Selecciona entorno (STAGE)",
+  "prompt.selectMode": "Actual: {current}. Selecciona modo de paralelismo",
+  "prompt.profileName": "Nombre del perfil",
+  "prompt.profileFilter": "Expresión de filtro",
+  "prompt.profileFilterExample": "Category=Smoke o FullyQualifiedName~LoginFeature",
+  "prompt.selectProfileRun": "Selecciona un perfil de ejecución",
+  "prompt.selectProfileDelete": "Selecciona un perfil para eliminar",
+  "prompt.selectProject": "Selecciona proyecto o solución de tests para BDD Pilot",
+
+  "progress.running": "Ejecutando tests ({stage}/{mode})",
+  "progress.debugging": "Depurando tests ({stage})",
+
+  "envGuard.prodConfirm":
+    "Vas a ejecutar tests contra PRODUCCIÓN. Puede afectar datos reales y reportes externos. ¿Continuar?",
+  "envGuard.stageConfirm":
+    "Vas a ejecutar tests contra '{stage}', que reporta a X-Ray. ¿Continuar?",
+
+  "action.run": "Ejecutar",
+  "action.debug": "Depurar",
+  "action.selectProject": "Seleccionar proyecto",
+  "action.showOutput": "Mostrar salida",
+
+  "quickPick.solution": "Solución",
+};
+
+export type MessageKey = keyof typeof EN;
+
+const MESSAGES: Record<PilotLocale, Record<MessageKey, string>> = { en: EN, es: ES };
+
+export function t(
+  locale: PilotLocale,
+  key: MessageKey,
+  params?: Record<string, string | number>,
+): string {
+  let text = MESSAGES[locale][key] ?? MESSAGES.en[key] ?? key;
+  if (params) {
+    for (const [name, value] of Object.entries(params)) {
+      text = text.replace(new RegExp(`\\{${name}\\}`, "g"), String(value));
+    }
+  }
+  return text;
+}
+
+export function envGuardMessageKey(stage: string): "envGuard.prodConfirm" | "envGuard.stageConfirm" {
+  return stage === "prod" ? "envGuard.prodConfirm" : "envGuard.stageConfirm";
+}

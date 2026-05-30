@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { PilotLocale, t } from "../core/i18n";
 import { FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
 import { parseFeature } from "../core/gherkin/parser";
 import { RunTarget } from "../core/runner/filterBuilder";
@@ -7,34 +8,43 @@ export type CodeLensRunHandler = (target: RunTarget, debug: boolean) => void | P
 
 const FEATURE_LINE_RE = /^\s*(?:Feature|Característica|Funcionalidad)\s*:/i;
 
+export interface CodeLensRegistration {
+  disposable: vscode.Disposable;
+  refresh: () => void;
+}
+
 /**
  * Shows Run / Debug CodeLens on Feature, Scenario, and Scenario Outline example rows.
  */
-export function registerFeatureCodeLens(): vscode.Disposable {
+export function registerFeatureCodeLens(getLocale: () => PilotLocale): CodeLensRegistration {
+  const changeEmitter = new vscode.EventEmitter<void>();
+
   const provider: vscode.CodeLensProvider = {
+    onDidChangeCodeLenses: changeEmitter.event,
     provideCodeLenses(document) {
       if (!document.fileName.toLowerCase().endsWith(".feature")) {
         return [];
       }
 
+      const locale = getLocale();
       const text = document.getText();
       const feature = parseFeature(document.uri.fsPath, text);
       const lenses: vscode.CodeLens[] = [];
       const featureLine = findFeatureLine(text);
 
       if (featureLine >= 0) {
-        lenses.push(...makeFeatureLenses(featureLine, feature, document.uri));
+        lenses.push(...makeFeatureLenses(featureLine, feature, document.uri, locale));
       }
 
       for (const scenario of feature.scenarios) {
         const range = lineRange(scenario.line);
         if (scenario.examples && scenario.examples.length > 0) {
-          lenses.push(...makeScenarioLenses(range, feature, scenario, true));
+          lenses.push(...makeScenarioLenses(range, feature, scenario, true, locale));
           for (const example of scenario.examples) {
-            lenses.push(...makeOutlineRowLenses(lineRange(example.line), feature, scenario, example));
+            lenses.push(...makeOutlineRowLenses(lineRange(example.line), feature, scenario, example, locale));
           }
         } else {
-          lenses.push(...makeScenarioLenses(range, feature, scenario, false));
+          lenses.push(...makeScenarioLenses(range, feature, scenario, false, locale));
         }
       }
 
@@ -42,7 +52,12 @@ export function registerFeatureCodeLens(): vscode.Disposable {
     },
   };
 
-  return vscode.languages.registerCodeLensProvider({ pattern: "**/*.feature" }, provider);
+  const registration = vscode.languages.registerCodeLensProvider({ pattern: "**/*.feature" }, provider);
+
+  return {
+    disposable: vscode.Disposable.from(registration, changeEmitter),
+    refresh: () => changeEmitter.fire(),
+  };
 }
 
 function findFeatureLine(content: string): number {
@@ -60,13 +75,18 @@ function lineRange(lineNumber: number): vscode.Range {
   return new vscode.Range(line, 0, line, 0);
 }
 
-function makeFeatureLenses(line: number, feature: FeatureInfo, uri: vscode.Uri): vscode.CodeLens[] {
+function makeFeatureLenses(
+  line: number,
+  feature: FeatureInfo,
+  uri: vscode.Uri,
+  locale: PilotLocale,
+): vscode.CodeLens[] {
   const range = new vscode.Range(line, 0, line, 0);
   const target: RunTarget = {
     kind: "feature",
     feature: { name: feature.name, filePath: uri.fsPath, tags: feature.tags, scenarios: [] },
   };
-  return makeRunLenses(range, target, "$(play) Run", "$(debug) Debug");
+  return makeRunLenses(range, target, locale, false, false);
 }
 
 function makeScenarioLenses(
@@ -74,15 +94,14 @@ function makeScenarioLenses(
   feature: FeatureInfo,
   scenario: ScenarioInfo,
   runAllRows: boolean,
+  locale: PilotLocale,
 ): vscode.CodeLens[] {
   const target: RunTarget = {
     kind: "scenario",
     feature: stubFeature(feature),
     scenario: { ...scenario, examples: undefined },
   };
-  const runTitle = runAllRows ? "$(play) Run all rows" : "$(play) Run";
-  const debugTitle = runAllRows ? "$(debug) Debug all rows" : "$(debug) Debug";
-  return makeRunLenses(range, target, runTitle, debugTitle);
+  return makeRunLenses(range, target, locale, runAllRows, false);
 }
 
 function makeOutlineRowLenses(
@@ -90,6 +109,7 @@ function makeOutlineRowLenses(
   feature: FeatureInfo,
   scenario: ScenarioInfo,
   example: OutlineExample,
+  locale: PilotLocale,
 ): vscode.CodeLens[] {
   const target: RunTarget = {
     kind: "outlineRow",
@@ -97,7 +117,7 @@ function makeOutlineRowLenses(
     scenario: { ...scenario, examples: undefined },
     example,
   };
-  return makeRunLenses(range, target, "$(play) Run row", "$(debug) Debug row");
+  return makeRunLenses(range, target, locale, false, true);
 }
 
 function stubFeature(feature: FeatureInfo): FeatureInfo {
@@ -112,9 +132,21 @@ function stubFeature(feature: FeatureInfo): FeatureInfo {
 function makeRunLenses(
   range: vscode.Range,
   target: RunTarget,
-  runTitle: string,
-  debugTitle: string,
+  locale: PilotLocale,
+  allRows: boolean,
+  outlineRow: boolean,
 ): vscode.CodeLens[] {
+  const runTitle = outlineRow
+    ? t(locale, "codeLens.runRow")
+    : allRows
+      ? t(locale, "codeLens.runAllRows")
+      : t(locale, "codeLens.run");
+  const debugTitle = outlineRow
+    ? t(locale, "codeLens.debugRow")
+    : allRows
+      ? t(locale, "codeLens.debugAllRows")
+      : t(locale, "codeLens.debug");
+
   return [
     new vscode.CodeLens(range, {
       title: runTitle,

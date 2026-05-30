@@ -1,36 +1,49 @@
 import * as vscode from "vscode";
+import { PilotLocale, t } from "../core/i18n";
 import { formatDuration } from "../core/results/durationFormat";
 import { RunHistoryEntry, flakyRate, scenarioHistoryKey } from "../core/results/runHistory";
 
 export class DashboardPanel {
   private panel: vscode.WebviewPanel | undefined;
+  private lastHistory: RunHistoryEntry[] = [];
 
-  show(history: RunHistoryEntry[]): void {
+  show(history: RunHistoryEntry[], locale: PilotLocale): void {
+    this.lastHistory = history;
     if (this.panel) {
+      this.panel.title = t(locale, "dashboard.panelTitle");
       this.panel.reveal();
-      this.panel.webview.html = this.render(history);
+      this.panel.webview.html = this.render(history, locale);
       return;
     }
 
     this.panel = vscode.window.createWebviewPanel(
       "bddPilot.dashboard",
-      "BDD Pilot Dashboard",
+      t(locale, "dashboard.panelTitle"),
       vscode.ViewColumn.One,
       { enableScripts: false, retainContextWhenHidden: true },
     );
     this.panel.onDidDispose(() => {
       this.panel = undefined;
     });
-    this.panel.webview.html = this.render(history);
+    this.panel.webview.html = this.render(history, locale);
   }
 
-  update(history: RunHistoryEntry[]): void {
+  update(history: RunHistoryEntry[], locale: PilotLocale): void {
+    this.lastHistory = history;
     if (this.panel) {
-      this.panel.webview.html = this.render(history);
+      this.panel.title = t(locale, "dashboard.panelTitle");
+      this.panel.webview.html = this.render(history, locale);
     }
   }
 
-  private render(history: RunHistoryEntry[]): string {
+  refreshLocale(locale: PilotLocale): void {
+    if (this.panel) {
+      this.panel.title = t(locale, "dashboard.panelTitle");
+      this.panel.webview.html = this.render(this.lastHistory, locale);
+    }
+  }
+
+  private render(history: RunHistoryEntry[], locale: PilotLocale): string {
     const recent = [...history].reverse().slice(0, 20);
     const totals = history.reduce(
       (acc, h) => {
@@ -43,9 +56,10 @@ export class DashboardPanel {
     );
 
     const flaky = collectFlaky(history);
+    const lang = locale === "es" ? "es" : "en";
 
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';" />
@@ -65,39 +79,40 @@ export class DashboardPanel {
   </style>
 </head>
 <body>
-  <h1>BDD Pilot Dashboard</h1>
-  <p>Run history and quality signals for your BDD test suite.</p>
+  <h1>${escapeHtml(t(locale, "dashboard.title"))}</h1>
+  <p>${escapeHtml(t(locale, "dashboard.subtitle"))}</p>
   <div class="stats">
-    <div class="stat"><strong>${totals.runs}</strong> runs</div>
-    <div class="stat"><strong class="pass">${totals.passed}</strong> passed (all runs)</div>
-    <div class="stat"><strong class="fail">${totals.failed}</strong> failed (all runs)</div>
+    <div class="stat"><strong>${totals.runs}</strong> ${escapeHtml(t(locale, "dashboard.statRuns"))}</div>
+    <div class="stat"><strong class="pass">${totals.passed}</strong> ${escapeHtml(t(locale, "dashboard.statPassed"))}</div>
+    <div class="stat"><strong class="fail">${totals.failed}</strong> ${escapeHtml(t(locale, "dashboard.statFailed"))}</div>
   </div>
-  <h2>Recent runs</h2>
-  ${recent.length === 0 ? `<p>No runs recorded yet.</p><p class="hint">Run tests from the <strong>BDD Pilot</strong> sidebar (play icon on a feature or scenario). History is stored per workspace — not related to execution profiles.</p>` : recentRunsTable(recent)}
-  <h2>Flaky scenarios (recent window)</h2>
-  ${flaky.length === 0 ? "<p>Not enough data yet (need 2+ runs per scenario).</p>" : flakyTable(flaky)}
+  <h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
+  ${recent.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.noRuns"))}</p><p class="hint">${t(locale, "dashboard.emptyHint")}</p>` : recentRunsTable(recent, locale)}
+  <h2>${escapeHtml(t(locale, "dashboard.flakyTitle"))}</h2>
+  ${flaky.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>` : flakyTable(flaky, locale)}
 </body>
 </html>`;
   }
 }
 
-function recentRunsTable(runs: RunHistoryEntry[]): string {
+function recentRunsTable(runs: RunHistoryEntry[], locale: PilotLocale): string {
   const rows = runs
     .map(
       (r) =>
         `<tr><td>${new Date(r.timestamp).toLocaleString()}</td><td>${r.stage}/${r.mode}</td><td class="pass">${r.passed}</td><td class="fail">${r.failed}</td><td>${r.skipped}</td><td title="${r.durationMs ?? ""} ms">${r.durationMs !== undefined ? formatDuration(r.durationMs, "auto") : "—"}</td></tr>`,
     )
     .join("");
-  return `<table><thead><tr><th>When</th><th>Env</th><th>Pass</th><th>Fail</th><th>Skip</th><th>Duration</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table><thead><tr><th>${t(locale, "dashboard.colWhen")}</th><th>${t(locale, "dashboard.colEnv")}</th><th>${t(locale, "dashboard.colPass")}</th><th>${t(locale, "dashboard.colFail")}</th><th>${t(locale, "dashboard.colSkip")}</th><th>${t(locale, "dashboard.colDuration")}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function flakyTable(
   items: { name: string; rate: number; key: string }[],
+  locale: PilotLocale,
 ): string {
   const rows = items
     .map((f) => `<tr><td>${escapeHtml(f.name)}</td><td>${Math.round(f.rate * 100)}%</td></tr>`)
     .join("");
-  return `<table><thead><tr><th>Scenario</th><th>Failure rate</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table><thead><tr><th>${t(locale, "dashboard.colScenario")}</th><th>${t(locale, "dashboard.colFailureRate")}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function collectFlaky(history: RunHistoryEntry[]): { name: string; rate: number; key: string }[] {

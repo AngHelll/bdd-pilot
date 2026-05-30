@@ -54,6 +54,7 @@ scenario and show me what failed.”*
 - **Saved execution profiles** for common filters.
 
 ### Environment & execution
+- **UI language** (`bddPilot.locale`: `auto` | `en` | `es`) — status bar, dashboard, CodeLens, palette, and dialogs follow VS Code UI language when set to `auto`.
 - **Environment selector** (`dev`/`test`/`stg`/`prod`) in the status bar — sets
   `STAGE` for the run.
 - **Parallelism mode** (`debug`/`parallel`/`ci`) passed as xUnit RunSettings, so
@@ -160,7 +161,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.6** (Test Explorer `@tag` grouping parity with BDD tree v0.3.2).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.7** (i18n EN/ES via `bddPilot.locale`; Test Explorer `@tag` grouping in v0.3.6).
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

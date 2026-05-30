@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { ParallelismMode, Stage } from "../core/config/types";
+import { PilotLocale, t } from "../core/i18n";
 
 /**
  * Status bar: STAGE, parallelism mode, and active test project.
@@ -18,26 +19,27 @@ export class StatusBar implements vscode.Disposable {
     this.projectItem.command = "bddPilot.selectProject";
   }
 
-  update(stage: Stage, mode: ParallelismMode, projectLabel?: string): void {
+  update(stage: Stage, mode: ParallelismMode, locale: PilotLocale, projectLabel?: string): void {
     const isProtected = stage === "stg" || stage === "prod";
-    this.stageItem.text = `$(globe) STAGE: ${stage}`;
-    this.stageItem.tooltip = "BDD Pilot: select environment";
+    this.stageItem.text = `$(globe) ${t(locale, "statusBar.stageLabel")}: ${stage}`;
+    this.stageItem.tooltip = t(locale, "statusBar.stageTooltip");
     this.stageItem.backgroundColor = isProtected
       ? new vscode.ThemeColor("statusBarItem.warningBackground")
       : undefined;
     this.stageItem.show();
 
-    this.modeItem.text = `$(server-process) mode: ${mode}`;
-    this.modeItem.tooltip = "BDD Pilot: select parallelism mode";
+    this.modeItem.text = `$(server-process) ${t(locale, "statusBar.modeLabel")}: ${mode}`;
+    this.modeItem.tooltip = t(locale, "statusBar.modeTooltip");
     this.modeItem.show();
 
     if (projectLabel) {
       this.projectItem.text = `$(folder) ${projectLabel}`;
-      this.projectItem.tooltip = "BDD Pilot: select test project or solution";
+      this.projectItem.tooltip = t(locale, "statusBar.projectTooltip");
+      this.projectItem.backgroundColor = undefined;
       this.projectItem.show();
     } else {
-      this.projectItem.text = "$(folder) project: (not set)";
-      this.projectItem.tooltip = "BDD Pilot: select test project — multiple or none detected";
+      this.projectItem.text = `$(folder) ${t(locale, "statusBar.projectNotSet")}`;
+      this.projectItem.tooltip = t(locale, "statusBar.projectMissingTooltip");
       this.projectItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
       this.projectItem.show();
     }

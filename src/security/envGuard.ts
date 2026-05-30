@@ -1,11 +1,13 @@
 import { Stage } from "../core/config/types";
+import { envGuardMessageKey } from "../core/i18n";
 
 export interface GuardDecision {
   /** Whether confirmation is required before running. */
   requiresConfirmation: boolean;
   /** Severity used to pick the right UI prompt (modal warning vs info). */
   severity: "info" | "warning";
-  message: string;
+  /** i18n key for the confirmation message when requiresConfirmation is true. */
+  messageKey?: ReturnType<typeof envGuardMessageKey>;
 }
 
 /**
@@ -22,15 +24,12 @@ export function evaluateRun(
     return {
       requiresConfirmation: false,
       severity: "info",
-      message: `Running tests against '${stage}'.`,
     };
   }
 
-  const severity: GuardDecision["severity"] = stage === "prod" ? "warning" : "warning";
-  const message =
-    stage === "prod"
-      ? "You are about to run tests against PRODUCTION. This may affect live data and trigger external reporting. Continue?"
-      : `You are about to run tests against '${stage}', which reports to X-Ray. Continue?`;
-
-  return { requiresConfirmation: true, severity, message };
+  return {
+    requiresConfirmation: true,
+    severity: "warning",
+    messageKey: envGuardMessageKey(stage),
+  };
 }

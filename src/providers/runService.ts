@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { loadStageEnv } from "../core/config/envFile";
 import { MODE_PROFILES, ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
+import { PilotLocale, t } from "../core/i18n";
 import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 import { findRecentEvidence } from "../core/results/evidence";
 import { loadRunResults, UnifiedSummary } from "../core/results/resultLoader";
@@ -27,6 +28,8 @@ export interface RunRequest {
   projectDir: string;
   testTarget?: string;
   debug?: boolean;
+  /** UI locale for confirmation dialogs. */
+  locale: PilotLocale;
   signal?: AbortSignal;
   onOutput?: (chunk: string) => void;
   onStart?: (cmd: string) => void;
@@ -81,13 +84,17 @@ export class RunService {
 
   async run(req: RunRequest): Promise<RunServiceResult> {
     const decision = evaluateRun(req.stage, req.settings.requireConfirmationForStages);
-    if (decision.requiresConfirmation) {
+    if (decision.requiresConfirmation && decision.messageKey) {
+      const message = t(req.locale, decision.messageKey, { stage: req.stage });
+      const primaryAction = req.debug
+        ? t(req.locale, "action.debug")
+        : t(req.locale, "action.run");
       const choice = await vscode.window.showWarningMessage(
-        decision.message,
+        message,
         { modal: true },
-        req.debug ? "Debug" : "Run",
+        primaryAction,
       );
-      if (choice !== "Run" && choice !== "Debug") {
+      if (choice !== primaryAction) {
         return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
       }
     }

@@ -34,6 +34,7 @@ import { estimateTestCount } from "./core/runner/runEstimate";
 import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardPanel } from "./providers/dashboardPanel";
+import { LocaleService } from "./providers/localeService";
 import { ProfileStore } from "./providers/profileStore";
 import { RunService } from "./providers/runService";
 import { StatusBar } from "./providers/statusBar";
@@ -59,6 +60,9 @@ const HISTORY_KEY = "bddPilot.runHistory";
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("BDD Pilot");
+  const localeService = new LocaleService();
+  const tr = (key: Parameters<LocaleService["tr"]>[0], params?: Parameters<LocaleService["tr"]>[1]) =>
+    localeService.tr(key, params);
   const statusBar = new StatusBar();
   const profileStore = new ProfileStore(context);
   const dashboard = new DashboardPanel();
@@ -79,7 +83,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const persistHistory = () => {
     void context.workspaceState.update(HISTORY_KEY, runService.getHistory());
-    dashboard.update(runService.getHistory());
+    dashboard.update(runService.getHistory(), localeService.getLocale());
   };
 
   runService.onHistoryChanged(() => persistHistory());
@@ -95,6 +99,7 @@ export function activate(context: vscode.ExtensionContext): void {
     getDomains: () => treeProvider.getDomains(),
     getTagGroups: () => treeProvider.getTagGroups(),
     getTreeGroupBy: () => readTreeGroupBy(),
+    getLocale: () => localeService.getLocale(),
     onResultsApplied: (summary: UnifiedSummary) => {
       treeProvider.applyResults(summary);
       managed.refresh();
@@ -140,9 +145,17 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const refreshUi = () => {
     const ctx = getProjectContext();
-    statusBar.update(currentStage, currentMode, ctx?.label);
+    statusBar.update(currentStage, currentMode, localeService.getLocale(), ctx?.label);
     void vscode.commands.executeCommand("setContext", "bddPilot.running", !!activeRun);
   };
+
+  const codeLens = registerFeatureCodeLens(() => localeService.getLocale());
+
+  localeService.onDidChangeLocale(() => {
+    refreshUi();
+    codeLens.refresh();
+    dashboard.refreshLocale(localeService.getLocale());
+  });
 
   refreshAll();
   refreshUi();
@@ -150,10 +163,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     output,
+    localeService,
     statusBar,
     treeView,
     managed.controller,
-    registerFeatureCodeLens(),
+    codeLens.disposable,
 
     vscode.commands.registerCommand("bddPilot.refresh", () => refreshAll()),
 
@@ -161,18 +175,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand("bddPilot.showDashboard", () => {
       const history = runService.getHistory();
-      dashboard.show(history);
+      dashboard.show(history, localeService.getLocale());
       if (history.length === 0) {
-        void vscode.window.showInformationMessage(
-          "Dashboard opened. Run tests from the BDD Pilot tree to record history here.",
-        );
+        void vscode.window.showInformationMessage(tr("toast.dashboardEmpty"));
       }
     }),
 
     vscode.commands.registerCommand("bddPilot.searchTests", async () => {
       const query = await vscode.window.showInputBox({
-        placeHolder: "Filter by name, tag (@Smoke), or path…",
-        prompt: "Leave empty to clear the filter",
+        placeHolder: tr("prompt.searchFilter"),
+        prompt: tr("prompt.searchClear"),
       });
       if (query !== undefined) {
         treeProvider.setSearchQuery(query);
@@ -183,7 +195,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand("bddPilot.selectStage", async () => {
       const picked = await vscode.window.showQuickPick(ALL_STAGES, {
-        placeHolder: `Current: ${currentStage}. Select environment (STAGE)`,
+        placeHolder: tr("prompt.selectStage", { current: currentStage }),
       });
       if (picked && isStage(picked)) {
         currentStage = picked;
@@ -194,7 +206,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand("bddPilot.selectMode", async () => {
       const picked = await vscode.window.showQuickPick(ALL_MODES, {
-        placeHolder: `Current: ${currentMode}. Select parallelism mode`,
+        placeHolder: tr("prompt.selectMode", { current: currentMode }),
       });
       if (picked && isMode(picked)) {
         currentMode = picked;
@@ -208,7 +220,7 @@ export function activate(context: vscode.ExtensionContext): void {
         activeRun.abort();
         output.appendLine("\n[bdd-pilot] Cancellation requested...");
       } else {
-        void vscode.window.showInformationMessage("No test run is currently active.");
+        void vscode.window.showInformationMessage(tr("toast.noActiveRun"));
       }
     }),
 
@@ -230,20 +242,20 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("bddPilot.rerunFailed", async () => {
       const filter = buildRerunFailedFilter(runService, readSettings().filterMapping);
       if (!filter) {
-        void vscode.window.showInformationMessage("No failed tests from the last run to re-run.");
+        void vscode.window.showInformationMessage(tr("toast.noFailedRerun"));
         return;
       }
       await executeRun({ kind: "all" }, { rawFilter: filter });
     }),
 
     vscode.commands.registerCommand("bddPilot.saveProfile", async () => {
-      const name = await vscode.window.showInputBox({ prompt: "Profile name" });
+      const name = await vscode.window.showInputBox({ prompt: tr("prompt.profileName") });
       if (!name) {
         return;
       }
       const filter = await vscode.window.showInputBox({
-        prompt: "Filter expression",
-        placeHolder: "Category=Smoke or FullyQualifiedName~LoginFeature",
+        prompt: tr("prompt.profileFilter"),
+        placeHolder: tr("prompt.profileFilterExample"),
       });
       if (!filter) {
         return;
@@ -254,21 +266,18 @@ export function activate(context: vscode.ExtensionContext): void {
         filter,
       };
       await profileStore.save(profile);
-      void vscode.window.showInformationMessage(`Saved profile "${name}".`);
+      void vscode.window.showInformationMessage(tr("toast.profileSaved", { name }));
     }),
 
     vscode.commands.registerCommand("bddPilot.runProfile", async () => {
       const profiles = profileStore.list();
       if (profiles.length === 0) {
-        void vscode.window.showInformationMessage(
-          "No saved execution profiles. Use Command Palette → 'BDD Pilot: Save Execution Profile'. " +
-            "For run history and flaky stats, use the graph icon (Show Dashboard).",
-        );
+        void vscode.window.showInformationMessage(tr("toast.noProfilesRun"));
         return;
       }
       const picked = await vscode.window.showQuickPick(
         profiles.map((p) => ({ label: p.name, description: p.filter, profile: p })),
-        { placeHolder: "Select an execution profile" },
+        { placeHolder: tr("prompt.selectProfileRun") },
       );
       if (picked) {
         await executeRun({ kind: "all" }, { rawFilter: picked.profile.filter });
@@ -278,16 +287,16 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("bddPilot.manageProfiles", async () => {
       const profiles = profileStore.list();
       if (profiles.length === 0) {
-        void vscode.window.showInformationMessage("No saved profiles.");
+        void vscode.window.showInformationMessage(tr("toast.noProfilesManage"));
         return;
       }
       const picked = await vscode.window.showQuickPick(
         profiles.map((p) => ({ label: p.name, description: p.filter, id: p.id })),
-        { placeHolder: "Select a profile to delete" },
+        { placeHolder: tr("prompt.selectProfileDelete") },
       );
       if (picked) {
         await profileStore.remove(picked.id);
-        void vscode.window.showInformationMessage(`Removed profile "${picked.label}".`);
+        void vscode.window.showInformationMessage(tr("toast.profileRemoved", { name: picked.label }));
       }
     }),
 
@@ -297,7 +306,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const next = current === "tag" ? "domain" : "tag";
       await cfg.update("tree.groupBy", next, vscode.ConfigurationTarget.Workspace);
       void vscode.window.showInformationMessage(
-        `BDD Pilot tree: group by ${next === "tag" ? "@tag" : "domain"}.`,
+        next === "tag" ? tr("toast.treeGroupByTag") : tr("toast.treeGroupByDomain"),
       );
     }),
 
@@ -349,7 +358,7 @@ export function activate(context: vscode.ExtensionContext): void {
     opts?: { debug?: boolean; rawFilter?: string },
   ): Promise<void> {
     if (activeRun && !opts?.debug) {
-      void vscode.window.showWarningMessage("A test run is already in progress.");
+      void vscode.window.showWarningMessage(tr("toast.runInProgress"));
       return;
     }
 
@@ -362,9 +371,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const project = getProjectContext();
     if (!project) {
-      void vscode.window.showErrorMessage(
-        "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
-      );
+      void vscode.window.showErrorMessage(tr("toast.projectNotFound"));
       return;
     }
 
@@ -402,8 +409,8 @@ export function activate(context: vscode.ExtensionContext): void {
       {
         location: vscode.ProgressLocation.Notification,
         title: opts?.debug
-          ? `Debugging tests (${currentStage})`
-          : `Running tests (${currentStage}/${currentMode})`,
+          ? tr("progress.debugging", { stage: currentStage })
+          : tr("progress.running", { stage: currentStage, mode: currentMode }),
         cancellable: !opts?.debug,
       },
       async (progress, token) => {
@@ -435,6 +442,7 @@ export function activate(context: vscode.ExtensionContext): void {
             projectDir: project.projectDir,
             testTarget: project.testTarget,
             debug: opts?.debug,
+            locale: localeService.getLocale(),
             signal: controller.signal,
             totalExpected,
             onProgress,
@@ -503,8 +511,8 @@ export function activate(context: vscode.ExtensionContext): void {
         : top.severity === "warning"
           ? vscode.window.showWarningMessage
           : vscode.window.showInformationMessage;
-    void show(`${top.title} ${top.hint}`, "Show Output").then((choice) => {
-      if (choice === "Show Output") {
+    void show(`${top.title} ${top.hint}`, tr("action.showOutput")).then((choice) => {
+      if (choice === tr("action.showOutput")) {
         output.show(true);
       }
     });
@@ -548,19 +556,17 @@ export function activate(context: vscode.ExtensionContext): void {
     const ambiguous = expandDirectoryAmbiguity(roots, settings.projectPath);
     const items = ambiguous ?? listSelectableProjects(roots);
     if (items.length === 0) {
-      void vscode.window.showWarningMessage(
-        "No .NET test projects found. Add .feature files and a .csproj, or set bddPilot.projectPath.",
-      );
+      void vscode.window.showWarningMessage(tr("toast.noProjectsFound"));
       return undefined;
     }
 
     const picked = await vscode.window.showQuickPick(
       items.map((p) => ({
         label: p.label,
-        description: p.kind === "sln" ? "Solution" : p.projectDir,
+        description: p.kind === "sln" ? tr("quickPick.solution") : p.projectDir,
         project: p,
       })),
-      { placeHolder: "Select test project or solution for BDD Pilot" },
+      { placeHolder: tr("prompt.selectProject") },
     );
     if (!picked) {
       return undefined;
@@ -586,13 +592,11 @@ export function activate(context: vscode.ExtensionContext): void {
     if (readStoredProject(context)) {
       return;
     }
+    const selectProjectLabel = tr("action.selectProject");
     void vscode.window
-      .showInformationMessage(
-        "BDD Pilot found multiple test projects. Select which one to use.",
-        "Select Project",
-      )
+      .showInformationMessage(tr("toast.multiProjectPrompt"), selectProjectLabel)
       .then((choice) => {
-        if (choice === "Select Project") {
+        if (choice === selectProjectLabel) {
           void selectProject();
         }
       });

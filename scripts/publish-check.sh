@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Capa C preflight: PAT present, package builds, VSIX ok, optional Marketplace version peek.
+# Capa C preflight: PAT present, package builds, VSIX ok, Marketplace version compare.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -7,6 +7,8 @@ cd "$ROOT"
 
 # shellcheck disable=SC1091
 source "$ROOT/scripts/load-maintainer-env.sh"
+# shellcheck disable=SC1091
+source "$ROOT/scripts/marketplace-version.sh"
 
 VERSION="$(node -p "require('./package.json').version")"
 
@@ -27,25 +29,22 @@ echo "VSIX OK: bdd-pilot.vsix ($(wc -c < bdd-pilot.vsix | tr -d ' ') bytes)"
 echo ""
 
 echo "-- marketplace (read-only) --"
-if npx @vscode/vsce show anghelll.bdd-pilot --json 2>/dev/null | node -e "
-  let s=''; process.stdin.on('data',d=>s+=d); process.stdin.on('end',()=>{
-    try {
-      const j=JSON.parse(s);
-      const v=j.versions?.[0]?.version ?? j.version ?? 'unknown';
-      console.log('  Marketplace latest   :', v);
-      console.log('  Local package.json   :', process.argv[1]);
-      if (v !== 'unknown' && v !== process.argv[1]) console.log('  → publish will upload', process.argv[1]);
-      else if (v === process.argv[1]) console.log('  → same version already on Marketplace (publish may no-op or fail)');
-    } catch { console.log('  (could not parse vsce show — PAT may lack read or network)'); }
-  });
-" "$VERSION"; then
-  :
+MP_LATEST="$(fetch_marketplace_latest)"
+if [[ -z "$MP_LATEST" ]]; then
+  echo "  (could not read Marketplace version — check PAT/network)"
+elif semver_gt "$VERSION" "$MP_LATEST"; then
+  echo "  Marketplace latest   : $MP_LATEST"
+  echo "  Local package.json   : $VERSION"
+  echo "  → publish OK (local > Marketplace)"
 else
-  echo "  (vsce show skipped — check PAT scopes or network)"
+  echo "  Marketplace latest   : $MP_LATEST"
+  echo "  Local package.json   : $VERSION"
+  echo "  → publish BLOCKED — bump package.json before publish:marketplace"
+  echo "    (override: PUBLISH_FORCE=1 — not recommended)"
 fi
 
 echo ""
-echo "Preflight OK. To publish:"
+echo "Preflight OK (build + PAT). To publish when version is ahead:"
 echo "  npm run publish:marketplace"
 echo ""
 echo "Gate: only run after Capa B dogfood OK and explicit \"publish\" order."

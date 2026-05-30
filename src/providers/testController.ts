@@ -38,6 +38,7 @@ export interface ControllerDeps {
   getDomains: () => DomainGroup[];
   getTagGroups: () => TagGroup[];
   getTreeGroupBy: () => TreeGroupBy;
+  getLocale: () => import("../core/i18n").PilotLocale;
   onResultsApplied?: (summary: UnifiedSummary) => void;
   acquireRunLock(): boolean;
   releaseRunLock(): void;
@@ -232,6 +233,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         projectDir: project.projectDir,
         testTarget: project.testTarget,
         debug,
+        locale: deps.getLocale(),
         signal: signal.signal,
         totalExpected,
         onProgress: (_state: LiveProgressState, event?: TestCompletionEvent) => {

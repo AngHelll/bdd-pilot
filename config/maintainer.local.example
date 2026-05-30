@@ -18,3 +18,6 @@
 #
 # Verify publisher: https://marketplace.visualstudio.com/manage/publishers/anghelll
 VSCE_PAT=
+
+# Optional: allow publish when local version <= Marketplace (NOT recommended)
+# PUBLISH_FORCE=1

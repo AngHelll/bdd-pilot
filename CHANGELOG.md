@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.7] — 2026-05-30
+
+### Added
+- i18n EN/ES — setting `bddPilot.locale` (`auto` | `en` | `es`); status bar, dashboard, CodeLens, command palette (nls), toasts, progress, and stg/prod confirmation dialogs
+
+### Changed
+- Marketplace publish scripts compare local version to Marketplace before `vsce publish`
+
 ## [0.3.6] — 2026-05-30
 
 ### Added

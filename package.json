@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -38,7 +38,7 @@
       "activitybar": [
         {
           "id": "bddPilot",
-          "title": "BDD Pilot",
+          "title": "%bddPilot.viewsContainer.title%",
           "icon": "media/pilot.svg"
         }
       ]
@@ -47,7 +47,7 @@
       "bddPilot": [
         {
           "id": "bddPilot.tests",
-          "name": "Tests",
+          "name": "%bddPilot.view.tests.name%",
           "icon": "media/pilot.svg"
         }
       ]
@@ -55,84 +55,84 @@
     "commands": [
       {
         "command": "bddPilot.refresh",
-        "title": "BDD Pilot: Refresh Tests",
+        "title": "%bddPilot.command.refresh.title%",
         "icon": "$(refresh)"
       },
       {
         "command": "bddPilot.runNode",
-        "title": "BDD Pilot: Run",
+        "title": "%bddPilot.command.runNode.title%",
         "icon": "$(run)"
       },
       {
         "command": "bddPilot.runAll",
-        "title": "BDD Pilot: Run All Tests",
+        "title": "%bddPilot.command.runAll.title%",
         "icon": "$(run-all)"
       },
       {
         "command": "bddPilot.cancel",
-        "title": "BDD Pilot: Cancel Test Run",
+        "title": "%bddPilot.command.cancel.title%",
         "icon": "$(stop)"
       },
       {
         "command": "bddPilot.selectProject",
-        "title": "BDD Pilot: Select Test Project"
+        "title": "%bddPilot.command.selectProject.title%"
       },
       {
         "command": "bddPilot.selectStage",
-        "title": "BDD Pilot: Select Environment (STAGE)"
+        "title": "%bddPilot.command.selectStage.title%"
       },
       {
         "command": "bddPilot.selectMode",
-        "title": "BDD Pilot: Select Parallelism Mode"
+        "title": "%bddPilot.command.selectMode.title%"
       },
       {
         "command": "bddPilot.showOutput",
-        "title": "BDD Pilot: Show Test Output"
+        "title": "%bddPilot.command.showOutput.title%"
       },
       {
         "command": "bddPilot.showDashboard",
-        "title": "BDD Pilot: Show Dashboard",
+        "title": "%bddPilot.command.showDashboard.title%",
         "icon": "$(graph)"
       },
       {
         "command": "bddPilot.searchTests",
-        "title": "BDD Pilot: Search Tests",
+        "title": "%bddPilot.command.searchTests.title%",
         "icon": "$(search)"
       },
       {
         "command": "bddPilot.rerunFailed",
-        "title": "BDD Pilot: Re-run Failed Tests",
+        "title": "%bddPilot.command.rerunFailed.title%",
         "icon": "$(debug-rerun)"
       },
       {
         "command": "bddPilot.runFromCodeLens",
-        "title": "BDD Pilot: Run from CodeLens"
+        "title": "%bddPilot.command.runFromCodeLens.title%"
       },
       {
         "command": "bddPilot.saveProfile",
-        "title": "BDD Pilot: Save Execution Profile",
+        "title": "%bddPilot.command.saveProfile.title%",
         "icon": "$(save)"
       },
       {
         "command": "bddPilot.runProfile",
-        "title": "BDD Pilot: Run Execution Profile",
+        "title": "%bddPilot.command.runProfile.title%",
         "icon": "$(run-above)"
       },
       {
         "command": "bddPilot.cycleTreeGroupBy",
-        "title": "BDD Pilot: Toggle Tree Grouping (Domain / Tag)",
+        "title": "%bddPilot.command.cycleTreeGroupBy.title%",
         "icon": "$(tag)"
       },
       {
         "command": "bddPilot.manageProfiles",
-        "title": "BDD Pilot: Manage Execution Profiles",
+        "title": "%bddPilot.command.manageProfiles.title%",
         "icon": "$(settings-gear)"
       }
     ],
     "submenus": [
       {
         "id": "bddPilot.profilesMenu",
-        "label": "Execution Profiles"
+        "label": "%bddPilot.submenu.profiles.label%"
       }
     ],
     "menus": {
@@ -203,6 +203,21 @@
     "configuration": {
       "title": "BDD Pilot",
       "properties": {
+        "bddPilot.locale": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "es"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "%bddPilot.configuration.locale.enum.auto%",
+            "%bddPilot.configuration.locale.enum.en%",
+            "%bddPilot.configuration.locale.enum.es%"
+          ],
+          "description": "%bddPilot.configuration.locale.description%"
+        },
         "bddPilot.projectPath": {
           "type": "string",
           "default": "",

@@ -7,11 +7,18 @@ cd "$ROOT"
 
 # shellcheck disable=SC1091
 source "$ROOT/scripts/load-maintainer-env.sh"
+# shellcheck disable=SC1091
+source "$ROOT/scripts/marketplace-version.sh"
 
 VERSION="$(node -p "require('./package.json').version")"
 
 echo "== BDD Pilot publish:marketplace (Capa C) =="
 echo "  anghelll.bdd-pilot @ $VERSION"
+echo ""
+
+echo "-- version gate --"
+MP_LATEST="$(fetch_marketplace_latest)"
+assert_publishable_version "$VERSION" "$MP_LATEST"
 echo ""
 
 npm run package
