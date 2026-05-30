@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.2** · **112 unit tests**
+> **Current release: v0.3.3** · **115 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.2** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | **v0.3.3** — diagnostics (timeout, port in use, test host crash) |
+| ✅ Shipped | v0.1.0 → **v0.3.3** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | **v0.3.4** — Marketplace dogfood gate + checklist closure |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -82,7 +82,7 @@ Use before clicking **Publish** on Marketplace:
 #### Product
 - [ ] Install from `.vsix` on clean VS Code (no dev dependencies)
 - [ ] Discover features in a repo with `Features/` **and** nested `.csproj`
-- [ ] Run scenario, outline row (tree + CodeLens), feature, tag, Run All
+- [ ] Run scenario, outline row (tree + CodeLens), feature, tag, Run All *(tag grouping: v0.3.2)*
 - [ ] Partial run leaves prior pass/fail icons on other scenarios
 - [ ] Live progress notification updates during run
 - [ ] Dashboard shows history; profiles submenu separate from dashboard
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [ ] Output channel has no raw secrets on intentional failure
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.1)
+- [x] `CHANGELOG.md` through current version (v0.3.3)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -115,8 +115,8 @@ Use before clicking **Publish** on Marketplace:
 |----------|------|-----------|
 | P1 | Scenarios with `<param>` but **no** Outline table (Theory rows in tree) | ✅ list-tests inference + `Scenarios:` keyword |
 | P1 | Test Explorer result parity with BDD tree (accumulated partial runs) | ✅ shared `OutcomeStore` |
-| P2 | Tree grouped **by tag** (`@smoke` → scenarios) | QA workflows |
-| P2 | More diagnostics (timeout, port in use, test host crash) | Support burden reduction |
+| P2 | Tree grouped **by tag** (`@smoke` → scenarios) | ✅ v0.3.2 |
+| P2 | More diagnostics (timeout, port in use, test host crash) | ✅ v0.3.3 |
 | P3 | Custom stage names | Only if users ask |
 | P3 | Runtime toggles in UI (`HEADLESS_MODE`) | `.env` covers most cases |
 | P4 | Shared `@anghelll/bdd-gherkin-lite` with Guardian | Wait until parsers stabilize |
@@ -127,7 +127,13 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-**v0.3.3** — diagnostics for timeout / port in use / test host crash.
+**v0.3.4** — Marketplace dogfood gate completion; publish sync.
+
+### v0.3.3 — runtime diagnostics (infra)
+
+| Area | Change |
+|------|--------|
+| **Diagnostics** | Test host crash/abort, port in use, execution timeout |
 
 ### v0.3.2 — tree grouped by tag
 

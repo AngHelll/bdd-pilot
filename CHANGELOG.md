@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.3] — 2026-05-30
+
+### Added
+- Diagnostics for test host crash/abort, port already in use, and test execution timeout
+
 ## [0.3.2] — 2026-05-30
 
 ### Added

@@ -265,6 +265,65 @@ const ANALYZERS: Analyzer[] = [
     hint: "Run `playwright install` for the browsers you need, then retry. Check for sandbox/CI restrictions.",
   },
   {
+    code: "TEST_HOST_CRASH",
+    severity: "error",
+    match: (o) =>
+      /Test host process crashed/i.test(o) ||
+      /The active test run was aborted/i.test(o) ||
+      /Test Run Aborted\.?/i.test(o) ||
+      /The test host process is not responding/i.test(o) ||
+      /test host process for the source\(s\).* crashed/i.test(o) ||
+      /Process is terminated due to/i.test(o),
+    title: () => "The .NET test host process crashed or aborted.",
+    detail: (o) => {
+      const reason =
+        /Reason:\s*([^\n]+)/i.exec(o)?.[1] ??
+        /Test host process crashed(?:\s*\(([^)]+)\))?/i.exec(o)?.[1];
+      return reason?.trim();
+    },
+    hint: "Inspect the stack trace above for OOM, native crashes, or unhandled exceptions. Try `dotnet test --blame-crash` or run one scenario to isolate.",
+  },
+  {
+    code: "PORT_IN_USE",
+    severity: "error",
+    match: (o) =>
+      /Address already in use/i.test(o) ||
+      /\bEADDRINUSE\b/.test(o) ||
+      /Only one usage of each socket address/i.test(o) ||
+      /Failed to bind to address/i.test(o) ||
+      (/Unable to start Kestrel/i.test(o) && /address already in use/i.test(o)),
+    title: (o) => {
+      const bindLine = /Failed to bind to address[^\n]*/i.exec(o)?.[0];
+      const bindPorts = bindLine ? [...bindLine.matchAll(/:(\d{2,5})/g)].map((m) => m[1]) : [];
+      const port =
+        bindPorts.length > 0
+          ? bindPorts[bindPorts.length - 1]
+          : (/Address already in use/i.test(o)
+              ? [...o.matchAll(/:(\d{2,5})/g)].map((m) => m[1]).filter((p) => parseInt(p, 10) >= 1024).pop()
+              : undefined);
+      return port ? `Port ${port} is already in use.` : "A required network port is already in use.";
+    },
+    detail: (o) => /Failed to bind to address ([^\s]+)/i.exec(o)?.[1],
+    hint: "Stop the process holding the port (`lsof -i :PORT` on macOS) or change the test app's URL in .env / launchSettings.",
+  },
+  {
+    code: "TEST_TIMEOUT",
+    severity: "error",
+    match: (o) =>
+      /Test run timed out/i.test(o) ||
+      /test run exceeded.*timeout/i.test(o) ||
+      /Test execution timed out/i.test(o) ||
+      /The test execution timed out after/i.test(o) ||
+      (testsExecuted(o) && /System\.TimeoutException/i.test(o)),
+    title: (o) => {
+      const duration =
+        /timed out after (\d+(?:\.\d+)?\s*(?:ms|s|sec|seconds|minutes|minute|min))/i.exec(o)?.[1] ??
+        /exceeded the test run timeout of (\d+(?:\.\d+)?\s*\w+)/i.exec(o)?.[1];
+      return duration ? `Test execution timed out after ${duration}.` : "Test execution timed out.";
+    },
+    hint: "Increase xUnit/Reqnroll timeout settings, or debug the hanging step (API wait, browser, deadlock). Run a single scenario to find the blocker.",
+  },
+  {
     code: "TEST_RUN_FAILED",
     severity: "error",
     match: (o) => {

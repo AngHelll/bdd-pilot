@@ -148,6 +148,41 @@ describe("diagnostics analyzer", () => {
     assert.deepStrictEqual(severities, ["error", "warning", "info"]);
   });
 
+  it("detects test host crash", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "The active test run was aborted. Reason: Test host process crashed",
+      "Test host process for the source(s) /repo/bin/Debug/net8.0/App.dll crashed.",
+    ].join("\n");
+    const found = codes(out);
+    assert.ok(found.includes("TEST_HOST_CRASH"));
+    const d = analyzeDotnetOutput(out).find((x) => x.code === "TEST_HOST_CRASH");
+    assert.match(d!.detail ?? "", /Test host process crashed/i);
+  });
+
+  it("detects port already in use", () => {
+    const out = [
+      "System.Net.Sockets.SocketException (98): Address already in use",
+      "Failed to bind to address http://127.0.0.1:5050: address already in use.",
+    ].join("\n");
+    const d = analyzeDotnetOutput(out).find((x) => x.code === "PORT_IN_USE");
+    assert.ok(d);
+    assert.match(d!.title, /5050/);
+    assert.match(d!.detail ?? "", /127\.0\.0\.1:5050/);
+  });
+
+  it("detects test execution timeout", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "System.TimeoutException : Test execution timed out after 60000 ms",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    const found = codes(out);
+    assert.ok(found.includes("TEST_TIMEOUT"));
+    const d = analyzeDotnetOutput(out).find((x) => x.code === "TEST_TIMEOUT");
+    assert.match(d!.title, /60000 ms/);
+  });
+
   it("returns nothing for clean output", () => {
     assert.deepStrictEqual(analyzeDotnetOutput("Passed!  - Failed: 0, Passed: 10"), []);
   });
