@@ -9,6 +9,9 @@ out-test/
 # Internal docs (not published)
 docs-internal/
 
+# Cursor agent config (local workflow)
+.cursor/
+
 # .NET (samples/minimal-bdd)
 **/bin/
 **/obj/
