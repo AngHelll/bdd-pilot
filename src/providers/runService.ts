@@ -25,6 +25,7 @@ export interface RunRequest {
   mode: ParallelismMode;
   settings: RunnerSettings;
   projectDir: string;
+  testTarget?: string;
   debug?: boolean;
   signal?: AbortSignal;
   onOutput?: (chunk: string) => void;
@@ -121,6 +122,7 @@ export class RunService {
       {
         dotnetPath: req.settings.dotnetPath,
         projectDir: req.projectDir,
+        testTarget: req.testTarget,
         filter,
         stage: req.stage,
         mode: MODE_PROFILES[req.mode],
@@ -164,6 +166,9 @@ export class RunService {
     }
 
     const args = ["test"];
+    if (req.testTarget && /\.(csproj|sln)$/i.test(req.testTarget)) {
+      args.push(req.testTarget);
+    }
     if (filter) {
       args.push("--filter", filter);
     }

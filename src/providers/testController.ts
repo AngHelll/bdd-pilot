@@ -11,8 +11,15 @@ import { estimateTestCount } from "../core/runner/runEstimate";
 import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { RunService } from "./runService";
 
+export interface ProjectContext {
+  projectDir: string;
+  testTarget: string;
+  discoveryRoot: string;
+  label: string;
+}
+
 export interface ControllerDeps {
-  getProjectDir(): string | undefined;
+  getProjectContext(): ProjectContext | undefined;
   getStage(): Stage;
   getMode(): ParallelismMode;
   getSettings(): RunnerSettings;
@@ -60,11 +67,11 @@ export function createManagedController(deps: ControllerDeps): ManagedController
 
   function buildTree(): void {
     controller.items.replace([]);
-    const dir = deps.getProjectDir();
-    if (!dir) {
+    const ctx = deps.getProjectContext();
+    if (!ctx) {
       return;
     }
-    for (const domain of discoverDomains(dir)) {
+    for (const domain of discoverDomains(ctx.discoveryRoot)) {
       const domainItem = controller.createTestItem(`domain:${domain.name}`, domain.name);
       for (const feature of domain.features) {
         const featureUri = vscode.Uri.file(feature.filePath);
@@ -110,12 +117,12 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     debug: boolean,
   ): Promise<void> {
     const run = controller.createTestRun(request);
-    const projectDir = deps.getProjectDir();
+    const project = deps.getProjectContext();
     const scenarioItems = collectScenarioItems(request, controller, itemData);
 
-    if (!projectDir) {
+    if (!project) {
       scenarioItems.forEach((i) =>
-        run.errored(i, new vscode.TestMessage("Project directory not found.")),
+        run.errored(i, new vscode.TestMessage("Test project not found. Select a project in the status bar.")),
       );
       run.end();
       return;
@@ -135,7 +142,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     const targets = buildTargets(scenarioItems, itemData, runningAll);
     const totalExpected = estimateTestCount(
       runningAll ? [{ kind: "all" }] : targets,
-      projectDir,
+      project.discoveryRoot,
     );
     const signal = new AbortController();
     token.onCancellationRequested(() => {
@@ -149,7 +156,8 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         stage: deps.getStage(),
         mode: deps.getMode(),
         settings: deps.getSettings(),
-        projectDir,
+        projectDir: project.projectDir,
+        testTarget: project.testTarget,
         debug,
         signal: signal.signal,
         totalExpected,
@@ -157,7 +165,14 @@ export function createManagedController(deps: ControllerDeps): ManagedController
           if (!event) {
             return;
           }
-          applyLiveTestRunResult(run, scenarioItems, itemData, event, projectDir, deps.runService);
+          applyLiveTestRunResult(
+            run,
+            scenarioItems,
+            itemData,
+            event,
+            project.projectDir,
+            deps.runService,
+          );
         },
         onOutput: (chunk) => {
           deps.output.append(chunk);
@@ -176,7 +191,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         return;
       }
 
-      applyResults(run, scenarioItems, itemData, projectDir, result.summary, deps.runService);
+      applyResults(run, scenarioItems, itemData, project.projectDir, result.summary, deps.runService);
       if (result.summary) {
         deps.onResultsApplied?.(result.summary);
       }

@@ -49,4 +49,12 @@ describe("dotnet test args", () => {
     const p = resolveTrxPath({ ...base });
     assert.strictEqual(p, "/proj/src/Service.Automation/TestResults/run.trx");
   });
+
+  it("includes explicit csproj target when provided", () => {
+    const args = buildArgs({
+      ...base,
+      testTarget: "/proj/src/Service.Automation/Tests.csproj",
+    });
+    assert.strictEqual(args[1], "/proj/src/Service.Automation/Tests.csproj");
+  });
 });

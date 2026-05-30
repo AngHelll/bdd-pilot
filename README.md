@@ -105,7 +105,7 @@ testable and reusable (e.g. a future CLI).
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `bddPilot.projectPath` | `""` | Path to the .NET test project. Empty = auto-detect. |
+| `bddPilot.projectPath` | `""` | Path to test project dir, `.csproj`, or `.sln`. Empty = auto-detect; use status bar **project** picker when multiple exist. |
 | `bddPilot.defaultStage` | `test` | Default `STAGE`. |
 | `bddPilot.defaultMode` | `debug` | Default parallelism mode. |
 | `bddPilot.requireConfirmationForStages` | `["stg","prod"]` | Stages that require confirmation. |

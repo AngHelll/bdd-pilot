@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -72,6 +72,10 @@
         "command": "bddPilot.cancel",
         "title": "BDD Pilot: Cancel Test Run",
         "icon": "$(stop)"
+      },
+      {
+        "command": "bddPilot.selectProject",
+        "title": "BDD Pilot: Select Test Project"
       },
       {
         "command": "bddPilot.selectStage",
@@ -192,7 +196,7 @@
         "bddPilot.projectPath": {
           "type": "string",
           "default": "",
-          "description": "Relative or absolute path to the .NET test project directory. If empty, the extension auto-detects the folder containing the .feature files."
+          "description": "Relative or absolute path to the .NET test project directory, `.csproj`, or `.sln`. If empty, auto-detect; when multiple projects exist, use 'Select Test Project'."
         },
         "bddPilot.defaultStage": {
           "type": "string",

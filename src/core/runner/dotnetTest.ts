@@ -5,6 +5,8 @@ import { ModeProfile, Stage } from "../config/types";
 export interface RunRequest {
   dotnetPath: string;
   projectDir: string;
+  /** Optional `.csproj` or `.sln` path passed to `dotnet test`. */
+  testTarget?: string;
   /** Value for --filter, or undefined to run everything. */
   filter?: string;
   stage: Stage;
@@ -36,7 +38,11 @@ export interface RunCallbacks {
  * Builds the argument vector for `dotnet test`. Kept pure for unit testing.
  */
 export function buildArgs(req: RunRequest): string[] {
-  const args = ["test", "--nologo", "--logger", `trx;LogFileName=${req.trxFileName}`, "--results-directory", req.resultsDir];
+  const args = ["test"];
+  if (req.testTarget && isExplicitTestTarget(req.testTarget)) {
+    args.push(req.testTarget);
+  }
+  args.push("--nologo", "--logger", `trx;LogFileName=${req.trxFileName}`, "--results-directory", req.resultsDir);
 
   if (req.filter && req.filter.trim().length > 0) {
     args.push("--filter", req.filter);
@@ -52,6 +58,11 @@ export function buildArgs(req: RunRequest): string[] {
   );
 
   return args;
+}
+
+function isExplicitTestTarget(target: string): boolean {
+  const lower = target.toLowerCase();
+  return lower.endsWith(".csproj") || lower.endsWith(".sln");
 }
 
 /**

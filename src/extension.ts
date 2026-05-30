@@ -1,7 +1,16 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { ExecutionProfile } from "./core/config/profiles";
-import { resolveProjectDir } from "./core/config/projectLocator";
+import {
+  discoveryRoot,
+  expandDirectoryAmbiguity,
+  listSelectableProjects,
+  resolveProject,
+  ResolvedProject,
+  StoredProjectSelection,
+  toStoredSelection,
+} from "./core/config/projectResolution";
+import { discoverProjectCandidates } from "./core/config/projectLocator";
 import { loadStageEnv } from "./core/config/envFile";
 import {
   ALL_MODES,
@@ -36,10 +45,11 @@ import {
   TestTreeProvider,
   TreeNode,
 } from "./providers/testTreeProvider";
-import { buildRerunFailedFilter, createManagedController } from "./providers/testController";
+import { buildRerunFailedFilter, createManagedController, ProjectContext } from "./providers/testController";
 
 const STAGE_KEY = "bddPilot.stage";
 const MODE_KEY = "bddPilot.mode";
+const PROJECT_KEY = "bddPilot.project";
 const HISTORY_KEY = "bddPilot.runHistory";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -56,7 +66,7 @@ export function activate(context: vscode.ExtensionContext): void {
     context.workspaceState.get<RunHistoryEntry[]>(HISTORY_KEY, []),
   );
 
-  const treeProvider = new TestTreeProvider(() => getProjectDir());
+  const treeProvider = new TestTreeProvider(() => getDiscoveryRoot());
   const treeView = vscode.window.createTreeView("bddPilot.tests", {
     treeDataProvider: treeProvider,
   });
@@ -69,7 +79,7 @@ export function activate(context: vscode.ExtensionContext): void {
   runService.onHistoryChanged(() => persistHistory());
 
   const managed = createManagedController({
-    getProjectDir: () => getProjectDir(),
+    getProjectContext: () => getProjectContext(),
     getStage: () => currentStage,
     getMode: () => currentMode,
     getSettings: () => readSettings(),
@@ -97,12 +107,14 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const refreshUi = () => {
-    statusBar.update(currentStage, currentMode);
+    const ctx = getProjectContext();
+    statusBar.update(currentStage, currentMode, ctx?.label);
     void vscode.commands.executeCommand("setContext", "bddPilot.running", !!activeRun);
   };
 
   refreshAll();
   refreshUi();
+  void maybePromptProjectSelection();
 
   context.subscriptions.push(
     output,
@@ -134,6 +146,8 @@ export function activate(context: vscode.ExtensionContext): void {
         treeProvider.setSearchQuery(query);
       }
     }),
+
+    vscode.commands.registerCommand("bddPilot.selectProject", () => selectProject()),
 
     vscode.commands.registerCommand("bddPilot.selectStage", async () => {
       const picked = await vscode.window.showQuickPick(ALL_STAGES, {
@@ -248,6 +262,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("bddPilot")) {
         refreshAll();
+        refreshUi();
       }
     }),
 
@@ -294,17 +309,25 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const settings = readSettings();
-    const projectDir = getProjectDir();
-    if (!projectDir) {
+    const ctx = getProjectContext();
+    if (!ctx) {
+      if (!(await selectProject())) {
+        return;
+      }
+    }
+    const project = getProjectContext();
+    if (!project) {
       void vscode.window.showErrorMessage(
-        "BDD Pilot: could not locate the .NET test project. Set 'bddPilot.projectPath'.",
+        "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
       );
       return;
     }
 
     const runTargets = opts?.rawFilter ? [] : normalizeTargets(target);
     const totalExpected =
-      opts?.rawFilter || opts?.debug ? undefined : estimateTestCount(runTargets, projectDir);
+      opts?.rawFilter || opts?.debug
+        ? undefined
+        : estimateTestCount(runTargets, project.discoveryRoot);
 
     const controller = new AbortController();
     if (!opts?.debug) {
@@ -317,7 +340,7 @@ export function activate(context: vscode.ExtensionContext): void {
         treeProvider.clearResultsForRunScope(scopeTargets);
       }
 
-      const loadedEnv = loadStageEnv(projectDir, currentStage);
+      const loadedEnv = loadStageEnv(project.projectDir, currentStage);
       if (loadedEnv.loadedFiles.length > 0) {
         const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
         output.appendLine(
@@ -364,7 +387,8 @@ export function activate(context: vscode.ExtensionContext): void {
             stage: currentStage,
             mode: currentMode,
             settings,
-            projectDir,
+            projectDir: project.projectDir,
+            testTarget: project.testTarget,
             debug: opts?.debug,
             signal: controller.signal,
             totalExpected,
@@ -441,10 +465,92 @@ export function activate(context: vscode.ExtensionContext): void {
     });
   }
 
-  function getProjectDir(): string | undefined {
+  function getWorkspaceRoots(): string[] {
+    return (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
+  }
+
+  function readStoredProject(context: vscode.ExtensionContext): StoredProjectSelection | undefined {
+    return context.workspaceState.get<StoredProjectSelection>(PROJECT_KEY);
+  }
+
+  function getResolvedProject(): ResolvedProject | undefined {
     const settings = readSettings();
-    const roots = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
-    return resolveProjectDir(roots, settings.projectPath);
+    const roots = getWorkspaceRoots();
+    return resolveProject(roots, settings.projectPath, readStoredProject(context));
+  }
+
+  function getProjectContext(): ProjectContext | undefined {
+    const project = getResolvedProject();
+    if (!project) {
+      return undefined;
+    }
+    const roots = getWorkspaceRoots();
+    return {
+      projectDir: project.projectDir,
+      testTarget: project.testTarget,
+      discoveryRoot: discoveryRoot(project, roots),
+      label: project.label,
+    };
+  }
+
+  function getDiscoveryRoot(): string | undefined {
+    return getProjectContext()?.discoveryRoot;
+  }
+
+  async function selectProject(): Promise<ResolvedProject | undefined> {
+    const roots = getWorkspaceRoots();
+    const settings = readSettings();
+    const ambiguous = expandDirectoryAmbiguity(roots, settings.projectPath);
+    const items = ambiguous ?? listSelectableProjects(roots);
+    if (items.length === 0) {
+      void vscode.window.showWarningMessage(
+        "No .NET test projects found. Add .feature files and a .csproj, or set bddPilot.projectPath.",
+      );
+      return undefined;
+    }
+
+    const picked = await vscode.window.showQuickPick(
+      items.map((p) => ({
+        label: p.label,
+        description: p.kind === "sln" ? "Solution" : p.projectDir,
+        project: p,
+      })),
+      { placeHolder: "Select test project or solution for BDD Pilot" },
+    );
+    if (!picked) {
+      return undefined;
+    }
+
+    if (!settings.projectPath.trim()) {
+      await context.workspaceState.update(PROJECT_KEY, toStoredSelection(picked.project));
+    }
+    refreshAll();
+    refreshUi();
+    return picked.project;
+  }
+
+  async function maybePromptProjectSelection(): Promise<void> {
+    if (readSettings().projectPath.trim()) {
+      return;
+    }
+    const roots = getWorkspaceRoots();
+    const candidates = discoverProjectCandidates(roots);
+    if (candidates.length <= 1) {
+      return;
+    }
+    if (readStoredProject(context)) {
+      return;
+    }
+    void vscode.window
+      .showInformationMessage(
+        "BDD Pilot found multiple test projects. Select which one to use.",
+        "Select Project",
+      )
+      .then((choice) => {
+        if (choice === "Select Project") {
+          void selectProject();
+        }
+      });
   }
 }
 

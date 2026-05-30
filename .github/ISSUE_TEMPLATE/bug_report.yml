@@ -1,0 +1,56 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please avoid pasting secrets, `.env` contents, or tokens.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What did you expect vs. what you saw?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open workspace with ...
+        2. Run scenario X from ...
+        3. See error in Output channel
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: BDD Pilot version
+      placeholder: e.g. 0.2.4
+    validations:
+      required: true
+  - type: input
+    id: vscode
+    attributes:
+      label: VS Code version
+      placeholder: Help → About
+  - type: input
+    id: dotnet
+    attributes:
+      label: .NET SDK (`dotnet --version`)
+  - type: dropdown
+    id: framework
+    attributes:
+      label: BDD stack
+      options:
+        - Reqnroll + xUnit
+        - SpecFlow + xUnit
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Output (BDD Pilot channel)
+      description: Redact credentials before submitting.
+      render: shell
