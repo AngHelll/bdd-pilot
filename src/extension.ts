@@ -45,6 +45,7 @@ import {
   TagNode,
   TestTreeProvider,
   TreeNode,
+  readTreeGroupBy,
 } from "./providers/testTreeProvider";
 import { listDotnetTests } from "./core/runner/listTests";
 import { OutcomeStore } from "./providers/outcomeStore";
@@ -92,6 +93,8 @@ export function activate(context: vscode.ExtensionContext): void {
     runService,
     outcomeStore,
     getDomains: () => treeProvider.getDomains(),
+    getTagGroups: () => treeProvider.getTagGroups(),
+    getTreeGroupBy: () => readTreeGroupBy(),
     onResultsApplied: (summary: UnifiedSummary) => {
       treeProvider.applyResults(summary);
       managed.refresh();

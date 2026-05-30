@@ -1,8 +1,11 @@
 import * as vscode from "vscode";
 import { ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
+import { TagGroup } from "../core/gherkin/groupByTag";
+import { computeRollup, prependRollup } from "../core/gherkin/outcomeRollup";
 import { FeatureInfo, OutlineExample, ScenarioInfo, DomainGroup } from "../core/gherkin/model";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
+import { TestOutcome } from "../core/results/trxParser";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
 import { DEFAULT_FILTER_MAPPING } from "../core/runner/filterMapping";
@@ -11,6 +14,11 @@ import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgr
 import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { RunService } from "./runService";
 import { OutcomeStore, outcomeDescription } from "./outcomeStore";
+import { TreeGroupBy } from "./testTreeProvider";
+import {
+  TestExplorerItemData,
+  resolveTestExplorerRunTargets,
+} from "./testExplorerRun";
 
 export interface ProjectContext {
   projectDir: string;
@@ -28,17 +36,12 @@ export interface ControllerDeps {
   runService: RunService;
   outcomeStore: OutcomeStore;
   getDomains: () => DomainGroup[];
+  getTagGroups: () => TagGroup[];
+  getTreeGroupBy: () => TreeGroupBy;
   onResultsApplied?: (summary: UnifiedSummary) => void;
   acquireRunLock(): boolean;
   releaseRunLock(): void;
   abortActiveRun(): void;
-}
-
-interface ItemData {
-  kind: "feature" | "scenario" | "outlineRow";
-  feature: FeatureInfo;
-  scenario?: ScenarioInfo;
-  example?: OutlineExample;
 }
 
 export interface ManagedController {
@@ -48,7 +51,7 @@ export interface ManagedController {
 
 export function createManagedController(deps: ControllerDeps): ManagedController {
   const controller = vscode.tests.createTestController("bddPilot.testController", "BDD Pilot");
-  const itemData = new WeakMap<vscode.TestItem, ItemData>();
+  const itemData = new WeakMap<vscode.TestItem, TestExplorerItemData>();
 
   const refresh = () => buildTree();
   controller.refreshHandler = async () => buildTree();
@@ -74,55 +77,97 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     if (!ctx) {
       return;
     }
+    if (deps.getTreeGroupBy() === "tag") {
+      buildTagTree();
+    } else {
+      buildDomainTree();
+    }
+  }
+
+  function buildDomainTree(): void {
     for (const domain of deps.getDomains()) {
       const domainItem = controller.createTestItem(`domain:${domain.name}`, domain.name);
       for (const feature of domain.features) {
-        const featureUri = vscode.Uri.file(feature.filePath);
-        const featureItem = controller.createTestItem(
-          `feature:${feature.filePath}`,
-          feature.name,
-          featureUri,
-        );
-        itemData.set(featureItem, { kind: "feature", feature });
+        const featureItem = addFeatureItem(domainItem, feature);
         for (const scenario of feature.scenarios) {
-          const hasExamples = scenario.examples && scenario.examples.length > 0;
-          const scenarioItem = controller.createTestItem(
-            `scenario:${feature.filePath}:${scenario.line}`,
-            scenario.name,
-            featureUri,
-          );
-          scenarioItem.range = new vscode.Range(scenario.line - 1, 0, scenario.line - 1, 0);
-          itemData.set(scenarioItem, { kind: "scenario", feature, scenario });
-
-          const scenarioOutcomeKey = scenarioKey(feature, scenario);
-          const scenarioDesc = outcomeDescription(deps.outcomeStore.get(scenarioOutcomeKey));
-          if (scenarioDesc) {
-            scenarioItem.description = scenarioDesc;
-          }
-
-          if (hasExamples) {
-            for (const example of scenario.examples ?? []) {
-              const rowItem = controller.createTestItem(
-                `outline:${feature.filePath}:${scenario.line}:${example.rowIndex}`,
-                example.label,
-                featureUri,
-              );
-              const rowKey = outlineRowKey(feature, scenario, example.rowIndex);
-              const rowDesc = outcomeDescription(deps.outcomeStore.get(rowKey));
-              if (rowDesc) {
-                rowItem.description = rowDesc;
-              }
-              itemData.set(rowItem, { kind: "outlineRow", feature, scenario, example });
-              scenarioItem.children.add(rowItem);
-            }
-          }
-
-          featureItem.children.add(scenarioItem);
+          addScenarioItem(featureItem, feature, scenario, false);
         }
-        domainItem.children.add(featureItem);
       }
       controller.items.add(domainItem);
     }
+  }
+
+  function buildTagTree(): void {
+    for (const group of deps.getTagGroups()) {
+      const tagItem = controller.createTestItem(`tag:${group.tag.toLowerCase()}`, `@${group.tag}`);
+      tagItem.description = tagGroupDescription(group, deps.outcomeStore);
+      itemData.set(tagItem, { kind: "tag", tag: group.tag });
+      for (const ref of group.scenarios) {
+        addScenarioItem(tagItem, ref.feature, ref.scenario, true);
+      }
+      controller.items.add(tagItem);
+    }
+  }
+
+  function addFeatureItem(parent: vscode.TestItem, feature: FeatureInfo): vscode.TestItem {
+    const featureUri = vscode.Uri.file(feature.filePath);
+    const featureItem = controller.createTestItem(`feature:${feature.filePath}`, feature.name, featureUri);
+    itemData.set(featureItem, { kind: "feature", feature });
+    parent.children.add(featureItem);
+    return featureItem;
+  }
+
+  function addScenarioItem(
+    parent: vscode.TestItem,
+    feature: FeatureInfo,
+    scenario: ScenarioInfo,
+    underTagGroup: boolean,
+  ): vscode.TestItem {
+    const featureUri = vscode.Uri.file(feature.filePath);
+    const hasExamples = scenario.examples && scenario.examples.length > 0;
+    const scenarioItem = controller.createTestItem(
+      `scenario:${feature.filePath}:${scenario.line}`,
+      scenario.name,
+      featureUri,
+    );
+    scenarioItem.range = new vscode.Range(scenario.line - 1, 0, scenario.line - 1, 0);
+    itemData.set(scenarioItem, { kind: "scenario", feature, scenario });
+
+    const desc = scenarioItemDescription(feature, scenario, deps.outcomeStore, underTagGroup);
+    if (desc) {
+      scenarioItem.description = desc;
+    }
+
+    if (hasExamples) {
+      for (const example of scenario.examples ?? []) {
+        addOutlineRowItem(scenarioItem, feature, scenario, example);
+      }
+    }
+
+    parent.children.add(scenarioItem);
+    return scenarioItem;
+  }
+
+  function addOutlineRowItem(
+    parent: vscode.TestItem,
+    feature: FeatureInfo,
+    scenario: ScenarioInfo,
+    example: OutlineExample,
+  ): vscode.TestItem {
+    const featureUri = vscode.Uri.file(feature.filePath);
+    const rowItem = controller.createTestItem(
+      `outline:${feature.filePath}:${scenario.line}:${example.rowIndex}`,
+      example.label,
+      featureUri,
+    );
+    const rowKey = outlineRowKey(feature, scenario, example.rowIndex);
+    const rowDesc = outcomeDescription(deps.outcomeStore.get(rowKey));
+    if (rowDesc) {
+      rowItem.description = rowDesc;
+    }
+    itemData.set(rowItem, { kind: "outlineRow", feature, scenario, example });
+    parent.children.add(rowItem);
+    return rowItem;
   }
 
   async function runHandler(
@@ -132,7 +177,11 @@ export function createManagedController(deps: ControllerDeps): ManagedController
   ): Promise<void> {
     const run = controller.createTestRun(request);
     const project = deps.getProjectContext();
-    const scenarioItems = collectScenarioItems(request, controller, itemData);
+    const roots = collectRunRoots(request, controller);
+    const scenarioItems = collectRunLeaves(roots, itemData, request.exclude ?? []);
+    const includedRootData = roots
+      .map((item) => itemData.get(item))
+      .filter((data): data is TestExplorerItemData => data !== undefined);
 
     if (!project) {
       scenarioItems.forEach((i) =>
@@ -153,7 +202,10 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     scenarioItems.forEach((i) => run.started(i));
 
     const runningAll = !request.include;
-    const targets = buildTargets(scenarioItems, itemData, runningAll);
+    const leafData = scenarioItems
+      .map((item) => itemData.get(item))
+      .filter((data): data is TestExplorerItemData => data !== undefined);
+    const targets = resolveTestExplorerRunTargets(includedRootData, leafData, runningAll);
     if (!debug) {
       deps.outcomeStore.clearForRunScope(
         runningAll ? [{ kind: "all" }] : targets,
@@ -243,10 +295,9 @@ export function createManagedController(deps: ControllerDeps): ManagedController
   return { controller, refresh };
 }
 
-function collectScenarioItems(
+function collectRunRoots(
   request: vscode.TestRunRequest,
   controller: vscode.TestController,
-  itemData: WeakMap<vscode.TestItem, ItemData>,
 ): vscode.TestItem[] {
   const roots: vscode.TestItem[] = [];
   if (request.include) {
@@ -254,8 +305,15 @@ function collectScenarioItems(
   } else {
     controller.items.forEach((i) => roots.push(i));
   }
+  return roots;
+}
 
-  const excluded = new Set(request.exclude ?? []);
+function collectRunLeaves(
+  roots: vscode.TestItem[],
+  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>,
+  exclude: readonly vscode.TestItem[],
+): vscode.TestItem[] {
+  const excluded = new Set(exclude);
   const leaves: vscode.TestItem[] = [];
   const visit = (item: vscode.TestItem) => {
     if (excluded.has(item)) {
@@ -266,53 +324,68 @@ function collectScenarioItems(
       leaves.push(item);
       return;
     }
-    if (data?.kind === "scenario") {
-      if (item.children.size === 0) {
-        leaves.push(item);
-      }
+    if (data?.kind === "scenario" && item.children.size === 0) {
+      leaves.push(item);
     }
     item.children.forEach(visit);
   };
-  roots.forEach(visit);
+  for (const root of roots) {
+    visit(root);
+  }
   return leaves;
 }
 
-function buildTargets(
-  scenarioItems: vscode.TestItem[],
-  itemData: WeakMap<vscode.TestItem, ItemData>,
-  runningAll: boolean,
-): RunTarget[] {
-  if (runningAll) {
-    return [{ kind: "all" }];
+function scenarioItemDescription(
+  feature: FeatureInfo,
+  scenario: ScenarioInfo,
+  store: OutcomeStore,
+  underTagGroup: boolean,
+): string | undefined {
+  const hasExamples = scenario.examples && scenario.examples.length > 0;
+  if (hasExamples) {
+    return underTagGroup ? feature.name : undefined;
   }
-  const targets: RunTarget[] = [];
-  for (const item of scenarioItems) {
-    const data = itemData.get(item);
-    if (data?.kind === "scenario" && data.scenario) {
-      targets.push({ kind: "scenario", feature: data.feature, scenario: data.scenario });
-    } else if (data?.kind === "outlineRow" && data.scenario && data.example) {
-      targets.push({
-        kind: "outlineRow",
-        feature: data.feature,
-        scenario: data.scenario,
-        example: data.example,
-      });
-    }
+  const outcomeDesc = outcomeDescription(store.get(scenarioKey(feature, scenario)));
+  if (underTagGroup) {
+    return outcomeDesc ? `${feature.name} · ${outcomeDesc}` : feature.name;
   }
-  return targets;
+  return outcomeDesc;
+}
+
+function tagGroupDescription(group: TagGroup, store: OutcomeStore): string {
+  const values = group.scenarios.flatMap((ref) =>
+    collectScenarioOutcomeValues(ref.feature, ref.scenario, store),
+  );
+  const rollup = computeRollup(values);
+  const base = `${group.scenarios.length} scenario${group.scenarios.length === 1 ? "" : "s"}`;
+  return prependRollup(base, rollup);
+}
+
+function collectScenarioOutcomeValues(
+  feature: FeatureInfo,
+  scenario: ScenarioInfo,
+  store: OutcomeStore,
+): Array<TestOutcome | undefined> {
+  if (scenario.examples && scenario.examples.length > 0) {
+    return scenario.examples.map((ex) => store.get(outlineRowKey(feature, scenario, ex.rowIndex)));
+  }
+  return [store.get(scenarioKey(feature, scenario))];
 }
 
 function storeOutcomeForItem(
   store: OutcomeStore,
-  data: ItemData | undefined,
-  outcome: import("../core/results/trxParser").TestOutcome,
+  data: TestExplorerItemData | undefined,
+  outcome: TestOutcome,
   durationMs?: number,
 ): string | undefined {
-  if (!data?.feature || !data.scenario) {
+  if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
+    return undefined;
+  }
+  if (!data.feature || !data.scenario) {
     return undefined;
   }
   const key =
-    data.kind === "outlineRow" && data.example
+    data.kind === "outlineRow"
       ? outlineRowKey(data.feature, data.scenario, data.example.rowIndex)
       : scenarioKey(data.feature, data.scenario);
   store.set(key, outcome, durationMs);
@@ -321,7 +394,7 @@ function storeOutcomeForItem(
 
 function clearDescriptionsForScope(
   scenarioItems: vscode.TestItem[],
-  itemData: WeakMap<vscode.TestItem, ItemData>,
+  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>,
   targets: RunTarget[] | "all",
   domains: DomainGroup[],
 ): void {
@@ -340,11 +413,14 @@ function clearDescriptionsForScope(
   }
   for (const item of scenarioItems) {
     const data = itemData.get(item);
-    if (!data?.feature || !data.scenario) {
+    if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
+      continue;
+    }
+    if (!data.feature || !data.scenario) {
       continue;
     }
     const key =
-      data.kind === "outlineRow" && data.example
+      data.kind === "outlineRow"
         ? outlineRowKey(data.feature, data.scenario, data.example.rowIndex)
         : scenarioKey(data.feature, data.scenario);
     if (scope.has(key)) {
@@ -356,7 +432,7 @@ function clearDescriptionsForScope(
 function applyLiveTestRunResult(
   run: vscode.TestRun,
   scenarioItems: vscode.TestItem[],
-  itemData: WeakMap<vscode.TestItem, ItemData>,
+  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>,
   event: TestCompletionEvent,
   projectDir: string,
   runService: RunService,
@@ -364,12 +440,12 @@ function applyLiveTestRunResult(
 ): void {
   for (const item of scenarioItems) {
     const data = itemData.get(item);
-    const scenarioName = data?.scenario?.name;
-    if (!scenarioName) {
+    if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
       continue;
     }
+    const scenarioName = data.scenario.name;
     const matched =
-      data?.kind === "outlineRow" && data.example
+      data.kind === "outlineRow"
         ? !!findOutlineExampleMatch(event.testName, scenarioName, [data.example])
         : matchesScenario(event.testName, scenarioName);
     if (!matched) {
@@ -394,7 +470,7 @@ function applyLiveTestRunResult(
 function applyResults(
   run: vscode.TestRun,
   scenarioItems: vscode.TestItem[],
-  itemData: WeakMap<vscode.TestItem, ItemData>,
+  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>,
   projectDir: string,
   summary: UnifiedSummary | undefined,
   runService: RunService,
@@ -408,14 +484,17 @@ function applyResults(
 
   for (const item of scenarioItems) {
     const data = itemData.get(item);
-    const scenarioName = data?.scenario?.name;
-    const match = scenarioName
-      ? data?.kind === "outlineRow" && data.example
+    if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
+      run.skipped(item);
+      continue;
+    }
+    const scenarioName = data.scenario.name;
+    const match =
+      data.kind === "outlineRow"
         ? summary.results.find((r) =>
-            findOutlineExampleMatch(r.testName, scenarioName, [data.example!]),
+            findOutlineExampleMatch(r.testName, scenarioName, [data.example]),
           )
-        : summary.results.find((r) => matchesScenario(r.testName, scenarioName))
-      : undefined;
+        : summary.results.find((r) => matchesScenario(r.testName, scenarioName));
     if (!match) {
       run.skipped(item);
       continue;

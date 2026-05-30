@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.6] — 2026-05-30
+
+### Added
+- Test Explorer grouped by `@tag` — follows `bddPilot.tree.groupBy` (`domain` | `tag`); run/debug from tag nodes with `Category=<tag>` filter; roll-up on tag folders
+
 ## [0.3.5] — 2026-05-30
 
 ### Added

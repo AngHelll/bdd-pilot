@@ -103,6 +103,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     return this.allDomains;
   }
 
+  /** Tag groups from full discovery (Test Explorer tag mode; ignores tree search filter). */
+  getTagGroups(): TagGroup[] {
+    return groupByTag(this.allDomains);
+  }
+
   /** Fills missing outline rows from `dotnet test --list-tests` when needed. */
   enrichTheoryRows(listTests: () => Promise<string[]>): Promise<boolean> {
     const needsDiscovery = this.allDomains.some((domain) =>
@@ -457,7 +462,7 @@ interface TreeDisplaySettings {
   durationDisplay: DurationDisplayMode;
 }
 
-function readTreeGroupBy(): TreeGroupBy {
+export function readTreeGroupBy(): TreeGroupBy {
   const raw = vscode.workspace.getConfiguration("bddPilot").get<string>("tree.groupBy", "domain");
   return raw === "tag" ? "tag" : "domain";
 }

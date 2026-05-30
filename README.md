@@ -38,7 +38,7 @@ scenario and show me what failed.”*
 ## Features
 
 ### Discovery & run
-- **Native Test Explorer** (`TestController`): Run and Debug profiles with results
+- **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`)
   mapped back to scenarios, including rich failure messages.
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
@@ -160,7 +160,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.5** (`pilot analyze` CLI for agent/CI log triage; `npm run verify:local` Capa A gate).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.6** (Test Explorer `@tag` grouping parity with BDD tree v0.3.2).
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

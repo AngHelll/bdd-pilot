@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.5** · **120 unit tests**
+> **Current release: v0.3.6** · **126 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.5** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | i18n EN/ES status bar + dashboard *(0.3.0-6 optional)* · watch issues 1–2 weeks post-publish |
+| ✅ Shipped | v0.1.0 → **v0.3.6** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | i18n EN/ES status bar + dashboard *(0.3.0-6 optional)* · watch issues post-publish |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.5)
+- [x] `CHANGELOG.md` through current version (v0.3.6)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -103,9 +103,9 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [ ] Pin Marketplace version to tagged release *(run `vsce publish` for v0.3.5)*
-- [ ] Open “good first issue” for tree-by-tag or i18n gaps
-- [ ] Watch issues 1–2 weeks; patch **0.3.6** if filter/outline regressions
+- [ ] Pin Marketplace version to tagged release *(run `vsce publish` for v0.3.6)*
+- [ ] Open “good first issue” for i18n gaps *(tree/Test Explorer tag parity shipped v0.3.2/v0.3.6)*
+- [ ] Watch issues 1–2 weeks; patch **0.3.7** if filter/outline regressions
 
 ---
 
@@ -116,6 +116,7 @@ Use before clicking **Publish** on Marketplace:
 | P1 | Scenarios with `<param>` but **no** Outline table (Theory rows in tree) | ✅ list-tests inference + `Scenarios:` keyword |
 | P1 | Test Explorer result parity with BDD tree (accumulated partial runs) | ✅ shared `OutcomeStore` |
 | P2 | Tree grouped **by tag** (`@smoke` → scenarios) | ✅ v0.3.2 |
+| P2 | Test Explorer grouped **by tag** (parity with tree) | ✅ v0.3.6 |
 | P2 | More diagnostics (timeout, port in use, test host crash) | ✅ v0.3.3 |
 | P3 | Custom stage names | Only if users ask |
 | P3 | Runtime toggles in UI (`HEADLESS_MODE`) | `.env` covers most cases |
@@ -128,6 +129,12 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v0.3.6 — Test Explorer grouped by tag
+
+| Area | Change |
+|------|--------|
+| **Test Explorer** | Follows `bddPilot.tree.groupBy`; `@tag` → scenarios → outline rows; run from tag node; roll-up on tag folders |
 
 ### v0.3.5 — Marketplace publish sync
 
@@ -276,4 +283,4 @@ src/
 
 ---
 
-*Last updated: v0.3.5 — Marketplace publish sync, dogfood Capa B, pilot analyze CLI (120 unit tests).*
+*Last updated: v0.3.6 — Test Explorer tag grouping parity (126 unit tests).*
