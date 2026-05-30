@@ -335,6 +335,9 @@
     "pilot": "node scripts/pilot-cli.js",
     "dogfood": "bash scripts/dogfood-smoke.sh",
     "verify:local": "bash scripts/verify-local.sh",
+    "publish:check": "bash scripts/publish-check.sh",
+    "publish:marketplace": "bash scripts/publish-marketplace.sh",
+    "guard:secrets": "bash scripts/guard-no-secrets.sh",
     "package": "vsce package --no-dependencies -o bdd-pilot.vsix"
   },
   "devDependencies": {

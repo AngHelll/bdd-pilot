@@ -1,0 +1,20 @@
+# BDD Pilot — maintainer secrets (local only, never commit)
+#
+# Setup:
+#   1. cp config/maintainer.local.example config/maintainer.local
+#   2. Create a Personal Access Token (see below)
+#   3. Paste the token as VSCE_PAT (no quotes needed unless the value contains spaces)
+#
+# Used by: npm run publish:check · npm run publish:marketplace
+# Gitignored: config/maintainer.local
+
+# Azure DevOps PAT with Marketplace → Manage scope
+# Create at: https://dev.azure.com/anghelll/_usersSettings/tokens
+#   (or your publisher org → User settings → Personal access tokens → New Token)
+# Name: bdd-pilot-marketplace
+# Organization: All accessible organizations (or anghelll if listed)
+# Expiration: 90 days (set a calendar reminder to rotate)
+# Scopes: Custom defined → Marketplace → Manage
+#
+# Verify publisher: https://marketplace.visualstudio.com/manage/publishers/anghelll
+VSCE_PAT=

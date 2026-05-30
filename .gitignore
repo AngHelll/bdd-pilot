@@ -9,6 +9,9 @@ out-test/
 # Internal docs (not published)
 docs-internal/
 
+# Maintainer secrets (Marketplace PAT — never commit)
+config/maintainer.local
+
 # Cursor agent config (local workflow)
 .cursor/
 

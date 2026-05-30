@@ -54,3 +54,7 @@ fi
 echo "  Cuando OK: di \"verificado, ship\" o pide más cambios."
 echo "  Git (commit/push/tag): solo con orden explícita."
 echo ""
+echo "  Tras ship docs + Capa B OK:"
+echo "  npm run publish:check        # Capa C preflight (VSCE_PAT en config/maintainer.local)"
+echo "  npm run publish:marketplace  # solo con orden explícita \"publish\""
+echo ""
