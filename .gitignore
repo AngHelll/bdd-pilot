@@ -5,3 +5,8 @@ out-test/
 *.vsix
 .DS_Store
 *.log
+
+# .NET (samples/minimal-bdd)
+**/bin/
+**/obj/
+samples/minimal-bdd/Features/*.feature.cs

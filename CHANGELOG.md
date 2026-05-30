@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.3.0] — 2026-05-30
+
+### Added
+- `samples/minimal-bdd/` — minimal Reqnroll + xUnit project for CI smoke and extension discovery tests
+- CI job `sample-smoke`: `dotnet test` on sample + tag/feature filter checks
+- Unit tests (`sampleSmoke.test.ts`) validating parser, project locator, and filter builder against the sample
+- `npm run dogfood` — automated pre-release smoke script (`scripts/dogfood-smoke.sh`)
+- GitHub issue template for manual release dogfood checklist
+- README Install section and tree preview asset (`media/readme-tree-preview.png`, source SVG in repo)
+
 ## [0.2.7] — 2026-05-29
 
 ### Changed
@@ -74,7 +84,8 @@ _Nothing yet._
 - Test Explorer, CodeLens, dashboard, execution profiles, diagnostics, output sanitizer
 - MIT license; ecosystem link with [BDD Guardian](https://github.com/AngHelll/bdd-guardian)
 
-[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/AngHelll/bdd-pilot/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.7...v0.3.0
 [0.2.7]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/AngHelll/bdd-pilot/compare/v0.2.4...v0.2.5

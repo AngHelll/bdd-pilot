@@ -26,3 +26,21 @@ jobs:
         with:
           name: bdd-pilot-vsix
           path: bdd-pilot.vsix
+
+  sample-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore sample BDD project
+        run: dotnet restore samples/minimal-bdd/MinimalBdd.csproj
+      - name: Build sample BDD project
+        run: dotnet build samples/minimal-bdd/MinimalBdd.csproj --no-restore
+      - name: Run all sample tests
+        run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --verbosity normal
+      - name: Smoke tag filter (Category=smoke)
+        run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "Category=smoke" --verbosity minimal
+      - name: Smoke feature filter (FullyQualifiedName~SmokeFeature)
+        run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "FullyQualifiedName~SmokeFeature" --verbosity minimal

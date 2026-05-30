@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.2.6** · **96 unit tests**
+> **Current release: v0.3.0** · **102 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.2.6** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | **v0.2.7** — docs sync + Marketplace/GitHub Release tag |
+| ✅ Shipped | v0.1.0 → **v0.3.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | **v0.3.1** — dogfood on second repo layout; P1 backlog |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -50,9 +50,9 @@ Must ship before listing. Low risk, high trust.
 | # | Issue title | Scope | Status |
 |---|-------------|-------|--------|
 | **0.2.5-1** | `docs: CHANGELOG + ROADMAP sync for 0.2.x` | `CHANGELOG.md`, this file | ✅ through v0.2.6 |
-| **0.2.5-2** | `release: GitHub Release with .vsix` | Manual / workflow | 🎯 tag **v0.2.7** + `.vsix` (pending) |
+| **0.2.5-2** | `release: GitHub Release with .vsix` | Manual / workflow | ✅ v0.2.7 |
 | **0.2.5-3** | `feat: project and solution selection` | `projectLocator`, settings UI | ✅ shipped v0.2.5 |
-| **0.2.5-4** | `dogfood: checklist death-star + sample layout` | Issue checklist only | 🎯 validate before Marketplace publish |
+| **0.2.5-4** | `dogfood: checklist nested layout + sample layout` | Issue template + `npm run dogfood` | 🎯 manual checklist (automated gate ✅) |
 
 **PR order:** 0.2.5-1 → 0.2.5-3 → 0.2.5-4 (validate) → 0.2.5-2 (tag after merge).
 
@@ -65,10 +65,10 @@ Must ship before listing. Low risk, high trust.
 | # | Issue title | Scope | Done when |
 |---|-------------|-------|-----------|
 | **0.3.0-1** | `community: issue templates + PR template` | `.github/ISSUE_TEMPLATE/` | ✅ bug + feature + PR template |
-| **0.3.0-2** | `ci: sample Reqnroll + xUnit project smoke` | `samples/minimal-bdd/` or separate repo | ❌ not started |
-| **0.3.0-3** | `docs: README marketplace assets` | README, `media/` | ❌ screenshot/GIF pending |
+| **0.3.0-2** | `ci: sample Reqnroll + xUnit project smoke` | `samples/minimal-bdd/` | ✅ shipped (CI + unit smoke) |
+| **0.3.0-3** | `docs: README marketplace assets` | README, `media/` | ✅ Install section + tree preview PNG |
 | **0.3.0-4** | `docs: privacy / data handling statement` | README section | ✅ Security section in README |
-| **0.3.0-5** | `release: Marketplace publish anghelll.bdd-pilot` | `package.json`, vsce | 🎯 in progress (`anghelll`, icon.png, pilot.svg) |
+| **0.3.0-5** | `release: Marketplace publish anghelll.bdd-pilot` | `package.json`, vsce | ✅ v0.2.7 on Marketplace |
 | **0.3.0-6** | `feat(i18n): EN/ES status bar + dashboard` *(optional for 0.3.0)* | Port from Guardian pattern | Core commands readable in ES; can slip to 0.3.1 |
 
 **PR order:** 0.3.0-1 → 0.3.0-2 → 0.3.0-3 + 0.3.0-4 (parallel) → 0.3.0-5 → 0.3.0-6 if time.
@@ -90,16 +90,16 @@ Use before clicking **Publish** on Marketplace:
 - [ ] Output channel has no raw secrets on intentional failure
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.2.6)
-- [ ] GitHub Release for latest tag with `.vsix`
+- [x] `CHANGELOG.md` through current version (v0.3.0)
+- [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
-- [x] Issue templates exist
+- [x] Issue templates exist (bug, feature, **dogfood checklist**)
 - [x] License MIT, publisher `anghelll`, icon + pilot.svg
 - [x] No company-specific references in repo
 
 #### Technical
 - [x] `npm run compile && npm run lint && npm run test:unit` pass in CI
-- [ ] Sample BDD project smoke in CI (0.3.0-2)
+- [x] Sample BDD project smoke in CI (0.3.0-2)
 - [ ] `engines.vscode` matches tested version
 
 #### Post-publish
@@ -127,7 +127,7 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-**v0.2.7** — ROADMAP/README sync; package for Marketplace/GitHub Release.
+**v0.3.1** — dogfood on nested layout; Test Explorer parity; Theory-without-Outline (P1).
 
 ### v0.2.6 — runtime diagnostics
 
@@ -222,7 +222,7 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 ### Phase C — Product *(→ v0.3.0)*
 
 - [x] Issue templates + CHANGELOG discipline
-- [ ] CI sample BDD project
+- [x] CI sample BDD project
 - [ ] Marketplace listing + GitHub release automation *(publish + tag in progress)*
 - [ ] i18n EN/ES *(optional 0.3.0)*
 - [ ] Security audit sanitizer / strict prod mode *(post-0.3.0)*
@@ -248,4 +248,4 @@ src/
 
 ---
 
-*Last updated: v0.2.7 — sync with v0.2.6 ship status, Marketplace checklist, 96 unit tests.*
+*Last updated: v0.3.0 — sample CI, dogfood script, README assets (102 unit tests).*

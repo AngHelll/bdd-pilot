@@ -1,6 +1,7 @@
 .vscode/**
 src/**
 scripts/**
+samples/**
 out/**
 out-test/**
 node_modules/**
@@ -11,3 +12,8 @@ tsconfig*.json
 .eslintrc.json
 **/*.map
 **/*.ts
+media/readme-tree-preview.*
+CHANGELOG.md
+ROADMAP.md
+CONTRIBUTING.md
+config/**

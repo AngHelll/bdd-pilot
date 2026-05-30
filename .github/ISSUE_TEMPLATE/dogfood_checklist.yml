@@ -1,0 +1,68 @@
+name: Release dogfood checklist
+description: Validate BDD Pilot before tagging a Marketplace release (0.2.5-4)
+title: "[dogfood]: v"
+labels: ["release"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Run `npm run dogfood` first (automated gate). Then complete this checklist in a **clean VS Code**
+        window with the extension installed from `.vsix` or Marketplace — not the Extension Development Host.
+
+        Suggested workspaces:
+        - `samples/minimal-bdd/` (minimal layout)
+        - A second repo with nested `.csproj` or solution layout (if available)
+
+  - type: input
+    id: version
+    attributes:
+      label: Version under test
+      placeholder: e.g. 0.3.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_source
+    attributes:
+      label: Install source
+      options:
+        - VSIX (Install from VSIX…)
+        - VS Code Marketplace
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: product
+    attributes:
+      label: Product
+      options:
+        - label: Discover features in tree (domain → feature → scenario)
+        - label: Run scenario from tree; result icon updates
+        - label: Run Scenario Outline row from tree
+        - label: CodeLens Run / Debug on feature, scenario, and Examples row
+        - label: Run by tag (@smoke or equivalent)
+        - label: Run All from tree or command palette
+        - label: Partial run keeps pass/fail icons on out-of-scope scenarios
+        - label: Live progress notification during run
+        - label: Dashboard shows run history
+        - label: Profiles submenu separate from dashboard
+        - label: stg/prod shows confirmation modal
+        - label: Output channel has no raw secrets on intentional failure
+        - label: Select Test Project works when multiple .csproj exist (second repo)
+
+  - type: checkboxes
+    id: layouts
+    attributes:
+      label: Repo layouts tested
+      options:
+        - label: samples/minimal-bdd (Features/ + single .csproj)
+        - label: Second layout (nested .csproj or .sln) — describe below
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / blockers
+      description: Redact secrets. Link issues if something failed.
+      placeholder: |
+        - VS Code 1.9x, BDD Pilot 0.3.0, .NET 8
+        - Blocker: ...

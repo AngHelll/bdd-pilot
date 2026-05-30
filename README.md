@@ -24,6 +24,17 @@ other and can be installed side by side:
 Guardian answers *“where is this step implemented?”* — Pilot answers *“run this
 scenario and show me what failed.”*
 
+![BDD Pilot test tree with CodeLens on a .feature file](./media/readme-tree-preview.png)
+
+## Install
+
+- **VS Code Marketplace:** search **BDD Pilot** (publisher [anghelll](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot)), or run:
+  ```text
+  ext install anghelll.bdd-pilot
+  ```
+- **Manual / pre-release:** download the `.vsix` from [GitHub Releases](https://github.com/AngHelll/bdd-pilot/releases) → Extensions → `…` → **Install from VSIX…**
+- **Try the sample:** open [`samples/minimal-bdd/`](./samples/minimal-bdd/) as the workspace after installing.
+
 ## Features
 
 ### Discovery & run
@@ -133,18 +144,24 @@ duration as `2.3 s (2341 ms)`.
 npm install
 npm run compile      # type-check
 npm run lint
-npm run test:unit    # core unit tests (node:test)
+npm run test:unit    # core unit tests (node:test) + sample smoke
 npm run build        # bundle with esbuild -> dist/extension.js
 npm run package      # produce a .vsix
+npm run dogfood      # automated pre-release smoke (lint, tests, VSIX, sample dotnet test)
 ```
 
 Press `F5` in VS Code to launch the Extension Development Host.
 
+### Sample BDD project
+
+[`samples/minimal-bdd/`](./samples/minimal-bdd/) is a minimal Reqnroll + xUnit project used for CI smoke
+(`dotnet test`) and to validate feature discovery / filter mapping in unit tests. Open that folder as the
+workspace to dogfood BDD Pilot on a clean layout.
+
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current codebase release is **v0.2.6** (Phase A
-complete; runtime diagnostics). **Next up:** **v0.2.7** Marketplace/GitHub Release,
-then Phase C (CI sample project, README screenshot, i18n). Works alongside
+See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.0** (sample CI smoke, Marketplace assets).
+Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 
 ## Contributing
