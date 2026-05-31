@@ -32,6 +32,7 @@ import {
 } from "./core/runner/liveProgress";
 import { estimateTestCount } from "./core/runner/runEstimate";
 import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
+import { buildAiFailureContext } from "./core/diagnostics/aiFailureContext";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardPanel } from "./providers/dashboardPanel";
 import { LocaleService } from "./providers/localeService";
@@ -161,6 +162,45 @@ export function activate(context: vscode.ExtensionContext): void {
   refreshUi();
   void maybePromptProjectSelection();
 
+  const readAiSettings = (): { enabled: boolean; contextMaxOutputLines: number } => {
+    const cfg = vscode.workspace.getConfiguration("bddPilot");
+    return {
+      enabled: cfg.get<boolean>("ai.enabled", true),
+      contextMaxOutputLines: Math.max(1, cfg.get<number>("ai.contextMaxOutputLines", 80)),
+    };
+  };
+
+  const copyFailureContextForAi = async (): Promise<void> => {
+    const snapshot = runService.getLastFailedRunSnapshot();
+    if (!snapshot) {
+      void vscode.window.showInformationMessage(tr("toast.noFailureContext"));
+      return;
+    }
+
+    const sensitiveStages = new Set<Stage>(["stg", "prod"]);
+    if (sensitiveStages.has(snapshot.stage as Stage)) {
+      const copyAnyway = tr("action.copyAnyway");
+      const choice = await vscode.window.showWarningMessage(
+        tr("toast.failureContextProdWarning"),
+        { modal: true },
+        copyAnyway,
+      );
+      if (choice !== copyAnyway) {
+        return;
+      }
+    }
+
+    const ai = readAiSettings();
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const markdown = buildAiFailureContext(snapshot, {
+      maxOutputLines: ai.contextMaxOutputLines,
+      extensionVersion: context.extension.packageJSON.version,
+      workspaceRoot,
+    });
+    await vscode.env.clipboard.writeText(markdown);
+    void vscode.window.showInformationMessage(tr("toast.failureContextCopied"));
+  };
+
   context.subscriptions.push(
     output,
     localeService,
@@ -172,6 +212,14 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("bddPilot.refresh", () => refreshAll()),
 
     vscode.commands.registerCommand("bddPilot.showOutput", () => output.show(true)),
+
+    ...(readAiSettings().enabled
+      ? [
+          vscode.commands.registerCommand("bddPilot.copyFailureContextForAi", () =>
+            copyFailureContextForAi(),
+          ),
+        ]
+      : []),
 
     vscode.commands.registerCommand("bddPilot.showDashboard", () => {
       const history = runService.getHistory();
@@ -466,7 +514,7 @@ export function activate(context: vscode.ExtensionContext): void {
               `[bdd-pilot] Results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
             );
           }
-          if (result.exitCode !== 0) {
+          if (result.exitCode !== 0 || (result.summary?.failed ?? 0) > 0) {
             reportDiagnostics(result.outputBuffer);
           }
           persistHistory();
@@ -511,9 +559,15 @@ export function activate(context: vscode.ExtensionContext): void {
         : top.severity === "warning"
           ? vscode.window.showWarningMessage
           : vscode.window.showInformationMessage;
-    void show(`${top.title} ${top.hint}`, tr("action.showOutput")).then((choice) => {
+    const actions = [tr("action.showOutput")];
+    if (readAiSettings().enabled && runService.getLastFailedRunSnapshot()) {
+      actions.push(tr("action.copyForAi"));
+    }
+    void show(`${top.title} ${top.hint}`, ...actions).then((choice) => {
       if (choice === tr("action.showOutput")) {
         output.show(true);
+      } else if (choice === tr("action.copyForAi")) {
+        void copyFailureContextForAi();
       }
     });
   }

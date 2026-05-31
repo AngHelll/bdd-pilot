@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace 
 
 _Nothing yet._
 
+## [0.4.0] — 2026-05-30
+
+### Added
+- **AI-ready failure context** — command `BDD Pilot: Copy Failure Context for AI` copies structured markdown (run metadata, failed scenarios, analyzer diagnostics, sanitized output tail, evidence paths) to the clipboard; optional **Copy for AI** action on post-failure diagnostic toasts; settings `bddPilot.ai.enabled` and `bddPilot.ai.contextMaxOutputLines`
+
 ## [0.3.9] — 2026-05-30
 
 ### Changed

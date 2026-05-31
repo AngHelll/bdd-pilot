@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.3.9** · **144 unit tests**
+> **Current release: v0.4.0** · **152 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.3.9** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| ✅ Shipped | v0.1.0 → **v0.4.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
 | 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 optional (pospuesto) |
 | 🏁 Goal | **v1.0.0** — stable public release |
 
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.3.9)
+- [x] `CHANGELOG.md` through current version (v0.4.0)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -103,9 +103,9 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [x] Pin Marketplace version to tagged release *(v0.3.9 publish)*
+- [x] Pin Marketplace version to tagged release *(v0.4.0 publish)*
 - [ ] Open “good first issue” for Capa C i18n extras *(tree roll-ups, setting descriptions)*
-- [ ] Watch issues 1–2 weeks; patch **0.3.9** if filter/outline regressions
+- [ ] Watch issues 1–2 weeks; patch **0.4.0** if filter/outline regressions
 
 ---
 
@@ -129,6 +129,12 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v0.4.0 — AI-ready failure context
+
+| Area | Change |
+|------|--------|
+| **AI context** | Command **Copy Failure Context for AI** — structured markdown (run metadata, failed scenarios, analyzer diagnostics, sanitized output tail, evidence paths) to clipboard; optional **Copy for AI** on post-failure diagnostic toasts; settings `bddPilot.ai.enabled`, `bddPilot.ai.contextMaxOutputLines` |
 
 ### v0.3.9 — Test Explorer visual parity
 
@@ -302,4 +308,4 @@ src/
 
 ---
 
-*Last updated: v0.3.9 — Test Explorer visual parity (144 unit tests).*
+*Last updated: v0.4.0 — AI-ready failure context (152 unit tests).*

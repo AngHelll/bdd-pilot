@@ -68,6 +68,8 @@ scenario and show me what failed.”*
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
   errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, etc.
+- **AI-ready failure context**: copy structured markdown of the last failed run to the
+  clipboard for Cursor/Copilot (no embedded LLM — review before sharing externally).
 
 ## Security
 

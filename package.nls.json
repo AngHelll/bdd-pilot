@@ -18,6 +18,7 @@
   "bddPilot.command.runProfile.title": "BDD Pilot: Run Execution Profile",
   "bddPilot.command.cycleTreeGroupBy.title": "BDD Pilot: Toggle Tree Grouping (Domain / Tag)",
   "bddPilot.command.manageProfiles.title": "BDD Pilot: Manage Execution Profiles",
+  "bddPilot.command.copyFailureContextForAi.title": "BDD Pilot: Copy Failure Context for AI",
   "bddPilot.configuration.locale.description": "Language for BDD Pilot status bar, dashboard, CodeLens, and dialogs. Auto follows VS Code UI language.",
   "bddPilot.configuration.locale.enum.auto": "Follow VS Code UI language (Spanish UI → Spanish).",
   "bddPilot.configuration.locale.enum.en": "English.",

@@ -55,6 +55,10 @@ const EN = {
   "toast.noProjectsFound":
     "No .NET test projects found. Add .feature files and a .csproj, or set bddPilot.projectPath.",
   "toast.multiProjectPrompt": "BDD Pilot found multiple test projects. Select which one to use.",
+  "toast.noFailureContext": "No failed run to copy. Run tests first and wait for failures.",
+  "toast.failureContextCopied": "Failure context copied to clipboard.",
+  "toast.failureContextProdWarning":
+    "This context may include staging or production environment details. Review before sharing with external AI.",
 
   "prompt.searchFilter": "Filter by name, tag (@Smoke), or path…",
   "prompt.searchClear": "Leave empty to clear the filter",
@@ -79,6 +83,8 @@ const EN = {
   "action.debug": "Debug",
   "action.selectProject": "Select Project",
   "action.showOutput": "Show Output",
+  "action.copyForAi": "Copy for AI",
+  "action.copyAnyway": "Copy anyway",
 
   "quickPick.solution": "Solution",
 
@@ -146,6 +152,11 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.noProjectsFound":
     "No se encontraron proyectos .NET de tests. Añade archivos .feature y un .csproj, o configura bddPilot.projectPath.",
   "toast.multiProjectPrompt": "BDD Pilot encontró varios proyectos de tests. Elige cuál usar.",
+  "toast.noFailureContext":
+    "No hay ejecución fallida para copiar. Ejecuta tests y espera a que fallen.",
+  "toast.failureContextCopied": "Contexto de fallo copiado al portapapeles.",
+  "toast.failureContextProdWarning":
+    "Este contexto puede incluir detalles de entorno staging o producción. Revísalo antes de compartirlo con IA externa.",
 
   "prompt.searchFilter": "Filtrar por nombre, tag (@Smoke) o ruta…",
   "prompt.searchClear": "Deja vacío para quitar el filtro",
@@ -170,6 +181,8 @@ const ES: Record<keyof typeof EN, string> = {
   "action.debug": "Depurar",
   "action.selectProject": "Seleccionar proyecto",
   "action.showOutput": "Mostrar salida",
+  "action.copyForAi": "Copiar para IA",
+  "action.copyAnyway": "Copiar de todos modos",
 
   "quickPick.solution": "Solución",
 

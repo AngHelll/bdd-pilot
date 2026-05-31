@@ -1,4 +1,9 @@
+import * as path from "path";
 import * as vscode from "vscode";
+import {
+  formatRunTargetScopeLabels,
+  LastRunSnapshot,
+} from "../core/diagnostics/aiFailureContext";
 import { loadStageEnv } from "../core/config/envFile";
 import { MODE_PROFILES, ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
@@ -57,6 +62,7 @@ export class RunService {
   private history: RunHistoryEntry[] = [];
   private lastFailedTargets: RunTarget[] = [];
   private lastFailedFilter: string | undefined;
+  private lastFailedRunSnapshot: LastRunSnapshot | undefined;
   private runStartedAt = 0;
 
   constructor(loadPersisted?: () => RunHistoryEntry[]) {
@@ -75,6 +81,10 @@ export class RunService {
 
   getLastFailedTargets(): RunTarget[] {
     return [...this.lastFailedTargets];
+  }
+
+  getLastFailedRunSnapshot(): LastRunSnapshot | undefined {
+    return this.lastFailedRunSnapshot;
   }
 
   setHistory(entries: RunHistoryEntry[]): void {
@@ -154,6 +164,7 @@ export class RunService {
       this.history = trimHistory(this.history, HISTORY_MAX);
       this._onHistory.fire(this.history);
     }
+    this.updateFailedRunSnapshot(req, filter, result, summary, buffer, historyEntry);
 
     return {
       exitCode: result.exitCode,
@@ -302,6 +313,61 @@ export class RunService {
       );
     }
     return msg;
+  }
+
+  private updateFailedRunSnapshot(
+    req: RunRequest,
+    filter: string | undefined,
+    result: { exitCode: number | null; canceled: boolean; trxPath: string },
+    summary: UnifiedSummary | undefined,
+    outputBuffer: string,
+    historyEntry?: RunHistoryEntry,
+  ): void {
+    if (result.canceled || !summary) {
+      return;
+    }
+    if (result.exitCode === 0 && summary.failed === 0) {
+      this.lastFailedRunSnapshot = undefined;
+      return;
+    }
+
+    const failedScenarios =
+      historyEntry?.scenarios
+        .filter((s) => s.outcome === "failed")
+        .map((s) => ({
+          featurePath: s.featurePath,
+          scenarioName: s.scenarioName,
+          errorMessage: s.errorMessage,
+        })) ?? [];
+
+    const evidence = findRecentEvidence(req.projectDir, this.runStartedAt - 5000).map((e) => ({
+      kind: e.kind,
+      path: e.absolutePath,
+    }));
+
+    this.lastFailedRunSnapshot = {
+      timestamp: Date.now(),
+      stage: req.stage,
+      mode: req.mode,
+      filter,
+      scopeLabels: formatRunTargetScopeLabels(req.targets),
+      projectDir: req.projectDir,
+      testTarget: req.testTarget,
+      exitCode: result.exitCode,
+      summary: {
+        passed: summary.passed,
+        failed: summary.failed,
+        skipped: summary.skipped,
+        total: summary.total,
+        source: summary.source,
+      },
+      outputForAnalysis: outputBuffer,
+      failedScenarios,
+      evidence,
+      trxPath: result.trxPath
+        ? path.relative(req.projectDir, result.trxPath).split(path.sep).join("/")
+        : undefined,
+    };
   }
 }
 
