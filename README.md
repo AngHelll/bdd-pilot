@@ -33,7 +33,17 @@ other and can be installed side by side:
 Guardian answers *“where is this step implemented?”* — Pilot answers *“run this
 scenario and show me what failed.”*
 
-![BDD Pilot test tree with CodeLens on a .feature file](./media/readme-tree-preview.png)
+## Screenshots
+
+**Run & diagnose from the editor** — domain tree, CodeLens, step outcomes, failure
+hover, diagnostics, and AI-ready context:
+
+![BDD Pilot: tree, CodeLens, failure hover, diagnostics, Copy for AI](./media/readme-editor-workflow.png)
+
+**Dashboard & @tag grouping** — run history, flaky scenarios, tag tree, and pending-step
+toast with **Copy for AI**:
+
+![BDD Pilot: dashboard, @tag tree, flaky scenarios, Copy for AI](./media/readme-dashboard.png)
 
 ## Install
 

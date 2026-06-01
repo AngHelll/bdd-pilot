@@ -14,6 +14,7 @@ tsconfig*.json
 .eslintrc.json
 **/*.map
 **/*.ts
+media/readme-*.png
 media/readme-tree-preview.*
 CHANGELOG.md
 ROADMAP.md
