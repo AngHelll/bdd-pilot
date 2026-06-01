@@ -2,12 +2,19 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { discoverDomains } from "../core/gherkin/discovery";
 import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
+import { PilotLocale } from "../core/i18n";
 import {
   computeRollup,
   formatRollupDescription,
+  formatRollupDescriptionLocalized,
   prependRollup,
   rollupSeverity,
 } from "../core/gherkin/outcomeRollup";
+import {
+  formatOutcomeForTooltip,
+  prependFailedOutcomeToDescription,
+  truncateErrorSnippet,
+} from "../core/results/outcomeFeedback";
 import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
 import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
@@ -15,6 +22,7 @@ import {
   DEFAULT_TAG_DISPLAY,
   TagDisplayMode,
   buildFeatureDescription,
+  buildDomainTooltipMarkdown,
   buildFeatureTooltipMarkdown,
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
@@ -23,7 +31,6 @@ import {
   DEFAULT_DURATION_DISPLAY,
   DurationDisplayMode,
   formatDuration,
-  formatDurationTooltip,
 } from "../core/results/durationFormat";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import {
@@ -87,6 +94,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   constructor(
     private projectDir: () => string | undefined,
     private readonly outcomeStore: OutcomeStore,
+    private readonly getLocale: () => PilotLocale = () => "en",
   ) {}
 
   setProjectDir(): void {
@@ -164,14 +172,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
               );
               if (match) {
                 const key = outlineRowKey(feature, scenario, example.rowIndex);
-                this.outcomeStore.set(key, match.outcome, match.durationMs);
+                this.outcomeStore.set(key, match.outcome, match.durationMs, match.errorMessage);
               }
             }
           } else {
             const match = summary.results.find((r) => matchesScenario(r.testName, scenario.name));
             if (match) {
               const key = scenarioKey(feature, scenario);
-              this.outcomeStore.set(key, match.outcome, match.durationMs);
+              this.outcomeStore.set(key, match.outcome, match.durationMs, match.errorMessage);
             }
           }
         }
@@ -305,6 +313,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   private domainItem(node: DomainNode): vscode.TreeItem {
+    const locale = this.getLocale();
     const scenarioCount = node.group.features.reduce((n, f) => n + f.scenarios.length, 0);
     const rollup = this.rollupFeatureOutcomes(node.group.features);
     const base = `${node.group.features.length} features · ${scenarioCount} scenarios`;
@@ -312,6 +321,17 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     item.description = prependRollup(base, rollup);
     item.iconPath = containerIcon("folder", rollup);
     item.contextValue = "bddRunnableDomain";
+    const rollupText = formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup);
+    const tooltip = new vscode.MarkdownString(
+      buildDomainTooltipMarkdown(
+        node.group.name,
+        node.group.features.length,
+        scenarioCount,
+        rollupText,
+      ),
+    );
+    tooltip.isTrusted = false;
+    item.tooltip = tooltip;
     return item;
   }
 
@@ -344,11 +364,13 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   private scenarioItem(node: ScenarioNode, display: TreeDisplaySettings): vscode.TreeItem {
+    const locale = this.getLocale();
     const hasExamples = !!node.scenario.examples && node.scenario.examples.length > 0;
     const rollup = hasExamples ? this.rollupScenarioOutcomes(node.feature, node.scenario) : undefined;
     const key = scenarioKey(node.feature, node.scenario);
     const outcome = hasExamples ? rollupToOutcome(rollup) : this.outcomeStore.get(key);
     const durationMs = hasExamples ? undefined : this.outcomeStore.getDuration(key);
+    const errorMessage = hasExamples ? undefined : this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const item = new vscode.TreeItem(
@@ -356,29 +378,42 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       hasExamples ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
     );
     const featureHint = node.underTagGroup ? node.feature.name : undefined;
-    const base = buildScenarioDescription(
+    let base = buildScenarioDescription(
       tags,
       display.tagDisplay,
       display.compactTagLimit,
       formatDurationLabel(durationMs, display.durationDisplay),
       featureHint,
     );
+    if (!hasExamples) {
+      base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
+    }
     item.description = rollup && rollup.withResults > 0 ? prependRollup(base, rollup) : base;
 
+    const rollupText = rollup
+      ? formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup)
+      : undefined;
     const tooltip = new vscode.MarkdownString(
-      buildScenarioTooltipMarkdown({
-        scenarioName: node.scenario.name,
-        featureName: node.feature.name,
-        fileName: path.basename(node.feature.filePath),
-        line: node.scenario.line,
-        featureTags: node.feature.tags,
-        scenarioTags: node.scenario.tags,
-        isOutline: node.scenario.isOutline,
-        outcome: outcome,
-        durationMs,
-        exampleCount: node.scenario.examples?.length,
-        rollupSummary: rollup ? formatRollupDescription(rollup) : undefined,
-      }),
+      buildScenarioTooltipMarkdown(
+        {
+          scenarioName: node.scenario.name,
+          featureName: node.feature.name,
+          fileName: path.basename(node.feature.filePath),
+          line: node.scenario.line,
+          featureTags: node.feature.tags,
+          scenarioTags: node.scenario.tags,
+          isOutline: node.scenario.isOutline,
+          outcomeLabel: outcome ? formatOutcomeForTooltip(outcome, locale) : undefined,
+          durationMs,
+          exampleCount: node.scenario.examples?.length,
+          rollupSummary: rollupText,
+          errorSnippet:
+            outcome === "failed" && errorMessage
+              ? truncateErrorSnippet(errorMessage)
+              : undefined,
+        },
+        locale,
+      ),
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
@@ -397,30 +432,43 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   private outlineRowItem(node: OutlineRowNode, display: TreeDisplaySettings): vscode.TreeItem {
+    const locale = this.getLocale();
     const key = outlineRowKey(node.feature, node.scenario, node.example.rowIndex);
     const outcome = this.outcomeStore.get(key);
     const durationMs = this.outcomeStore.getDuration(key);
+    const errorMessage = this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const item = new vscode.TreeItem(node.example.label, vscode.TreeItemCollapsibleState.None);
-    item.description = buildScenarioDescription(
+    let base = buildScenarioDescription(
       tags,
       display.tagDisplay,
       display.compactTagLimit,
       formatDurationLabel(durationMs, display.durationDisplay),
     );
+    base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
+    item.description = base;
 
     const tooltip = new vscode.MarkdownString(
-      [
-        `**${node.scenario.name}**`,
-        "",
-        `Example row: \`${node.example.label}\``,
-        "",
-        `Feature: ${node.feature.name}`,
-        `File: \`${path.basename(node.feature.filePath)}\` · line ${node.scenario.line}`,
-        outcome ? `\nLast run: **${outcome}**` : "",
-        durationMs !== undefined ? `\n${formatDurationTooltip(durationMs)}` : "",
-      ].join("\n"),
+      buildScenarioTooltipMarkdown(
+        {
+          scenarioName: node.scenario.name,
+          featureName: node.feature.name,
+          fileName: path.basename(node.feature.filePath),
+          line: node.scenario.line,
+          featureTags: node.feature.tags,
+          scenarioTags: node.scenario.tags,
+          isOutline: true,
+          exampleRowLabel: node.example.label,
+          outcomeLabel: outcome ? formatOutcomeForTooltip(outcome, locale) : undefined,
+          durationMs,
+          errorSnippet:
+            outcome === "failed" && errorMessage
+              ? truncateErrorSnippet(errorMessage)
+              : undefined,
+        },
+        locale,
+      ),
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;

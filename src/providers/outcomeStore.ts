@@ -1,4 +1,5 @@
 import { DomainGroup } from "../core/gherkin/model";
+import { sanitizeErrorForStore } from "../core/results/outcomeFeedback";
 import { collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { TestOutcome } from "../core/results/trxParser";
@@ -7,11 +8,22 @@ import { TestOutcome } from "../core/results/trxParser";
 export class OutcomeStore {
   private outcomes = new Map<string, TestOutcome>();
   private durations = new Map<string, number>();
+  private errors = new Map<string, string>();
 
-  set(key: string, outcome: TestOutcome, durationMs?: number): void {
+  set(key: string, outcome: TestOutcome, durationMs?: number, errorMessage?: string): void {
     this.outcomes.set(key, outcome);
     if (durationMs !== undefined) {
       this.durations.set(key, durationMs);
+    }
+    if (errorMessage !== undefined) {
+      const clean = sanitizeErrorForStore(errorMessage);
+      if (clean) {
+        this.errors.set(key, clean);
+      } else {
+        this.errors.delete(key);
+      }
+    } else if (outcome !== "failed") {
+      this.errors.delete(key);
     }
   }
 
@@ -23,9 +35,14 @@ export class OutcomeStore {
     return this.durations.get(key);
   }
 
+  getErrorMessage(key: string): string | undefined {
+    return this.errors.get(key);
+  }
+
   clearAll(): void {
     this.outcomes.clear();
     this.durations.clear();
+    this.errors.clear();
   }
 
   clearForRunScope(targets: RunTarget[], domains: DomainGroup[]): void {
@@ -40,6 +57,7 @@ export class OutcomeStore {
     for (const key of scope) {
       this.outcomes.delete(key);
       this.durations.delete(key);
+      this.errors.delete(key);
     }
   }
 }

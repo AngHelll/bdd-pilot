@@ -1,3 +1,4 @@
+import { PilotLocale, t } from "../i18n";
 import { formatDurationTooltip } from "../results/durationFormat";
 
 /** How tags appear in the tree view description (muted text to the right of the label). */
@@ -72,14 +73,18 @@ export interface ScenarioTooltipParts {
   featureTags: readonly string[];
   scenarioTags: readonly string[];
   isOutline: boolean;
-  outcome?: string;
+  /** Localized outcome label (e.g. passed / fallido). */
+  outcomeLabel?: string;
   durationMs?: number;
   exampleCount?: number;
   rollupSummary?: string;
+  /** Sanitized, truncated error for failed runs. */
+  errorSnippet?: string;
+  exampleRowLabel?: string;
 }
 
 /** Multi-line tooltip content (Markdown). Full tag lists live here, not in the label. */
-export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts): string {
+export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts, locale: PilotLocale): string {
   const lines: string[] = [`**${parts.scenarioName}**`, ""];
 
   if (parts.isOutline) {
@@ -99,19 +104,44 @@ export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts): strin
     lines.push("", `Scenario tags: ${formatTagsMarkdown(parts.scenarioTags)}`);
   }
 
-  if (parts.outcome || parts.durationMs !== undefined || parts.rollupSummary) {
+  if (parts.exampleRowLabel) {
+    lines.push("", `Example row: \`${parts.exampleRowLabel}\``);
+  }
+
+  if (parts.outcomeLabel || parts.durationMs !== undefined || parts.rollupSummary || parts.errorSnippet) {
     lines.push("");
     if (parts.rollupSummary) {
       lines.push(`Results: ${parts.rollupSummary}`);
     }
-    if (parts.outcome) {
-      lines.push(`Last run: **${parts.outcome}**`);
+    if (parts.outcomeLabel) {
+      lines.push(`Last run: **${parts.outcomeLabel}**`);
+    }
+    if (parts.errorSnippet) {
+      lines.push("", t(locale, "tooltip.errorLine", { snippet: parts.errorSnippet }));
     }
     if (parts.durationMs !== undefined) {
       lines.push(formatDurationTooltip(parts.durationMs));
     }
   }
 
+  return lines.join("\n");
+}
+
+export function buildDomainTooltipMarkdown(
+  domainName: string,
+  featureCount: number,
+  scenarioCount: number,
+  rollupSummary?: string,
+): string {
+  const lines = [
+    `**${domainName}**`,
+    "",
+    featureCount === 1 ? "1 feature" : `${featureCount} features`,
+    scenarioCount === 1 ? "1 scenario" : `${scenarioCount} scenarios`,
+  ];
+  if (rollupSummary) {
+    lines.push("", `Last run: ${rollupSummary}`);
+  }
   return lines.join("\n");
 }
 

@@ -34,7 +34,7 @@ describe("OutcomeStore", () => {
   it("clears only in-scope keys for partial runs", () => {
     const store = new OutcomeStore();
     store.set("/x/Sample.feature::2::One", "passed");
-    store.set("/x/Sample.feature::5::Many::row0", "failed");
+    store.set("/x/Sample.feature::5::Many::row0", "failed", undefined, "assertion failed");
     store.set("/x/Sample.feature::5::Many::row1", "passed");
 
     store.clearForRunScope(
@@ -44,7 +44,16 @@ describe("OutcomeStore", () => {
 
     assert.strictEqual(store.get("/x/Sample.feature::2::One"), undefined);
     assert.strictEqual(store.get("/x/Sample.feature::5::Many::row0"), "failed");
+    assert.strictEqual(store.getErrorMessage("/x/Sample.feature::5::Many::row0"), "assertion failed");
     assert.strictEqual(store.get("/x/Sample.feature::5::Many::row1"), "passed");
+  });
+
+  it("stores sanitized error messages and clears on clearAll", () => {
+    const store = new OutcomeStore();
+    store.set("k", "failed", 100, "password=secret");
+    assert.match(store.getErrorMessage("k")!, /REDACTED/);
+    store.clearAll();
+    assert.strictEqual(store.getErrorMessage("k"), undefined);
   });
 
   it("collectOutcomeKeysForTargets matches store keys", () => {

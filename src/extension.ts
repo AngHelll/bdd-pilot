@@ -77,7 +77,11 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const outcomeStore = new OutcomeStore();
-  const treeProvider = new TestTreeProvider(() => getDiscoveryRoot(), outcomeStore);
+  const treeProvider = new TestTreeProvider(
+    () => getDiscoveryRoot(),
+    outcomeStore,
+    () => localeService.getLocale(),
+  );
   const treeView = vscode.window.createTreeView("bddPilot.tests", {
     treeDataProvider: treeProvider,
   });
@@ -154,6 +158,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   localeService.onDidChangeLocale(() => {
     refreshUi();
+    refreshAll();
     codeLens.refresh();
     dashboard.refreshLocale(localeService.getLocale());
   });
@@ -168,6 +173,54 @@ export function activate(context: vscode.ExtensionContext): void {
       enabled: cfg.get<boolean>("ai.enabled", true),
       contextMaxOutputLines: Math.max(1, cfg.get<number>("ai.contextMaxOutputLines", 80)),
     };
+  };
+
+  type PostRunToastMode = "off" | "failures" | "always";
+
+  const readPostRunToast = (): PostRunToastMode => {
+    const value = vscode.workspace.getConfiguration("bddPilot").get<string>("feedback.postRunToast", "failures");
+    if (value === "off" || value === "always") {
+      return value;
+    }
+    return "failures";
+  };
+
+  const showPostRunSummaryToast = (summary: UnifiedSummary): void => {
+    const message =
+      summary.failed > 0
+        ? tr("toast.runSummaryFailures", {
+            failed: summary.failed,
+            passed: summary.passed,
+            total: summary.total,
+          })
+        : tr("toast.runSummary", {
+            failed: summary.failed,
+            passed: summary.passed,
+            skipped: summary.skipped,
+            total: summary.total,
+          });
+
+    const actions: string[] = [tr("action.showOutput")];
+    if (summary.failed > 0) {
+      if (buildRerunFailedFilter(runService, readSettings().filterMapping)) {
+        actions.push(tr("action.rerunFailed"));
+      }
+      if (readAiSettings().enabled && runService.getLastFailedRunSnapshot()) {
+        actions.push(tr("action.copyForAi"));
+      }
+    }
+
+    const show =
+      summary.failed > 0 ? vscode.window.showWarningMessage : vscode.window.showInformationMessage;
+    void show(message, ...actions).then((choice) => {
+      if (choice === tr("action.showOutput")) {
+        output.show(true);
+      } else if (choice === tr("action.rerunFailed")) {
+        void vscode.commands.executeCommand("bddPilot.rerunFailed");
+      } else if (choice === tr("action.copyForAi")) {
+        void copyFailureContextForAi();
+      }
+    });
   };
 
   const copyFailureContextForAi = async (): Promise<void> => {
@@ -514,8 +567,17 @@ export function activate(context: vscode.ExtensionContext): void {
               `[bdd-pilot] Results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
             );
           }
+          let diagnosticsToastShown = false;
           if (result.exitCode !== 0 || (result.summary?.failed ?? 0) > 0) {
-            reportDiagnostics(result.outputBuffer);
+            diagnosticsToastShown = reportDiagnostics(result.outputBuffer);
+          }
+          if (result.summary) {
+            const toastMode = readPostRunToast();
+            if (toastMode === "always") {
+              showPostRunSummaryToast(result.summary);
+            } else if (toastMode === "failures" && !diagnosticsToastShown && result.summary.failed > 0) {
+              showPostRunSummaryToast(result.summary);
+            }
           }
           persistHistory();
         } catch (err) {
@@ -538,13 +600,15 @@ export function activate(context: vscode.ExtensionContext): void {
     return [target];
   }
 
-  function reportDiagnostics(text: string, fallbackMessage?: string): void {
+  /** @returns true if a modal toast was shown (skip duplicate post-run summary). */
+  function reportDiagnostics(text: string, fallbackMessage?: string): boolean {
     const diagnostics = analyzeDotnetOutput(text);
     if (diagnostics.length === 0) {
       if (fallbackMessage) {
         void vscode.window.showErrorMessage(fallbackMessage);
+        return true;
       }
-      return;
+      return false;
     }
 
     output.appendLine("\n[bdd-pilot] Diagnostics:");
@@ -570,6 +634,7 @@ export function activate(context: vscode.ExtensionContext): void {
         void copyFailureContextForAi();
       }
     });
+    return true;
   }
 
   function getWorkspaceRoots(): string[] {

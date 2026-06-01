@@ -421,6 +421,7 @@ function storeOutcomeForItem(
   data: TestExplorerItemData | undefined,
   outcome: TestOutcome,
   durationMs?: number,
+  errorMessage?: string,
 ): string | undefined {
   if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
     return undefined;
@@ -432,7 +433,7 @@ function storeOutcomeForItem(
     data.kind === "outlineRow"
       ? outlineRowKey(data.feature, data.scenario, data.example.rowIndex)
       : scenarioKey(data.feature, data.scenario);
-  store.set(key, outcome, durationMs);
+  store.set(key, outcome, durationMs, errorMessage);
   return key;
 }
 
@@ -550,15 +551,15 @@ function applyResults(
     switch (match.outcome) {
       case "passed":
         run.passed(item, match.durationMs);
-        storeOutcomeForItem(outcomeStore, data, "passed", match.durationMs);
+        storeOutcomeForItem(outcomeStore, data, "passed", match.durationMs, match.errorMessage);
         break;
       case "failed":
         run.failed(item, runService.buildFailureMessage(projectDir, match.errorMessage), match.durationMs);
-        storeOutcomeForItem(outcomeStore, data, "failed", match.durationMs);
+        storeOutcomeForItem(outcomeStore, data, "failed", match.durationMs, match.errorMessage);
         break;
       default:
         run.skipped(item);
-        storeOutcomeForItem(outcomeStore, data, "skipped", match.durationMs);
+        storeOutcomeForItem(outcomeStore, data, "skipped", match.durationMs, match.errorMessage);
         break;
     }
     updateLeafItemDescription(item, data, outcomeStore, display, locale);

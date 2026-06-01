@@ -1,8 +1,8 @@
 {
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
-  "description": "Graphical interface to discover, filter and run Reqnroll/SpecFlow + xUnit BDD tests from VS Code, with environment-aware, secure execution and actionable diagnostics.",
-  "version": "0.4.0",
+  "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
+  "version": "1.0.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -17,17 +17,23 @@
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Testing",
-    "Other"
+    "Testing"
   ],
   "keywords": [
     "bdd",
     "reqnroll",
     "specflow",
-    "xunit",
+    "cucumber",
     "gherkin",
+    "xunit",
     "dotnet",
-    "test runner"
+    "dotnet test",
+    "test explorer",
+    "test runner",
+    "playwright",
+    "cursor",
+    "copilot",
+    "qa"
   ],
   "activationEvents": [
     "workspaceContains:**/*.feature"
@@ -353,6 +359,21 @@
           "minimum": 1,
           "maximum": 500,
           "description": "Maximum lines of sanitized test output included in the AI failure context package."
+        },
+        "bddPilot.feedback.postRunToast": {
+          "type": "string",
+          "enum": [
+            "off",
+            "failures",
+            "always"
+          ],
+          "default": "failures",
+          "enumDescriptions": [
+            "No summary toast after a test run.",
+            "Show a summary toast when tests failed (skipped if infrastructure diagnostics already showed a toast).",
+            "Always show a numeric summary toast after every completed run."
+          ],
+          "description": "Post-run notification with pass/fail counts and quick actions."
         }
       }
     }

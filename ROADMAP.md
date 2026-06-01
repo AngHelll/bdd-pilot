@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v0.4.0** · **152 unit tests**
+> **Current release: v1.0.0** · **157 unit tests**
 
 ---
 
@@ -9,9 +9,9 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v0.4.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| ✅ Shipped | v0.1.0 → **v1.0.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
 | 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 optional (pospuesto) |
-| 🏁 Goal | **v1.0.0** — stable public release |
+| 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
 
@@ -90,7 +90,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v0.4.0)
+- [x] `CHANGELOG.md` through current version (v1.0.0)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -103,9 +103,9 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [x] Pin Marketplace version to tagged release *(v0.4.0 publish)*
+- [x] Pin Marketplace version to tagged release *(v1.0.0 publish)*
 - [ ] Open “good first issue” for Capa C i18n extras *(tree roll-ups, setting descriptions)*
-- [ ] Watch issues 1–2 weeks; patch **0.4.0** if filter/outline regressions
+- [ ] Watch issues 1–2 weeks; patch **1.0.x** if filter/outline regressions
 
 ---
 
@@ -129,6 +129,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.0.0 — stable public release
+
+| Area | Change |
+|------|--------|
+| **Stable 1.0** | First stable Marketplace release; README/GTM for Reqnroll/SpecFlow on VS Code & Cursor |
+| **Post-run feedback** | Error snippets in tree hover/description; `bddPilot.feedback.postRunToast`; localized outcomes |
+| **AI context** | Copy Failure Context for AI (clipboard markdown for Copilot/Cursor) |
 
 ### v0.4.0 — AI-ready failure context
 
@@ -308,4 +316,4 @@ src/
 
 ---
 
-*Last updated: v0.4.0 — AI-ready failure context (152 unit tests).*
+*Last updated: v1.0.0 — stable public release (157 unit tests).*

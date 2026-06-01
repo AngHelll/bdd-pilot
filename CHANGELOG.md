@@ -2,11 +2,27 @@
 
 All notable changes to **BDD Pilot** are documented here.  
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
-Versioning: [Semver](https://semver.org/) (conservative `0.x` until Marketplace stable).
+Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
 _Nothing yet._
+
+## [1.0.0] — 2026-05-30
+
+**First stable release** on the VS Code Marketplace — Reqnroll/SpecFlow BDD execution for VS Code and Cursor.
+
+### Added
+- **Post-run feedback** — sanitized error snippets on failed scenarios (tree description + hover, localized outcomes); domain roll-up tooltips; `bddPilot.feedback.postRunToast` for summary toast with Show Output, Re-run Failed, and Copy for AI
+- **AI-ready failure context** (from 0.4.x) — clipboard markdown of the last failed run for Cursor/Copilot (`bddPilot.ai.*`)
+- **Test Explorer parity** — localized outcomes, roll-ups, and durations aligned with the BDD tree
+- **i18n EN/ES**, execution profiles, outline-row filters, runtime diagnostics, and secure multi-stage runs (`dev`/`test`/`stg`/`prod`)
+
+### Highlights
+- Gherkin tree grouped by **domain** or **@tag**; run feature, scenario, tag, or single outline row
+- Native **Test Explorer** + CodeLens; TRX/Cucumber results, dashboard, re-run failed
+- Works with any .NET BDD stack via `dotnet test` (API, Playwright, etc.)
+- Pairs with [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) for step bindings and navigation
 
 ## [0.4.0] — 2026-05-30
 

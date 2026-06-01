@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
+import { formatOutcomeForTooltip } from "../core/results/outcomeFeedback";
 import {
   buildFeatureDescription,
   buildScenarioDescription,
@@ -35,18 +36,21 @@ describe("treeLabels", () => {
     );
   });
 
-  it("tooltip includes full tag lists", () => {
-    const md = buildScenarioTooltipMarkdown({
-      scenarioName: "Retrieve all internal funds",
-      featureName: "Funds Management",
-      fileName: "Funds.feature",
-      line: 12,
-      featureTags: ["Funds", "P1"],
-      scenarioTags: tags,
-      isOutline: false,
-      outcome: "failed",
-      durationMs: 1200,
-    });
+  it("tooltip includes full tag lists and localized outcome", () => {
+    const md = buildScenarioTooltipMarkdown(
+      {
+        scenarioName: "Retrieve all internal funds",
+        featureName: "Funds Management",
+        fileName: "Funds.feature",
+        line: 12,
+        featureTags: ["Funds", "P1"],
+        scenarioTags: tags,
+        isOutline: false,
+        outcomeLabel: formatOutcomeForTooltip("failed", "en"),
+        durationMs: 1200,
+      },
+      "en",
+    );
     assert.match(md, /Retrieve all internal funds/);
     assert.match(md, /`@WM-5874`/);
     assert.match(md, /Last run: \*\*failed\*\*/);

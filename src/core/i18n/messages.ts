@@ -59,6 +59,8 @@ const EN = {
   "toast.failureContextCopied": "Failure context copied to clipboard.",
   "toast.failureContextProdWarning":
     "This context may include staging or production environment details. Review before sharing with external AI.",
+  "toast.runSummary": "{failed} failed, {passed} passed, {skipped} skipped ({total} total)",
+  "toast.runSummaryFailures": "{failed} failed, {passed} passed ({total} total)",
 
   "prompt.searchFilter": "Filter by name, tag (@Smoke), or path…",
   "prompt.searchClear": "Leave empty to clear the filter",
@@ -85,6 +87,9 @@ const EN = {
   "action.showOutput": "Show Output",
   "action.copyForAi": "Copy for AI",
   "action.copyAnyway": "Copy anyway",
+  "action.rerunFailed": "Re-run Failed",
+
+  "tooltip.errorLine": "Error: {snippet}",
 
   "quickPick.solution": "Solution",
 
@@ -157,6 +162,8 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.failureContextCopied": "Contexto de fallo copiado al portapapeles.",
   "toast.failureContextProdWarning":
     "Este contexto puede incluir detalles de entorno staging o producción. Revísalo antes de compartirlo con IA externa.",
+  "toast.runSummary": "{failed} fallidos, {passed} correctos, {skipped} omitidos ({total} total)",
+  "toast.runSummaryFailures": "{failed} fallidos, {passed} correctos ({total} total)",
 
   "prompt.searchFilter": "Filtrar por nombre, tag (@Smoke) o ruta…",
   "prompt.searchClear": "Deja vacío para quitar el filtro",
@@ -183,6 +190,9 @@ const ES: Record<keyof typeof EN, string> = {
   "action.showOutput": "Mostrar salida",
   "action.copyForAi": "Copiar para IA",
   "action.copyAnyway": "Copiar de todos modos",
+  "action.rerunFailed": "Reejecutar fallidos",
+
+  "tooltip.errorLine": "Error: {snippet}",
 
   "quickPick.solution": "Solución",
 

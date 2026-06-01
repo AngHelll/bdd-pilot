@@ -2,13 +2,22 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-**BDD Pilot** is an open-source VS Code extension that gives you a graphical
-interface to discover, filter and run **Reqnroll / SpecFlow + xUnit** BDD tests
-from `.feature` files — reliably, securely, and with actionable diagnostics.
+**Run Reqnroll, SpecFlow, and Cucumber-style BDD tests from VS Code or Cursor** —
+without hand-building `dotnet test --filter` strings or digging through raw console output.
 
-It is framework-agnostic: it works with any .NET BDD project that runs through
-`dotnet test`, regardless of domain (API tests, web/Playwright tests, etc.). No
-project- or vendor-specific assumptions are baked in.
+BDD Pilot is the **execution layer** for .NET Gherkin projects: discover scenarios in a
+**domain or @tag tree**, run from the sidebar, native **Test Explorer**, or **CodeLens**,
+see pass/fail on every row (including **Scenario Outline** examples), and get **actionable
+diagnostics** when builds, NuGet, Playwright, or step bindings break.
+
+**Stable v1.0** — environment-aware runs (`STAGE`), sanitized logs, **AI-ready failure
+context** for Copilot/Cursor, and **post-run feedback** (error snippets in hover + optional
+summary toast). Framework-agnostic: any suite that runs through `dotnet test` (API,
+Playwright, UI, etc.).
+
+> **Reqnroll on VS Code:** the official Reqnroll extension targets Visual Studio 2022/2026.
+> For **VS Code / Cursor**, use BDD Pilot to run tests and [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian)
+> to navigate step bindings — install both.
 
 ## BDD extension family
 
@@ -70,6 +79,8 @@ scenario and show me what failed.”*
   errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, etc.
 - **AI-ready failure context**: copy structured markdown of the last failed run to the
   clipboard for Cursor/Copilot (no embedded LLM — review before sharing externally).
+- **Post-run feedback**: error snippets on failed scenarios (hover + description), localized
+  outcomes, optional summary toast (`bddPilot.feedback.postRunToast`).
 
 ## Security
 
