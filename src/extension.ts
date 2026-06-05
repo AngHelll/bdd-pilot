@@ -51,7 +51,11 @@ import {
 } from "./providers/testTreeProvider";
 import { listDotnetTests } from "./core/runner/listTests";
 import { OutcomeStore } from "./providers/outcomeStore";
-import { UnifiedSummary } from "./core/results/resultLoader";
+import { loadRunResults, UnifiedSummary } from "./core/results/resultLoader";
+import {
+  findPilotTrxCandidates,
+  selectLatestPilotTrx,
+} from "./core/results/pilotTrxDiscovery";
 import { buildRerunFailedFilter, createManagedController, ProjectContext } from "./providers/testController";
 import { BDD_PILOT_DEBUG_SESSION_NAME } from "./providers/runService";
 
@@ -192,9 +196,58 @@ export function activate(context: vscode.ExtensionContext): void {
     dashboard.refreshLocale(localeService.getLocale());
   });
 
-  refreshAll();
+  treeProvider.refresh();
+  managed.refresh();
   refreshUi();
+  void bootstrapWorkspace();
   void maybePromptProjectSelection();
+
+  async function bootstrapWorkspace(): Promise<void> {
+    await enrichTheoryRows();
+    tryRehydrateOutcomes();
+  }
+
+  function tryRehydrateOutcomes(): void {
+    const rehydrate = readOutcomeRehydrateSettings();
+    if (!rehydrate.enabled) {
+      return;
+    }
+    if (activeRun || runService.isDebugActive()) {
+      return;
+    }
+    if (!outcomeStore.isEmpty()) {
+      return;
+    }
+
+    const ctx = getProjectContext();
+    if (!ctx) {
+      return;
+    }
+
+    const latest = selectLatestPilotTrx(findPilotTrxCandidates(ctx.projectDir), {
+      maxAgeMs: rehydrate.maxAgeMs,
+    });
+    if (!latest) {
+      return;
+    }
+
+    const summary = loadRunResults(ctx.projectDir, latest.absolutePath);
+    if (!summary || summary.total === 0) {
+      return;
+    }
+
+    treeProvider.applyResults(summary);
+    managed.refresh();
+    output.appendLine(
+      `[bdd-pilot] ${tr("log.rehydrateRestored", {
+        file: latest.fileName,
+        passed: summary.passed,
+        failed: summary.failed,
+        skipped: summary.skipped,
+        total: summary.total,
+      })}`,
+    );
+  }
 
   const readAiSettings = (): { enabled: boolean; contextMaxOutputLines: number } => {
     const cfg = vscode.workspace.getConfiguration("bddPilot");
@@ -751,11 +804,18 @@ export function activate(context: vscode.ExtensionContext): void {
       return undefined;
     }
 
+    const previousProjectDir = getProjectContext()?.projectDir;
     if (!settings.projectPath.trim()) {
       await context.workspaceState.update(PROJECT_KEY, toStoredSelection(picked.project));
     }
     refreshAll();
     refreshUi();
+    const newProjectDir = getProjectContext()?.projectDir;
+    if (newProjectDir && newProjectDir !== previousProjectDir) {
+      outcomeStore.clearAll();
+      await enrichTheoryRows();
+      tryRehydrateOutcomes();
+    }
     return picked.project;
   }
 
@@ -824,4 +884,14 @@ function readStoredStage(context: vscode.ExtensionContext): Stage | undefined {
 function readStoredMode(context: vscode.ExtensionContext): ParallelismMode | undefined {
   const value = context.workspaceState.get<string>(MODE_KEY);
   return value && isMode(value) ? value : undefined;
+}
+
+function readOutcomeRehydrateSettings(): { enabled: boolean; maxAgeMs: number | undefined } {
+  const cfg = vscode.workspace.getConfiguration("bddPilot");
+  const mode = cfg.get<string>("outcomes.rehydrateOnActivate", "on");
+  const hours = Math.max(0, cfg.get<number>("outcomes.rehydrateMaxAgeHours", 168));
+  return {
+    enabled: mode !== "off",
+    maxAgeMs: hours > 0 ? hours * 3_600_000 : undefined,
+  };
 }

@@ -39,6 +39,10 @@ export class OutcomeStore {
     return this.errors.get(key);
   }
 
+  isEmpty(): boolean {
+    return this.outcomes.size === 0;
+  }
+
   clearAll(): void {
     this.outcomes.clear();
     this.durations.clear();

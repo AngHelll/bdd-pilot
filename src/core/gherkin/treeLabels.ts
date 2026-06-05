@@ -80,6 +80,8 @@ export interface ScenarioTooltipParts {
   rollupSummary?: string;
   /** Sanitized, truncated error for failed runs. */
   errorSnippet?: string;
+  /** Localized skip reason (runner / unknown) for tree tooltip. */
+  skipReasonLabel?: string;
   exampleRowLabel?: string;
 }
 
@@ -118,6 +120,9 @@ export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts, locale
     }
     if (parts.errorSnippet) {
       lines.push("", t(locale, "tooltip.errorLine", { snippet: parts.errorSnippet }));
+    }
+    if (parts.skipReasonLabel) {
+      lines.push(t(locale, "tooltip.skipReasonLine", { reason: parts.skipReasonLabel }));
     }
     if (parts.durationMs !== undefined) {
       lines.push(formatDurationTooltip(parts.durationMs));

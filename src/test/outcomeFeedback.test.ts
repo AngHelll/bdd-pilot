@@ -7,6 +7,7 @@ import {
   sanitizeErrorForStore,
   truncateErrorSnippet,
 } from "../core/results/outcomeFeedback";
+import { skipReasonLabelForTreeOutcome } from "../core/results/skipReason";
 
 describe("outcomeFeedback", () => {
   it("truncateErrorSnippet collapses whitespace and caps length", () => {
@@ -46,5 +47,25 @@ describe("outcomeFeedback", () => {
     );
     assert.match(md, /Last run: \*\*fallido\*\*/);
     assert.match(md, /Error: Expected true but was false/);
+  });
+
+  it("buildScenarioTooltipMarkdown includes skip reason for skipped outcomes", () => {
+    const skipLabel = skipReasonLabelForTreeOutcome("skipped", "en");
+    const md = buildScenarioTooltipMarkdown(
+      {
+        scenarioName: "Skipped scenario",
+        featureName: "Feat",
+        fileName: "F.feature",
+        line: 3,
+        featureTags: [],
+        scenarioTags: [],
+        isOutline: false,
+        outcomeLabel: formatOutcomeForTooltip("skipped", "en"),
+        skipReasonLabel: skipLabel,
+      },
+      "en",
+    );
+    assert.match(md, /Last run: \*\*skipped\*\*/);
+    assert.match(md, /Skip: skipped by runner/);
   });
 });

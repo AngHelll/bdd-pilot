@@ -31,6 +31,15 @@ describe("OutcomeStore", () => {
     },
   ];
 
+  it("isEmpty reflects whether any outcomes are stored", () => {
+    const store = new OutcomeStore();
+    assert.strictEqual(store.isEmpty(), true);
+    store.set("/x/Sample.feature::2::One", "passed");
+    assert.strictEqual(store.isEmpty(), false);
+    store.clearAll();
+    assert.strictEqual(store.isEmpty(), true);
+  });
+
   it("clears only in-scope keys for partial runs", () => {
     const store = new OutcomeStore();
     store.set("/x/Sample.feature::2::One", "passed");

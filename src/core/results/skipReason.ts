@@ -1,5 +1,6 @@
 import { PilotLocale, t } from "../i18n";
 import { joinDescriptionParts } from "../gherkin/treeLabels";
+import { TestOutcome } from "./trxParser";
 
 export type SkipReason = "runner_skipped" | "not_in_trx" | "canceled" | "unknown";
 
@@ -17,6 +18,20 @@ export function skipReasonMessage(reason: SkipReason, locale: PilotLocale): stri
 }
 
 /** Appends a localized skip reason suffix to an existing TE description. */
+/** Localized skip reason for BDD tree tooltips (skipped / unknown outcomes). */
+export function skipReasonLabelForTreeOutcome(
+  outcome: TestOutcome | undefined,
+  locale: PilotLocale,
+): string | undefined {
+  if (outcome === "skipped") {
+    return skipReasonMessage("runner_skipped", locale);
+  }
+  if (outcome === "unknown") {
+    return skipReasonMessage("unknown", locale);
+  }
+  return undefined;
+}
+
 export function appendSkipReasonToDescription(
   description: string | undefined,
   reason: SkipReason,

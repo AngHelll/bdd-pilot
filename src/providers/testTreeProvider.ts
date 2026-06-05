@@ -15,6 +15,7 @@ import {
   prependFailedOutcomeToDescription,
   truncateErrorSnippet,
 } from "../core/results/outcomeFeedback";
+import { skipReasonLabelForTreeOutcome } from "../core/results/skipReason";
 import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
 import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
@@ -411,6 +412,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             outcome === "failed" && errorMessage
               ? truncateErrorSnippet(errorMessage)
               : undefined,
+          skipReasonLabel: skipReasonLabelForTreeOutcome(outcome, locale),
         },
         locale,
       ),
@@ -466,6 +468,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             outcome === "failed" && errorMessage
               ? truncateErrorSnippet(errorMessage)
               : undefined,
+          skipReasonLabel: skipReasonLabelForTreeOutcome(outcome, locale),
         },
         locale,
       ),

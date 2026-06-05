@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.0] — 2026-06-04
+
+### Added
+- **Outcome rehydration on activate** — restore pass/fail icons from the latest BDD Pilot TRX in `TestResults/` when opening the workspace (tree + Test Explorer)
+- **Settings** — `bddPilot.outcomes.rehydrateOnActivate` (`on` | `off`) and `bddPilot.outcomes.rehydrateMaxAgeHours` (default 7 days)
+- **BDD tree skip tooltips** — localized skip reason line on hover for `skipped` / `unknown` outcomes (parity with Test Explorer messaging)
+
+### Changed
+- **Project switch** — clears in-memory outcomes and rehydrates from the new project's latest Pilot TRX when eligible
+
 ## [1.1.0] — 2026-06-04
 
 ### Added

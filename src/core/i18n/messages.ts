@@ -98,6 +98,9 @@ const EN = {
   "action.rerunFailed": "Re-run Failed",
 
   "tooltip.errorLine": "Error: {snippet}",
+  "tooltip.skipReasonLine": "Skip: {reason}",
+  "log.rehydrateRestored":
+    "Restored test outcomes from TestResults/{file} ({passed} passed, {failed} failed, {skipped} skipped, {total} total).",
 
   "quickPick.solution": "Solution",
 
@@ -214,6 +217,9 @@ const ES: Record<keyof typeof EN, string> = {
   "action.rerunFailed": "Reejecutar fallidos",
 
   "tooltip.errorLine": "Error: {snippet}",
+  "tooltip.skipReasonLine": "Omitido: {reason}",
+  "log.rehydrateRestored":
+    "Resultados restaurados desde TestResults/{file} ({passed} correctos, {failed} fallidos, {skipped} omitidos, {total} total).",
 
   "quickPick.solution": "Solución",
 

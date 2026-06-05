@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -374,6 +374,25 @@
             "Always show a numeric summary toast after every completed run."
           ],
           "description": "Post-run notification with pass/fail counts and quick actions."
+        },
+        "bddPilot.outcomes.rehydrateOnActivate": {
+          "type": "string",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "default": "on",
+          "enumDescriptions": [
+            "Restore pass/fail icons from the latest BDD Pilot TRX in TestResults/ when the extension activates (if no outcomes in this session yet).",
+            "Do not restore outcomes from disk on activate."
+          ],
+          "description": "Restore tree and Test Explorer outcomes from the latest Pilot TRX file when opening the workspace."
+        },
+        "bddPilot.outcomes.rehydrateMaxAgeHours": {
+          "type": "number",
+          "default": 168,
+          "minimum": 0,
+          "description": "Ignore TRX files older than this many hours when rehydrating on activate. 0 = no age limit."
         }
       }
     }
