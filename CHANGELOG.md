@@ -8,6 +8,19 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.1.0] — 2026-06-04
+
+### Added
+- **Post-debug results** — TRX logger on debug launch; tree and Test Explorer update when the BDD Pilot debug session ends
+- **Status bar run indicator** — spinner while a run or debug session is active
+- **Cancel partial preservation** — completed tests keep pass/fail; toast with `{completed}/{expected}` when known
+- **Test Explorer skip reasons** — localized descriptions (`not in results`, `canceled before completion`, etc.)
+- **Infra vs test failures** — SDK/host/no-TRX cases surface as `errored` in Test Explorer with actionable messages
+
+### Changed
+- **Unified run/debug policy** — block Debug while a run is active (and vice versa)
+- **TRX `unknown` outcomes** — roll-up aware; leaves show skip reason instead of misleading pass/fail
+
 ## [1.0.0] — 2026-05-30
 
 **First stable release** on the VS Code Marketplace — Reqnroll/SpecFlow BDD execution for VS Code and Cursor.

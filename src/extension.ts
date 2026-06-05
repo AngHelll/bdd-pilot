@@ -53,6 +53,7 @@ import { listDotnetTests } from "./core/runner/listTests";
 import { OutcomeStore } from "./providers/outcomeStore";
 import { UnifiedSummary } from "./core/results/resultLoader";
 import { buildRerunFailedFilter, createManagedController, ProjectContext } from "./providers/testController";
+import { BDD_PILOT_DEBUG_SESSION_NAME } from "./providers/runService";
 
 const STAGE_KEY = "bddPilot.stage";
 const MODE_KEY = "bddPilot.mode";
@@ -110,7 +111,7 @@ export function activate(context: vscode.ExtensionContext): void {
       managed.refresh();
     },
     acquireRunLock: () => {
-      if (activeRun) {
+      if (activeRun || runService.isDebugActive()) {
         return false;
       }
       activeRun = new AbortController();
@@ -150,8 +151,36 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const refreshUi = () => {
     const ctx = getProjectContext();
-    statusBar.update(currentStage, currentMode, localeService.getLocale(), ctx?.label);
-    void vscode.commands.executeCommand("setContext", "bddPilot.running", !!activeRun);
+    statusBar.update(currentStage, currentMode, localeService.getLocale(), ctx?.label, {
+      running: !!activeRun || runService.isDebugActive(),
+      debugging: runService.isDebugActive() && !activeRun,
+    });
+    void vscode.commands.executeCommand("setContext", "bddPilot.running", !!activeRun || runService.isDebugActive());
+  };
+
+  const handleDebugSessionEnded = () => {
+    const debugResult = runService.finishDebugSession();
+    if (!debugResult) {
+      return;
+    }
+
+    output.appendLine("\n[bdd-pilot] Debug session ended.");
+    if (debugResult.summary && debugResult.summary.total > 0) {
+      treeProvider.applyResults(debugResult.summary);
+      managed.refresh();
+      output.appendLine(
+        `[bdd-pilot] Results (${debugResult.summary.source}): ${debugResult.summary.passed} passed, ${debugResult.summary.failed} failed, ${debugResult.summary.skipped} skipped (${debugResult.summary.total} total).`,
+      );
+    } else {
+      void vscode.window.showInformationMessage(tr("toast.debugNoTrx"));
+    }
+
+    managed.finalizePendingDebugRun(
+      debugResult.summary,
+      debugResult.completionKind,
+      "",
+    );
+    refreshUi();
   };
 
   const codeLens = registerFeatureCodeLens(() => localeService.getLocale());
@@ -423,6 +452,12 @@ export function activate(context: vscode.ExtensionContext): void {
         refreshAll();
       }
     }),
+
+    vscode.debug.onDidTerminateDebugSession((session) => {
+      if (session.name === BDD_PILOT_DEBUG_SESSION_NAME) {
+        handleDebugSessionEnded();
+      }
+    }),
   );
 
   function toRunTarget(node: TreeNode | undefined): RunTarget | undefined {
@@ -458,8 +493,14 @@ export function activate(context: vscode.ExtensionContext): void {
     target: RunTarget,
     opts?: { debug?: boolean; rawFilter?: string },
   ): Promise<void> {
-    if (activeRun && !opts?.debug) {
-      void vscode.window.showWarningMessage(tr("toast.runInProgress"));
+    if (activeRun || runService.isDebugActive()) {
+      if (opts?.debug) {
+        void vscode.window.showWarningMessage(
+          runService.isDebugActive() ? tr("toast.debugAlreadyActive") : tr("toast.debugWhileRunning"),
+        );
+      } else {
+        void vscode.window.showWarningMessage(tr("toast.runInProgress"));
+      }
       return;
     }
 
@@ -518,8 +559,10 @@ export function activate(context: vscode.ExtensionContext): void {
         token.onCancellationRequested(() => controller.abort());
         const progressIncrement = totalExpected && totalExpected > 0 ? 100 / totalExpected : 0;
         let lastMessage = "";
+        let lastProgressState: LiveProgressState | undefined;
 
         const onProgress = (state: LiveProgressState, event?: TestCompletionEvent) => {
+          lastProgressState = state;
           const message = formatProgressMessage(state);
           if (event && progressIncrement > 0) {
             lastMessage = message;
@@ -553,10 +596,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
           if (result.canceled) {
             output.appendLine("\n[bdd-pilot] Run canceled.");
+            if (result.summary) {
+              treeProvider.applyResults(result.summary);
+              output.appendLine(
+                `[bdd-pilot] Partial results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
+              );
+            }
+            if (lastProgressState?.totalExpected) {
+              void vscode.window.showInformationMessage(
+                tr("toast.runCanceledPartial", {
+                  completed: lastProgressState.completed,
+                  expected: lastProgressState.totalExpected,
+                }),
+              );
+            }
             return;
           }
 
           if (opts?.debug) {
+            if (result.debugStarted) {
+              refreshUi();
+            }
             return;
           }
 

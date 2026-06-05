@@ -13,7 +13,11 @@ export interface OutcomeRollup {
 export function computeRollup(outcomes: Array<TestOutcome | undefined>): OutcomeRollup {
   const rollup: OutcomeRollup = { passed: 0, failed: 0, skipped: 0, withResults: 0 };
   for (const outcome of outcomes) {
-    if (!outcome || outcome === "unknown") {
+    if (!outcome) {
+      continue;
+    }
+    if (outcome === "unknown") {
+      rollup.withResults++;
       continue;
     }
     rollup.withResults++;
@@ -50,13 +54,14 @@ export function formatRollupDescription(rollup: OutcomeRollup): string | undefin
 export function rollupSeverity(
   rollup: OutcomeRollup,
 ): "failed" | "passed" | "skipped" | undefined {
+  const classified = rollup.passed + rollup.failed + rollup.skipped;
+  if (classified === 0) {
+    return undefined;
+  }
   if (rollup.failed > 0) {
     return "failed";
   }
-  if (rollup.withResults === 0) {
-    return undefined;
-  }
-  if (rollup.passed === rollup.withResults) {
+  if (rollup.passed === classified) {
     return "passed";
   }
   if (rollup.skipped > 0) {

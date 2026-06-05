@@ -12,8 +12,15 @@ import {
 } from "../core/gherkin/testExplorerLabels";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
+import { appendSkipReasonToDescription, SkipReason } from "../core/results/skipReason";
+import {
+  resolveCanceledLeafOutcome,
+  skipReasonForTrxOutcome,
+} from "../core/results/testRunApply";
 import { TestOutcome } from "../core/results/trxParser";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
+import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
+import { t } from "../core/i18n";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
 import { DEFAULT_FILTER_MAPPING } from "../core/runner/filterMapping";
 import { estimateTestCount } from "../core/runner/runEstimate";
@@ -56,11 +63,24 @@ export interface ControllerDeps {
 export interface ManagedController {
   controller: vscode.TestController;
   refresh(): void;
+  finalizePendingDebugRun(
+    summary: UnifiedSummary | undefined,
+    completionKind: RunCompletionKind,
+    outputBuffer: string,
+  ): void;
+}
+
+export interface PendingTestExplorerDebug {
+  run: vscode.TestRun;
+  scenarioItems: vscode.TestItem[];
+  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>;
+  projectDir: string;
 }
 
 export function createManagedController(deps: ControllerDeps): ManagedController {
   const controller = vscode.tests.createTestController("bddPilot.testController", "BDD Pilot");
   const itemData = new WeakMap<vscode.TestItem, TestExplorerItemData>();
+  let pendingDebugRun: PendingTestExplorerDebug | undefined;
 
   const refresh = () => buildTree();
   controller.refreshHandler = async () => buildTree();
@@ -241,6 +261,8 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       return;
     }
 
+    let debugRunHeld = false;
+
     scenarioItems.forEach((i) => run.started(i));
 
     const runningAll = !request.include;
@@ -300,8 +322,30 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       });
 
       if (result.canceled) {
-        scenarioItems.forEach((i) => run.skipped(i));
+        applyRunResults({
+          run,
+          scenarioItems,
+          itemData,
+          projectDir: project.projectDir,
+          summary: result.summary,
+          outputBuffer: result.outputBuffer,
+          runService: deps.runService,
+          outcomeStore: deps.outcomeStore,
+          locale: deps.getLocale(),
+          display: readTreeDisplaySettings(),
+          canceled: true,
+          exitCode: result.exitCode,
+        });
+        if (result.summary) {
+          deps.onResultsApplied?.(result.summary);
+        }
         run.end();
+        return;
+      }
+
+      if (debug && result.debugStarted) {
+        pendingDebugRun = { run, scenarioItems, itemData, projectDir: project.projectDir };
+        debugRunHeld = true;
         return;
       }
 
@@ -310,17 +354,20 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         return;
       }
 
-      applyResults(
+      applyRunResults({
         run,
         scenarioItems,
         itemData,
-        project.projectDir,
-        result.summary,
-        deps.runService,
-        deps.outcomeStore,
-        deps.getLocale(),
-        readTreeDisplaySettings(),
-      );
+        projectDir: project.projectDir,
+        summary: result.summary,
+        outputBuffer: result.outputBuffer,
+        runService: deps.runService,
+        outcomeStore: deps.outcomeStore,
+        locale: deps.getLocale(),
+        display: readTreeDisplaySettings(),
+        canceled: false,
+        exitCode: result.exitCode,
+      });
       if (result.summary) {
         deps.onResultsApplied?.(result.summary);
       }
@@ -334,12 +381,53 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       const message = new vscode.TestMessage(String(err));
       scenarioItems.forEach((i) => run.errored(i, message));
     } finally {
-      deps.releaseRunLock();
-      run.end();
+      if (!debugRunHeld) {
+        deps.releaseRunLock();
+        run.end();
+      }
     }
   }
 
-  return { controller, refresh };
+  function finalizePendingDebugRun(
+    summary: UnifiedSummary | undefined,
+    completionKind: RunCompletionKind,
+    outputBuffer: string,
+  ): void {
+    const pending = pendingDebugRun;
+    pendingDebugRun = undefined;
+    if (!pending) {
+      return;
+    }
+
+    if (summary && summary.total > 0) {
+      applyRunResults({
+        run: pending.run,
+        scenarioItems: pending.scenarioItems,
+        itemData: pending.itemData,
+        projectDir: pending.projectDir,
+        summary,
+        outputBuffer,
+        runService: deps.runService,
+        outcomeStore: deps.outcomeStore,
+        locale: deps.getLocale(),
+        display: readTreeDisplaySettings(),
+        canceled: false,
+        exitCode: 0,
+      });
+    } else {
+      const msg = buildInfraTestMessage(outputBuffer, deps.getLocale(), completionKind);
+      pending.scenarioItems.forEach((i) => pending.run.errored(i, msg));
+    }
+
+    pending.run.end();
+    deps.releaseRunLock();
+  }
+
+  return {
+    controller,
+    refresh,
+    finalizePendingDebugRun,
+  };
 }
 
 function collectRunRoots(
@@ -514,56 +602,201 @@ function applyLiveTestRunResult(
   }
 }
 
-function applyResults(
-  run: vscode.TestRun,
-  scenarioItems: vscode.TestItem[],
-  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>,
-  projectDir: string,
-  summary: UnifiedSummary | undefined,
-  runService: RunService,
-  outcomeStore: OutcomeStore,
+function buildInfraTestMessage(
+  outputBuffer: string,
   locale: PilotLocale,
-  display: TestExplorerDisplaySettings,
-): void {
-  if (!summary) {
-    const msg = new vscode.TestMessage("No test results were produced.");
-    scenarioItems.forEach((i) => run.errored(i, msg));
+  kind: RunCompletionKind,
+): vscode.TestMessage {
+  const diagnostics = analyzeDotnetOutput(outputBuffer);
+  if (diagnostics.length > 0) {
+    const top = diagnostics[0];
+    return new vscode.TestMessage(`[${top.code}] ${top.title}\n${top.hint}`);
+  }
+  if (kind === "no_results") {
+    return new vscode.TestMessage(t(locale, "toast.debugNoTrx"));
+  }
+  return new vscode.TestMessage("No test results were produced.");
+}
+
+interface ApplyRunResultsOptions {
+  run: vscode.TestRun;
+  scenarioItems: vscode.TestItem[];
+  itemData: WeakMap<vscode.TestItem, TestExplorerItemData>;
+  projectDir: string;
+  summary: UnifiedSummary | undefined;
+  outputBuffer: string;
+  runService: RunService;
+  outcomeStore: OutcomeStore;
+  locale: PilotLocale;
+  display: TestExplorerDisplaySettings;
+  canceled: boolean;
+  exitCode: number | null;
+}
+
+function applyRunResults(opts: ApplyRunResultsOptions): void {
+  const completionKind = classifyRunCompletion({
+    exitCode: opts.exitCode,
+    canceled: opts.canceled,
+    summary: opts.summary,
+    outputBuffer: opts.outputBuffer,
+  });
+
+  if (!opts.canceled && (completionKind === "infra" || completionKind === "no_results")) {
+    const msg = buildInfraTestMessage(opts.outputBuffer, opts.locale, completionKind);
+    opts.scenarioItems.forEach((i) => opts.run.errored(i, msg));
     return;
   }
 
-  for (const item of scenarioItems) {
-    const data = itemData.get(item);
-    if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
-      run.skipped(item);
-      continue;
-    }
-    const scenarioName = data.scenario.name;
-    const match =
-      data.kind === "outlineRow"
-        ? summary.results.find((r) =>
-            findOutlineExampleMatch(r.testName, scenarioName, [data.example]),
-          )
-        : summary.results.find((r) => matchesScenario(r.testName, scenarioName));
-    if (!match) {
-      run.skipped(item);
-      continue;
-    }
-    switch (match.outcome) {
-      case "passed":
-        run.passed(item, match.durationMs);
-        storeOutcomeForItem(outcomeStore, data, "passed", match.durationMs, match.errorMessage);
-        break;
-      case "failed":
-        run.failed(item, runService.buildFailureMessage(projectDir, match.errorMessage), match.durationMs);
-        storeOutcomeForItem(outcomeStore, data, "failed", match.durationMs, match.errorMessage);
-        break;
-      default:
-        run.skipped(item);
-        storeOutcomeForItem(outcomeStore, data, "skipped", match.durationMs, match.errorMessage);
-        break;
-    }
-    updateLeafItemDescription(item, data, outcomeStore, display, locale);
+  if (!opts.canceled && !opts.summary) {
+    const msg = buildInfraTestMessage(opts.outputBuffer, opts.locale, completionKind);
+    opts.scenarioItems.forEach((i) => opts.run.errored(i, msg));
+    return;
   }
+
+  for (const item of opts.scenarioItems) {
+    applyLeafRunResult(item, opts);
+  }
+}
+
+function applyLeafRunResult(item: vscode.TestItem, opts: ApplyRunResultsOptions): void {
+  const data = opts.itemData.get(item);
+  if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
+    opts.run.skipped(item);
+    return;
+  }
+
+  const scenarioName = data.scenario.name;
+  const match = opts.summary
+    ? data.kind === "outlineRow"
+      ? opts.summary.results.find((r) =>
+          findOutlineExampleMatch(r.testName, scenarioName, [data.example]),
+        )
+      : opts.summary.results.find((r) => matchesScenario(r.testName, scenarioName))
+    : undefined;
+
+  if (match) {
+    applyMatchedOutcomeToRun(item, data, match, opts);
+    return;
+  }
+
+  const storedKey = outlineOrScenarioKey(data);
+  const storedOutcome = opts.outcomeStore.get(storedKey);
+  const storedDuration = opts.outcomeStore.getDuration(storedKey);
+  const storedError = opts.outcomeStore.getErrorMessage(storedKey);
+
+  if (storedOutcome && storedOutcome !== "unknown") {
+    applyStoredOutcomeToRun(
+      item,
+      data,
+      storedOutcome,
+      storedDuration,
+      storedError,
+      opts,
+      opts.canceled ? "canceled" : "not_in_trx",
+    );
+    return;
+  }
+
+  if (opts.canceled) {
+    opts.run.skipped(item);
+    setSkippedDescription(item, data, opts, "canceled");
+    return;
+  }
+
+  opts.run.skipped(item);
+  setSkippedDescription(item, data, opts, "not_in_trx");
+}
+
+function outlineOrScenarioKey(data: TestExplorerItemData): string {
+  if (data.kind === "outlineRow") {
+    return outlineRowKey(data.feature, data.scenario, data.example.rowIndex);
+  }
+  if (data.kind === "scenario") {
+    return scenarioKey(data.feature, data.scenario);
+  }
+  return "";
+}
+
+function applyMatchedOutcomeToRun(
+  item: vscode.TestItem,
+  data: TestExplorerItemData,
+  match: { outcome: TestOutcome; durationMs?: number; errorMessage?: string },
+  opts: ApplyRunResultsOptions,
+): void {
+  storeOutcomeForItem(opts.outcomeStore, data, match.outcome, match.durationMs, match.errorMessage);
+
+  switch (match.outcome) {
+    case "passed":
+      opts.run.passed(item, match.durationMs);
+      break;
+    case "failed":
+      opts.run.failed(
+        item,
+        opts.runService.buildFailureMessage(opts.projectDir, match.errorMessage),
+        match.durationMs,
+      );
+      break;
+    case "unknown":
+      opts.run.skipped(item);
+      setSkippedDescription(item, data, opts, "unknown");
+      return;
+    default:
+      opts.run.skipped(item);
+      setSkippedDescription(item, data, opts, "runner_skipped");
+      return;
+  }
+  updateLeafItemDescription(item, data, opts.outcomeStore, opts.display, opts.locale);
+}
+
+function applyStoredOutcomeToRun(
+  item: vscode.TestItem,
+  data: TestExplorerItemData,
+  outcome: TestOutcome,
+  durationMs: number | undefined,
+  errorMessage: string | undefined,
+  opts: ApplyRunResultsOptions,
+  skipReason: SkipReason,
+): void {
+  const resolved = resolveCanceledLeafOutcome(outcome);
+  if (resolved === "pending") {
+    opts.run.skipped(item);
+    setSkippedDescription(item, data, opts, skipReason);
+    return;
+  }
+
+  switch (resolved) {
+    case "passed":
+      opts.run.passed(item, durationMs);
+      break;
+    case "failed":
+      opts.run.failed(
+        item,
+        opts.runService.buildFailureMessage(opts.projectDir, errorMessage),
+        durationMs,
+      );
+      break;
+    default:
+      opts.run.skipped(item);
+      setSkippedDescription(
+        item,
+        data,
+        opts,
+        skipReasonForTrxOutcome(outcome, opts.canceled, false) ?? skipReason,
+      );
+      return;
+  }
+  updateLeafItemDescription(item, data, opts.outcomeStore, opts.display, opts.locale);
+}
+
+function setSkippedDescription(
+  item: vscode.TestItem,
+  data: TestExplorerItemData,
+  opts: ApplyRunResultsOptions,
+  reason: SkipReason,
+): void {
+  updateLeafItemDescription(item, data, opts.outcomeStore, opts.display, opts.locale);
+  const base = item.description;
+  item.description = appendSkipReasonToDescription(base, reason, opts.locale);
 }
 
 /** Re-run only scenarios that failed in the last run (Test Explorer helper). */

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.0.0** · **157 unit tests**
+> **Current release: v1.1.0** · **169 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.0.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 optional (pospuesto) |
+| ✅ Shipped | v0.1.0 → **v1.1.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 optional (pospuesto) · run-lifecycle backlog P3–P4 |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -34,6 +34,7 @@ Semver stays conservative until Marketplace + stable API:
 | **0.2.7** | ROADMAP/README sync; Marketplace release packaging |
 | **0.3.0** | Phase C — CI sample project, README assets, full Marketplace gate |
 | **1.0.0** | Stable public release |
+| **1.1.0** | Run lifecycle & VS Code state parity (post-debug TRX, cancel partial, TE errored/skip reasons, status bar running) |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -90,7 +91,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v1.0.0)
+- [x] `CHANGELOG.md` through current version (v1.1.0)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -103,7 +104,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [x] Pin Marketplace version to tagged release *(v1.0.0 publish)*
+- [x] Pin Marketplace version to tagged release *(v1.1.0 publish)*
 - [ ] Open “good first issue” for Capa C i18n extras *(tree roll-ups, setting descriptions)*
 - [ ] Watch issues 1–2 weeks; patch **1.0.x** if filter/outline regressions
 
@@ -129,6 +130,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.1.0 — run lifecycle & VS Code states
+
+| Area | Change |
+|------|--------|
+| **Post-debug** | TRX on debug launch; apply results to tree + TE on session end |
+| **Cancel** | Preserve partial live/TRX outcomes; localized skip reasons |
+| **TE infra** | `errored` + diagnostics when no tests executed / no TRX |
+| **Status bar** | Running spinner; unified block run↔debug |
+| **Core** | `classifyRunCompletion`, skip reasons, shared TRX args (169 unit tests) |
 
 ### v1.0.0 — stable public release
 
@@ -316,4 +327,4 @@ src/
 
 ---
 
-*Last updated: v1.0.0 — stable public release (157 unit tests).*
+*Last updated: v1.1.0 — run lifecycle & VS Code states (169 unit tests).*

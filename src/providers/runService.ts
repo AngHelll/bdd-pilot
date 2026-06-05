@@ -4,12 +4,19 @@ import {
   formatRunTargetScopeLabels,
   LastRunSnapshot,
 } from "../core/diagnostics/aiFailureContext";
+import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
 import { loadStageEnv } from "../core/config/envFile";
 import { MODE_PROFILES, ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
 import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 import { findRecentEvidence } from "../core/results/evidence";
 import { loadRunResults, UnifiedSummary } from "../core/results/resultLoader";
+import {
+  appendTrxLoggerArgs,
+  createDebugTrxFileName,
+  createRunTrxFileName,
+  resolveTrxPath,
+} from "../core/runner/trxArgs";
 import {
   RunHistoryEntry,
   ScenarioRunRecord,
@@ -51,9 +58,31 @@ export interface RunServiceResult {
   summary?: UnifiedSummary;
   outputBuffer: string;
   historyEntry?: RunHistoryEntry;
+  /** Set when a debug session was launched and results arrive on session end. */
+  debugStarted?: boolean;
 }
 
+export interface DebugSessionResult {
+  summary?: UnifiedSummary;
+  trxPath: string;
+  completionKind: RunCompletionKind;
+  historyEntry?: RunHistoryEntry;
+  filter?: string;
+  targets: RunTarget[];
+  stage: Stage;
+  mode: ParallelismMode;
+  projectDir: string;
+}
+
+export const BDD_PILOT_DEBUG_SESSION_NAME = "BDD Pilot Debug";
+
 const HISTORY_MAX = 50;
+
+interface PendingDebugSession {
+  trxPath: string;
+  req: RunRequest;
+  filter?: string;
+}
 
 export class RunService {
   private readonly _onHistory = new vscode.EventEmitter<RunHistoryEntry[]>();
@@ -64,6 +93,8 @@ export class RunService {
   private lastFailedFilter: string | undefined;
   private lastFailedRunSnapshot: LastRunSnapshot | undefined;
   private runStartedAt = 0;
+  private pendingDebug: PendingDebugSession | undefined;
+  private debugActive = false;
 
   constructor(loadPersisted?: () => RunHistoryEntry[]) {
     if (loadPersisted) {
@@ -90,6 +121,10 @@ export class RunService {
   setHistory(entries: RunHistoryEntry[]): void {
     this.history = entries;
     this._onHistory.fire(this.history);
+  }
+
+  isDebugActive(): boolean {
+    return this.debugActive;
   }
 
   async run(req: RunRequest): Promise<RunServiceResult> {
@@ -120,7 +155,7 @@ export class RunService {
     }
 
     const loadedEnv = loadStageEnv(req.projectDir, req.stage);
-    const trxFileName = `bdd-pilot-${Date.now()}.trx`;
+    const trxFileName = createRunTrxFileName();
     this.runStartedAt = Date.now();
     const progressParser = new LiveProgressParser(req.totalExpected);
 
@@ -159,12 +194,16 @@ export class RunService {
     );
 
     const summary = loadRunResults(req.projectDir, result.trxPath);
-    const historyEntry = this.recordHistory(req, filter, summary, result.canceled);
+    const historyEntry = result.canceled
+      ? undefined
+      : this.recordHistory(req, filter, summary, false);
     if (historyEntry) {
       this.history = trimHistory(this.history, HISTORY_MAX);
       this._onHistory.fire(this.history);
     }
-    this.updateFailedRunSnapshot(req, filter, result, summary, buffer, historyEntry);
+    if (!result.canceled) {
+      this.updateFailedRunSnapshot(req, filter, result, summary, buffer, historyEntry);
+    }
 
     return {
       exitCode: result.exitCode,
@@ -176,12 +215,67 @@ export class RunService {
     };
   }
 
+  /** Called when the VS Code debug session launched by Pilot terminates. */
+  finishDebugSession(): DebugSessionResult | undefined {
+    const pending = this.pendingDebug;
+    this.pendingDebug = undefined;
+    this.debugActive = false;
+    if (!pending) {
+      return undefined;
+    }
+
+    const summary = loadRunResults(pending.req.projectDir, pending.trxPath);
+    const completionKind = classifyRunCompletion({
+      exitCode: summary && summary.total > 0 ? 0 : 1,
+      canceled: false,
+      summary,
+      outputBuffer: "",
+    });
+
+    let historyEntry: RunHistoryEntry | undefined;
+    if (summary && summary.total > 0) {
+      historyEntry = this.recordHistory(pending.req, pending.filter, summary, false);
+      if (historyEntry) {
+        this.history = trimHistory(this.history, HISTORY_MAX);
+        this._onHistory.fire(this.history);
+      }
+      this.updateFailedRunSnapshot(
+        pending.req,
+        pending.filter,
+        { exitCode: 0, canceled: false, trxPath: pending.trxPath },
+        summary,
+        "",
+        historyEntry,
+      );
+    }
+
+    return {
+      summary,
+      trxPath: pending.trxPath,
+      completionKind,
+      historyEntry,
+      filter: pending.filter,
+      targets: pending.req.targets,
+      stage: pending.req.stage,
+      mode: pending.req.mode,
+      projectDir: pending.req.projectDir,
+    };
+  }
+
   private async runDebug(req: RunRequest, filter?: string): Promise<RunServiceResult> {
+    if (this.debugActive) {
+      return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
+    }
+
     const loadedEnv = loadStageEnv(req.projectDir, req.stage);
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
       throw new Error("Open a workspace folder to debug tests.");
     }
+
+    const trxFileName = createDebugTrxFileName();
+    const trxPath = resolveTrxPath(req.projectDir, "TestResults", trxFileName);
+    this.runStartedAt = Date.now();
 
     const args = ["test"];
     if (req.testTarget && /\.(csproj|sln)$/i.test(req.testTarget)) {
@@ -190,10 +284,11 @@ export class RunService {
     if (filter) {
       args.push("--filter", filter);
     }
+    appendTrxLoggerArgs(args, trxFileName);
 
     const config: vscode.DebugConfiguration = {
       type: "coreclr",
-      name: "BDD Pilot Debug",
+      name: BDD_PILOT_DEBUG_SESSION_NAME,
       request: "launch",
       program: req.settings.dotnetPath,
       args,
@@ -202,10 +297,24 @@ export class RunService {
       console: "integratedTerminal",
     };
 
-    req.onOutput?.(`[bdd-pilot] Starting debugger: ${req.settings.dotnetPath} ${args.join(" ")}\n`);
-    await vscode.debug.startDebugging(folder, config);
+    this.pendingDebug = { trxPath, req, filter };
+    req.onOutput?.(
+      `[bdd-pilot] Starting debugger: ${req.settings.dotnetPath} ${args.join(" ")}\n`,
+    );
+    const started = await vscode.debug.startDebugging(folder, config);
+    if (!started) {
+      this.pendingDebug = undefined;
+      return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
+    }
 
-    return { exitCode: null, canceled: false, trxPath: "", outputBuffer: "" };
+    this.debugActive = true;
+    return {
+      exitCode: null,
+      canceled: false,
+      trxPath,
+      outputBuffer: "",
+      debugStarted: true,
+    };
   }
 
   private recordHistory(

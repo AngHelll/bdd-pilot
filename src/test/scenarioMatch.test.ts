@@ -12,6 +12,14 @@ describe("outcomeRollup", () => {
     assert.strictEqual(formatRollupDescription(rollup), "1 failed · 2 passed");
     assert.strictEqual(rollupSeverity(rollup), "failed");
   });
+
+  it("counts unknown as withResults without affecting pass/fail counts", () => {
+    const rollup = computeRollup(["unknown", "passed"]);
+    assert.strictEqual(rollup.withResults, 2);
+    assert.strictEqual(rollup.passed, 1);
+    assert.strictEqual(rollup.failed, 0);
+    assert.strictEqual(rollupSeverity(rollup), "passed");
+  });
 });
 
 describe("scenarioMatch outline", () => {

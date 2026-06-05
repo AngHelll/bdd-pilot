@@ -40,12 +40,16 @@ function parseTestRunSummary(output: string): { failed: number; passed: number; 
   };
 }
 
-function testsExecuted(output: string): boolean {
+export function testsExecutedInOutput(output: string): boolean {
   return (
     /Test run for .+\.dll/.test(output) ||
     /\[xUnit\.net/.test(output) ||
     parseTestRunSummary(output) !== undefined
   );
+}
+
+function testsExecuted(output: string): boolean {
+  return testsExecutedInOutput(output);
 }
 
 function failureBreakdown(output: string): string | undefined {

@@ -9,6 +9,9 @@ const EN = {
   "statusBar.stageLabel": "STAGE",
   "statusBar.modeLabel": "mode",
   "statusBar.projectNotSet": "project: (not set)",
+  "statusBar.running": "Running…",
+  "statusBar.runningTooltip": "BDD Pilot test run in progress — click to cancel",
+  "statusBar.debugRunningTooltip": "BDD Pilot debug session in progress — stop from the Debug toolbar",
 
   "dashboard.panelTitle": "BDD Pilot Dashboard",
   "dashboard.title": "BDD Pilot Dashboard",
@@ -50,6 +53,11 @@ const EN = {
   "toast.treeGroupByTag": "BDD Pilot tree: group by @tag.",
   "toast.treeGroupByDomain": "BDD Pilot tree: group by domain.",
   "toast.runInProgress": "A test run is already in progress.",
+  "toast.debugWhileRunning": "Stop the current run before starting a debug session.",
+  "toast.debugAlreadyActive": "A BDD Pilot debug session is already active.",
+  "toast.debugNoTrx":
+    "Debug session ended. No test results file was produced — check the terminal.",
+  "toast.runCanceledPartial": "Run canceled — {completed}/{expected} tests finished.",
   "toast.projectNotFound":
     "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
   "toast.noProjectsFound":
@@ -96,6 +104,10 @@ const EN = {
   "outcome.passed": "passed",
   "outcome.failed": "failed",
   "outcome.skipped": "skipped",
+  "skip.runner": "skipped by runner",
+  "skip.notInTrx": "not in results",
+  "skip.canceled": "canceled before completion",
+  "skip.unknown": "unknown result",
   "rollup.failed": "{count} failed",
   "rollup.passed": "{count} passed",
   "rollup.skipped": "{count} skipped",
@@ -111,6 +123,10 @@ const ES: Record<keyof typeof EN, string> = {
   "statusBar.stageLabel": "STAGE",
   "statusBar.modeLabel": "modo",
   "statusBar.projectNotSet": "proyecto: (sin asignar)",
+  "statusBar.running": "Ejecutando…",
+  "statusBar.runningTooltip": "Ejecución BDD Pilot en curso — clic para cancelar",
+  "statusBar.debugRunningTooltip":
+    "Depuración BDD Pilot en curso — detén desde la barra Debug",
 
   "dashboard.panelTitle": "Panel BDD Pilot",
   "dashboard.title": "Panel BDD Pilot",
@@ -152,6 +168,11 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.treeGroupByTag": "Árbol BDD Pilot: agrupado por @tag.",
   "toast.treeGroupByDomain": "Árbol BDD Pilot: agrupado por dominio.",
   "toast.runInProgress": "Ya hay una ejecución de tests en curso.",
+  "toast.debugWhileRunning": "Detén la ejecución actual antes de depurar.",
+  "toast.debugAlreadyActive": "Ya hay una sesión de depuración BDD Pilot activa.",
+  "toast.debugNoTrx":
+    "Sesión de depuración finalizada. No se generó archivo de resultados — revisa la terminal.",
+  "toast.runCanceledPartial": "Ejecución cancelada — {completed}/{expected} tests completados.",
   "toast.projectNotFound":
     "BDD Pilot: no se encontró el proyecto .NET de tests. Usa 'Select Test Project' o configura 'bddPilot.projectPath'.",
   "toast.noProjectsFound":
@@ -199,6 +220,10 @@ const ES: Record<keyof typeof EN, string> = {
   "outcome.passed": "correcto",
   "outcome.failed": "fallido",
   "outcome.skipped": "omitido",
+  "skip.runner": "omitido por el runner",
+  "skip.notInTrx": "sin resultado",
+  "skip.canceled": "cancelado antes de terminar",
+  "skip.unknown": "resultado desconocido",
   "rollup.failed": "{count} fallidos",
   "rollup.passed": "{count} correctos",
   "rollup.skipped": "{count} omitidos",
