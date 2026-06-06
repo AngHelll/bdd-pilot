@@ -194,9 +194,10 @@ export class RunService {
     );
 
     const summary = loadRunResults(req.projectDir, result.trxPath);
+    const liveState = progressParser.getState();
     const historyEntry = result.canceled
-      ? undefined
-      : this.recordHistory(req, filter, summary, false);
+      ? this.recordCanceledHistory(req, filter, summary, liveState)
+      : this.recordHistory(req, filter, summary);
     if (historyEntry) {
       this.history = trimHistory(this.history, HISTORY_MAX);
       this._onHistory.fire(this.history);
@@ -234,7 +235,7 @@ export class RunService {
 
     let historyEntry: RunHistoryEntry | undefined;
     if (summary && summary.total > 0) {
-      historyEntry = this.recordHistory(pending.req, pending.filter, summary, false);
+      historyEntry = this.recordHistory(pending.req, pending.filter, summary);
       if (historyEntry) {
         this.history = trimHistory(this.history, HISTORY_MAX);
         this._onHistory.fire(this.history);
@@ -321,15 +322,70 @@ export class RunService {
     req: RunRequest,
     filter: string | undefined,
     summary: UnifiedSummary | undefined,
-    canceled: boolean,
   ): RunHistoryEntry | undefined {
-    if (canceled || !summary) {
+    if (!summary) {
       return undefined;
     }
 
-    const scenarios: ScenarioRunRecord[] = [];
-    const failedTargets: RunTarget[] = [];
+    const scenarios = this.buildScenarioRecords(req, summary);
+    this.updateFailedTargetsFromSummary(req, summary);
 
+    const entry: RunHistoryEntry = {
+      id: `run-${Date.now()}`,
+      timestamp: Date.now(),
+      stage: req.stage,
+      mode: req.mode,
+      filter,
+      passed: summary.passed,
+      failed: summary.failed,
+      skipped: summary.skipped,
+      total: summary.total,
+      durationMs: Date.now() - this.runStartedAt,
+      scenarios,
+      status: "completed",
+    };
+    this.history.push(entry);
+    return entry;
+  }
+
+  private recordCanceledHistory(
+    req: RunRequest,
+    filter: string | undefined,
+    summary: UnifiedSummary | undefined,
+    liveState: LiveProgressState,
+  ): RunHistoryEntry | undefined {
+    const hasSummary = !!summary && summary.total > 0;
+    const hasLive = liveState.completed > 0;
+    if (!hasSummary && !hasLive) {
+      return undefined;
+    }
+
+    const scenarios = hasSummary ? this.buildScenarioRecords(req, summary!) : [];
+    const passed = hasSummary ? summary!.passed : liveState.passed;
+    const failed = hasSummary ? summary!.failed : liveState.failed;
+    const skipped = hasSummary ? summary!.skipped : liveState.skipped;
+    const total = hasSummary ? summary!.total : liveState.completed;
+
+    const entry: RunHistoryEntry = {
+      id: `run-cancel-${Date.now()}`,
+      timestamp: Date.now(),
+      stage: req.stage,
+      mode: req.mode,
+      filter,
+      passed,
+      failed,
+      skipped,
+      total,
+      durationMs: Date.now() - this.runStartedAt,
+      scenarios,
+      status: "canceled",
+    };
+    this.history.push(entry);
+    return entry;
+  }
+
+  private buildScenarioRecords(req: RunRequest, summary: UnifiedSummary): ScenarioRunRecord[] {
+    const scenarios: ScenarioRunRecord[] = [];
     for (const r of summary.results) {
       const match = matchTarget(req.targets, r.testName);
       if (match) {
@@ -341,9 +397,32 @@ export class RunService {
           durationMs: r.durationMs,
           errorMessage: r.errorMessage,
         });
-        if (r.outcome === "failed") {
-          failedTargets.push(match.target);
-        }
+      }
+    }
+    if (scenarios.length === 0) {
+      for (const r of summary.results) {
+        scenarios.push({
+          featurePath: "",
+          scenarioLine: 0,
+          scenarioName: r.testName,
+          outcome: r.outcome,
+          durationMs: r.durationMs,
+          errorMessage: r.errorMessage,
+        });
+      }
+    }
+    return scenarios;
+  }
+
+  private updateFailedTargetsFromSummary(req: RunRequest, summary: UnifiedSummary): void {
+    const failedTargets: RunTarget[] = [];
+    for (const r of summary.results) {
+      if (r.outcome !== "failed") {
+        continue;
+      }
+      const match = matchTarget(req.targets, r.testName);
+      if (match) {
+        failedTargets.push(match.target);
       }
     }
 
@@ -369,35 +448,6 @@ export class RunService {
     } else {
       this.lastFailedFilter = undefined;
     }
-
-    if (scenarios.length === 0) {
-      for (const r of summary.results) {
-        scenarios.push({
-          featurePath: "",
-          scenarioLine: 0,
-          scenarioName: r.testName,
-          outcome: r.outcome,
-          durationMs: r.durationMs,
-          errorMessage: r.errorMessage,
-        });
-      }
-    }
-
-    const entry: RunHistoryEntry = {
-      id: `run-${Date.now()}`,
-      timestamp: Date.now(),
-      stage: req.stage,
-      mode: req.mode,
-      filter,
-      passed: summary.passed,
-      failed: summary.failed,
-      skipped: summary.skipped,
-      total: summary.total,
-      durationMs: Date.now() - this.runStartedAt,
-      scenarios,
-    };
-    this.history.push(entry);
-    return entry;
   }
 
   buildFailureMessage(projectDir: string, errorMessage?: string): vscode.TestMessage {

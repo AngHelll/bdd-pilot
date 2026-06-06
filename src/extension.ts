@@ -23,6 +23,9 @@ import {
   isStage,
 } from "./core/config/types";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
+import { resolveLastKnownSnapshot } from "./core/results/dashboardLastKnown";
+import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
+import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
 import { RunTarget } from "./core/runner/filterBuilder";
 import {
@@ -34,7 +37,7 @@ import { estimateTestCount } from "./core/runner/runEstimate";
 import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
 import { buildAiFailureContext } from "./core/diagnostics/aiFailureContext";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
-import { DashboardPanel } from "./providers/dashboardPanel";
+import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
 import { LocaleService } from "./providers/localeService";
 import { ProfileStore } from "./providers/profileStore";
 import { RunService } from "./providers/runService";
@@ -82,6 +85,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const outcomeStore = new OutcomeStore();
+  let rehydrateNotice: RehydrateNotice | undefined;
   const treeProvider = new TestTreeProvider(
     () => getDiscoveryRoot(),
     outcomeStore,
@@ -91,9 +95,24 @@ export function activate(context: vscode.ExtensionContext): void {
     treeDataProvider: treeProvider,
   });
 
+  const buildDashboardContext = (): DashboardContext => {
+    const storeRollup = summarizeOutcomeStore(outcomeStore, treeProvider.getDomains());
+    const lastHistory = runService.getHistory().at(-1);
+    return {
+      lastKnown: resolveLastKnownSnapshot(
+        storeRollup,
+        !outcomeStore.isEmpty(),
+        lastHistory,
+        rehydrateNotice,
+      ),
+      rehydrateNotice,
+    };
+  };
+
   const persistHistory = () => {
+    rehydrateNotice = undefined;
     void context.workspaceState.update(HISTORY_KEY, runService.getHistory());
-    dashboard.update(runService.getHistory(), localeService.getLocale());
+    dashboard.update(runService.getHistory(), localeService.getLocale(), buildDashboardContext());
   };
 
   runService.onHistoryChanged(() => persistHistory());
@@ -193,7 +212,7 @@ export function activate(context: vscode.ExtensionContext): void {
     refreshUi();
     refreshAll();
     codeLens.refresh();
-    dashboard.refreshLocale(localeService.getLocale());
+    dashboard.refreshLocale(localeService.getLocale(), buildDashboardContext());
   });
 
   treeProvider.refresh();
@@ -238,6 +257,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
     treeProvider.applyResults(summary);
     managed.refresh();
+    rehydrateNotice = {
+      trxFileName: latest.fileName,
+      mtimeMs: latest.mtimeMs,
+      passed: summary.passed,
+      failed: summary.failed,
+      skipped: summary.skipped,
+      total: summary.total,
+    };
+    dashboard.update(runService.getHistory(), localeService.getLocale(), buildDashboardContext());
     output.appendLine(
       `[bdd-pilot] ${tr("log.rehydrateRestored", {
         file: latest.fileName,
@@ -358,7 +386,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand("bddPilot.showDashboard", () => {
       const history = runService.getHistory();
-      dashboard.show(history, localeService.getLocale());
+      dashboard.show(history, localeService.getLocale(), buildDashboardContext());
       if (history.length === 0) {
         void vscode.window.showInformationMessage(tr("toast.dashboardEmpty"));
       }

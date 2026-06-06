@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.1] — 2026-06-04
+
+### Added
+- **Dashboard — last known results** — snapshot from `OutcomeStore` (or last history entry) aligned with tree/Test Explorer after reload
+- **Dashboard — TRX rehydrate notice** — session banner when v1.2 restores outcomes without a new run
+- **Dashboard — scope column** — shows the filter used for each recent run
+- **Canceled run history** — partial cancel runs recorded with `canceled` status; global KPIs exclude their pass/fail counts
+
 ## [1.2.0] — 2026-06-04
 
 ### Added

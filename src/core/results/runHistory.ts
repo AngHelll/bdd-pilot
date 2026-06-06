@@ -9,6 +9,8 @@ export interface ScenarioRunRecord {
   errorMessage?: string;
 }
 
+export type RunHistoryStatus = "completed" | "canceled";
+
 export interface RunHistoryEntry {
   id: string;
   timestamp: number;
@@ -21,6 +23,8 @@ export interface RunHistoryEntry {
   total: number;
   durationMs?: number;
   scenarios: ScenarioRunRecord[];
+  /** Omitted on legacy entries — treated as completed. */
+  status?: RunHistoryStatus;
 }
 
 export function scenarioHistoryKey(featurePath: string, scenarioLine: number, scenarioName: string): string {
