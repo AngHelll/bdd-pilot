@@ -45,6 +45,14 @@ const EN = {
   "dashboard.statusCanceled": "canceled",
   "dashboard.statCanceled": "canceled",
   "dashboard.scopeCanceled": "— (canceled)",
+  "dashboard.actionsTitle": "Actions",
+  "dashboard.actionShowOutput": "Show Output",
+  "dashboard.actionRerunFailed": "Re-run Failed",
+  "dashboard.actionCopyForAi": "Copy for AI",
+  "dashboard.actionsTarget": "Last failed run · {stage}/{mode} · {failed} failed · {when}",
+  "dashboard.actionRerunDisabled": "No failed-test filter available",
+  "dashboard.actionCopyDisabledHistory":
+    "Available after a run in this session (output not stored in history)",
 
   "codeLens.run": "$(play) Run",
   "codeLens.debug": "$(debug) Debug",
@@ -175,6 +183,14 @@ const ES: Record<keyof typeof EN, string> = {
   "dashboard.statusCanceled": "cancelada",
   "dashboard.statCanceled": "canceladas",
   "dashboard.scopeCanceled": "— (cancelada)",
+  "dashboard.actionsTitle": "Acciones",
+  "dashboard.actionShowOutput": "Mostrar salida",
+  "dashboard.actionRerunFailed": "Reejecutar fallidos",
+  "dashboard.actionCopyForAi": "Copiar para IA",
+  "dashboard.actionsTarget": "Última ejecución fallida · {stage}/{mode} · {failed} fallidos · {when}",
+  "dashboard.actionRerunDisabled": "No hay filtro de tests fallidos disponible",
+  "dashboard.actionCopyDisabledHistory":
+    "Disponible tras una ejecución en esta sesión (la salida no se guarda en el historial)",
 
   "codeLens.run": "$(play) Ejecutar",
   "codeLens.debug": "$(debug) Depurar",

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.1** · **184 unit tests**
+> **Current release: v1.2.2** · **191 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.1** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| ✅ Shipped | v0.1.0 → **v1.2.2** (see [CHANGELOG.md](./CHANGELOG.md)) |
 | 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 optional (pospuesto) · outcome continuity P3–P4 · Visual UX v2 |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
@@ -37,6 +37,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.1.0** | Run lifecycle & VS Code state parity (post-debug TRX, cancel partial, TE errored/skip reasons, status bar running) |
 | **1.2.0** | Outcome continuity (TRX rehydrate on activate, tree skip tooltips, rehydrate settings) |
 | **1.2.1** | Dashboard continuity (last known snapshot, rehydrate notice, scope column, canceled run history) |
+| **1.2.2** | Dashboard actions (Show Output, Re-run Failed, Copy for AI — parity with post-run toast) |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -132,6 +133,13 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.2.2 — dashboard actions
+
+| Area | Change |
+|------|--------|
+| **Dashboard** | Action bar: Show Output, Re-run Failed, Copy for AI (session + history re-run) |
+| **Webview** | Minimal scripts + CSP nonce; core `dashboardActions` (191 unit tests) |
 
 ### v1.2.1 — dashboard continuity
 
@@ -345,4 +353,4 @@ src/
 
 ---
 
-*Last updated: v1.2.1 — dashboard continuity (184 unit tests).*
+*Last updated: v1.2.2 — dashboard actions (191 unit tests).*

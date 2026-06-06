@@ -1,6 +1,8 @@
+import * as crypto from "crypto";
 import * as vscode from "vscode";
 import { PilotLocale, t } from "../core/i18n";
 import { formatRollupDescriptionLocalized } from "../core/gherkin/outcomeRollup";
+import { DashboardActionsViewModel, DashboardWebviewCommand, parseDashboardWebviewMessage } from "../core/results/dashboardActions";
 import { computeDashboardTotals, truncateScopeFilter } from "../core/results/dashboardFormat";
 import { isCanceledRun, LastKnownSnapshot, runHistoryStatus } from "../core/results/dashboardLastKnown";
 import { formatDuration } from "../core/results/durationFormat";
@@ -10,12 +12,18 @@ import { RunHistoryEntry, flakyRate, scenarioHistoryKey } from "../core/results/
 export interface DashboardContext {
   lastKnown?: LastKnownSnapshot;
   rehydrateNotice?: RehydrateNotice;
+  actions?: DashboardActionsViewModel;
 }
 
 export class DashboardPanel {
   private panel: vscode.WebviewPanel | undefined;
   private lastHistory: RunHistoryEntry[] = [];
   private lastContext: DashboardContext = {};
+  private messageHandler?: (command: DashboardWebviewCommand) => void;
+
+  setMessageHandler(handler: (command: DashboardWebviewCommand) => void): void {
+    this.messageHandler = handler;
+  }
 
   show(history: RunHistoryEntry[], locale: PilotLocale, context: DashboardContext = {}): void {
     this.lastHistory = history;
@@ -31,8 +39,14 @@ export class DashboardPanel {
       "bddPilot.dashboard",
       t(locale, "dashboard.panelTitle"),
       vscode.ViewColumn.One,
-      { enableScripts: false, retainContextWhenHidden: true },
+      { enableScripts: true, retainContextWhenHidden: true },
     );
+    this.panel.webview.onDidReceiveMessage((message) => {
+      const command = parseDashboardWebviewMessage(message);
+      if (command) {
+        this.messageHandler?.(command);
+      }
+    });
     this.panel.onDidDispose(() => {
       this.panel = undefined;
     });
@@ -67,6 +81,7 @@ export class DashboardPanel {
     const totals = computeDashboardTotals(history);
     const flaky = collectFlaky(history);
     const lang = locale === "es" ? "es" : "en";
+    const nonce = crypto.randomBytes(16).toString("base64");
 
     const canceledStat =
       totals.canceled > 0
@@ -83,11 +98,15 @@ export class DashboardPanel {
       ? renderLastKnownSection(context.lastKnown, locale)
       : "";
 
+    const actionsSection = context.actions
+      ? renderActionsSection(context.actions, locale, nonce)
+      : "";
+
     return `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';" />
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 16px; }
     h1 { font-size: 1.4em; margin-bottom: 8px; }
@@ -105,6 +124,19 @@ export class DashboardPanel {
     .canceled-row { opacity: 0.7; }
     .badge { font-size: 0.85em; opacity: 0.9; }
     .last-known { background: var(--vscode-editor-inactiveSelectionBackground); padding: 12px 16px; border-radius: 6px; margin: 12px 0; max-width: 560px; }
+    .actions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; max-width: 560px; }
+    .action-btn {
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-button-foreground);
+      background: var(--vscode-button-background);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .action-btn:hover:not(:disabled) { background: var(--vscode-button-hoverBackground); }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -118,6 +150,7 @@ export class DashboardPanel {
     ${canceledStat}
   </div>
   ${lastKnownSection}
+  ${actionsSection}
   <h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
   ${recent.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.noRuns"))}</p><p class="hint">${t(locale, "dashboard.emptyHint")}</p>` : recentRunsTable(recent, locale)}
   <h2>${escapeHtml(t(locale, "dashboard.flakyTitle"))}</h2>
@@ -125,6 +158,57 @@ export class DashboardPanel {
 </body>
 </html>`;
   }
+}
+
+function renderActionsSection(
+  actions: DashboardActionsViewModel,
+  locale: PilotLocale,
+  nonce: string,
+): string {
+  if (!actions.target) {
+    return "";
+  }
+
+  const target = actions.target;
+  const when = new Date(target.timestamp).toLocaleString();
+  const targetLine = escapeHtml(
+    t(locale, "dashboard.actionsTarget", {
+      stage: target.stage,
+      mode: target.mode,
+      failed: target.failed,
+      when,
+    }),
+  );
+
+  const rerunTitle = actions.canRerunFailed
+    ? ""
+    : ` title="${escapeHtml(t(locale, "dashboard.actionRerunDisabled"))}"`;
+  const copyTitle = actions.canCopyForAi
+    ? ""
+    : ` title="${escapeHtml(t(locale, "dashboard.actionCopyDisabledHistory"))}"`;
+
+  const copyButton = actions.aiEnabled
+    ? `<button type="button" class="action-btn" data-command="copyForAi"${copyTitle}${actions.canCopyForAi ? "" : " disabled"}>${escapeHtml(t(locale, "dashboard.actionCopyForAi"))}</button>`
+    : "";
+
+  return `<h2>${escapeHtml(t(locale, "dashboard.actionsTitle"))}</h2>
+  <div class="actions-bar">
+    <button type="button" class="action-btn" data-command="showOutput">${escapeHtml(t(locale, "dashboard.actionShowOutput"))}</button>
+    <button type="button" class="action-btn" data-command="rerunFailed"${rerunTitle}${actions.canRerunFailed ? "" : " disabled"}>${escapeHtml(t(locale, "dashboard.actionRerunFailed"))}</button>
+    ${copyButton}
+  </div>
+  <p class="hint muted">${targetLine}</p>
+  <script nonce="${nonce}">
+    (function() {
+      const vscode = acquireVsCodeApi();
+      document.querySelectorAll("[data-command]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          if (btn.hasAttribute("disabled")) return;
+          vscode.postMessage({ command: btn.getAttribute("data-command") });
+        });
+      });
+    })();
+  </script>`;
 }
 
 function renderLastKnownSection(snapshot: LastKnownSnapshot, locale: PilotLocale): string {

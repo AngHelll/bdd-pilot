@@ -23,6 +23,7 @@ import {
   isStage,
 } from "./core/config/types";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
+import { buildDashboardActionsViewModel, buildRerunFilterFromHistoryEntry, DashboardWebviewCommand } from "./core/results/dashboardActions";
 import { resolveLastKnownSnapshot } from "./core/results/dashboardLastKnown";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
@@ -95,9 +96,19 @@ export function activate(context: vscode.ExtensionContext): void {
     treeDataProvider: treeProvider,
   });
 
+  const readAiSettings = (): { enabled: boolean; contextMaxOutputLines: number } => {
+    const cfg = vscode.workspace.getConfiguration("bddPilot");
+    return {
+      enabled: cfg.get<boolean>("ai.enabled", true),
+      contextMaxOutputLines: Math.max(1, cfg.get<number>("ai.contextMaxOutputLines", 80)),
+    };
+  };
+
   const buildDashboardContext = (): DashboardContext => {
+    const settings = readSettings();
     const storeRollup = summarizeOutcomeStore(outcomeStore, treeProvider.getDomains());
     const lastHistory = runService.getHistory().at(-1);
+    const sessionSnapshot = runService.getLastFailedRunSnapshot();
     return {
       lastKnown: resolveLastKnownSnapshot(
         storeRollup,
@@ -106,6 +117,14 @@ export function activate(context: vscode.ExtensionContext): void {
         rehydrateNotice,
       ),
       rehydrateNotice,
+      actions: buildDashboardActionsViewModel({
+        history: runService.getHistory(),
+        sessionSnapshot,
+        sessionRerunFilter: buildRerunFailedFilter(runService, settings.filterMapping),
+        domains: treeProvider.getDomains(),
+        filterMapping: settings.filterMapping,
+        aiEnabled: readAiSettings().enabled,
+      }),
     };
   };
 
@@ -276,14 +295,6 @@ export function activate(context: vscode.ExtensionContext): void {
       })}`,
     );
   }
-
-  const readAiSettings = (): { enabled: boolean; contextMaxOutputLines: number } => {
-    const cfg = vscode.workspace.getConfiguration("bddPilot");
-    return {
-      enabled: cfg.get<boolean>("ai.enabled", true),
-      contextMaxOutputLines: Math.max(1, cfg.get<number>("ai.contextMaxOutputLines", 80)),
-    };
-  };
 
   type PostRunToastMode = "off" | "failures" | "always";
 
@@ -733,6 +744,50 @@ export function activate(context: vscode.ExtensionContext): void {
       },
     );
   }
+
+  const handleDashboardCommand = async (command: DashboardWebviewCommand): Promise<void> => {
+    const ctx = buildDashboardContext();
+    const target = ctx.actions?.target;
+    switch (command) {
+      case "showOutput":
+        output.show(true);
+        return;
+      case "copyForAi":
+        await copyFailureContextForAi();
+        return;
+      case "rerunFailed": {
+        if (!target) {
+          return;
+        }
+        if (target.kind === "session") {
+          await vscode.commands.executeCommand("bddPilot.rerunFailed");
+          return;
+        }
+        if (!target.entryId) {
+          return;
+        }
+        const entry = runService.getHistory().find((e) => e.id === target.entryId);
+        if (!entry) {
+          return;
+        }
+        const filter = buildRerunFilterFromHistoryEntry(
+          entry,
+          readSettings().filterMapping,
+          treeProvider.getDomains(),
+        );
+        if (!filter) {
+          void vscode.window.showInformationMessage(tr("toast.noFailedRerun"));
+          return;
+        }
+        await executeRun({ kind: "all" }, { rawFilter: filter });
+        return;
+      }
+    }
+  };
+
+  dashboard.setMessageHandler((command) => {
+    void handleDashboardCommand(command);
+  });
 
   function normalizeTargets(target: RunTarget): RunTarget[] {
     if (target.kind === "all") {

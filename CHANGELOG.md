@@ -8,6 +8,12 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.2] — 2026-06-04
+
+### Added
+- **Dashboard actions** — Show Output, Re-run Failed, and Copy for AI buttons (parity with post-run toast)
+- **History re-run** — Re-run Failed from last history entry with failures when no session snapshot
+
 ## [1.2.1] — 2026-06-04
 
 ### Added
