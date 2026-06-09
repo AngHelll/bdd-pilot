@@ -45,6 +45,7 @@ const EN = {
   "dashboard.statusCanceled": "canceled",
   "dashboard.statCanceled": "canceled",
   "dashboard.scopeCanceled": "— (canceled)",
+  "dashboard.scopeAllTests": "All tests",
   "dashboard.actionsTitle": "Actions",
   "dashboard.actionShowOutput": "Show Output",
   "dashboard.actionRerunFailed": "Re-run Failed",
@@ -53,6 +54,13 @@ const EN = {
   "dashboard.actionRerunDisabled": "No failed-test filter available",
   "dashboard.actionCopyDisabledHistory":
     "Available after a run in this session (output not stored in history)",
+
+  "tree.summaryEmpty": "Run tests from the tree to see results.",
+  "tree.summaryRunning": "Running…",
+  "tree.summaryRehydrate": "Restored (not a new run)",
+  "tree.pilotSummaryHint": "Click for run summary and history",
+  "tree.outlineRowCountOne": "1 row",
+  "tree.outlineRowCount": "{count} rows",
 
   "codeLens.run": "$(play) Run",
   "codeLens.debug": "$(debug) Debug",
@@ -183,6 +191,7 @@ const ES: Record<keyof typeof EN, string> = {
   "dashboard.statusCanceled": "cancelada",
   "dashboard.statCanceled": "canceladas",
   "dashboard.scopeCanceled": "— (cancelada)",
+  "dashboard.scopeAllTests": "Todos los tests",
   "dashboard.actionsTitle": "Acciones",
   "dashboard.actionShowOutput": "Mostrar salida",
   "dashboard.actionRerunFailed": "Reejecutar fallidos",
@@ -191,6 +200,13 @@ const ES: Record<keyof typeof EN, string> = {
   "dashboard.actionRerunDisabled": "No hay filtro de tests fallidos disponible",
   "dashboard.actionCopyDisabledHistory":
     "Disponible tras una ejecución en esta sesión (la salida no se guarda en el historial)",
+
+  "tree.summaryEmpty": "Ejecuta tests en el árbol para ver resultados.",
+  "tree.summaryRunning": "Ejecutando…",
+  "tree.summaryRehydrate": "Restaurado (no es una nueva ejecución)",
+  "tree.pilotSummaryHint": "Clic para ver resumen e historial",
+  "tree.outlineRowCountOne": "1 fila",
+  "tree.outlineRowCount": "{count} filas",
 
   "codeLens.run": "$(play) Ejecutar",
   "codeLens.debug": "$(debug) Depurar",

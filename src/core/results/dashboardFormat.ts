@@ -1,3 +1,5 @@
+import { RUN_SCOPE_ALL_TESTS_LABEL } from "../diagnostics/aiFailureContext";
+import { PilotLocale, t } from "../i18n";
 import { RunHistoryEntry } from "./runHistory";
 import { isCanceledRun } from "./dashboardLastKnown";
 
@@ -34,4 +36,30 @@ export function truncateScopeFilter(filter: string | undefined, maxLen = 40): st
     return trimmed;
   }
   return `${trimmed.slice(0, maxLen - 1)}…`;
+}
+
+/** Scope column text for dashboard history rows. */
+export function formatHistoryScopeDisplay(
+  entry: RunHistoryEntry,
+  locale: PilotLocale,
+  maxLen = 40,
+): string {
+  if (isCanceledRun(entry) && !entry.filter?.trim() && !entry.scopeLabel?.trim()) {
+    return t(locale, "dashboard.scopeCanceled");
+  }
+
+  const scopeLabel = entry.scopeLabel?.trim();
+  if (scopeLabel) {
+    if (scopeLabel === RUN_SCOPE_ALL_TESTS_LABEL) {
+      return t(locale, "dashboard.scopeAllTests");
+    }
+    return truncateScopeFilter(scopeLabel, maxLen) || scopeLabel;
+  }
+
+  const filter = entry.filter?.trim();
+  if (filter) {
+    return truncateScopeFilter(filter, maxLen) || filter;
+  }
+
+  return "—";
 }

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.2** · **191 unit tests**
+> **Current release: v1.2.3** · **209 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.2** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Watch issues post-publish · Capa C i18n phase 2 optional (pospuesto) · outcome continuity P3–P4 · Visual UX v2 |
+| ✅ Shipped | v0.1.0 → **v1.2.3** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Watch issues post-1.2.3 · Test Explorer `displayMode` parity (P2) · Capa C i18n phase 2 optional (pospuesto) |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -38,6 +38,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.0** | Outcome continuity (TRX rehydrate on activate, tree skip tooltips, rehydrate settings) |
 | **1.2.1** | Dashboard continuity (last known snapshot, rehydrate notice, scope column, canceled run history) |
 | **1.2.2** | Dashboard actions (Show Output, Re-run Failed, Copy for AI — parity with post-run toast) |
+| **1.2.3** | Tree UX — `displayMode`, pilot summary row, dashboard scope labels, toolbar cleanup |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -133,6 +134,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.2.3 — tree UX & pilot summary
+
+| Area | Change |
+|------|--------|
+| **Tree** | `bddPilot.tree.displayMode` (`detailed` default \| `compact`); `treeContainerLabels` core |
+| **Summary** | Pilot summary row (status + history icon → dashboard); no duplicate `TreeView.message` |
+| **Dashboard** | Scope column `scopeLabel` (e.g. **All tests** on Run All); direct graph toolbar button |
+| **Core** | `pilotSummaryViewModel`, `formatHistoryScopeDisplay` (209 unit tests) |
 
 ### v1.2.2 — dashboard actions
 
@@ -353,4 +363,4 @@ src/
 
 ---
 
-*Last updated: v1.2.2 — dashboard actions (191 unit tests).*
+*Last updated: v1.2.3 — tree UX & pilot summary (209 unit tests).*

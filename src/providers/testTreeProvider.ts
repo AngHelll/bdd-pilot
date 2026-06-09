@@ -7,9 +7,17 @@ import {
   computeRollup,
   formatRollupDescription,
   formatRollupDescriptionLocalized,
-  prependRollup,
   rollupSeverity,
 } from "../core/gherkin/outcomeRollup";
+import {
+  buildContainerDescription,
+  buildOutlineParentDescription,
+  DEFAULT_TREE_DISPLAY_MODE,
+  effectiveLeafTagDisplay,
+  isTreeDisplayMode,
+  shouldTintContainerIcon,
+  TreeDisplayMode,
+} from "../core/gherkin/treeContainerLabels";
 import {
   formatOutcomeForTooltip,
   prependFailedOutcomeToDescription,
@@ -46,11 +54,27 @@ import {
   scenarioKey,
 } from "../core/runner/runScope";
 import { enrichFeaturesWithTheoryTests, scenarioNeedsTheoryDiscovery } from "../core/gherkin/theoryExamples";
+import {
+  formatPilotSummaryLabel,
+  PILOT_SUMMARY_DASHBOARD_COMMAND,
+  PilotSummaryViewModel,
+} from "../core/results/pilotSummaryViewModel";
+import { t } from "../core/i18n";
 import { OutcomeStore } from "./outcomeStore";
 
 export type TreeGroupBy = "domain" | "tag";
 
-export type TreeNode = DomainNode | TagNode | FeatureNode | ScenarioNode | OutlineRowNode;
+export type TreeNode =
+  | PilotSummaryNode
+  | DomainNode
+  | TagNode
+  | FeatureNode
+  | ScenarioNode
+  | OutlineRowNode;
+
+export interface PilotSummaryNode {
+  kind: "pilotSummary";
+}
 
 export interface DomainNode {
   kind: "domain";
@@ -96,7 +120,15 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     private projectDir: () => string | undefined,
     private readonly outcomeStore: OutcomeStore,
     private readonly getLocale: () => PilotLocale = () => "en",
+    private readonly getPilotSummary: () => PilotSummaryViewModel = () => ({
+      running: false,
+    }),
   ) {}
+
+  /** Refreshes the pilot summary row without re-scanning features. */
+  refreshPilotSummary(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
 
   setProjectDir(): void {
     this.refresh();
@@ -248,10 +280,12 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   getTreeItem(node: TreeNode): vscode.TreeItem {
     const display = readTreeDisplaySettings();
     switch (node.kind) {
+      case "pilotSummary":
+        return this.pilotSummaryItem();
       case "domain":
-        return this.domainItem(node);
+        return this.domainItem(node, display);
       case "tag":
-        return this.tagItem(node);
+        return this.tagItem(node, display);
       case "feature":
         return this.featureItem(node, display);
       case "scenario":
@@ -263,10 +297,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   getChildren(node?: TreeNode): TreeNode[] {
     if (!node) {
+      const summaryRow: PilotSummaryNode = { kind: "pilotSummary" };
       if (readTreeGroupBy() === "tag") {
-        return this.tagGroups.map((group) => ({ kind: "tag", group }));
+        return [summaryRow, ...this.tagGroups.map((group) => ({ kind: "tag" as const, group }))];
       }
-      return this.domains.map((group) => ({ kind: "domain", group }));
+      return [summaryRow, ...this.domains.map((group) => ({ kind: "domain" as const, group }))];
+    }
+    if (node.kind === "pilotSummary") {
+      return [];
     }
     if (node.kind === "tag") {
       return node.group.scenarios.map((ref) => ({
@@ -297,15 +335,34 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     return [];
   }
 
-  private tagItem(node: TagNode): vscode.TreeItem {
+  private pilotSummaryItem(): vscode.TreeItem {
+    const locale = this.getLocale();
+    const model = this.getPilotSummary();
+    const status = formatPilotSummaryLabel(model, locale);
+    const hint = t(locale, "tree.pilotSummaryHint");
+    const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
+    item.iconPath = new vscode.ThemeIcon("history");
+    item.command = {
+      command: PILOT_SUMMARY_DASHBOARD_COMMAND,
+      title: hint,
+    };
+    item.contextValue = "bddPilotSummary";
+    const tooltip = new vscode.MarkdownString(`*${hint}*`);
+    tooltip.isTrusted = false;
+    item.tooltip = tooltip;
+    return item;
+  }
+
+  private tagItem(node: TagNode, display: TreeDisplaySettings): vscode.TreeItem {
+    const locale = this.getLocale();
     const refs = node.group.scenarios;
     const rollup = computeRollup(
       refs.flatMap((ref) => this.collectScenarioOutcomeValues(ref.feature, ref.scenario)),
     );
     const base = `${refs.length} scenario${refs.length === 1 ? "" : "s"}`;
     const item = new vscode.TreeItem(`@${node.group.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
-    item.description = prependRollup(base, rollup);
-    item.iconPath = containerIcon("tag", rollup);
+    item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
+    item.iconPath = containerIcon("tag", rollup, display.displayMode);
     item.contextValue = "bddRunnableTag";
     item.tooltip = new vscode.MarkdownString(
       [`**@${node.group.tag}**`, "", `${refs.length} scenario(s)`, formatRollupDescription(rollup)].join("\n"),
@@ -313,14 +370,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     return item;
   }
 
-  private domainItem(node: DomainNode): vscode.TreeItem {
+  private domainItem(node: DomainNode, display: TreeDisplaySettings): vscode.TreeItem {
     const locale = this.getLocale();
     const scenarioCount = node.group.features.reduce((n, f) => n + f.scenarios.length, 0);
     const rollup = this.rollupFeatureOutcomes(node.group.features);
     const base = `${node.group.features.length} features · ${scenarioCount} scenarios`;
     const item = new vscode.TreeItem(node.group.name, vscode.TreeItemCollapsibleState.Collapsed);
-    item.description = prependRollup(base, rollup);
-    item.iconPath = containerIcon("folder", rollup);
+    item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
+    item.iconPath = containerIcon("folder", rollup, display.displayMode);
     item.contextValue = "bddRunnableDomain";
     const rollupText = formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup);
     const tooltip = new vscode.MarkdownString(
@@ -345,8 +402,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       display.tagDisplay,
       display.compactTagLimit,
     );
+    const locale = this.getLocale();
     const item = new vscode.TreeItem(node.feature.name, vscode.TreeItemCollapsibleState.Collapsed);
-    item.description = prependRollup(base, rollup);
+    item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
     const tooltip = new vscode.MarkdownString(
       buildFeatureTooltipMarkdown(
         node.feature.name,
@@ -358,7 +416,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
-    item.iconPath = containerIcon("file-code", rollup);
+    item.iconPath = containerIcon("file-code", rollup, display.displayMode);
     item.contextValue = "bddRunnableFeature";
     item.resourceUri = vscode.Uri.file(node.feature.filePath);
     return item;
@@ -378,18 +436,29 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       node.scenario.name,
       hasExamples ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
     );
-    const featureHint = node.underTagGroup ? node.feature.name : undefined;
-    let base = buildScenarioDescription(
-      tags,
-      display.tagDisplay,
-      display.compactTagLimit,
-      formatDurationLabel(durationMs, display.durationDisplay),
-      featureHint,
-    );
-    if (!hasExamples) {
+    const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
+    const featureHint =
+      display.displayMode === "detailed" && node.underTagGroup ? node.feature.name : undefined;
+    if (hasExamples) {
+      const tagBase = buildScenarioDescription(tags, display.tagDisplay, display.compactTagLimit);
+      item.description = buildOutlineParentDescription(
+        display.displayMode,
+        rollup,
+        node.scenario.examples!.length,
+        locale,
+        tagBase,
+      );
+    } else {
+      let base = buildScenarioDescription(
+        tags,
+        leafTags,
+        display.compactTagLimit,
+        formatDurationLabel(durationMs, display.durationDisplay),
+        featureHint,
+      );
       base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
+      item.description = base;
     }
-    item.description = rollup && rollup.withResults > 0 ? prependRollup(base, rollup) : base;
 
     const rollupText = rollup
       ? formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup)
@@ -441,10 +510,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const errorMessage = this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
+    const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
     const item = new vscode.TreeItem(node.example.label, vscode.TreeItemCollapsibleState.None);
     let base = buildScenarioDescription(
       tags,
-      display.tagDisplay,
+      leafTags,
       display.compactTagLimit,
       formatDurationLabel(durationMs, display.durationDisplay),
     );
@@ -508,6 +578,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 }
 
 interface TreeDisplaySettings {
+  displayMode: TreeDisplayMode;
   tagDisplay: TagDisplayMode;
   compactTagLimit: number;
   durationDisplay: DurationDisplayMode;
@@ -522,6 +593,8 @@ export function readTreeGroupBy(): TreeGroupBy {
 
 export function readTreeDisplaySettings(): TreeDisplaySettings {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
+  const modeRaw = cfg.get<string>("tree.displayMode", DEFAULT_TREE_DISPLAY_MODE);
+  const displayMode: TreeDisplayMode = isTreeDisplayMode(modeRaw) ? modeRaw : DEFAULT_TREE_DISPLAY_MODE;
   const raw = cfg.get<string>("tree.tagDisplay", DEFAULT_TAG_DISPLAY);
   const tagDisplay: TagDisplayMode =
     raw === "hidden" || raw === "count" || raw === "compact" || raw === "full" ? raw : DEFAULT_TAG_DISPLAY;
@@ -531,14 +604,21 @@ export function readTreeDisplaySettings(): TreeDisplaySettings {
     durationRaw === "auto" || durationRaw === "ms" || durationRaw === "seconds" || durationRaw === "compact"
       ? durationRaw
       : DEFAULT_DURATION_DISPLAY;
-  return { tagDisplay, compactTagLimit, durationDisplay };
+  return { displayMode, tagDisplay, compactTagLimit, durationDisplay };
 }
 
 function formatDurationLabel(durationMs: number | undefined, mode: DurationDisplayMode): string | undefined {
   return durationMs !== undefined ? formatDuration(durationMs, mode) : undefined;
 }
 
-function containerIcon(baseIcon: string, rollup: ReturnType<typeof computeRollup>): vscode.ThemeIcon {
+function containerIcon(
+  baseIcon: string,
+  rollup: ReturnType<typeof computeRollup>,
+  mode: TreeDisplayMode,
+): vscode.ThemeIcon {
+  if (!shouldTintContainerIcon(mode, rollup)) {
+    return new vscode.ThemeIcon(baseIcon);
+  }
   const severity = rollupSeverity(rollup);
   switch (severity) {
     case "failed":

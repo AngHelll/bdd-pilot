@@ -1,6 +1,11 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
-import { computeDashboardTotals, truncateScopeFilter } from "../core/results/dashboardFormat";
+import {
+  computeDashboardTotals,
+  formatHistoryScopeDisplay,
+  truncateScopeFilter,
+} from "../core/results/dashboardFormat";
+import { RUN_SCOPE_ALL_TESTS_LABEL } from "../core/diagnostics/aiFailureContext";
 import { resolveLastKnownSnapshot } from "../core/results/dashboardLastKnown";
 import { RunHistoryEntry, flakyRate, scenarioHistoryKey } from "../core/results/runHistory";
 
@@ -22,6 +27,22 @@ describe("dashboard continuity", () => {
     const truncated = truncateScopeFilter(long, 40);
     assert.strictEqual(truncated.length, 40);
     assert.ok(truncated.endsWith("…"));
+  });
+
+  it("formatHistoryScopeDisplay shows All tests for full-suite runs", () => {
+    const entry = makeEntry("1", { scopeLabel: RUN_SCOPE_ALL_TESTS_LABEL });
+    assert.strictEqual(formatHistoryScopeDisplay(entry, "en"), "All tests");
+    assert.strictEqual(formatHistoryScopeDisplay(entry, "es"), "Todos los tests");
+  });
+
+  it("formatHistoryScopeDisplay prefers scopeLabel over empty filter", () => {
+    const entry = makeEntry("1", { scopeLabel: "@smoke (tag)", filter: "" });
+    assert.strictEqual(formatHistoryScopeDisplay(entry, "en"), "@smoke (tag)");
+  });
+
+  it("formatHistoryScopeDisplay falls back to filter for legacy entries", () => {
+    const entry = makeEntry("1", { filter: "Category=smoke" });
+    assert.strictEqual(formatHistoryScopeDisplay(entry, "en"), "Category=smoke");
   });
 
   it("resolveLastKnownSnapshot prefers live store over history", () => {
@@ -85,6 +106,8 @@ function makeEntry(
     status?: "completed" | "canceled";
     scenarioKey?: string;
     outcome?: "passed" | "failed";
+    scopeLabel?: string;
+    filter?: string;
   } = {},
 ): RunHistoryEntry {
   const key = opts.scenarioKey ?? "a::1::s";
@@ -95,6 +118,8 @@ function makeEntry(
     timestamp: opts.timestamp ?? Date.now(),
     stage: "test",
     mode: "debug",
+    scopeLabel: opts.scopeLabel,
+    filter: opts.filter,
     passed: opts.passed ?? (outcome === "passed" ? 1 : 0),
     failed: opts.failed ?? (outcome === "failed" ? 1 : 0),
     skipped: 0,

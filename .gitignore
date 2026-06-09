@@ -15,6 +15,10 @@ config/maintainer.local
 # Cursor agent config (local workflow)
 .cursor/
 
+# Local sample / dogfood workspace settings (not shipped)
+samples/**/.vscode/
+scripts/edit-readme-screenshot.py
+
 # .NET (samples/minimal-bdd)
 **/bin/
 **/obj/

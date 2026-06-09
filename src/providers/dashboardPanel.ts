@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { PilotLocale, t } from "../core/i18n";
 import { formatRollupDescriptionLocalized } from "../core/gherkin/outcomeRollup";
 import { DashboardActionsViewModel, DashboardWebviewCommand, parseDashboardWebviewMessage } from "../core/results/dashboardActions";
-import { computeDashboardTotals, truncateScopeFilter } from "../core/results/dashboardFormat";
+import { computeDashboardTotals, formatHistoryScopeDisplay } from "../core/results/dashboardFormat";
 import { isCanceledRun, LastKnownSnapshot, runHistoryStatus } from "../core/results/dashboardLastKnown";
 import { formatDuration } from "../core/results/durationFormat";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
@@ -271,12 +271,9 @@ function recentRunsTable(runs: RunHistoryEntry[], locale: PilotLocale): string {
 }
 
 function scopeCell(entry: RunHistoryEntry, locale: PilotLocale): string {
-  if (isCanceledRun(entry) && !entry.filter?.trim()) {
-    return escapeHtml(t(locale, "dashboard.scopeCanceled"));
-  }
-  const full = entry.filter?.trim() ?? "";
-  const display = truncateScopeFilter(full) || "—";
-  const title = full ? ` title="${escapeHtml(full)}"` : "";
+  const display = formatHistoryScopeDisplay(entry, locale);
+  const full = entry.scopeLabel?.trim() || entry.filter?.trim() || "";
+  const title = full && full !== display ? ` title="${escapeHtml(full)}"` : "";
   return `<span${title}>${escapeHtml(display)}</span>`;
 }
 

@@ -16,6 +16,8 @@ export interface RunHistoryEntry {
   timestamp: number;
   stage: string;
   mode: string;
+  /** Human-readable run scope (e.g. all tests, @smoke). Omitted on legacy entries. */
+  scopeLabel?: string;
   filter?: string;
   passed: number;
   failed: number;

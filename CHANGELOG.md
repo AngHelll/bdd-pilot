@@ -8,6 +8,22 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.3] — 2026-06-06
+
+### Added
+- **Tree display mode** — `bddPilot.tree.displayMode`: `detailed` (default) vs `compact` (less duplicate roll-ups on folders)
+- **Pilot summary row** — clickable status line at the top of the BDD tree (`history` icon → dashboard); `buildPilotSummaryViewModel` shared with dashboard *Last known*
+- **Dashboard scope labels** — run history stores `scopeLabel`; full-suite runs show **All tests** in the Scope column (localized)
+
+### Changed
+- **Compact tree** (opt-in) — global summary row for roll-up; structural folder labels; roll-up on containers only when tests failed; neutral folder icons; leaves show duration/error without tag clutter
+- **Dashboard toolbar** — `$(graph)` opens the dashboard directly (no submenu flyout)
+- **Summary row UX** — status-only label (`3 passed`, `Running…`); dashboard hint in tooltip only
+
+### Fixed
+- **Activation order** — register commands before tree summary / dashboard refresh
+- **`copyFailureContextForAi`** — always registered (declared in manifest)
+
 ## [1.2.2] — 2026-06-04
 
 ### Added

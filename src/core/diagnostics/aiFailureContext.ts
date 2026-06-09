@@ -45,9 +45,12 @@ export interface BuildAiFailureContextOptions {
   workspaceRoot?: string;
 }
 
+/** Canonical scope label stored on run history for full-suite runs. */
+export const RUN_SCOPE_ALL_TESTS_LABEL = "all tests";
+
 export function formatRunTargetScopeLabels(targets: RunTarget[]): string[] {
   if (targets.length === 0 || targets.some((t) => t.kind === "all")) {
-    return ["all tests"];
+    return [RUN_SCOPE_ALL_TESTS_LABEL];
   }
   const labels: string[] = [];
   for (const t of targets) {

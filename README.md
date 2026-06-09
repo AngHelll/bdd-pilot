@@ -60,6 +60,10 @@ toast with **Copy for AI**:
 - **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`); descriptions mirror BDD tree settings (`tree.durationDisplay`, `tree.tagDisplay`) and locale for outcomes/roll-ups.
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
+- **Pilot summary row** at the top of the tree — last run status (`3 passed`, `Running…`);
+  click for dashboard and history. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
+- **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
+  or `compact` (less duplicate roll-ups; outcomes emphasized on leaves).
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
 - **One-click run**: domain, feature, scenario, tag, or **Scenario Outline row** —
   the correct `dotnet test --filter` is built automatically.
@@ -83,7 +87,7 @@ toast with **Copy for AI**:
 
 ### Results & diagnostics
 - **TRX + Cucumber JSON**: scenarios decorated with pass / fail / skip and duration.
-- **Webview dashboard**: run history, totals, and flaky scenario table.
+- **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, and flaky scenario table.
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
   errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, etc.
@@ -144,6 +148,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.defaultMode` | `debug` | Default parallelism mode. |
 | `bddPilot.requireConfirmationForStages` | `["stg","prod"]` | Stages that require confirmation. |
 | `bddPilot.dotnetPath` | `dotnet` | Path to the `dotnet` executable. |
+| `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (less duplicate roll-ups). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |
 | `bddPilot.tree.durationDisplay` | `auto` | Durations: `auto`, `ms`, `seconds`, or `compact`. Hover shows exact ms. |
@@ -183,7 +188,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v0.3.7** (i18n EN/ES via `bddPilot.locale`; Test Explorer `@tag` grouping in v0.3.6).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.2.3** (tree display mode, pilot summary row, dashboard scope labels).
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

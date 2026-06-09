@@ -24,7 +24,7 @@ import {
 } from "./core/config/types";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
 import { buildDashboardActionsViewModel, buildRerunFilterFromHistoryEntry, DashboardWebviewCommand } from "./core/results/dashboardActions";
-import { resolveLastKnownSnapshot } from "./core/results/dashboardLastKnown";
+import { buildPilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
@@ -87,14 +87,29 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const outcomeStore = new OutcomeStore();
   let rehydrateNotice: RehydrateNotice | undefined;
+
+  function buildPilotSummaryFromState() {
+    const storeRollup = summarizeOutcomeStore(outcomeStore, treeProvider.getDomains());
+    return buildPilotSummaryViewModel({
+      storeRollup,
+      storeNonEmpty: !outcomeStore.isEmpty(),
+      lastHistory: runService.getHistory().at(-1),
+      rehydrateNotice,
+      running: !!activeRun || runService.isDebugActive(),
+    });
+  }
+
   const treeProvider = new TestTreeProvider(
     () => getDiscoveryRoot(),
     outcomeStore,
     () => localeService.getLocale(),
+    buildPilotSummaryFromState,
   );
   const treeView = vscode.window.createTreeView("bddPilot.tests", {
     treeDataProvider: treeProvider,
   });
+  // Capa 1 is the pilot summary tree row — never duplicate rollup in TreeView.message.
+  treeView.message = undefined;
 
   const readAiSettings = (): { enabled: boolean; contextMaxOutputLines: number } => {
     const cfg = vscode.workspace.getConfiguration("bddPilot");
@@ -104,19 +119,14 @@ export function activate(context: vscode.ExtensionContext): void {
     };
   };
 
-  const buildDashboardContext = (): DashboardContext => {
+  let lastSummaryRunning: boolean | undefined;
+
+  const buildDashboardContext = (summary = buildPilotSummaryFromState()): DashboardContext => {
     const settings = readSettings();
-    const storeRollup = summarizeOutcomeStore(outcomeStore, treeProvider.getDomains());
-    const lastHistory = runService.getHistory().at(-1);
     const sessionSnapshot = runService.getLastFailedRunSnapshot();
     return {
-      lastKnown: resolveLastKnownSnapshot(
-        storeRollup,
-        !outcomeStore.isEmpty(),
-        lastHistory,
-        rehydrateNotice,
-      ),
-      rehydrateNotice,
+      lastKnown: summary.lastKnown,
+      rehydrateNotice: summary.rehydrateNotice,
       actions: buildDashboardActionsViewModel({
         history: runService.getHistory(),
         sessionSnapshot,
@@ -128,10 +138,17 @@ export function activate(context: vscode.ExtensionContext): void {
     };
   };
 
+  const refreshPilotSurfaces = () => {
+    const locale = localeService.getLocale();
+    const summary = buildPilotSummaryFromState();
+    treeProvider.refreshPilotSummary();
+    dashboard.update(runService.getHistory(), locale, buildDashboardContext(summary));
+  };
+
   const persistHistory = () => {
     rehydrateNotice = undefined;
     void context.workspaceState.update(HISTORY_KEY, runService.getHistory());
-    dashboard.update(runService.getHistory(), localeService.getLocale(), buildDashboardContext());
+    refreshPilotSurfaces();
   };
 
   runService.onHistoryChanged(() => persistHistory());
@@ -193,11 +210,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const refreshUi = () => {
     const ctx = getProjectContext();
+    const running = !!activeRun || runService.isDebugActive();
     statusBar.update(currentStage, currentMode, localeService.getLocale(), ctx?.label, {
-      running: !!activeRun || runService.isDebugActive(),
+      running,
       debugging: runService.isDebugActive() && !activeRun,
     });
-    void vscode.commands.executeCommand("setContext", "bddPilot.running", !!activeRun || runService.isDebugActive());
+    void vscode.commands.executeCommand("setContext", "bddPilot.running", running);
+    if (lastSummaryRunning !== running) {
+      lastSummaryRunning = running;
+      refreshPilotSurfaces();
+    }
   };
 
   const handleDebugSessionEnded = () => {
@@ -233,12 +255,6 @@ export function activate(context: vscode.ExtensionContext): void {
     codeLens.refresh();
     dashboard.refreshLocale(localeService.getLocale(), buildDashboardContext());
   });
-
-  treeProvider.refresh();
-  managed.refresh();
-  refreshUi();
-  void bootstrapWorkspace();
-  void maybePromptProjectSelection();
 
   async function bootstrapWorkspace(): Promise<void> {
     await enrichTheoryRows();
@@ -284,7 +300,7 @@ export function activate(context: vscode.ExtensionContext): void {
       skipped: summary.skipped,
       total: summary.total,
     };
-    dashboard.update(runService.getHistory(), localeService.getLocale(), buildDashboardContext());
+    refreshPilotSurfaces();
     output.appendLine(
       `[bdd-pilot] ${tr("log.rehydrateRestored", {
         file: latest.fileName,
@@ -387,13 +403,12 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand("bddPilot.showOutput", () => output.show(true)),
 
-    ...(readAiSettings().enabled
-      ? [
-          vscode.commands.registerCommand("bddPilot.copyFailureContextForAi", () =>
-            copyFailureContextForAi(),
-          ),
-        ]
-      : []),
+    vscode.commands.registerCommand("bddPilot.copyFailureContextForAi", () => {
+      if (!readAiSettings().enabled) {
+        return;
+      }
+      void copyFailureContextForAi();
+    }),
 
     vscode.commands.registerCommand("bddPilot.showDashboard", () => {
       const history = runService.getHistory();
@@ -552,9 +567,19 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
+  treeProvider.refresh();
+  managed.refresh();
+  refreshUi();
+  refreshPilotSurfaces();
+  void bootstrapWorkspace();
+  void maybePromptProjectSelection();
+
   function toRunTarget(node: TreeNode | undefined): RunTarget | undefined {
     if (!node) {
       return { kind: "all" };
+    }
+    if (node.kind === "pilotSummary") {
+      return undefined;
     }
     if (node.kind === "domain") {
       return { kind: "domain", group: (node as DomainNode).group };
@@ -898,6 +923,7 @@ export function activate(context: vscode.ExtensionContext): void {
       outcomeStore.clearAll();
       await enrichTheoryRows();
       tryRehydrateOutcomes();
+      refreshPilotSurfaces();
     }
     return picked.project;
   }
