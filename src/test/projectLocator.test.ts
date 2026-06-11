@@ -93,4 +93,42 @@ describe("projectLocator", () => {
     const list = listSelectableProjects([dir]);
     assert.ok(list.some((p) => p.kind === "sln"));
   });
+
+  it("resolves configured .slnx path as solution", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-slnx-"));
+    const slnx = path.join(dir, "App.slnx");
+    fs.writeFileSync(slnx, "<Solution></Solution>");
+
+    const resolved = resolveConfiguredPath([dir], slnx);
+    assert.ok(resolved);
+    assert.strictEqual(resolved!.testTarget, slnx);
+    assert.strictEqual(resolved!.kind, "sln");
+    assert.strictEqual(resolved!.projectDir, dir);
+  });
+
+  it("resolves directory containing a single .slnx", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-slnx-dir-"));
+    const slnx = path.join(dir, "App.slnx");
+    fs.writeFileSync(slnx, "<Solution></Solution>");
+
+    const resolved = resolveConfiguredPath([dir], dir);
+    assert.ok(resolved);
+    assert.strictEqual(resolved!.testTarget, slnx);
+    assert.strictEqual(resolved!.kind, "sln");
+  });
+
+  it("does not auto-resolve directory with both .sln and .slnx", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-slnx-ambig-"));
+    fs.writeFileSync(path.join(dir, "App.sln"), "Microsoft Visual Studio Solution File, Format Version 12.00");
+    fs.writeFileSync(path.join(dir, "App.slnx"), "<Solution></Solution>");
+
+    assert.strictEqual(resolveConfiguredPath([dir], dir), undefined);
+  });
+
+  it("listSelectableProjects includes .slnx solutions", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-slnx-pick-"));
+    fs.writeFileSync(path.join(dir, "App.slnx"), "<Solution></Solution>");
+    const list = listSelectableProjects([dir]);
+    assert.ok(list.some((p) => p.kind === "sln" && p.testTarget.endsWith(".slnx")));
+  });
 });

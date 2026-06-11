@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.3** · **209 unit tests**
+> **Current release: v1.2.5** · **215 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.3** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Watch issues post-1.2.3 · Test Explorer `displayMode` parity (P2) · Capa C i18n phase 2 optional (pospuesto) |
+| ✅ Shipped | v0.1.0 → **v1.2.5** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Spec **`test-explorer-display-mode.md`** (v1.2.4, pending) · watch issues post-1.2.5 · i18n phase 2 (pospuesto) |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -39,6 +39,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.1** | Dashboard continuity (last known snapshot, rehydrate notice, scope column, canceled run history) |
 | **1.2.2** | Dashboard actions (Show Output, Re-run Failed, Copy for AI — parity with post-run toast) |
 | **1.2.3** | Tree UX — `displayMode`, pilot summary row, dashboard scope labels, toolbar cleanup |
+| **1.2.4** *(spec)* | Test Explorer `displayMode` parity (`test-explorer-display-mode.md`) |
+| **1.2.5** | `.slnx` solution support (`slnx-support.md`) |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -95,7 +97,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v1.2.0)
+- [x] `CHANGELOG.md` through current version (v1.2.3)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -108,9 +110,9 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [x] Pin Marketplace version to tagged release *(v1.2.0 publish)*
-- [ ] Open “good first issue” for Capa C i18n extras *(tree roll-ups, setting descriptions)*
-- [ ] Watch issues 1–2 weeks; patch **1.0.x** if filter/outline regressions
+- [x] Pin Marketplace version to tagged release *(v1.2.3 publish)*
+- [ ] Open “good first issue” for Capa C i18n extras *(enumDescriptions ES, roll-ups TE)*
+- [ ] Watch issues 1–2 weeks; patch **1.2.x** if filter/outline/displayMode regressions
 
 ---
 
@@ -134,6 +136,21 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.2.5 — `.slnx` solution support
+
+| Area | Change |
+|------|--------|
+| **Project resolution** | `.slnx` accepted in `bddPilot.projectPath` (file or directory) and *Select Test Project* picker; passed explicitly to `dotnet test` |
+| **Fix** | Directory path with a single solution now resolves to the absolute solution path |
+| **Core** | `projectLocator`, `projectResolution`, `dotnetTest` (215 unit tests) |
+
+### v1.2.4 *(spec — not shipped)* — Test Explorer displayMode parity
+
+| Area | Change |
+|------|--------|
+| **Spec** | `docs-internal/specs/test-explorer-display-mode.md` — reuse `treeContainerLabels` in TE descriptions |
+| **Gate** | *spec aprobada, implementa* |
 
 ### v1.2.3 — tree UX & pilot summary
 
@@ -363,4 +380,4 @@ src/
 
 ---
 
-*Last updated: v1.2.3 — tree UX & pilot summary (209 unit tests).*
+*Last updated: v1.2.5 — `.slnx` solution support (215 unit tests).*

@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.5] — 2026-06-11
+
+### Added
+- **`.slnx` solution support** — modern XML solution files (`dotnet` SDK 9.0.200+) are now accepted everywhere `.sln` was: `bddPilot.projectPath` (file or directory), the *Select Test Project* picker, and as explicit `dotnet test` target
+
+### Fixed
+- **Directory project path with a single solution** — resolving `bddPilot.projectPath` pointed at a directory containing one solution now stores the absolute solution path (was a bare file name)
+
 ## [1.2.3] — 2026-06-06
 
 ### Added

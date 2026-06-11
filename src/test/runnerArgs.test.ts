@@ -57,4 +57,20 @@ describe("dotnet test args", () => {
     });
     assert.strictEqual(args[1], "/proj/src/Service.Automation/Tests.csproj");
   });
+
+  it("includes explicit .slnx target when provided", () => {
+    const args = buildArgs({
+      ...base,
+      testTarget: "/proj/App.slnx",
+    });
+    assert.strictEqual(args[1], "/proj/App.slnx");
+  });
+
+  it("omits directory target (not an explicit file)", () => {
+    const args = buildArgs({
+      ...base,
+      testTarget: "/proj/src",
+    });
+    assert.notStrictEqual(args[1], "/proj/src");
+  });
 });

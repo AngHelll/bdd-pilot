@@ -58,7 +58,7 @@ export function resolveConfiguredPath(
   if (lower.endsWith(".csproj")) {
     return makeProject(path.dirname(absolute), absolute, "csproj");
   }
-  if (lower.endsWith(".sln")) {
+  if (lower.endsWith(".sln") || lower.endsWith(".slnx")) {
     return makeProject(path.dirname(absolute), absolute, "sln");
   }
 
@@ -67,7 +67,9 @@ export function resolveConfiguredPath(
   }
 
   const csprojs = listProjectsInDir(absolute);
-  const slns = listFilesWithExt(absolute, ".sln");
+  const slns = [...listFilesWithExt(absolute, ".sln"), ...listFilesWithExt(absolute, ".slnx")].map(
+    (name) => path.join(absolute, name),
+  );
   if (csprojs.length === 1) {
     return makeProject(absolute, csprojs[0], "csproj");
   }

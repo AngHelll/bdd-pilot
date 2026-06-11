@@ -5,7 +5,7 @@ import { ModeProfile, Stage } from "../config/types";
 export interface RunRequest {
   dotnetPath: string;
   projectDir: string;
-  /** Optional `.csproj` or `.sln` path passed to `dotnet test`. */
+  /** Optional `.csproj`, `.sln`, or `.slnx` path passed to `dotnet test`. */
   testTarget?: string;
   /** Value for --filter, or undefined to run everything. */
   filter?: string;
@@ -62,7 +62,7 @@ export function buildArgs(req: RunRequest): string[] {
 
 function isExplicitTestTarget(target: string): boolean {
   const lower = target.toLowerCase();
-  return lower.endsWith(".csproj") || lower.endsWith(".sln");
+  return lower.endsWith(".csproj") || lower.endsWith(".sln") || lower.endsWith(".slnx");
 }
 
 /**

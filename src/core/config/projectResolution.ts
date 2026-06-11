@@ -13,7 +13,7 @@ export type ProjectTargetKind = "csproj" | "sln" | "directory";
 export interface ResolvedProject {
   /** Working directory for `dotnet test`, TRX output, and `config/.env`. */
   projectDir: string;
-  /** Absolute path to `.csproj`, `.sln`, or directory passed to `dotnet test`. */
+  /** Absolute path to `.csproj`, `.sln`/`.slnx`, or directory passed to `dotnet test`. */
   testTarget: string;
   kind: ProjectTargetKind;
   /** Short label for status bar / picker. */
@@ -91,12 +91,12 @@ function isPathInside(filePath: string, root: string): boolean {
   return rel !== ".." && !rel.startsWith(`..${path.sep}`);
 }
 
-/** Lists `.sln` files in workspace roots (for manual picker). */
+/** Lists `.sln` / `.slnx` files in workspace roots (for manual picker). */
 export function discoverSolutionCandidates(workspaceRoots: string[]): ResolvedProject[] {
   const seen = new Set<string>();
   const results: ResolvedProject[] = [];
   for (const root of workspaceRoots) {
-    for (const sln of findFiles(root, ".sln", 50)) {
+    for (const sln of [...findFiles(root, ".sln", 50), ...findFiles(root, ".slnx", 50)]) {
       if (seen.has(sln)) {
         continue;
       }
