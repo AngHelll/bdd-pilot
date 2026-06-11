@@ -118,7 +118,12 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     const display = readTreeDisplaySettings();
     for (const domain of deps.getDomains()) {
       const domainItem = controller.createTestItem(`domain:${domain.name}`, domain.name);
-      domainItem.description = buildTestExplorerDomainDescription(domain, deps.outcomeStore, locale);
+      domainItem.description = buildTestExplorerDomainDescription(
+        domain,
+        deps.outcomeStore,
+        display,
+        locale,
+      );
       for (const feature of domain.features) {
         const featureItem = addFeatureItem(domainItem, feature, display, locale);
         for (const scenario of feature.scenarios) {
@@ -134,7 +139,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     const display = readTreeDisplaySettings();
     for (const group of deps.getTagGroups()) {
       const tagItem = controller.createTestItem(`tag:${group.tag.toLowerCase()}`, `@${group.tag}`);
-      tagItem.description = buildTestExplorerTagDescription(group, deps.outcomeStore, locale);
+      tagItem.description = buildTestExplorerTagDescription(group, deps.outcomeStore, display, locale);
       itemData.set(tagItem, { kind: "tag", tag: group.tag });
       for (const ref of group.scenarios) {
         addScenarioItem(tagItem, ref.feature, ref.scenario, true, display, locale);

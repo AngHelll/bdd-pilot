@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.6] — 2026-06-11
+
+### Changed
+- **Test Explorer `displayMode` parity** — native Test Explorer descriptions now follow `bddPilot.tree.displayMode`: `compact` hides all-passed roll-ups on domain/tag/feature folders, shows row counts on outlines, and hides leaf tags (failures always surface); `detailed` unchanged
+
+### Fixed
+- **BDD tree `detailed` roll-ups localized** — folder roll-up descriptions now use EN/ES labels in `detailed` mode (parity with `compact` and Test Explorer)
+
 ## [1.2.5] — 2026-06-11
 
 ### Added

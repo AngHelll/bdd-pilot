@@ -31,6 +31,11 @@ describe("treeContainerLabels", () => {
     assert.ok(msg.includes(structural));
   });
 
+  it("buildContainerDescription detailed localizes rollup", () => {
+    const msg = buildContainerDescription("detailed", passedRollup, structural, "es");
+    assert.ok(msg.startsWith("5 correctos"));
+  });
+
   it("shouldTintContainerIcon compact only when failed", () => {
     assert.strictEqual(shouldTintContainerIcon("compact", passedRollup), false);
     assert.strictEqual(shouldTintContainerIcon("compact", failedRollup), true);

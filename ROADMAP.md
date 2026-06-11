@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.5** · **215 unit tests**
+> **Current release: v1.2.6** · **222 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.5** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Spec **`test-explorer-display-mode.md`** (v1.2.4, pending) · watch issues post-1.2.5 · i18n phase 2 (pospuesto) |
+| ✅ Shipped | v0.1.0 → **v1.2.6** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | watch issues post-1.2.6 · i18n phase 2 (pospuesto) · backlog (empty-state, otros tests) |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -39,8 +39,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.1** | Dashboard continuity (last known snapshot, rehydrate notice, scope column, canceled run history) |
 | **1.2.2** | Dashboard actions (Show Output, Re-run Failed, Copy for AI — parity with post-run toast) |
 | **1.2.3** | Tree UX — `displayMode`, pilot summary row, dashboard scope labels, toolbar cleanup |
-| **1.2.4** *(spec)* | Test Explorer `displayMode` parity (`test-explorer-display-mode.md`) |
 | **1.2.5** | `.slnx` solution support (`slnx-support.md`) |
+| **1.2.6** | Test Explorer `displayMode` parity (`test-explorer-display-mode.md`, renum. de 1.2.4) |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -145,12 +145,13 @@ _Nothing yet._
 | **Fix** | Directory path with a single solution now resolves to the absolute solution path |
 | **Core** | `projectLocator`, `projectResolution`, `dotnetTest` (215 unit tests) |
 
-### v1.2.4 *(spec — not shipped)* — Test Explorer displayMode parity
+### v1.2.6 — Test Explorer displayMode parity
 
 | Area | Change |
 |------|--------|
-| **Spec** | `docs-internal/specs/test-explorer-display-mode.md` — reuse `treeContainerLabels` in TE descriptions |
-| **Gate** | *spec aprobada, implementa* |
+| **Test Explorer** | Descriptions follow `bddPilot.tree.displayMode` (`compact` hides all-passed roll-ups, row counts on outlines, leaf tags hidden; failures always visible) |
+| **Fix** | BDD tree `detailed` roll-ups localized EN/ES (`buildContainerDescription` → `prependRollupLocalized`) |
+| **Core** | `testExplorerLabels` composes `treeContainerLabels` (222 unit tests) |
 
 ### v1.2.3 — tree UX & pilot summary
 
@@ -380,4 +381,4 @@ src/
 
 ---
 
-*Last updated: v1.2.5 — `.slnx` solution support (215 unit tests).*
+*Last updated: v1.2.6 — Test Explorer displayMode parity (222 unit tests).*

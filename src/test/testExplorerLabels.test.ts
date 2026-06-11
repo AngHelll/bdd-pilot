@@ -16,10 +16,13 @@ import { DEFAULT_COMPACT_TAG_LIMIT, DEFAULT_TAG_DISPLAY } from "../core/gherkin/
 import { DEFAULT_DURATION_DISPLAY } from "../core/results/durationFormat";
 
 const display = {
+  displayMode: "detailed" as const,
   tagDisplay: DEFAULT_TAG_DISPLAY,
   compactTagLimit: DEFAULT_COMPACT_TAG_LIMIT,
   durationDisplay: DEFAULT_DURATION_DISPLAY,
 };
+
+const compactDisplay = { ...display, displayMode: "compact" as const };
 
 class MemoryStore implements OutcomeReader {
   private outcomes = new Map<string, "passed" | "failed" | "skipped">();
@@ -115,7 +118,7 @@ describe("testExplorerLabels", () => {
     const store = new MemoryStore();
     store.set("/f/F.feature::1::A", "failed");
 
-    const desc = buildTestExplorerDomainDescription(domain, store, "es");
+    const desc = buildTestExplorerDomainDescription(domain, store, display, "es");
     assert.ok(desc.includes("1 fallidos"));
     assert.ok(desc.includes("1 feature"));
   });
@@ -133,8 +136,98 @@ describe("testExplorerLabels", () => {
     store.set("/f/F.feature::1::A", "passed");
     store.set("/f/F.feature::2::B", "passed");
 
-    const desc = buildTestExplorerTagDescription(group, store, "en");
+    const desc = buildTestExplorerTagDescription(group, store, display, "en");
     assert.strictEqual(desc, "2 passed · 2 scenarios");
+  });
+
+  it("compact domain/tag omit all-passed rollup but keep structural base", () => {
+    const scenario = plainScenario("A", 1);
+    const f = feature("F", [scenario]);
+    const domain: DomainGroup = { name: "Trading", features: [f] };
+    const group: TagGroup = { tag: "smoke", scenarios: [{ feature: f, scenario }] };
+    const store = new MemoryStore();
+    store.set("/f/F.feature::1::A", "passed");
+
+    assert.strictEqual(
+      buildTestExplorerDomainDescription(domain, store, compactDisplay, "en"),
+      "1 feature · 1 scenario",
+    );
+    assert.strictEqual(
+      buildTestExplorerTagDescription(group, store, compactDisplay, "en"),
+      "1 scenario",
+    );
+  });
+
+  it("compact containers still surface failed rollup", () => {
+    const scenario = plainScenario("A", 1);
+    const f = feature("F", [scenario]);
+    const domain: DomainGroup = { name: "Trading", features: [f] };
+    const store = new MemoryStore();
+    store.set("/f/F.feature::1::A", "failed");
+
+    const desc = buildTestExplorerDomainDescription(domain, store, compactDisplay, "en");
+    assert.strictEqual(desc, "1 failed · 1 feature · 1 scenario");
+  });
+
+  it("compact feature omits passed rollup; detailed keeps it", () => {
+    const f = feature("Checkout", [plainScenario("Pay", 4)]);
+    const store = new MemoryStore();
+    store.set("/f/Checkout.feature::4::Pay", "passed");
+
+    const compact = buildTestExplorerFeatureDescription(f, store, compactDisplay, "en");
+    assert.ok(!compact.includes("1 passed"));
+    assert.ok(compact.includes("1 scenario"));
+
+    const detailed = buildTestExplorerFeatureDescription(f, store, display, "en");
+    assert.ok(detailed.startsWith("1 passed"));
+  });
+
+  it("compact outline parent shows row count instead of rollup", () => {
+    const scenario: ScenarioInfo = {
+      name: "Outline",
+      tags: [],
+      line: 5,
+      isOutline: true,
+      examples: [
+        { rowIndex: 0, line: 8, headers: ["a"], values: ["1"], label: "a=1" },
+        { rowIndex: 1, line: 9, headers: ["a"], values: ["2"], label: "a=2" },
+      ],
+    };
+    const f = feature("Outline", [scenario]);
+    const store = new MemoryStore();
+    store.set("/f/Outline.feature::5::Outline::row0", "passed");
+
+    const desc = buildTestExplorerScenarioDescription(f, scenario, store, compactDisplay, "en", false);
+    assert.strictEqual(desc, "2 rows");
+  });
+
+  it("compact hides tags on outline row leaves", () => {
+    const scenario = plainScenario("Row scenario", 3);
+    const f = feature("Feat", [scenario]);
+    const store = new MemoryStore();
+    store.set("/f/Feat.feature::3::Row scenario::row0", "passed", 90);
+
+    const desc = buildTestExplorerOutlineRowDescription(f, scenario, store, compactDisplay, "en", 0);
+    assert.strictEqual(desc, "passed · 90 ms");
+  });
+
+  it("compact hides feature hint under tag group; detailed keeps it", () => {
+    const f = feature("Login", [plainScenario("User logs in", 10)]);
+    const store = new MemoryStore();
+    store.set("/f/Login.feature::10::User logs in", "passed", 1200);
+
+    const compact = buildTestExplorerScenarioDescription(
+      f,
+      f.scenarios[0],
+      store,
+      compactDisplay,
+      "en",
+      true,
+    );
+    assert.strictEqual(compact, "passed · 1.2 s");
+
+    const detailed = buildTestExplorerScenarioDescription(f, f.scenarios[0], store, display, "en", true);
+    assert.strictEqual(detailed, "passed · 1.2 s · Login");
   });
 
   it("buildTestExplorerFeatureDescription prepends rollup to feature summary", () => {

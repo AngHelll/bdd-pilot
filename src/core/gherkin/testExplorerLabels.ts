@@ -4,8 +4,14 @@ import { TestOutcome } from "../results/trxParser";
 import { outlineRowKey, scenarioKey } from "../runner/runScope";
 import { TagGroup } from "./groupByTag";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "./model";
-import { computeRollup, prependRollupLocalized } from "./outcomeRollup";
+import { computeRollup } from "./outcomeRollup";
 import { effectiveScenarioTags } from "./tags";
+import {
+  buildContainerDescription,
+  buildOutlineParentDescription,
+  effectiveLeafTagDisplay,
+  TreeDisplayMode,
+} from "./treeContainerLabels";
 import {
   buildFeatureDescription,
   buildScenarioDescription,
@@ -14,6 +20,7 @@ import {
 } from "./treeLabels";
 
 export interface TestExplorerDisplaySettings {
+  displayMode: TreeDisplayMode;
   tagDisplay: TagDisplayMode;
   compactTagLimit: number;
   durationDisplay: DurationDisplayMode;
@@ -76,7 +83,7 @@ export function buildTestExplorerOutlineRowDescription(
   const tags = effectiveScenarioTags(feature, scenario);
   const tagPart = buildScenarioDescription(
     tags,
-    display.tagDisplay,
+    effectiveLeafTagDisplay(display.displayMode, display.tagDisplay),
     display.compactTagLimit,
     undefined,
   );
@@ -93,7 +100,9 @@ export function buildTestExplorerScenarioDescription(
 ): string | undefined {
   const hasExamples = scenario.examples && scenario.examples.length > 0;
   const tags = effectiveScenarioTags(feature, scenario);
-  const featureHint = underTagGroup ? feature.name : undefined;
+  // Parity with BDD tree: feature hint under tag groups only in detailed mode.
+  const featureHint =
+    underTagGroup && display.displayMode === "detailed" ? feature.name : undefined;
 
   if (hasExamples) {
     const rollup = computeRollup(collectScenarioOutcomeValues(feature, scenario, store));
@@ -104,10 +113,14 @@ export function buildTestExplorerScenarioDescription(
       undefined,
       featureHint,
     );
-    if (rollup.withResults > 0) {
-      return prependRollupLocalized(base, rollup, locale);
-    }
-    return base.length > 0 ? base : undefined;
+    const desc = buildOutlineParentDescription(
+      display.displayMode,
+      rollup,
+      scenario.examples!.length,
+      locale,
+      base,
+    );
+    return desc.length > 0 ? desc : undefined;
   }
 
   const key = scenarioKey(feature, scenario);
@@ -138,12 +151,13 @@ export function buildTestExplorerFeatureDescription(
     display.tagDisplay,
     display.compactTagLimit,
   );
-  return prependRollupLocalized(base, rollup, locale);
+  return buildContainerDescription(display.displayMode, rollup, base, locale);
 }
 
 export function buildTestExplorerDomainDescription(
   domain: DomainGroup,
   store: OutcomeReader,
+  display: TestExplorerDisplaySettings,
   locale: PilotLocale,
 ): string {
   const scenarioCount = domain.features.reduce((n, f) => n + f.scenarios.length, 0);
@@ -158,12 +172,13 @@ export function buildTestExplorerDomainDescription(
     domain.features.length === 1 ? "1 feature" : `${domain.features.length} features`;
   const scenarioPart = scenarioCount === 1 ? "1 scenario" : `${scenarioCount} scenarios`;
   const base = `${featurePart} · ${scenarioPart}`;
-  return prependRollupLocalized(base, rollup, locale);
+  return buildContainerDescription(display.displayMode, rollup, base, locale);
 }
 
 export function buildTestExplorerTagDescription(
   group: TagGroup,
   store: OutcomeReader,
+  display: TestExplorerDisplaySettings,
   locale: PilotLocale,
 ): string {
   const values = group.scenarios.flatMap((ref) =>
@@ -171,5 +186,5 @@ export function buildTestExplorerTagDescription(
   );
   const rollup = computeRollup(values);
   const base = `${group.scenarios.length} scenario${group.scenarios.length === 1 ? "" : "s"}`;
-  return prependRollupLocalized(base, rollup, locale);
+  return buildContainerDescription(display.displayMode, rollup, base, locale);
 }

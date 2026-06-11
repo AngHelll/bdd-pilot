@@ -2,7 +2,6 @@ import { PilotLocale, t } from "../i18n";
 import {
   formatRollupDescriptionLocalized,
   OutcomeRollup,
-  prependRollup,
   prependRollupLocalized,
   rollupSeverity,
 } from "./outcomeRollup";
@@ -23,7 +22,7 @@ export function buildContainerDescription(
   locale: PilotLocale,
 ): string {
   if (mode === "detailed") {
-    return prependRollup(structuralBase, rollup);
+    return prependRollupLocalized(structuralBase, rollup, locale);
   }
   if (rollup.failed > 0) {
     const rollupText = formatRollupDescriptionLocalized(rollup, locale);
