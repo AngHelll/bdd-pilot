@@ -1,6 +1,11 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { discoverDomains } from "../core/gherkin/discovery";
+import {
+  countFeaturesInDomains,
+  resolveTreeEmptyKind,
+  TreeEmptyKind,
+} from "../core/gherkin/treeEmptyState";
 import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
 import { PilotLocale } from "../core/i18n";
 import {
@@ -66,6 +71,7 @@ export type TreeGroupBy = "domain" | "tag";
 
 export type TreeNode =
   | PilotSummaryNode
+  | EmptyGuideNode
   | DomainNode
   | TagNode
   | FeatureNode
@@ -74,6 +80,11 @@ export type TreeNode =
 
 export interface PilotSummaryNode {
   kind: "pilotSummary";
+}
+
+export interface EmptyGuideNode {
+  kind: "emptyGuide";
+  emptyKind: Exclude<TreeEmptyKind, "none">;
 }
 
 export interface DomainNode {
@@ -142,6 +153,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   getDomains(): DomainGroup[] {
     return this.allDomains;
+  }
+
+  getEmptyKind(): TreeEmptyKind {
+    const hasProject = this.projectDir() !== undefined;
+    const totalFeatureCount = countFeaturesInDomains(this.allDomains);
+    const visibleFeatureCount = countFeaturesInDomains(this.domains);
+    return resolveTreeEmptyKind({
+      hasProject,
+      totalFeatureCount,
+      visibleFeatureCount,
+      searchActive: this.searchQuery.length > 0,
+    });
   }
 
   /** Tag groups from full discovery (Test Explorer tag mode; ignores tree search filter). */
@@ -282,6 +305,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     switch (node.kind) {
       case "pilotSummary":
         return this.pilotSummaryItem();
+      case "emptyGuide":
+        return this.emptyGuideItem(node);
       case "domain":
         return this.domainItem(node, display);
       case "tag":
@@ -298,12 +323,16 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   getChildren(node?: TreeNode): TreeNode[] {
     if (!node) {
       const summaryRow: PilotSummaryNode = { kind: "pilotSummary" };
+      const emptyKind = this.getEmptyKind();
+      const guideRow: EmptyGuideNode | undefined =
+        emptyKind !== "none" ? { kind: "emptyGuide", emptyKind } : undefined;
+      const prefix: TreeNode[] = guideRow ? [summaryRow, guideRow] : [summaryRow];
       if (readTreeGroupBy() === "tag") {
-        return [summaryRow, ...this.tagGroups.map((group) => ({ kind: "tag" as const, group }))];
+        return [...prefix, ...this.tagGroups.map((group) => ({ kind: "tag" as const, group }))];
       }
-      return [summaryRow, ...this.domains.map((group) => ({ kind: "domain" as const, group }))];
+      return [...prefix, ...this.domains.map((group) => ({ kind: "domain" as const, group }))];
     }
-    if (node.kind === "pilotSummary") {
+    if (node.kind === "pilotSummary" || node.kind === "emptyGuide") {
       return [];
     }
     if (node.kind === "tag") {
@@ -350,6 +379,51 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const tooltip = new vscode.MarkdownString(`*${hint}*`);
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
+    return item;
+  }
+
+  private emptyGuideItem(node: EmptyGuideNode): vscode.TreeItem {
+    const locale = this.getLocale();
+    const { emptyKind } = node;
+    let title: string;
+    let subtitle: string;
+    let tooltip: vscode.MarkdownString | undefined;
+    let command: string | undefined;
+    let icon: string;
+
+    switch (emptyKind) {
+      case "no_project":
+        title = t(locale, "tree.guideNoProject.title");
+        subtitle = t(locale, "tree.guideNoProject.subtitle");
+        command = "bddPilot.selectProject";
+        icon = "warning";
+        break;
+      case "no_features":
+        title = t(locale, "tree.guideNoFeatures.title");
+        subtitle = t(locale, "tree.guideNoFeatures.subtitle");
+        tooltip = new vscode.MarkdownString(t(locale, "tree.guideNoFeatures.tooltip"));
+        icon = "info";
+        break;
+      case "search_no_match":
+        title = t(locale, "tree.guideSearch.title");
+        subtitle = t(locale, "tree.guideSearch.subtitle");
+        tooltip = new vscode.MarkdownString(t(locale, "tree.guideSearch.tooltip"));
+        command = "bddPilot.searchTests";
+        icon = "info";
+        break;
+    }
+
+    const item = new vscode.TreeItem(title, vscode.TreeItemCollapsibleState.None);
+    item.description = subtitle;
+    item.iconPath = new vscode.ThemeIcon(icon);
+    item.contextValue = "bddEmptyGuide";
+    if (command) {
+      item.command = { command, title: subtitle };
+    }
+    if (tooltip) {
+      tooltip.isTrusted = true;
+      item.tooltip = tooltip;
+    }
     return item;
   }
 

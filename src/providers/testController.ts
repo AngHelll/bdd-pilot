@@ -11,6 +11,7 @@ import {
   TestExplorerDisplaySettings,
 } from "../core/gherkin/testExplorerLabels";
 import { UnifiedSummary } from "../core/results/resultLoader";
+import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
 import { appendSkipReasonToDescription, SkipReason } from "../core/results/skipReason";
 import {
@@ -55,6 +56,7 @@ export interface ControllerDeps {
   getTreeGroupBy: () => TreeGroupBy;
   getLocale: () => import("../core/i18n").PilotLocale;
   onResultsApplied?: (summary: UnifiedSummary) => void;
+  onPostRunFeedback?: (request: PostRunFeedbackRequest) => void;
   acquireRunLock(): boolean;
   releaseRunLock(): void;
   abortActiveRun(): void;
@@ -267,6 +269,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     }
 
     let debugRunHeld = false;
+    let lastProgressState: LiveProgressState | undefined;
 
     scenarioItems.forEach((i) => run.started(i));
 
@@ -304,7 +307,8 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         locale: deps.getLocale(),
         signal: signal.signal,
         totalExpected,
-        onProgress: (_state: LiveProgressState, event?: TestCompletionEvent) => {
+        onProgress: (state: LiveProgressState, event?: TestCompletionEvent) => {
+          lastProgressState = state;
           if (!event) {
             return;
           }
@@ -344,6 +348,19 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         if (result.summary) {
           deps.onResultsApplied?.(result.summary);
         }
+        deps.onPostRunFeedback?.({
+          canceled: true,
+          debug: false,
+          outputBuffer: result.outputBuffer,
+          exitCode: result.exitCode,
+          summary: result.summary,
+          cancelProgress: lastProgressState?.totalExpected
+            ? {
+                completed: lastProgressState.completed,
+                expected: lastProgressState.totalExpected,
+              }
+            : undefined,
+        });
         run.end();
         return;
       }
@@ -376,6 +393,14 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       if (result.summary) {
         deps.onResultsApplied?.(result.summary);
       }
+
+      deps.onPostRunFeedback?.({
+        canceled: false,
+        debug: false,
+        outputBuffer: result.outputBuffer,
+        exitCode: result.exitCode,
+        summary: result.summary,
+      });
 
       if (result.exitCode !== 0) {
         for (const d of analyzeDotnetOutput(result.outputBuffer)) {

@@ -24,7 +24,7 @@ import {
 } from "./core/config/types";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
 import { buildDashboardActionsViewModel, buildRerunFilterFromHistoryEntry, DashboardWebviewCommand } from "./core/results/dashboardActions";
-import { buildPilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
+import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
@@ -37,6 +37,11 @@ import {
 import { estimateTestCount } from "./core/runner/runEstimate";
 import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
 import { buildAiFailureContext } from "./core/diagnostics/aiFailureContext";
+import {
+  buildPostRunFeedback,
+  PostRunFeedbackRequest,
+  PostRunFeedbackViewModel,
+} from "./core/feedback/postRunFeedback";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
 import { LocaleService } from "./providers/localeService";
@@ -88,7 +93,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const outcomeStore = new OutcomeStore();
   let rehydrateNotice: RehydrateNotice | undefined;
 
-  function buildPilotSummaryFromState() {
+  function buildPilotSummaryFromState(): PilotSummaryViewModel {
     const storeRollup = summarizeOutcomeStore(outcomeStore, treeProvider.getDomains());
     return buildPilotSummaryViewModel({
       storeRollup,
@@ -96,6 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
       lastHistory: runService.getHistory().at(-1),
       rehydrateNotice,
       running: !!activeRun || runService.isDebugActive(),
+      emptyKind: treeProvider.getEmptyKind(),
     });
   }
 
@@ -169,6 +175,7 @@ export function activate(context: vscode.ExtensionContext): void {
       treeProvider.applyResults(summary);
       managed.refresh();
     },
+    onPostRunFeedback: (request: PostRunFeedbackRequest) => notifyPostRunFeedback(request),
     acquireRunLock: () => {
       if (activeRun || runService.isDebugActive()) {
         return false;
@@ -322,34 +329,38 @@ export function activate(context: vscode.ExtensionContext): void {
     return "failures";
   };
 
-  const showPostRunSummaryToast = (summary: UnifiedSummary): void => {
-    const message =
-      summary.failed > 0
-        ? tr("toast.runSummaryFailures", {
-            failed: summary.failed,
-            passed: summary.passed,
-            total: summary.total,
-          })
-        : tr("toast.runSummary", {
-            failed: summary.failed,
-            passed: summary.passed,
-            skipped: summary.skipped,
-            total: summary.total,
-          });
-
-    const actions: string[] = [tr("action.showOutput")];
-    if (summary.failed > 0) {
-      if (buildRerunFailedFilter(runService, readSettings().filterMapping)) {
-        actions.push(tr("action.rerunFailed"));
-      }
-      if (readAiSettings().enabled && runService.getLastFailedRunSnapshot()) {
-        actions.push(tr("action.copyForAi"));
-      }
+  function appendRunDiagnosticsToOutput(text: string): void {
+    const diagnostics = analyzeDotnetOutput(text);
+    if (diagnostics.length === 0) {
+      return;
     }
+    output.appendLine("\n[bdd-pilot] Diagnostics:");
+    for (const d of diagnostics) {
+      output.appendLine(`  • [${d.code}] ${d.title}${d.detail ? `\n    ${d.detail}` : ""}\n    → ${d.hint}`);
+    }
+  }
 
+  function presentPostRunFeedback(vm: PostRunFeedbackViewModel | undefined): void {
+    if (!vm?.message) {
+      return;
+    }
+    const labels = vm.actions.map((action) => {
+      switch (action) {
+        case "showOutput":
+          return tr("action.showOutput");
+        case "rerunFailed":
+          return tr("action.rerunFailed");
+        case "copyForAi":
+          return tr("action.copyForAi");
+      }
+    });
     const show =
-      summary.failed > 0 ? vscode.window.showWarningMessage : vscode.window.showInformationMessage;
-    void show(message, ...actions).then((choice) => {
+      vm.severity === "error"
+        ? vscode.window.showErrorMessage
+        : vm.severity === "warning"
+          ? vscode.window.showWarningMessage
+          : vscode.window.showInformationMessage;
+    void show(vm.message, ...labels).then((choice) => {
       if (choice === tr("action.showOutput")) {
         output.show(true);
       } else if (choice === tr("action.rerunFailed")) {
@@ -358,7 +369,23 @@ export function activate(context: vscode.ExtensionContext): void {
         void copyFailureContextForAi();
       }
     });
-  };
+  }
+
+  function notifyPostRunFeedback(request: PostRunFeedbackRequest): void {
+    if (!request.canceled && !request.debug) {
+      if (request.exitCode !== 0 || (request.summary?.failed ?? 0) > 0) {
+        appendRunDiagnosticsToOutput(request.outputBuffer);
+      }
+    }
+    const vm = buildPostRunFeedback({
+      ...request,
+      locale: localeService.getLocale(),
+      toastMode: readPostRunToast(),
+      canRerunFailed: !!buildRerunFailedFilter(runService, readSettings().filterMapping),
+      canCopyForAi: readAiSettings().enabled && !!runService.getLastFailedRunSnapshot(),
+    });
+    presentPostRunFeedback(vm);
+  }
 
   const copyFailureContextForAi = async (): Promise<void> => {
     const snapshot = runService.getLastFailedRunSnapshot();
@@ -680,7 +707,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         const onProgress = (state: LiveProgressState, event?: TestCompletionEvent) => {
           lastProgressState = state;
-          const message = formatProgressMessage(state);
+          const message = formatProgressMessage(state, localeService.getLocale());
           if (event && progressIncrement > 0) {
             lastMessage = message;
             progress.report({ message, increment: progressIncrement });
@@ -720,12 +747,17 @@ export function activate(context: vscode.ExtensionContext): void {
               );
             }
             if (lastProgressState?.totalExpected) {
-              void vscode.window.showInformationMessage(
-                tr("toast.runCanceledPartial", {
+              notifyPostRunFeedback({
+                canceled: true,
+                debug: false,
+                outputBuffer: result.outputBuffer,
+                exitCode: result.exitCode,
+                summary: result.summary,
+                cancelProgress: {
                   completed: lastProgressState.completed,
                   expected: lastProgressState.totalExpected,
-                }),
-              );
+                },
+              });
             }
             return;
           }
@@ -744,22 +776,24 @@ export function activate(context: vscode.ExtensionContext): void {
               `[bdd-pilot] Results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
             );
           }
-          let diagnosticsToastShown = false;
-          if (result.exitCode !== 0 || (result.summary?.failed ?? 0) > 0) {
-            diagnosticsToastShown = reportDiagnostics(result.outputBuffer);
-          }
-          if (result.summary) {
-            const toastMode = readPostRunToast();
-            if (toastMode === "always") {
-              showPostRunSummaryToast(result.summary);
-            } else if (toastMode === "failures" && !diagnosticsToastShown && result.summary.failed > 0) {
-              showPostRunSummaryToast(result.summary);
-            }
-          }
+          notifyPostRunFeedback({
+            canceled: false,
+            debug: false,
+            outputBuffer: result.outputBuffer,
+            exitCode: result.exitCode,
+            summary: result.summary,
+          });
           persistHistory();
         } catch (err) {
           output.appendLine(`\n[bdd-pilot] Error: ${String(err)}`);
-          reportDiagnostics(String(err), `BDD Pilot: ${String(err)}`);
+          appendRunDiagnosticsToOutput(String(err));
+          notifyPostRunFeedback({
+            canceled: false,
+            debug: false,
+            outputBuffer: String(err),
+            exitCode: 1,
+            fallbackMessage: `BDD Pilot: ${String(err)}`,
+          });
         } finally {
           if (!opts?.debug) {
             activeRun = undefined;
@@ -819,43 +853,6 @@ export function activate(context: vscode.ExtensionContext): void {
       return [{ kind: "all" }];
     }
     return [target];
-  }
-
-  /** @returns true if a modal toast was shown (skip duplicate post-run summary). */
-  function reportDiagnostics(text: string, fallbackMessage?: string): boolean {
-    const diagnostics = analyzeDotnetOutput(text);
-    if (diagnostics.length === 0) {
-      if (fallbackMessage) {
-        void vscode.window.showErrorMessage(fallbackMessage);
-        return true;
-      }
-      return false;
-    }
-
-    output.appendLine("\n[bdd-pilot] Diagnostics:");
-    for (const d of diagnostics) {
-      output.appendLine(`  • [${d.code}] ${d.title}${d.detail ? `\n    ${d.detail}` : ""}\n    → ${d.hint}`);
-    }
-
-    const top = diagnostics[0];
-    const show =
-      top.severity === "error"
-        ? vscode.window.showErrorMessage
-        : top.severity === "warning"
-          ? vscode.window.showWarningMessage
-          : vscode.window.showInformationMessage;
-    const actions = [tr("action.showOutput")];
-    if (readAiSettings().enabled && runService.getLastFailedRunSnapshot()) {
-      actions.push(tr("action.copyForAi"));
-    }
-    void show(`${top.title} ${top.hint}`, ...actions).then((choice) => {
-      if (choice === tr("action.showOutput")) {
-        output.show(true);
-      } else if (choice === tr("action.copyForAi")) {
-        void copyFailureContextForAi();
-      }
-    });
-    return true;
   }
 
   function getWorkspaceRoots(): string[] {

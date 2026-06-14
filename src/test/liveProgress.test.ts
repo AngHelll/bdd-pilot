@@ -31,7 +31,18 @@ describe("liveProgress", () => {
     assert.strictEqual(state.passed, 1);
     assert.strictEqual(state.failed, 1);
     assert.strictEqual(state.completed, 2);
-    assert.strictEqual(formatProgressMessage(state), "2/3 · 1 passed, 1 failed");
+    assert.strictEqual(formatProgressMessage(state), "2/3 · 1 passed · 1 failed");
+  });
+
+  it("formatProgressMessage localizes outcomes in Spanish", () => {
+    const parser = new LiveProgressParser(3);
+    parser.feed("[xUnit.net]     Passed A.Test1 [1 ms]\n[xUnit.net]     Failed A.Test2 [2 ms]\n");
+    const state = parser.getState();
+    assert.strictEqual(formatProgressMessage(state, "es"), "2/3 · 1 correctos · 1 fallidos");
+  });
+
+  it("formatProgressMessage shows localized starting text", () => {
+    assert.strictEqual(formatProgressMessage(new LiveProgressParser().getState(), "es"), "Iniciando…");
   });
 
   it("handles split lines across chunks", () => {

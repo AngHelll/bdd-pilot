@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -383,11 +383,11 @@
           ],
           "default": "failures",
           "enumDescriptions": [
-            "No summary toast after a test run.",
-            "Show a summary toast when tests failed (skipped if infrastructure diagnostics already showed a toast).",
-            "Always show a numeric summary toast after every completed run."
+            "No post-run toast.",
+            "One unified toast when tests failed or the run did not complete (counts plus actionable hint when available).",
+            "Always show one unified post-run toast with pass/fail counts after every completed run."
           ],
-          "description": "Post-run notification with pass/fail counts and quick actions."
+          "description": "Unified post-run notification with pass/fail counts, optional diagnostic hint, and quick actions."
         },
         "bddPilot.outcomes.rehydrateOnActivate": {
           "type": "string",

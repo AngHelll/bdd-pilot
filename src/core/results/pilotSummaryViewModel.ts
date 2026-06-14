@@ -1,4 +1,5 @@
 import { formatRollupDescriptionLocalized, OutcomeRollup } from "../gherkin/outcomeRollup";
+import { TreeEmptyKind } from "../gherkin/treeEmptyState";
 import { PilotLocale, t } from "../i18n";
 import { resolveLastKnownSnapshot, LastKnownSnapshot } from "./dashboardLastKnown";
 import { RehydrateNotice } from "./rehydrateNotice";
@@ -12,6 +13,7 @@ export interface PilotSummaryViewModel {
   lastKnown?: LastKnownSnapshot;
   rehydrateNotice?: RehydrateNotice;
   running: boolean;
+  emptyKind?: TreeEmptyKind;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -20,6 +22,7 @@ export interface BuildPilotSummaryOptions {
   lastHistory: RunHistoryEntry | undefined;
   rehydrateNotice: RehydrateNotice | undefined;
   running: boolean;
+  emptyKind?: TreeEmptyKind;
 }
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
@@ -32,7 +35,21 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     ),
     rehydrateNotice: options.rehydrateNotice,
     running: options.running,
+    emptyKind: options.emptyKind ?? "none",
   };
+}
+
+function emptyStateSummaryLabel(kind: TreeEmptyKind, locale: PilotLocale): string {
+  switch (kind) {
+    case "no_project":
+      return t(locale, "tree.emptyNoProject");
+    case "no_features":
+      return t(locale, "tree.emptyNoFeatures");
+    case "search_no_match":
+      return t(locale, "tree.emptySearchNoMatch");
+    default:
+      return t(locale, "tree.summaryEmpty");
+  }
 }
 
 /** Tree row label for the global pilot summary (Capa 1). */
@@ -55,7 +72,7 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
       parts.push(body);
     }
   } else if (!model.running) {
-    parts.push(t(locale, "tree.summaryEmpty"));
+    parts.push(emptyStateSummaryLabel(model.emptyKind ?? "none", locale));
   }
 
   if (model.rehydrateNotice) {

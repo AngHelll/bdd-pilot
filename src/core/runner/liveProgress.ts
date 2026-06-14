@@ -1,3 +1,5 @@
+import { PilotLocale, t } from "../i18n";
+
 export type LiveOutcome = "passed" | "failed" | "skipped";
 
 export interface LiveProgressState {
@@ -109,41 +111,48 @@ export function parseResultLine(line: string): TestCompletionEvent | undefined {
   return undefined;
 }
 
-export function formatProgressMessage(state: LiveProgressState): string {
+export function formatProgressMessage(state: LiveProgressState, locale: PilotLocale = "en"): string {
   const parts: string[] = [];
   const { completed, totalExpected, passed, failed, skipped } = state;
 
   if (totalExpected !== undefined && totalExpected > 0) {
     parts.push(`${Math.min(completed, totalExpected)}/${totalExpected}`);
   } else if (completed > 0) {
-    parts.push(`${completed} done`);
+    parts.push(t(locale, "progress.doneCount", { count: completed }));
   }
 
+  const sep = t(locale, "rollup.separator");
   const outcomes: string[] = [];
   if (passed > 0) {
-    outcomes.push(`${passed} passed`);
+    outcomes.push(t(locale, "rollup.passed", { count: passed }));
   }
   if (failed > 0) {
-    outcomes.push(`${failed} failed`);
+    outcomes.push(t(locale, "rollup.failed", { count: failed }));
   }
   if (skipped > 0) {
-    outcomes.push(`${skipped} skipped`);
+    outcomes.push(t(locale, "rollup.skipped", { count: skipped }));
   }
   if (outcomes.length > 0) {
-    parts.push(outcomes.join(", "));
+    parts.push(outcomes.join(sep));
   }
 
   if (parts.length === 0) {
-    return "Starting…";
+    return t(locale, "progress.starting");
   }
-  return parts.join(" · ");
+  return parts.join(sep);
 }
 
-export function formatProgressTitle(stage: string, mode: string, state: LiveProgressState): string {
-  const detail = formatProgressMessage(state);
-  return detail === "Starting…"
-    ? `Running tests (${stage}/${mode})`
-    : `Running tests (${stage}/${mode}) — ${detail}`;
+export function formatProgressTitle(
+  stage: string,
+  mode: string,
+  state: LiveProgressState,
+  locale: PilotLocale = "en",
+): string {
+  const detail = formatProgressMessage(state, locale);
+  const starting = t(locale, "progress.starting");
+  return detail === starting
+    ? t(locale, "progress.running", { stage, mode })
+    : `${t(locale, "progress.running", { stage, mode })} — ${detail}`;
 }
 
 function normalizeOutcome(value: string): LiveOutcome {

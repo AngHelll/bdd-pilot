@@ -56,6 +56,19 @@ const EN = {
     "Available after a run in this session (output not stored in history)",
 
   "tree.summaryEmpty": "Run tests from the tree to see results.",
+  "tree.emptyNoProject": "Select a BDD test project to begin.",
+  "tree.emptyNoFeatures": "No .feature files found in this project.",
+  "tree.emptySearchNoMatch": "No scenarios match the current filter.",
+  "tree.guideNoProject.title": "No test project selected",
+  "tree.guideNoProject.subtitle": "Click to choose a .csproj or solution",
+  "tree.guideNoFeatures.title": "BDD features not found",
+  "tree.guideNoFeatures.subtitle": "Add Reqnroll/SpecFlow .feature files to run tests here",
+  "tree.guideNoFeatures.tooltip":
+    "BDD Pilot runs **Reqnroll/SpecFlow** scenarios from `.feature` files — not plain xUnit unit tests.\n\nAdd a `Features/` folder with Gherkin scenarios, or open a repo that already has them.\n\n[Learn more](https://github.com/AngHelll/bdd-pilot#quick-start)",
+  "tree.guideSearch.title": "No matching scenarios",
+  "tree.guideSearch.subtitle": "Clear or change the search filter",
+  "tree.guideSearch.tooltip":
+    "The active tree filter hid every scenario. Use **Search Tests** to change or clear the filter.",
   "tree.summaryRunning": "Running…",
   "tree.summaryRehydrate": "Restored (not a new run)",
   "tree.pilotSummaryHint": "Click for run summary and history",
@@ -97,6 +110,8 @@ const EN = {
     "This context may include staging or production environment details. Review before sharing with external AI.",
   "toast.runSummary": "{failed} failed, {passed} passed, {skipped} skipped ({total} total)",
   "toast.runSummaryFailures": "{failed} failed, {passed} passed ({total} total)",
+  "toast.runInfraFallback":
+    "The test run did not complete successfully. Check the BDD Pilot output for details.",
 
   "prompt.searchFilter": "Filter by name, tag (@Smoke), or path…",
   "prompt.searchClear": "Leave empty to clear the filter",
@@ -111,6 +126,8 @@ const EN = {
 
   "progress.running": "Running tests ({stage}/{mode})",
   "progress.debugging": "Debugging tests ({stage})",
+  "progress.starting": "Starting…",
+  "progress.doneCount": "{count} done",
 
   "envGuard.prodConfirm":
     "You are about to run tests against PRODUCTION. This may affect live data and trigger external reporting. Continue?",
@@ -202,6 +219,19 @@ const ES: Record<keyof typeof EN, string> = {
     "Disponible tras una ejecución en esta sesión (la salida no se guarda en el historial)",
 
   "tree.summaryEmpty": "Ejecuta tests en el árbol para ver resultados.",
+  "tree.emptyNoProject": "Selecciona un proyecto BDD para empezar.",
+  "tree.emptyNoFeatures": "No se encontraron archivos .feature en este proyecto.",
+  "tree.emptySearchNoMatch": "Ningún escenario coincide con el filtro actual.",
+  "tree.guideNoProject.title": "Sin proyecto de tests seleccionado",
+  "tree.guideNoProject.subtitle": "Clic para elegir un .csproj o solución",
+  "tree.guideNoFeatures.title": "No se encontraron features BDD",
+  "tree.guideNoFeatures.subtitle": "Añade archivos .feature Reqnroll/SpecFlow para ejecutar tests aquí",
+  "tree.guideNoFeatures.tooltip":
+    "BDD Pilot ejecuta escenarios **Reqnroll/SpecFlow** desde archivos `.feature` — no tests xUnit unitarios simples.\n\nAñade una carpeta `Features/` con escenarios Gherkin, o abre un repo que ya los tenga.\n\n[Más información](https://github.com/AngHelll/bdd-pilot#quick-start)",
+  "tree.guideSearch.title": "Ningún escenario coincide",
+  "tree.guideSearch.subtitle": "Borra o cambia el filtro de búsqueda",
+  "tree.guideSearch.tooltip":
+    "El filtro activo ocultó todos los escenarios. Usa **Buscar tests** para cambiar o borrar el filtro.",
   "tree.summaryRunning": "Ejecutando…",
   "tree.summaryRehydrate": "Restaurado (no es una nueva ejecución)",
   "tree.pilotSummaryHint": "Clic para ver resumen e historial",
@@ -244,6 +274,8 @@ const ES: Record<keyof typeof EN, string> = {
     "Este contexto puede incluir detalles de entorno staging o producción. Revísalo antes de compartirlo con IA externa.",
   "toast.runSummary": "{failed} fallidos, {passed} correctos, {skipped} omitidos ({total} total)",
   "toast.runSummaryFailures": "{failed} fallidos, {passed} correctos ({total} total)",
+  "toast.runInfraFallback":
+    "La ejecución no terminó correctamente. Revisa la salida de BDD Pilot para más detalles.",
 
   "prompt.searchFilter": "Filtrar por nombre, tag (@Smoke) o ruta…",
   "prompt.searchClear": "Deja vacío para quitar el filtro",
@@ -258,6 +290,8 @@ const ES: Record<keyof typeof EN, string> = {
 
   "progress.running": "Ejecutando tests ({stage}/{mode})",
   "progress.debugging": "Depurando tests ({stage})",
+  "progress.starting": "Iniciando…",
+  "progress.doneCount": "{count} listos",
 
   "envGuard.prodConfirm":
     "Vas a ejecutar tests contra PRODUCCIÓN. Puede afectar datos reales y reportes externos. ¿Continuar?",

@@ -64,6 +64,34 @@ describe("pilotSummaryViewModel", () => {
     assert.ok(!label.includes("command:"));
   });
 
+  it("formatPilotSummaryLabel uses no_features copy when emptyKind is no_features", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      emptyKind: "no_features",
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.includes("No .feature files found"));
+    assert.ok(!label.includes("Run tests from the tree"));
+  });
+
+  it("formatPilotSummaryLabel prefers rollup over emptyKind when lastKnown exists", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      emptyKind: "no_features",
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.includes("1 passed"));
+    assert.ok(!label.includes("No .feature files"));
+  });
+
   it("formatPilotSummaryLabel includes rollup and running prefix", () => {
     const vm = buildPilotSummaryViewModel({
       storeRollup: { passed: 5, failed: 2, skipped: 0, withResults: 7 },

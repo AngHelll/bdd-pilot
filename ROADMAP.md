@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.6** · **222 unit tests**
+> **Current release: v1.2.7** · **242 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.6** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | watch issues post-1.2.6 · i18n phase 2 (pospuesto) · backlog (empty-state, otros tests) |
+| ✅ Shipped | v0.1.0 → **v1.2.7** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | **v1.2.8+** — backlog (performance P1/P2, bucket otros tests, scope label toast P3) |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -41,6 +41,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.3** | Tree UX — `displayMode`, pilot summary row, dashboard scope labels, toolbar cleanup |
 | **1.2.5** | `.slnx` solution support (`slnx-support.md`) |
 | **1.2.6** | Test Explorer `displayMode` parity (`test-explorer-display-mode.md`, renum. de 1.2.4) |
+| **1.2.7** | Bundle comunicación: post-run unificado + progress i18n + empty-state guide |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -136,6 +137,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.2.7 — bundle comunicación (post-run + progress i18n + empty-state)
+
+| Area | Change |
+|------|--------|
+| **Post-run** | Unified toast from tree + Test Explorer; actionable diagnostics merged; `TEST_RUN_FAILED` toast exclusion; cancel partial from TE |
+| **Progress** | Localized live progress notification (EN/ES) |
+| **Empty-state** | Contextual summary + guide row for no project / no features / search no match |
+| **Core** | `postRunFeedback`, `treeEmptyState`, `formatProgressMessage` i18n (242 unit tests) |
 
 ### v1.2.5 — `.slnx` solution support
 
@@ -381,4 +391,4 @@ src/
 
 ---
 
-*Last updated: v1.2.6 — Test Explorer displayMode parity (222 unit tests).*
+*Last updated: v1.2.7 — bundle comunicación (242 unit tests).*

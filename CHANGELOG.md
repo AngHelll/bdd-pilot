@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.7] — 2026-06-13
+
+### Added
+- **Empty-state guide** — contextual pilot summary text and an informational guide row when no project is selected, no `.feature` files exist, or search filters hide all scenarios; Reqnroll/SpecFlow tooltip with README link; actions for *Select Test Project* and *Search Tests* where applicable (EN/ES)
+- **Post-run feedback unified** — single toast after runs from BDD tree and Test Explorer; actionable diagnostics merged into the same message; `TEST_RUN_FAILED` excluded from toast (still in Output); cancel partial toast from Test Explorer; deduped `always` mode
+- **Progress notification i18n** — live run progress messages localized (EN/ES via `bddPilot.locale`)
+
+### Changed
+- **Post-run toast enumDescriptions** — clarified `bddPilot.feedback.postRunToast` options in settings
+
 ## [1.2.6] — 2026-06-11
 
 ### Changed
