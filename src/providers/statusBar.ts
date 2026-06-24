@@ -6,6 +6,8 @@ export interface StatusBarActivity {
   running: boolean;
   /** When true, cancel command is hidden and debug-stop tooltip is shown. */
   debugging?: boolean;
+  /** When true, the user selected a solution — show slower-run hint in project tooltip. */
+  solutionSelected?: boolean;
 }
 
 /**
@@ -60,7 +62,10 @@ export class StatusBar implements vscode.Disposable {
 
     if (projectLabel) {
       this.projectItem.text = `$(folder) ${projectLabel}`;
-      this.projectItem.tooltip = t(locale, "statusBar.projectTooltip");
+      const baseTooltip = t(locale, "statusBar.projectTooltip");
+      this.projectItem.tooltip = activity?.solutionSelected
+        ? `${baseTooltip}\n${t(locale, "statusBar.solutionSlowHint")}`
+        : baseTooltip;
       this.projectItem.backgroundColor = undefined;
       this.projectItem.show();
     } else {

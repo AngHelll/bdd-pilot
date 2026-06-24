@@ -5,6 +5,7 @@ import {
   discoveryRoot,
   expandDirectoryAmbiguity,
   listSelectableProjects,
+  resolveExecutionTarget,
   resolveProject,
   ResolvedProject,
   StoredProjectSelection,
@@ -191,10 +192,37 @@ export function activate(context: vscode.ExtensionContext): void {
     abortActiveRun: () => activeRun?.abort(),
   });
 
-  const refreshAll = () => {
+  const FEATURE_ENRICH_DEBOUNCE_MS = 2000;
+  let enrichTheoryTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const cancelScheduledEnrich = () => {
+    if (enrichTheoryTimer !== undefined) {
+      clearTimeout(enrichTheoryTimer);
+      enrichTheoryTimer = undefined;
+    }
+  };
+
+  const refreshTreeSurfaces = () => {
     treeProvider.refresh();
     managed.refresh();
-    void enrichTheoryRows();
+  };
+
+  const refreshAll = (immediateEnrich = true) => {
+    refreshTreeSurfaces();
+    if (immediateEnrich) {
+      cancelScheduledEnrich();
+      void enrichTheoryRows();
+    } else {
+      scheduleEnrichTheoryRows();
+    }
+  };
+
+  const scheduleEnrichTheoryRows = () => {
+    cancelScheduledEnrich();
+    enrichTheoryTimer = setTimeout(() => {
+      enrichTheoryTimer = undefined;
+      void enrichTheoryRows();
+    }, FEATURE_ENRICH_DEBOUNCE_MS);
   };
 
   const enrichTheoryRows = async (): Promise<void> => {
@@ -221,6 +249,7 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBar.update(currentStage, currentMode, localeService.getLocale(), ctx?.label, {
       running,
       debugging: runService.isDebugActive() && !activeRun,
+      solutionSelected: ctx?.selectedKind === "sln",
     });
     void vscode.commands.executeCommand("setContext", "bddPilot.running", running);
     if (lastSummaryRunning !== running) {
@@ -422,6 +451,7 @@ export function activate(context: vscode.ExtensionContext): void {
     output,
     localeService,
     statusBar,
+    { dispose: cancelScheduledEnrich },
     treeView,
     managed.controller,
     codeLens.disposable,
@@ -583,7 +613,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.fileName.toLowerCase().endsWith(".feature")) {
-        refreshAll();
+        refreshTreeSurfaces();
+        scheduleEnrichTheoryRows();
       }
     }),
 
@@ -875,11 +906,13 @@ export function activate(context: vscode.ExtensionContext): void {
       return undefined;
     }
     const roots = getWorkspaceRoots();
+    const execution = resolveExecutionTarget(project, roots);
     return {
-      projectDir: project.projectDir,
-      testTarget: project.testTarget,
+      projectDir: execution.projectDir,
+      testTarget: execution.testTarget,
       discoveryRoot: discoveryRoot(project, roots),
       label: project.label,
+      selectedKind: project.kind,
     };
   }
 
@@ -918,7 +951,6 @@ export function activate(context: vscode.ExtensionContext): void {
     const newProjectDir = getProjectContext()?.projectDir;
     if (newProjectDir && newProjectDir !== previousProjectDir) {
       outcomeStore.clearAll();
-      await enrichTheoryRows();
       tryRehydrateOutcomes();
       refreshPilotSurfaces();
     }

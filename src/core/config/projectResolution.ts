@@ -65,6 +65,21 @@ export function toStoredSelection(project: ResolvedProject): StoredProjectSelect
   };
 }
 
+/** When stored selection is a solution and exactly one BDD csproj exists, prefer it for dotnet. */
+export function resolveExecutionTarget(
+  project: ResolvedProject,
+  workspaceRoots: string[],
+): ResolvedProject {
+  if (project.kind !== "sln") {
+    return project;
+  }
+  const candidates = discoverProjectCandidates(workspaceRoots);
+  if (candidates.length === 1) {
+    return candidates[0];
+  }
+  return project;
+}
+
 /** Root directory for `.feature` discovery (project dir or workspace for solutions). */
 export function discoveryRoot(project: ResolvedProject, workspaceRoots: string[]): string {
   if (project.kind === "sln") {

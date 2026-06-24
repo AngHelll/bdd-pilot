@@ -28,6 +28,7 @@ import { estimateTestCount } from "../core/runner/runEstimate";
 import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { PilotLocale } from "../core/i18n";
+import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
 import { readTreeDisplaySettings, TreeGroupBy } from "./testTreeProvider";
@@ -41,6 +42,8 @@ export interface ProjectContext {
   testTarget: string;
   discoveryRoot: string;
   label: string;
+  /** Stored selection kind (UI); execution may use a faster csproj when kind is sln. */
+  selectedKind: ProjectTargetKind;
 }
 
 export interface ControllerDeps {

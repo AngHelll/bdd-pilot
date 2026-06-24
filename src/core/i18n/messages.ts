@@ -4,6 +4,8 @@ const EN = {
   "statusBar.stageTooltip": "BDD Pilot: select environment",
   "statusBar.modeTooltip": "BDD Pilot: select parallelism mode",
   "statusBar.projectTooltip": "BDD Pilot: select test project or solution",
+  "statusBar.solutionSlowHint":
+    "Running against the full solution can be slower. Select the .csproj test project for faster runs.",
   "statusBar.projectMissingTooltip":
     "BDD Pilot: select test project — multiple or none detected",
   "statusBar.stageLabel": "STAGE",
@@ -166,6 +168,8 @@ const ES: Record<keyof typeof EN, string> = {
   "statusBar.stageTooltip": "BDD Pilot: seleccionar entorno",
   "statusBar.modeTooltip": "BDD Pilot: seleccionar modo de paralelismo",
   "statusBar.projectTooltip": "BDD Pilot: seleccionar proyecto o solución de tests",
+  "statusBar.solutionSlowHint":
+    "Ejecutar contra la solución completa puede ser más lento. Selecciona el .csproj de tests para runs más rápidos.",
   "statusBar.projectMissingTooltip":
     "BDD Pilot: seleccionar proyecto — varios detectados o ninguno",
   "statusBar.stageLabel": "STAGE",

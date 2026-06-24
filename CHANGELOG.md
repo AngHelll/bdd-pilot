@@ -8,6 +8,15 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.2.8] — 2026-06-13
+
+### Added
+- **Run target performance** — when a solution is selected but exactly one BDD `.csproj` exists, `dotnet test` and `--list-tests` use that project for faster runs; feature discovery and picker label unchanged
+- **Status bar solution hint** — tooltip recommends selecting the `.csproj` for faster runs when a solution is the active selection (EN/ES)
+
+### Changed
+- **Theory row enrichment debounce** — saving `.feature` files refreshes the tree immediately but coalesces `list-tests` calls (~2 s) to avoid repeated slow dotnet invocations
+
 ## [1.2.7] — 2026-06-13
 
 ### Added

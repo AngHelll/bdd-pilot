@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.7** · **242 unit tests**
+> **Current release: v1.2.8** · **247 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.7** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | **v1.2.8+** — backlog (performance P1/P2, bucket otros tests, scope label toast P3) |
+| ✅ Shipped | v0.1.0 → **v1.2.8** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Watch issues post-1.2.8 · backlog (dashboard Tier 2, dotnet flags, scope toast P3) |
 | 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -42,6 +42,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.5** | `.slnx` solution support (`slnx-support.md`) |
 | **1.2.6** | Test Explorer `displayMode` parity (`test-explorer-display-mode.md`, renum. de 1.2.4) |
 | **1.2.7** | Bundle comunicación: post-run unificado + progress i18n + empty-state guide |
+| **1.2.8** | Run target performance — prefer BDD csproj over solution + debounce list-tests |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -137,6 +138,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.2.8 — run target performance
+
+| Area | Change |
+|------|--------|
+| **Execution target** | `resolveExecutionTarget` — solution → single BDD csproj for `dotnet test` / `--list-tests` |
+| **Save debounce** | Feature save refreshes tree immediately; `list-tests` coalesced ~2 s |
+| **Status bar** | Solution selection shows slower-run hint (EN/ES) |
+| **Core** | `projectResolution`, `executionTarget.test.ts` (247 unit tests) |
 
 ### v1.2.7 — bundle comunicación (post-run + progress i18n + empty-state)
 
@@ -391,4 +401,4 @@ src/
 
 ---
 
-*Last updated: v1.2.7 — bundle comunicación (242 unit tests).*
+*Last updated: v1.2.8 — run target performance (247 unit tests).*
