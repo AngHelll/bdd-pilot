@@ -13,6 +13,7 @@ export interface PilotSummaryViewModel {
   lastKnown?: LastKnownSnapshot;
   rehydrateNotice?: RehydrateNotice;
   running: boolean;
+  debugging?: boolean;
   emptyKind?: TreeEmptyKind;
 }
 
@@ -22,6 +23,7 @@ export interface BuildPilotSummaryOptions {
   lastHistory: RunHistoryEntry | undefined;
   rehydrateNotice: RehydrateNotice | undefined;
   running: boolean;
+  debugging?: boolean;
   emptyKind?: TreeEmptyKind;
 }
 
@@ -35,8 +37,20 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     ),
     rehydrateNotice: options.rehydrateNotice,
     running: options.running,
+    debugging: options.debugging,
     emptyKind: options.emptyKind ?? "none",
   };
+}
+
+/** Codicon id for the pilot summary tree row. */
+export function resolvePilotSummaryIcon(running: boolean, debugging: boolean): string {
+  if (!running) {
+    return "history";
+  }
+  if (debugging) {
+    return "debug-alt";
+  }
+  return "loading~spin";
 }
 
 function emptyStateSummaryLabel(kind: TreeEmptyKind, locale: PilotLocale): string {

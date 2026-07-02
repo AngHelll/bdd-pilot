@@ -61,7 +61,8 @@ toast with **Copy for AI**:
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
 - **Pilot summary row** at the top of the tree — last run status (`3 passed`, `Running…`);
-  click for dashboard and history. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
+  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); click for dashboard and history.
+  Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
 - **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
   or `compact` (less duplicate roll-ups; outcomes emphasized on leaves).
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
@@ -77,8 +78,8 @@ toast with **Copy for AI**:
 
 ### Environment & execution
 - **UI language** (`bddPilot.locale`: `auto` | `en` | `es`) — status bar, dashboard, CodeLens, palette, and dialogs follow VS Code UI language when set to `auto`.
-- **Environment selector** (`dev`/`test`/`stg`/`prod`) in the status bar — sets
-  `STAGE` for the run.
+- **Execution hub** (status bar) — compact branded chip `$(beaker) Pilot` with STAGE, mode, and project (`bddPilot.statusBar.display`: `compact` default, `detailed` for legacy four items). Click to open unified settings QuickPick with descriptions for environments and parallelism presets.
+- **Environment (STAGE)** (`dev`/`test`/`stg`/`prod`) — sets `STAGE` for the run; stg/prod require confirmation.
 - **Parallelism mode** (`debug`/`parallel`/`ci`) passed as xUnit RunSettings, so
   the project's `xunit.runner.json` is never mutated on disk.
 - **Reliable execution**: progress UI, cancellation, and live streaming to the
@@ -116,7 +117,7 @@ from VS Code. This is **optional** — your project may already load its own
 1. Create a `config/` folder next to (or above) your test `.csproj`.
 2. Copy [`config/env.example`](./config/env.example) to `config/.env.test`
    (or `.env.dev`, `.env.stg`, `.env.prod`).
-3. Select the matching **STAGE** in the status bar before running.
+3. Select the matching **STAGE** in the status bar execution hub before running.
 
 Load order: `config/.env.<stage>` then `config/.env.local` (overrides). Values
 are merged in memory only; see [Security](#security) above.
@@ -143,7 +144,8 @@ testable and reusable (e.g. a future CLI).
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `bddPilot.projectPath` | `""` | Path to test project dir, `.csproj`, or `.sln`. Empty = auto-detect; use status bar **project** picker when multiple exist. |
+| `bddPilot.projectPath` | `""` | Path to test project dir, `.csproj`, or `.sln`. Empty = auto-detect; use status bar hub or **Select Test Project** when multiple exist. |
+| `bddPilot.statusBar.display` | `compact` | Status bar: `compact` (single hub) or `detailed` (legacy four items). |
 | `bddPilot.defaultStage` | `test` | Default `STAGE`. |
 | `bddPilot.defaultMode` | `debug` | Default parallelism mode. |
 | `bddPilot.requireConfirmationForStages` | `["stg","prod"]` | Stages that require confirmation. |
@@ -188,7 +190,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.2.3** (tree display mode, pilot summary row, dashboard scope labels).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.3.0** (compact status bar hub, execution feedback in tree and activity bar).
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

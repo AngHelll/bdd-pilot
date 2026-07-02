@@ -13,9 +13,9 @@ import {
 } from "./core/config/projectResolution";
 import { discoverProjectCandidates } from "./core/config/projectLocator";
 import { loadStageEnv } from "./core/config/envFile";
+import { buildModeHubPickItems, buildStageHubPickItems } from "./core/config/hubPickItems";
+import { readStatusBarDisplayMode, StatusBarDisplayMode } from "./core/config/statusBarViewModel";
 import {
-  ALL_MODES,
-  ALL_STAGES,
   DEFAULT_SETTINGS,
   ParallelismMode,
   RunnerSettings,
@@ -102,6 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
       lastHistory: runService.getHistory().at(-1),
       rehydrateNotice,
       running: !!activeRun || runService.isDebugActive(),
+      debugging: runService.isDebugActive() && !activeRun,
       emptyKind: treeProvider.getEmptyKind(),
     });
   }
@@ -126,7 +127,7 @@ export function activate(context: vscode.ExtensionContext): void {
     };
   };
 
-  let lastSummaryRunning: boolean | undefined;
+  let lastExecutionFeedbackKey: string | undefined;
 
   const buildDashboardContext = (summary = buildPilotSummaryFromState()): DashboardContext => {
     const settings = readSettings();
@@ -246,14 +247,29 @@ export function activate(context: vscode.ExtensionContext): void {
   const refreshUi = () => {
     const ctx = getProjectContext();
     const running = !!activeRun || runService.isDebugActive();
-    statusBar.update(currentStage, currentMode, localeService.getLocale(), ctx?.label, {
-      running,
-      debugging: runService.isDebugActive() && !activeRun,
-      solutionSelected: ctx?.selectedKind === "sln",
-    });
+    const debugging = runService.isDebugActive() && !activeRun;
+    statusBar.update(
+      currentStage,
+      currentMode,
+      localeService.getLocale(),
+      ctx?.label,
+      {
+        running,
+        debugging,
+        solutionSelected: ctx?.selectedKind === "sln",
+      },
+      readStatusBarDisplay(),
+    );
+    treeView.badge = running
+      ? {
+          value: 1,
+          tooltip: tr(debugging ? "badge.debugging" : "badge.running"),
+        }
+      : undefined;
     void vscode.commands.executeCommand("setContext", "bddPilot.running", running);
-    if (lastSummaryRunning !== running) {
-      lastSummaryRunning = running;
+    const feedbackKey = `${running}:${debugging}`;
+    if (lastExecutionFeedbackKey !== feedbackKey) {
+      lastExecutionFeedbackKey = feedbackKey;
       refreshPilotSurfaces();
     }
   };
@@ -487,24 +503,32 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand("bddPilot.selectProject", () => selectProject()),
 
+    vscode.commands.registerCommand("bddPilot.openStatusBarHub", () => openStatusBarHub()),
+
     vscode.commands.registerCommand("bddPilot.selectStage", async () => {
-      const picked = await vscode.window.showQuickPick(ALL_STAGES, {
-        placeHolder: tr("prompt.selectStage", { current: currentStage }),
-      });
-      if (picked && isStage(picked)) {
-        currentStage = picked;
-        await context.workspaceState.update(STAGE_KEY, picked);
+      const locale = localeService.getLocale();
+      const items = buildStageHubPickItems(currentStage, locale);
+      const picked = await vscode.window.showQuickPick(
+        items.map((item) => ({ label: item.label, description: item.description, value: item.value })),
+        { placeHolder: tr("prompt.selectStage", { current: currentStage }) },
+      );
+      if (picked && isStage(picked.value)) {
+        currentStage = picked.value;
+        await context.workspaceState.update(STAGE_KEY, picked.value);
         refreshUi();
       }
     }),
 
     vscode.commands.registerCommand("bddPilot.selectMode", async () => {
-      const picked = await vscode.window.showQuickPick(ALL_MODES, {
-        placeHolder: tr("prompt.selectMode", { current: currentMode }),
-      });
-      if (picked && isMode(picked)) {
-        currentMode = picked;
-        await context.workspaceState.update(MODE_KEY, picked);
+      const locale = localeService.getLocale();
+      const items = buildModeHubPickItems(currentMode, locale);
+      const picked = await vscode.window.showQuickPick(
+        items.map((item) => ({ label: item.label, description: item.description, value: item.value })),
+        { placeHolder: tr("prompt.selectMode", { current: currentMode }) },
+      );
+      if (picked && isMode(picked.value)) {
+        currentMode = picked.value;
+        await context.workspaceState.update(MODE_KEY, picked.value);
         refreshUi();
       }
     }),
@@ -920,6 +944,91 @@ export function activate(context: vscode.ExtensionContext): void {
     return getProjectContext()?.discoveryRoot;
   }
 
+  async function applyProjectSelection(project: ResolvedProject): Promise<void> {
+    const settings = readSettings();
+    const previousProjectDir = getProjectContext()?.projectDir;
+    if (!settings.projectPath.trim()) {
+      await context.workspaceState.update(PROJECT_KEY, toStoredSelection(project));
+    }
+    refreshAll();
+    refreshUi();
+    const newProjectDir = getProjectContext()?.projectDir;
+    if (newProjectDir && newProjectDir !== previousProjectDir) {
+      outcomeStore.clearAll();
+      tryRehydrateOutcomes();
+      refreshPilotSurfaces();
+    }
+  }
+
+  async function openStatusBarHub(): Promise<void> {
+    type HubPick = vscode.QuickPickItem & {
+      hubKind?: "stage" | "mode" | "project";
+      hubValue?: string;
+      project?: ResolvedProject;
+    };
+
+    const locale = localeService.getLocale();
+    const items: HubPick[] = [
+      { label: tr("statusBar.hubSectionStage"), kind: vscode.QuickPickItemKind.Separator },
+      ...buildStageHubPickItems(currentStage, locale).map((item) => ({
+        label: item.label,
+        description: item.description,
+        hubKind: "stage" as const,
+        hubValue: item.value,
+      })),
+      { label: tr("statusBar.hubSectionMode"), kind: vscode.QuickPickItemKind.Separator },
+      ...buildModeHubPickItems(currentMode, locale).map((item) => ({
+        label: item.label,
+        description: item.description,
+        hubKind: "mode" as const,
+        hubValue: item.value,
+      })),
+    ];
+
+    const roots = getWorkspaceRoots();
+    const settings = readSettings();
+    const ambiguous = expandDirectoryAmbiguity(roots, settings.projectPath);
+    const projects = ambiguous ?? listSelectableProjects(roots);
+    if (projects.length > 0) {
+      items.push({ label: tr("statusBar.hubSectionProject"), kind: vscode.QuickPickItemKind.Separator });
+      const currentLabel = getProjectContext()?.label;
+      for (const project of projects) {
+        items.push({
+          label: project.label === currentLabel ? `$(check) ${project.label}` : project.label,
+          description: project.kind === "sln" ? tr("quickPick.solution") : project.projectDir,
+          hubKind: "project",
+          project,
+        });
+      }
+    }
+
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder: tr("statusBar.hubTooltipTitle"),
+      matchOnDescription: true,
+    });
+    if (!picked?.hubKind) {
+      return;
+    }
+
+    if (picked.hubKind === "stage" && picked.hubValue && isStage(picked.hubValue)) {
+      currentStage = picked.hubValue;
+      await context.workspaceState.update(STAGE_KEY, picked.hubValue);
+      refreshUi();
+      return;
+    }
+
+    if (picked.hubKind === "mode" && picked.hubValue && isMode(picked.hubValue)) {
+      currentMode = picked.hubValue;
+      await context.workspaceState.update(MODE_KEY, picked.hubValue);
+      refreshUi();
+      return;
+    }
+
+    if (picked.hubKind === "project" && picked.project) {
+      await applyProjectSelection(picked.project);
+    }
+  }
+
   async function selectProject(): Promise<ResolvedProject | undefined> {
     const roots = getWorkspaceRoots();
     const settings = readSettings();
@@ -942,18 +1051,7 @@ export function activate(context: vscode.ExtensionContext): void {
       return undefined;
     }
 
-    const previousProjectDir = getProjectContext()?.projectDir;
-    if (!settings.projectPath.trim()) {
-      await context.workspaceState.update(PROJECT_KEY, toStoredSelection(picked.project));
-    }
-    refreshAll();
-    refreshUi();
-    const newProjectDir = getProjectContext()?.projectDir;
-    if (newProjectDir && newProjectDir !== previousProjectDir) {
-      outcomeStore.clearAll();
-      tryRehydrateOutcomes();
-      refreshPilotSurfaces();
-    }
+    await applyProjectSelection(picked.project);
     return picked.project;
   }
 
@@ -982,6 +1080,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   // no-op
+}
+
+function readStatusBarDisplay(): StatusBarDisplayMode {
+  const cfg = vscode.workspace.getConfiguration("bddPilot");
+  return readStatusBarDisplayMode(cfg.get<string>("statusBar.display", "compact"));
 }
 
 function readSettings(): RunnerSettings {

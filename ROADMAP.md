@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.2.8** · **247 unit tests**
+> **Current release: v1.3.0** · **258 unit tests**
 
 ---
 
@@ -9,9 +9,9 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.2.8** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Watch issues post-1.2.8 · backlog (dashboard Tier 2, dotnet flags, scope toast P3) |
-| 🏁 Goal | **v1.x** — incremental UX (Visual UX v2, dotnet flags, MCP post-v1.0) |
+| ✅ Shipped | v0.1.0 → **v1.3.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
+| 🎯 Next | Watch issues post-1.3.0 · backlog (toolbar Stage/Mode, dotnet flags, scope toast P3) |
+| 🏁 Goal | **v1.x** — incremental UX (dotnet flags, MCP post-v1.0; Visual UX v2 partial ✅) |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
 
@@ -43,6 +43,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.6** | Test Explorer `displayMode` parity (`test-explorer-display-mode.md`, renum. de 1.2.4) |
 | **1.2.7** | Bundle comunicación: post-run unificado + progress i18n + empty-state guide |
 | **1.2.8** | Run target performance — prefer BDD csproj over solution + debounce list-tests |
+| **1.3.0** | Visual UX v2 — compact status bar hub, hub descriptions, execution feedback (tree icon + activity badge) |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -99,7 +100,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v1.2.3)
+- [x] `CHANGELOG.md` through current version (v1.3.0)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -112,7 +113,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [x] Pin Marketplace version to tagged release *(v1.2.3 publish)*
+- [x] Pin Marketplace version to tagged release *(v1.3.0 publish)*
 - [ ] Open “good first issue” for Capa C i18n extras *(enumDescriptions ES, roll-ups TE)*
 - [ ] Watch issues 1–2 weeks; patch **1.2.x** if filter/outline/displayMode regressions
 
@@ -138,6 +139,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.3.0 — Visual UX v2 (status bar + execution feedback)
+
+| Area | Change |
+|------|--------|
+| **Status bar** | Compact branded hub (`compact` default); `detailed` legacy; unified QuickPick; descriptions for STAGE/mode |
+| **Execution feedback** | Tree summary dynamic icon; activity bar badge during run/debug; no spinner on compact status bar |
+| **Core** | `statusBarViewModel`, `hubPickItems`, `resolvePilotSummaryIcon` (258 unit tests) |
 
 ### v1.2.8 — run target performance
 
@@ -401,4 +410,4 @@ src/
 
 ---
 
-*Last updated: v1.2.8 — run target performance (247 unit tests).*
+*Last updated: v1.3.0 — Visual UX v2 (258 unit tests).*

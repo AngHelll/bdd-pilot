@@ -7,6 +7,7 @@
   "bddPilot.command.runAll.title": "BDD Pilot: Ejecutar todos los tests",
   "bddPilot.command.cancel.title": "BDD Pilot: Cancelar ejecución",
   "bddPilot.command.selectProject.title": "BDD Pilot: Seleccionar proyecto de tests",
+  "bddPilot.command.openStatusBarHub.title": "BDD Pilot: Configuración de ejecución",
   "bddPilot.command.selectStage.title": "BDD Pilot: Seleccionar entorno (STAGE)",
   "bddPilot.command.selectMode.title": "BDD Pilot: Seleccionar modo de paralelismo",
   "bddPilot.command.showOutput.title": "BDD Pilot: Mostrar salida de tests",
@@ -24,5 +25,8 @@
   "bddPilot.configuration.locale.description": "Idioma del status bar, panel, CodeLens y diálogos de BDD Pilot. Auto sigue el idioma de la interfaz de VS Code.",
   "bddPilot.configuration.locale.enum.auto": "Seguir idioma de VS Code (interfaz en español → español).",
   "bddPilot.configuration.locale.enum.en": "Inglés.",
-  "bddPilot.configuration.locale.enum.es": "Español."
+  "bddPilot.configuration.locale.enum.es": "Español.",
+  "bddPilot.configuration.statusBar.display.description": "Layout de la barra de estado: compact (hub único con marca, por defecto) o detailed (cuatro ítems legacy).",
+  "bddPilot.configuration.statusBar.display.enum.compact": "Hub único BDD Pilot con stage, mode y proyecto.",
+  "bddPilot.configuration.statusBar.display.enum.detailed": "Layout legacy con ítems separados STAGE, mode, running y project."
 }

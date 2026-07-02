@@ -8,6 +8,19 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.3.0] — 2026-07-02
+
+### Added
+- **Compact status bar hub** — single branded item `$(beaker) Pilot` with STAGE, mode, and project; click opens unified execution settings QuickPick (EN/ES)
+- **Status bar display mode** — `bddPilot.statusBar.display`: `compact` (default) or `detailed` (legacy four items)
+- **Hub descriptions** — STAGE and parallelism pickers show thread hints and stg/prod confirmation warnings; shared by hub and Command Palette
+- **Activity bar badge** — numeric badge on the BDD Pilot sidebar icon while a run or debug session is active
+- **Execution Settings command** — `BDD Pilot: Execution Settings` (`bddPilot.openStatusBarHub`)
+
+### Changed
+- **Execution feedback** — run/debug state in tree summary row (dynamic icon) and activity badge; compact status bar stays static (no spinner)
+- **Pilot summary icon** — `loading~spin` during runs, `debug-alt` during debug, `history` when idle
+
 ## [1.2.8] — 2026-06-13
 
 ### Added

@@ -63,6 +63,7 @@ import {
   formatPilotSummaryLabel,
   PILOT_SUMMARY_DASHBOARD_COMMAND,
   PilotSummaryViewModel,
+  resolvePilotSummaryIcon,
 } from "../core/results/pilotSummaryViewModel";
 import { t } from "../core/i18n";
 import { OutcomeStore } from "./outcomeStore";
@@ -370,7 +371,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const status = formatPilotSummaryLabel(model, locale);
     const hint = t(locale, "tree.pilotSummaryHint");
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
-    item.iconPath = new vscode.ThemeIcon("history");
+    item.iconPath = new vscode.ThemeIcon(
+      resolvePilotSummaryIcon(model.running, model.debugging ?? false),
+    );
     item.command = {
       command: PILOT_SUMMARY_DASHBOARD_COMMAND,
       title: hint,

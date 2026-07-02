@@ -1,4 +1,11 @@
 import * as vscode from "vscode";
+import {
+  CompactStatusBarInput,
+  formatCompactStatusBarLabel,
+  formatCompactStatusBarTooltip,
+  StatusBarDisplayMode,
+  statusBarNeedsWarning,
+} from "../core/config/statusBarViewModel";
 import { ParallelismMode, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
 
@@ -10,16 +17,21 @@ export interface StatusBarActivity {
   solutionSelected?: boolean;
 }
 
+const HUB_COMMAND = "bddPilot.openStatusBarHub";
+
 /**
- * Status bar: STAGE, parallelism mode, active test project, and optional run indicator.
+ * Status bar: compact branded hub (default) or legacy detailed items.
  */
 export class StatusBar implements vscode.Disposable {
+  private readonly hubItem: vscode.StatusBarItem;
   private readonly stageItem: vscode.StatusBarItem;
   private readonly modeItem: vscode.StatusBarItem;
   private readonly runningItem: vscode.StatusBarItem;
   private readonly projectItem: vscode.StatusBarItem;
 
   constructor() {
+    this.hubItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    this.hubItem.command = HUB_COMMAND;
     this.stageItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     this.stageItem.command = "bddPilot.selectStage";
     this.modeItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
@@ -34,7 +46,49 @@ export class StatusBar implements vscode.Disposable {
     stage: Stage,
     mode: ParallelismMode,
     locale: PilotLocale,
-    projectLabel?: string,
+    projectLabel: string | undefined,
+    activity: StatusBarActivity | undefined,
+    displayMode: StatusBarDisplayMode,
+  ): void {
+    if (displayMode === "compact") {
+      this.updateCompact(stage, mode, locale, projectLabel, activity);
+      this.hideDetailed();
+      return;
+    }
+
+    this.hubItem.hide();
+    this.updateDetailed(stage, mode, locale, projectLabel, activity);
+  }
+
+  private updateCompact(
+    stage: Stage,
+    mode: ParallelismMode,
+    locale: PilotLocale,
+    projectLabel: string | undefined,
+    activity?: StatusBarActivity,
+  ): void {
+    const input: CompactStatusBarInput = {
+      stage,
+      mode,
+      locale,
+      projectLabel,
+      running: activity?.running,
+      solutionSelected: activity?.solutionSelected,
+      debugging: activity?.debugging,
+    };
+    this.hubItem.text = formatCompactStatusBarLabel(input);
+    this.hubItem.tooltip = formatCompactStatusBarTooltip(input);
+    this.hubItem.backgroundColor = statusBarNeedsWarning(stage, projectLabel)
+      ? new vscode.ThemeColor("statusBarItem.warningBackground")
+      : undefined;
+    this.hubItem.show();
+  }
+
+  private updateDetailed(
+    stage: Stage,
+    mode: ParallelismMode,
+    locale: PilotLocale,
+    projectLabel: string | undefined,
     activity?: StatusBarActivity,
   ): void {
     const isProtected = stage === "stg" || stage === "prod";
@@ -76,7 +130,15 @@ export class StatusBar implements vscode.Disposable {
     }
   }
 
+  private hideDetailed(): void {
+    this.stageItem.hide();
+    this.modeItem.hide();
+    this.runningItem.hide();
+    this.projectItem.hide();
+  }
+
   dispose(): void {
+    this.hubItem.dispose();
     this.stageItem.dispose();
     this.modeItem.dispose();
     this.runningItem.dispose();

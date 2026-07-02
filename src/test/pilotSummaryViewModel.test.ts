@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   buildPilotSummaryViewModel,
   formatPilotSummaryLabel,
+  resolvePilotSummaryIcon,
 } from "../core/results/pilotSummaryViewModel";
 
 describe("pilotSummaryViewModel", () => {
@@ -145,5 +146,11 @@ describe("pilotSummaryViewModel", () => {
     assert.ok(label.includes("Running…"));
     assert.ok(label.includes("Restored (not a new run)"));
     assert.ok(label.length <= 160);
+  });
+
+  it("resolvePilotSummaryIcon returns history, spin, or debug-alt", () => {
+    assert.strictEqual(resolvePilotSummaryIcon(false, false), "history");
+    assert.strictEqual(resolvePilotSummaryIcon(true, false), "loading~spin");
+    assert.strictEqual(resolvePilotSummaryIcon(true, true), "debug-alt");
   });
 });
