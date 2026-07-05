@@ -34,6 +34,7 @@ echo ""
 echo "-- Sample BDD: Pilot-style filters --"
 dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "Category=smoke" --verbosity minimal
 dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "FullyQualifiedName~SmokeFeature" --verbosity minimal
+dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "FullyQualifiedName~E_CommerceFeature" --verbosity minimal
 
 echo ""
 echo "All automated dogfood checks passed."

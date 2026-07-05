@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.3.0** · **258 unit tests**
+> **Current release: v1.4.0** · **273 unit tests**
 
 ---
 
@@ -9,9 +9,10 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped | v0.1.0 → **v1.3.0** (see [CHANGELOG.md](./CHANGELOG.md)) |
-| 🎯 Next | Watch issues post-1.3.0 · backlog (toolbar Stage/Mode, dotnet flags, scope toast P3) |
-| 🏁 Goal | **v1.x** — incremental UX (dotnet flags, MCP post-v1.0; Visual UX v2 partial ✅) |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.3.0** |
+| 🚧 Local | **v1.4.0** Run API v1 producer — Capa A ✅ · Capa B ☐ · sin tag/commit |
+| 🎯 Next | Capa B cross-ext Pilot v1.4 + Jarvis v0.8 · ship v1.4.0 · watch issues |
+| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ local) · dotnet flags · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
 
@@ -44,8 +45,28 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.7** | Bundle comunicación: post-run unificado + progress i18n + empty-state guide |
 | **1.2.8** | Run target performance — prefer BDD csproj over solution + debounce list-tests |
 | **1.3.0** | Visual UX v2 — compact status bar hub, hub descriptions, execution feedback (tree icon + activity badge) |
+| **1.4.0** | Ecosystem API — `PilotRunApiV1` via `extension.exports`; `docs/EXTENSION_API.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
+
+---
+
+## Ecosystem alignment (ForgeOne)
+
+> Contratos congelados en `bdd-jarvis/docs-internal/specs/CONTRACT-*.md`.  
+> **Actualizado:** 2026-07-05 · modo producto
+
+| Slice | Repo | Versión local | Marketplace | Capa B | Depende de |
+|-------|------|---------------|-------------|--------|------------|
+| Index API v1 (+ resolveStep v1.1) | bdd-guardian | 0.8.3 | publicado | ✅ | — |
+| **Run API v1 producer** | **bdd-pilot** | **1.4.0** | 1.3.0 | ☐ Pilot solo | — |
+| Run API v1 consumer | bdd-jarvis | 0.8.0 | 0.2.0 | ☐ cross-ext | Pilot VSIX 1.4+ |
+| Pre-run gate | bdd-pilot → guardian | — | — | 📋 | Guardian `resolveStep` (slice aparte) |
+| MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto de Run API |
+
+**Enhanced mode Jarvis:** `isPilotRunApiV1 && isReady && getRunHistory().length > 0` — TRX fallback siempre vigente.
+
+**Orden de validación ship:** Pilot v1.4.0 Capa B → Jarvis v0.8.0 Capa B cross-ext (`minimal-bdd`) → tags/releases por repo.
 
 ---
 
@@ -138,7 +159,16 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-_Nothing yet._
+**v1.4.0** — Run API v1 implementado; pendiente Capa B + ship (commit/tag/Marketplace).
+
+### v1.4.0 — Ecosystem API (Run API v1)
+
+| Area | Change |
+|------|--------|
+| **Extension API** | `PilotRunApiV1` via `extension.exports` — history, lastRun, rollup, events |
+| **Reqnroll identifiers** | `sanitizeIdentifier` ↔ Reqnroll `ToIdentifierPart` (hyphen → `_` in filters) |
+| **Core** | `sessionRunSnapshot`, `pilotRunApiMapper`, `reqnrollIdentifier`, `src/api/` (273 unit tests) |
+| **Docs** | `docs/EXTENSION_API.md` |
 
 ### v1.3.0 — Visual UX v2 (status bar + execution feedback)
 
@@ -395,10 +425,11 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 
 ```
 src/
+├── api/            # PilotRunApiV1 — extension.exports (v1.4.0)
 ├── core/           # Pure logic — unit tested, no VS Code API
 │   ├── gherkin/    # parser, grouping, discovery, treeLabels
 │   ├── runner/     # filterBuilder, runScope, liveProgress, dotnetTest
-│   ├── results/    # TRX, Cucumber, evidence, runHistory
+│   ├── results/    # TRX, Cucumber, evidence, runHistory, sessionRunSnapshot
 │   ├── diagnostics/
 │   └── config/     # stages, modes, profiles, projectLocator, envFile
 ├── providers/      # Tree, TestController, CodeLens, RunService, dashboard
@@ -410,4 +441,4 @@ src/
 
 ---
 
-*Last updated: v1.3.0 — Visual UX v2 (258 unit tests).*
+*Last updated: v1.4.0 local — Run API v1 (269 unit tests). Ecosystem: Jarvis v0.8.0 consumer local.*

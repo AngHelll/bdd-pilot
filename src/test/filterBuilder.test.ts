@@ -74,6 +74,26 @@ describe("filterBuilder", () => {
     assert.strictEqual(sanitizeIdentifier("PPR Questionnaire"), "PPRQuestionnaire");
   });
 
+  it("sanitizeIdentifier aligns hyphens with Reqnroll (underscore in class name)", () => {
+    assert.strictEqual(sanitizeIdentifier("Pre-order"), "Pre_Order");
+    assert.strictEqual(sanitizeIdentifier("E-Commerce"), "E_Commerce");
+    assert.strictEqual(
+      buildFilter({
+        kind: "feature",
+        feature: { ...feature, name: "E-Commerce" },
+      }),
+      "FullyQualifiedName~E_CommerceFeature",
+    );
+    assert.strictEqual(
+      buildFilter({
+        kind: "scenario",
+        feature: { ...feature, name: "Pre-order" },
+        scenario: { ...scenario, name: "Check out flow" },
+      }),
+      "FullyQualifiedName~Pre_OrderFeature.CheckOutFlow",
+    );
+  });
+
   it("builds DisplayName filter for outline rows", () => {
     const outline: ScenarioInfo = {
       name: "Reject invalid GUID values in path parameters",

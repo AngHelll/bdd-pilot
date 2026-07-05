@@ -8,6 +8,18 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.4.0] — 2026-07-05
+
+### Added
+- **Run API v1** — read-only `extension.exports` surface for companion extensions (BDD Jarvis): run history, last run snapshot, outcome rollup, completion events
+- **`docs/EXTENSION_API.md`** — public API reference (pattern aligned with BDD Guardian)
+- **Session run snapshot** — `getLastRun()` covers all completed/canceled runs including all-green; diagnostics cached at finish without exporting stdout
+
+### Changed
+- **`activate()`** returns `PilotRunApiV1` via `extension.exports`
+- **Run history** — optional absolute `trxPath` persisted per entry
+- **Reqnroll identifier matching** — `sanitizeIdentifier` aligned with Reqnroll `ToIdentifierPart` (hyphens/dots → `_` in generated class names); fixes scoped runs on features like `E-Commerce` / `Pre-order`
+
 ## [1.3.0] — 2026-07-02
 
 ### Added

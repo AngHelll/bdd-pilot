@@ -29,6 +29,9 @@ other and can be installed side by side:
 |-----------|------|
 | [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) | Go to Definition, CodeLens on steps, binding diagnostics, Coach mode |
 | **BDD Pilot** (this repo) | Test tree, `dotnet test` execution, TRX/Cucumber results, run history |
+| [**BDD Jarvis**](https://github.com/AngHelll/bdd-jarvis) | Workspace QA analysis, context packs — consumes Pilot Run API when available |
+
+Pilot exposes a read-only [**Extension API**](docs/EXTENSION_API.md) (`PilotRunApiV1`) for in-process consumers such as Jarvis. TRX-on-disk remains the fallback when the API is absent.
 
 Guardian answers *“where is this step implemented?”* — Pilot answers *“run this
 scenario and show me what failed.”*

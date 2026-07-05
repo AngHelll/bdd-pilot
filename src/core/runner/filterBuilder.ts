@@ -4,6 +4,7 @@ import {
   FilterMappingConfig,
   buildOutlineRowFilter,
 } from "./filterMapping";
+import { toReqnrollIdentifierPart } from "./reqnrollIdentifier";
 
 export type RunTarget =
   | { kind: "all" }
@@ -109,16 +110,9 @@ export function featureClassName(
 }
 
 /**
- * Reqnroll generates C# identifiers from feature/scenario names by stripping
- * non-alphanumeric characters and PascalCasing word boundaries. We approximate
- * that here for a usable substring match.
+ * Reqnroll-generated C# identifier from a feature/scenario title.
+ * @see toReqnrollIdentifierPart — hyphens become `_` (e.g. Pre-order → Pre_Order).
  */
 export function sanitizeIdentifier(name: string): string {
-  const words = name
-    .replace(/['"]/g, "")
-    .split(/[^A-Za-z0-9]+/)
-    .filter((w) => w.length > 0);
-  return words
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join("");
+  return toReqnrollIdentifierPart(name);
 }

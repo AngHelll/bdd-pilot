@@ -27,6 +27,8 @@ export interface RunHistoryEntry {
   scenarios: ScenarioRunRecord[];
   /** Omitted on legacy entries — treated as completed. */
   status?: RunHistoryStatus;
+  /** Absolute path to TRX when generated. */
+  trxPath?: string;
 }
 
 export function scenarioHistoryKey(featurePath: string, scenarioLine: number, scenarioName: string): string {

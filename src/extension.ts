@@ -29,6 +29,7 @@ import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/result
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
+import { createPilotRunApi, PilotRunApiV1 } from "./api";
 import { RunTarget } from "./core/runner/filterBuilder";
 import {
   formatProgressMessage,
@@ -74,7 +75,7 @@ const MODE_KEY = "bddPilot.mode";
 const PROJECT_KEY = "bddPilot.project";
 const HISTORY_KEY = "bddPilot.runHistory";
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   const output = vscode.window.createOutputChannel("BDD Pilot");
   const localeService = new LocaleService();
   const tr = (key: Parameters<LocaleService["tr"]>[0], params?: Parameters<LocaleService["tr"]>[1]) =>
@@ -1076,6 +1077,14 @@ export function activate(context: vscode.ExtensionContext): void {
         }
       });
   }
+
+  return createPilotRunApi({
+    runService,
+    outcomeStore,
+    isReady: () => getResolvedProject() !== undefined,
+    isRunInProgress: () => !!activeRun || runService.isDebugActive(),
+    getDomains: () => treeProvider.getDomains(),
+  });
 }
 
 export function deactivate(): void {

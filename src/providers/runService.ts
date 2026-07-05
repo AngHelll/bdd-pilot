@@ -22,6 +22,11 @@ import {
   ScenarioRunRecord,
   trimHistory,
 } from "../core/results/runHistory";
+import {
+  buildSessionRunSnapshot,
+  cloneSessionRunSnapshot,
+  SessionRunSnapshot,
+} from "../core/results/sessionRunSnapshot";
 import { matchesScenario } from "../core/results/trxParser";
 import { findOutlineExampleMatch } from "../core/results/scenarioMatch";
 import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filterBuilder";
@@ -88,10 +93,14 @@ export class RunService {
   private readonly _onHistory = new vscode.EventEmitter<RunHistoryEntry[]>();
   readonly onHistoryChanged = this._onHistory.event;
 
+  private readonly _onCompleteRun = new vscode.EventEmitter<void>();
+  readonly onRunCompleted = this._onCompleteRun.event;
+
   private history: RunHistoryEntry[] = [];
   private lastFailedTargets: RunTarget[] = [];
   private lastFailedFilter: string | undefined;
   private lastFailedRunSnapshot: LastRunSnapshot | undefined;
+  private lastRunSnapshot: SessionRunSnapshot | undefined;
   private runStartedAt = 0;
   private pendingDebug: PendingDebugSession | undefined;
   private debugActive = false;
@@ -116,6 +125,10 @@ export class RunService {
 
   getLastFailedRunSnapshot(): LastRunSnapshot | undefined {
     return this.lastFailedRunSnapshot;
+  }
+
+  getLastRunSnapshot(): SessionRunSnapshot | undefined {
+    return this.lastRunSnapshot ? cloneSessionRunSnapshot(this.lastRunSnapshot) : undefined;
   }
 
   setHistory(entries: RunHistoryEntry[]): void {
@@ -195,9 +208,10 @@ export class RunService {
 
     const summary = loadRunResults(req.projectDir, result.trxPath);
     const liveState = progressParser.getState();
+    const absoluteTrxPath = toAbsoluteTrxPath(result.trxPath);
     const historyEntry = result.canceled
-      ? this.recordCanceledHistory(req, filter, summary, liveState)
-      : this.recordHistory(req, filter, summary);
+      ? this.recordCanceledHistory(req, filter, summary, liveState, absoluteTrxPath)
+      : this.recordHistory(req, filter, summary, absoluteTrxPath);
     if (historyEntry) {
       this.history = trimHistory(this.history, HISTORY_MAX);
       this._onHistory.fire(this.history);
@@ -205,6 +219,16 @@ export class RunService {
     if (!result.canceled) {
       this.updateFailedRunSnapshot(req, filter, result, summary, buffer, historyEntry);
     }
+    this.updateSessionRunSnapshot(
+      req,
+      filter,
+      result,
+      summary,
+      buffer,
+      historyEntry,
+      liveState,
+    );
+    this.notifyRunCompleted();
 
     return {
       exitCode: result.exitCode,
@@ -235,7 +259,8 @@ export class RunService {
 
     let historyEntry: RunHistoryEntry | undefined;
     if (summary && summary.total > 0) {
-      historyEntry = this.recordHistory(pending.req, pending.filter, summary);
+      const absoluteTrxPath = toAbsoluteTrxPath(pending.trxPath);
+      historyEntry = this.recordHistory(pending.req, pending.filter, summary, absoluteTrxPath);
       if (historyEntry) {
         this.history = trimHistory(this.history, HISTORY_MAX);
         this._onHistory.fire(this.history);
@@ -248,7 +273,17 @@ export class RunService {
         "",
         historyEntry,
       );
+      this.updateSessionRunSnapshot(
+        pending.req,
+        pending.filter,
+        { exitCode: 0, canceled: false, trxPath: pending.trxPath },
+        summary,
+        "",
+        historyEntry,
+      );
     }
+
+    this.notifyRunCompleted();
 
     return {
       summary,
@@ -322,6 +357,7 @@ export class RunService {
     req: RunRequest,
     filter: string | undefined,
     summary: UnifiedSummary | undefined,
+    trxPath?: string,
   ): RunHistoryEntry | undefined {
     if (!summary) {
       return undefined;
@@ -344,6 +380,7 @@ export class RunService {
       durationMs: Date.now() - this.runStartedAt,
       scenarios,
       status: "completed",
+      trxPath,
     };
     this.history.push(entry);
     return entry;
@@ -354,6 +391,7 @@ export class RunService {
     filter: string | undefined,
     summary: UnifiedSummary | undefined,
     liveState: LiveProgressState,
+    trxPath?: string,
   ): RunHistoryEntry | undefined {
     const hasSummary = !!summary && summary.total > 0;
     const hasLive = liveState.completed > 0;
@@ -381,6 +419,7 @@ export class RunService {
       durationMs: Date.now() - this.runStartedAt,
       scenarios,
       status: "canceled",
+      trxPath,
     };
     this.history.push(entry);
     return entry;
@@ -530,6 +569,76 @@ export class RunService {
         : undefined,
     };
   }
+
+  private updateSessionRunSnapshot(
+    req: RunRequest,
+    filter: string | undefined,
+    result: { exitCode: number | null; canceled: boolean; trxPath: string },
+    summary: UnifiedSummary | undefined,
+    outputBuffer: string,
+    historyEntry?: RunHistoryEntry,
+    liveState?: LiveProgressState,
+  ): void {
+    if (result.canceled) {
+      const hasSummary = !!summary && summary.total > 0;
+      const hasLive = (liveState?.completed ?? 0) > 0;
+      if (!hasSummary && !hasLive) {
+        return;
+      }
+    } else if (!summary) {
+      return;
+    }
+
+    const runSummary = summary
+      ? {
+          passed: summary.passed,
+          failed: summary.failed,
+          skipped: summary.skipped,
+          total: summary.total,
+          source: summary.source,
+        }
+      : {
+          passed: liveState!.passed,
+          failed: liveState!.failed,
+          skipped: liveState!.skipped,
+          total: liveState!.completed,
+        };
+
+    const failedScenarios =
+      historyEntry?.scenarios
+        .filter((s) => s.outcome === "failed")
+        .map((s) => ({
+          featurePath: s.featurePath,
+          scenarioName: s.scenarioName,
+          errorMessage: s.errorMessage,
+        })) ?? [];
+
+    const evidence = findRecentEvidence(req.projectDir, this.runStartedAt - 5000).map((e) => ({
+      kind: e.kind,
+      path: e.absolutePath,
+    }));
+
+    this.lastRunSnapshot = buildSessionRunSnapshot({
+      timestamp: Date.now(),
+      stage: req.stage,
+      mode: req.mode,
+      filter,
+      scopeLabels: formatRunTargetScopeLabels(req.targets),
+      projectDir: req.projectDir,
+      testTarget: req.testTarget,
+      exitCode: result.exitCode,
+      status: result.canceled ? "canceled" : "completed",
+      summary: runSummary,
+      failedScenarios,
+      evidence,
+      trxPath: toAbsoluteTrxPath(result.trxPath),
+      outputBuffer,
+    });
+  }
+
+  private notifyRunCompleted(): void {
+    this._onCompleteRun.fire();
+  }
 }
 
 function matchTarget(
@@ -569,4 +678,11 @@ function matchTarget(
 function shortTestName(fqn: string): string {
   const parts = fqn.split(".");
   return parts[parts.length - 1] ?? fqn;
+}
+
+function toAbsoluteTrxPath(trxPath: string | undefined): string | undefined {
+  if (!trxPath) {
+    return undefined;
+  }
+  return path.isAbsolute(trxPath) ? trxPath : path.resolve(trxPath);
 }
