@@ -186,6 +186,91 @@ const EN = {
   "tooltip.skipReasonLine": "Skip: {reason}",
   "log.rehydrateRestored":
     "Restored test outcomes from TestResults/{file} ({passed} passed, {failed} failed, {skipped} skipped, {total} total).",
+  "log.envLoaded":
+    "[bdd-pilot] Loaded environment from {files} ({count} variables, values hidden).",
+  "log.envMissing":
+    "[bdd-pilot] No config/.env.{stage} found. Tests will rely on the current process environment.",
+
+  "diagnostic.output.header": "\n[bdd-pilot] Diagnostics:",
+  "diagnostic.output.summaryLine":
+    "[bdd-pilot] Diagnostics: {code} — {title} (+{more} more). Open Output for full log.",
+  "diagnostic.output.summaryLineSingle":
+    "[bdd-pilot] Diagnostics: {code} — {title}. Open Output for full log.",
+  "diagnostic.output.hintPrefix": "→",
+
+  "diagnostic.breakdown.pending": "{n} pending/missing step definition(s)",
+  "diagnostic.breakdown.testData": "{n} test data / fixture setup failure(s)",
+  "diagnostic.breakdown.nullRef": "{n} NullReferenceException (often failed setup/Given steps)",
+  "diagnostic.breakdown.apiHttp": "{n} API/HTTP error(s)",
+  "diagnostic.breakdown.cloudCreds": "{n} cloud credential failure(s)",
+  "diagnostic.breakdown.ambiguous": "{n} ambiguous step definition(s)",
+
+  "diagnostic.DOTNET_NOT_FOUND.title": ".NET SDK is not installed or not on PATH.",
+  "diagnostic.DOTNET_NOT_FOUND.hint":
+    "Install the .NET SDK and ensure `dotnet` is available in your shell PATH.",
+  "diagnostic.SDK_NOT_FOUND.title": "Required .NET SDK {version} is not installed.",
+  "diagnostic.SDK_NOT_FOUND.titleFallback": "Required .NET SDK version is not installed.",
+  "diagnostic.SDK_NOT_FOUND.hint":
+    "Install the SDK version from global.json, or update global.json to match an installed SDK.",
+  "diagnostic.FEED_AUTH.title": "A NuGet feed rejected the request (unauthorized).",
+  "diagnostic.FEED_AUTH.hint":
+    "Provide valid credentials for the private feed (PAT env var or credential provider). Do not commit secrets.",
+  "diagnostic.PACKAGE_NOT_FOUND.title": "Package not found: {pkg}",
+  "diagnostic.PACKAGE_NOT_FOUND.titleFallback": "A required NuGet package was not found.",
+  "diagnostic.PACKAGE_NOT_FOUND.hint":
+    "Check package version in the .csproj and that your feed credentials can access the private feed.",
+  "diagnostic.VULNERABILITY_AS_ERROR.title": "Vulnerability policy blocked package: {pkg}",
+  "diagnostic.VULNERABILITY_AS_ERROR.titleFallback": "A package vulnerability is treated as an error.",
+  "diagnostic.VULNERABILITY_AS_ERROR.hint":
+    "Upgrade the affected package or adjust NuGet audit settings for local development.",
+  "diagnostic.NO_TESTS_MATCHED.title": "No tests matched the current filter.",
+  "diagnostic.NO_TESTS_MATCHED.hint":
+    "Clear filters or pick a scenario/feature that exists in the test assembly.",
+  "diagnostic.PENDING_STEPS.title": "Tests have pending or missing step definitions.",
+  "diagnostic.PENDING_STEPS.titleMany": "{n} tests have pending or missing step definitions.",
+  "diagnostic.PENDING_STEPS.hint":
+    "Implement the missing step bindings in Steps/ or mark scenarios @ignore until steps exist.",
+  "diagnostic.AMBIGUOUS_STEPS.title": "Reqnroll found duplicate step definitions for the same step text.",
+  "diagnostic.AMBIGUOUS_STEPS.hint":
+    "Remove or rename duplicate [Given]/[When]/[Then] bindings so each step text maps to one method.",
+  "diagnostic.TEST_DATA_SETUP.title": "Test data or fixture setup failed.",
+  "diagnostic.TEST_DATA_SETUP.titleMany": "{n} failures due to test data or fixture setup.",
+  "diagnostic.TEST_DATA_SETUP.hint":
+    "Check test data files, database seeds, or Given/setup steps required by your project.",
+  "diagnostic.AWS_CREDENTIALS.title": "Cloud credentials are invalid or expired.",
+  "diagnostic.AWS_CREDENTIALS.hint":
+    "Refresh cloud credentials in your environment file and verify the target account/region.",
+  "diagnostic.XRAY_CONFIG.title": "X-Ray integration is not configured.",
+  "diagnostic.XRAY_CONFIG.hint":
+    "Set X-Ray client credentials in your environment file, or skip @XRay scenarios locally.",
+  "diagnostic.API_HTTP_ERRORS.title": "An API call failed during tests{statuses}.",
+  "diagnostic.API_HTTP_ERRORS.titleMany": "{n} API calls failed during tests{statuses}.",
+  "diagnostic.API_HTTP_ERRORS.detailNoContracts":
+    "Some failures: authenticated user has no contracts in test environment.",
+  "diagnostic.API_HTTP_ERRORS.hint":
+    "Verify test users, endpoints in your environment file, and that the target environment has the expected data.",
+  "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.title":
+    "Playwright driver bundle is incomplete in the test output folder.",
+  "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.hint":
+    "Run `dotnet build` then `pwsh bin/Debug/net8.0/playwright.ps1 install` (or rebuild so Playwright copies driver assets).",
+  "diagnostic.PLAYWRIGHT_RUNTIME.title": "Playwright failed to launch or connect to the browser.",
+  "diagnostic.PLAYWRIGHT_RUNTIME.hint":
+    "Run `playwright install` for the browsers you need, then retry. Check for sandbox/CI restrictions.",
+  "diagnostic.TEST_HOST_CRASH.title": "The .NET test host process crashed or aborted.",
+  "diagnostic.TEST_HOST_CRASH.hint":
+    "Inspect the stack trace above for OOM, native crashes, or unhandled exceptions. Try `dotnet test --blame-crash` or run one scenario to isolate.",
+  "diagnostic.PORT_IN_USE.title": "Port {port} is already in use.",
+  "diagnostic.PORT_IN_USE.titleFallback": "A required network port is already in use.",
+  "diagnostic.PORT_IN_USE.hint":
+    "Stop the process holding the port (`lsof -i :PORT` on macOS) or change the test app's URL in .env / launchSettings.",
+  "diagnostic.TEST_TIMEOUT.title": "Test execution timed out after {duration}.",
+  "diagnostic.TEST_TIMEOUT.titleFallback": "Test execution timed out.",
+  "diagnostic.TEST_TIMEOUT.hint":
+    "Increase xUnit/Reqnroll timeout settings, or debug the hanging step (API wait, browser, deadlock). Run a single scenario to find the blocker.",
+  "diagnostic.TEST_RUN_FAILED.title":
+    "Test run finished with {failed} failure(s) ({passed} passed, {skipped} skipped).",
+  "diagnostic.TEST_RUN_FAILED.hint":
+    "Review failure categories above; fix step definitions, test data, env vars, or API/environment issues first.",
 
   "quickPick.solution": "Solution",
 
@@ -391,6 +476,91 @@ const ES: Record<keyof typeof EN, string> = {
   "tooltip.skipReasonLine": "Omitido: {reason}",
   "log.rehydrateRestored":
     "Resultados restaurados desde TestResults/{file} ({passed} correctos, {failed} fallidos, {skipped} omitidos, {total} total).",
+  "log.envLoaded":
+    "[bdd-pilot] Entorno cargado desde {files} ({count} variables, valores ocultos).",
+  "log.envMissing":
+    "[bdd-pilot] No se encontró config/.env.{stage}. Los tests usarán el entorno del proceso actual.",
+
+  "diagnostic.output.header": "\n[bdd-pilot] Diagnósticos:",
+  "diagnostic.output.summaryLine":
+    "[bdd-pilot] Diagnósticos: {code} — {title} (+{more} más). Abre Output para el log completo.",
+  "diagnostic.output.summaryLineSingle":
+    "[bdd-pilot] Diagnósticos: {code} — {title}. Abre Output para el log completo.",
+  "diagnostic.output.hintPrefix": "→",
+
+  "diagnostic.breakdown.pending": "{n} step(s) pendiente(s) o sin definición",
+  "diagnostic.breakdown.testData": "{n} fallo(s) de datos de prueba / fixture",
+  "diagnostic.breakdown.nullRef": "{n} NullReferenceException (a menudo setup/Given fallido)",
+  "diagnostic.breakdown.apiHttp": "{n} error(es) API/HTTP",
+  "diagnostic.breakdown.cloudCreds": "{n} fallo(s) de credenciales cloud",
+  "diagnostic.breakdown.ambiguous": "{n} definición(es) de step ambigua(s)",
+
+  "diagnostic.DOTNET_NOT_FOUND.title": "El SDK de .NET no está instalado o no está en PATH.",
+  "diagnostic.DOTNET_NOT_FOUND.hint":
+    "Instala el SDK de .NET y asegúrate de que `dotnet` esté disponible en el PATH del shell.",
+  "diagnostic.SDK_NOT_FOUND.title": "El SDK de .NET {version} requerido no está instalado.",
+  "diagnostic.SDK_NOT_FOUND.titleFallback": "La versión requerida del SDK de .NET no está instalada.",
+  "diagnostic.SDK_NOT_FOUND.hint":
+    "Instala la versión de global.json o actualiza global.json para coincidir con un SDK instalado.",
+  "diagnostic.FEED_AUTH.title": "Un feed NuGet rechazó la solicitud (no autorizado).",
+  "diagnostic.FEED_AUTH.hint":
+    "Proporciona credenciales válidas para el feed privado (PAT o credential provider). No subas secretos.",
+  "diagnostic.PACKAGE_NOT_FOUND.title": "Paquete no encontrado: {pkg}",
+  "diagnostic.PACKAGE_NOT_FOUND.titleFallback": "No se encontró un paquete NuGet requerido.",
+  "diagnostic.PACKAGE_NOT_FOUND.hint":
+    "Revisa la versión en el .csproj y que tus credenciales puedan acceder al feed privado.",
+  "diagnostic.VULNERABILITY_AS_ERROR.title": "Política de vulnerabilidades bloqueó el paquete: {pkg}",
+  "diagnostic.VULNERABILITY_AS_ERROR.titleFallback": "Una vulnerabilidad de paquete se trata como error.",
+  "diagnostic.VULNERABILITY_AS_ERROR.hint":
+    "Actualiza el paquete afectado o ajusta la auditoría NuGet para desarrollo local.",
+  "diagnostic.NO_TESTS_MATCHED.title": "Ningún test coincidió con el filtro actual.",
+  "diagnostic.NO_TESTS_MATCHED.hint":
+    "Limpia filtros o elige un escenario/feature que exista en el ensamblado de tests.",
+  "diagnostic.PENDING_STEPS.title": "Hay steps pendientes o sin definición.",
+  "diagnostic.PENDING_STEPS.titleMany": "{n} tests con steps pendientes o sin definición.",
+  "diagnostic.PENDING_STEPS.hint":
+    "Implementa los bindings faltantes en Steps/ o marca escenarios @ignore hasta que existan.",
+  "diagnostic.AMBIGUOUS_STEPS.title": "Reqnroll encontró definiciones duplicadas para el mismo step.",
+  "diagnostic.AMBIGUOUS_STEPS.hint":
+    "Elimina o renombra bindings [Given]/[When]/[Then] duplicados para que cada step tenga un solo método.",
+  "diagnostic.TEST_DATA_SETUP.title": "Falló la configuración de datos de prueba o fixture.",
+  "diagnostic.TEST_DATA_SETUP.titleMany": "{n} fallos por datos de prueba o fixture.",
+  "diagnostic.TEST_DATA_SETUP.hint":
+    "Revisa archivos de datos, seeds de base de datos o steps Given/setup requeridos por tu proyecto.",
+  "diagnostic.AWS_CREDENTIALS.title": "Las credenciales cloud son inválidas o expiraron.",
+  "diagnostic.AWS_CREDENTIALS.hint":
+    "Renueva credenciales cloud en tu archivo de entorno y verifica cuenta/región.",
+  "diagnostic.XRAY_CONFIG.title": "La integración X-Ray no está configurada.",
+  "diagnostic.XRAY_CONFIG.hint":
+    "Configura credenciales X-Ray en tu archivo de entorno, u omite escenarios @XRay en local.",
+  "diagnostic.API_HTTP_ERRORS.title": "Una llamada API falló durante los tests{statuses}.",
+  "diagnostic.API_HTTP_ERRORS.titleMany": "{n} llamadas API fallaron durante los tests{statuses}.",
+  "diagnostic.API_HTTP_ERRORS.detailNoContracts":
+    "Algunos fallos: el usuario autenticado no tiene contratos en el entorno de prueba.",
+  "diagnostic.API_HTTP_ERRORS.hint":
+    "Verifica usuarios de prueba, endpoints en tu archivo de entorno y datos esperados en el entorno.",
+  "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.title":
+    "El bundle del driver de Playwright está incompleto en la carpeta de salida.",
+  "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.hint":
+    "Ejecuta `dotnet build` y luego `pwsh bin/Debug/net8.0/playwright.ps1 install` (o recompila para copiar assets).",
+  "diagnostic.PLAYWRIGHT_RUNTIME.title": "Playwright no pudo lanzar o conectar con el navegador.",
+  "diagnostic.PLAYWRIGHT_RUNTIME.hint":
+    "Ejecuta `playwright install` para los navegadores necesarios y reintenta. Revisa restricciones sandbox/CI.",
+  "diagnostic.TEST_HOST_CRASH.title": "El proceso host de tests de .NET falló o abortó.",
+  "diagnostic.TEST_HOST_CRASH.hint":
+    "Revisa el stack trace por OOM, crashes nativos o excepciones no controladas. Prueba `dotnet test --blame-crash` o un solo escenario.",
+  "diagnostic.PORT_IN_USE.title": "El puerto {port} ya está en uso.",
+  "diagnostic.PORT_IN_USE.titleFallback": "Un puerto de red requerido ya está en uso.",
+  "diagnostic.PORT_IN_USE.hint":
+    "Detén el proceso que usa el puerto (`lsof -i :PORT` en macOS) o cambia la URL en .env / launchSettings.",
+  "diagnostic.TEST_TIMEOUT.title": "La ejecución de tests expiró tras {duration}.",
+  "diagnostic.TEST_TIMEOUT.titleFallback": "La ejecución de tests expiró.",
+  "diagnostic.TEST_TIMEOUT.hint":
+    "Aumenta timeouts de xUnit/Reqnroll o depura el step bloqueado (API, navegador, deadlock). Ejecuta un escenario aislado.",
+  "diagnostic.TEST_RUN_FAILED.title":
+    "Ejecución terminada con {failed} fallo(s) ({passed} correctos, {skipped} omitidos).",
+  "diagnostic.TEST_RUN_FAILED.hint":
+    "Revisa las categorías de fallo arriba; corrige bindings, datos de prueba, variables de entorno o API/entorno primero.",
 
   "quickPick.solution": "Solución",
 

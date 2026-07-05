@@ -32,5 +32,10 @@
   "bddPilot.configuration.preRun.bindingGate.description": "Before dotnet test, check step bindings via BDD Guardian resolveStep (requires anghelll.bdd-guardian v0.8.3+).",
   "bddPilot.configuration.preRun.bindingGate.enum.off": "Disabled — same behavior as before v1.5.",
   "bddPilot.configuration.preRun.bindingGate.enum.warn": "Show a modal for unbound or ambiguous bindings; you can cancel or run anyway.",
-  "bddPilot.configuration.preRun.bindingGate.enum.block": "Block runs with missing (unbound) bindings; ambiguous bindings still allow run anyway."
+  "bddPilot.configuration.preRun.bindingGate.enum.block": "Block runs with missing (unbound) bindings; ambiguous bindings still allow run anyway.",
+  "bddPilot.configuration.diagnostics.extendedRules.description": "Enable extended post-run diagnostics (cloud credentials, X-Ray, API HTTP errors). Off by default for generic Marketplace projects.",
+  "bddPilot.configuration.feedback.diagnosticsInOutput.description": "How much of the BDD Pilot diagnostics block to append to the Output channel after a run.",
+  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.off": "Do not append Pilot diagnostics (dotnet log unchanged).",
+  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.summary": "One-line summary of the top diagnostic (+N more when applicable).",
+  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.full": "Full diagnostics list (legacy v1.5 behavior)."
 }

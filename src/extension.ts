@@ -38,8 +38,12 @@ import {
   TestCompletionEvent,
 } from "./core/runner/liveProgress";
 import { estimateTestCount } from "./core/runner/runEstimate";
-import { analyzeDotnetOutput } from "./core/diagnostics/analyzer";
+import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "./core/diagnostics/analyzer";
 import { buildAiFailureContext } from "./core/diagnostics/aiFailureContext";
+import {
+  DiagnosticsInOutputMode,
+  formatDiagnosticsOutputLines,
+} from "./core/diagnostics/diagnosticsOutput";
 import {
   buildPostRunFeedback,
   PostRunFeedbackRequest,
@@ -175,6 +179,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     getTagGroups: () => treeProvider.getTagGroups(),
     getTreeGroupBy: () => readTreeGroupBy(),
     getLocale: () => localeService.getLocale(),
+    getAnalyzeOptions: () => readAnalyzeOptions(),
     getBindingGate: () => readBindingGate(),
     onResultsApplied: (summary: UnifiedSummary) => {
       treeProvider.applyResults(summary);
@@ -377,14 +382,33 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     return "failures";
   };
 
-  function appendRunDiagnosticsToOutput(text: string): void {
-    const diagnostics = analyzeDotnetOutput(text);
-    if (diagnostics.length === 0) {
-      return;
+  const readAnalyzeOptions = (): AnalyzeDotnetOutputOptions => {
+    const cfg = vscode.workspace.getConfiguration("bddPilot");
+    return {
+      extendedRules: cfg.get<boolean>("diagnostics.extendedRules", false),
+      locale: localeService.getLocale(),
+    };
+  };
+
+  const readDiagnosticsInOutput = (): DiagnosticsInOutputMode => {
+    const value = vscode.workspace
+      .getConfiguration("bddPilot")
+      .get<string>("feedback.diagnosticsInOutput", "summary");
+    if (value === "off" || value === "full") {
+      return value;
     }
-    output.appendLine("\n[bdd-pilot] Diagnostics:");
-    for (const d of diagnostics) {
-      output.appendLine(`  • [${d.code}] ${d.title}${d.detail ? `\n    ${d.detail}` : ""}\n    → ${d.hint}`);
+    return "summary";
+  };
+
+  function appendRunDiagnosticsToOutput(text: string): void {
+    const analyzeOptions = readAnalyzeOptions();
+    const diagnostics = analyzeDotnetOutput(text, analyzeOptions);
+    for (const line of formatDiagnosticsOutputLines(
+      diagnostics,
+      readDiagnosticsInOutput(),
+      analyzeOptions.locale ?? "en",
+    )) {
+      output.appendLine(line);
     }
   }
 
@@ -428,6 +452,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     const vm = buildPostRunFeedback({
       ...request,
       locale: localeService.getLocale(),
+      analyzeOptions: readAnalyzeOptions(),
       toastMode: readPostRunToast(),
       canRerunFailed: !!buildRerunFailedFilter(runService, readSettings().filterMapping),
       canCopyForAi: readAiSettings().enabled && !!runService.getLastFailedRunSnapshot(),
@@ -461,6 +486,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       maxOutputLines: ai.contextMaxOutputLines,
       extensionVersion: context.extension.packageJSON.version,
       workspaceRoot,
+      analyzeOptions: readAnalyzeOptions(),
     });
     await vscode.env.clipboard.writeText(markdown);
     void vscode.window.showInformationMessage(tr("toast.failureContextCopied"));
@@ -737,15 +763,19 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       }
 
       const loadedEnv = loadStageEnv(project.projectDir, currentStage);
+      const envMissingKey = `bddPilot.envMissingNotified.${currentStage}`;
       if (loadedEnv.loadedFiles.length > 0) {
+        void context.workspaceState.update(envMissingKey, undefined);
         const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
         output.appendLine(
-          `[bdd-pilot] Loaded environment from ${names} (${Object.keys(loadedEnv.vars).length} variables, values hidden).`,
+          tr("log.envLoaded", {
+            files: names,
+            count: Object.keys(loadedEnv.vars).length,
+          }),
         );
-      } else {
-        output.appendLine(
-          `[bdd-pilot] No config/.env.${currentStage} found. Tests will rely on the current process environment.`,
-        );
+      } else if (!context.workspaceState.get<boolean>(envMissingKey)) {
+        output.appendLine(tr("log.envMissing", { stage: currentStage }));
+        void context.workspaceState.update(envMissingKey, true);
       }
     }
 
@@ -793,6 +823,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
             totalExpected,
             bindingGate: readBindingGate(),
             domains: treeProvider.getDomains(),
+            analyzeOptions: readAnalyzeOptions(),
             onProgress,
             onOutput: (chunk) => output.append(chunk),
             onStart: (cmd) => output.appendLine(`[bdd-pilot] ${cmd}\n`),

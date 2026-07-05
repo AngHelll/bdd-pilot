@@ -19,7 +19,7 @@ import {
   skipReasonForTrxOutcome,
 } from "../core/results/testRunApply";
 import { TestOutcome } from "../core/results/trxParser";
-import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
+import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
 import { t } from "../core/i18n";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
@@ -59,6 +59,7 @@ export interface ControllerDeps {
   getTagGroups: () => TagGroup[];
   getTreeGroupBy: () => TreeGroupBy;
   getLocale: () => import("../core/i18n").PilotLocale;
+  getAnalyzeOptions: () => AnalyzeDotnetOutputOptions;
   getBindingGate: () => BindingGateMode;
   onResultsApplied?: (summary: UnifiedSummary) => void;
   onPostRunFeedback?: (request: PostRunFeedbackRequest) => void;
@@ -314,6 +315,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         totalExpected,
         bindingGate: deps.getBindingGate(),
         domains: deps.getDomains(),
+        analyzeOptions: deps.getAnalyzeOptions(),
         onProgress: (state: LiveProgressState, event?: TestCompletionEvent) => {
           lastProgressState = state;
           if (!event) {
@@ -348,6 +350,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
           runService: deps.runService,
           outcomeStore: deps.outcomeStore,
           locale: deps.getLocale(),
+          analyzeOptions: deps.getAnalyzeOptions(),
           display: readTreeDisplaySettings(),
           canceled: true,
           exitCode: result.exitCode,
@@ -393,6 +396,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         runService: deps.runService,
         outcomeStore: deps.outcomeStore,
         locale: deps.getLocale(),
+        analyzeOptions: deps.getAnalyzeOptions(),
         display: readTreeDisplaySettings(),
         canceled: false,
         exitCode: result.exitCode,
@@ -408,12 +412,6 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         exitCode: result.exitCode,
         summary: result.summary,
       });
-
-      if (result.exitCode !== 0) {
-        for (const d of analyzeDotnetOutput(result.outputBuffer)) {
-          deps.output.appendLine(`[bdd-pilot] [${d.code}] ${d.title} → ${d.hint}`);
-        }
-      }
     } catch (err) {
       const message = new vscode.TestMessage(String(err));
       scenarioItems.forEach((i) => run.errored(i, message));
@@ -447,12 +445,13 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         runService: deps.runService,
         outcomeStore: deps.outcomeStore,
         locale: deps.getLocale(),
+        analyzeOptions: deps.getAnalyzeOptions(),
         display: readTreeDisplaySettings(),
         canceled: false,
         exitCode: 0,
       });
     } else {
-      const msg = buildInfraTestMessage(outputBuffer, deps.getLocale(), completionKind);
+      const msg = buildInfraTestMessage(outputBuffer, deps.getAnalyzeOptions(), completionKind);
       pending.scenarioItems.forEach((i) => pending.run.errored(i, msg));
     }
 
@@ -641,10 +640,11 @@ function applyLiveTestRunResult(
 
 function buildInfraTestMessage(
   outputBuffer: string,
-  locale: PilotLocale,
+  analyzeOptions: AnalyzeDotnetOutputOptions,
   kind: RunCompletionKind,
 ): vscode.TestMessage {
-  const diagnostics = analyzeDotnetOutput(outputBuffer);
+  const locale = analyzeOptions.locale ?? "en";
+  const diagnostics = analyzeDotnetOutput(outputBuffer, analyzeOptions);
   if (diagnostics.length > 0) {
     const top = diagnostics[0];
     return new vscode.TestMessage(`[${top.code}] ${top.title}\n${top.hint}`);
@@ -665,6 +665,7 @@ interface ApplyRunResultsOptions {
   runService: RunService;
   outcomeStore: OutcomeStore;
   locale: PilotLocale;
+  analyzeOptions: AnalyzeDotnetOutputOptions;
   display: TestExplorerDisplaySettings;
   canceled: boolean;
   exitCode: number | null;
@@ -679,13 +680,13 @@ function applyRunResults(opts: ApplyRunResultsOptions): void {
   });
 
   if (!opts.canceled && (completionKind === "infra" || completionKind === "no_results")) {
-    const msg = buildInfraTestMessage(opts.outputBuffer, opts.locale, completionKind);
+    const msg = buildInfraTestMessage(opts.outputBuffer, opts.analyzeOptions, completionKind);
     opts.scenarioItems.forEach((i) => opts.run.errored(i, msg));
     return;
   }
 
   if (!opts.canceled && !opts.summary) {
-    const msg = buildInfraTestMessage(opts.outputBuffer, opts.locale, completionKind);
+    const msg = buildInfraTestMessage(opts.outputBuffer, opts.analyzeOptions, completionKind);
     opts.scenarioItems.forEach((i) => opts.run.errored(i, msg));
     return;
   }

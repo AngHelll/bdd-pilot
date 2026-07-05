@@ -5,6 +5,7 @@ import {
   LastRunSnapshot,
 } from "../core/diagnostics/aiFailureContext";
 import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
+import { AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { loadStageEnv } from "../core/config/envFile";
 import { MODE_PROFILES, ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
@@ -65,6 +66,8 @@ export interface RunRequest {
   bindingGate?: BindingGateMode;
   /** Discovery domains for binding gate scope. */
   domains?: DomainGroup[];
+  /** Analyzer options (extended rules, locale). */
+  analyzeOptions?: AnalyzeDotnetOutputOptions;
 }
 
 export interface RunServiceResult {
@@ -649,6 +652,7 @@ export class RunService {
       evidence,
       trxPath: toAbsoluteTrxPath(result.trxPath),
       outputBuffer,
+      analyzeOptions: req.analyzeOptions,
     });
   }
 

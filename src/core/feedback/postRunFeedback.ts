@@ -1,4 +1,4 @@
-import { analyzeDotnetOutput, Diagnostic } from "../diagnostics/analyzer";
+import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions, Diagnostic } from "../diagnostics/analyzer";
 import { classifyRunCompletion } from "../diagnostics/runOutcomeClass";
 import { PilotLocale, t } from "../i18n";
 import { UnifiedSummary } from "../results/resultLoader";
@@ -23,6 +23,7 @@ export interface PostRunFeedbackInput {
   cancelProgress?: { completed: number; expected: number };
   canRerunFailed: boolean;
   canCopyForAi: boolean;
+  analyzeOptions?: AnalyzeDotnetOutputOptions;
   /** Used when analyzer finds no rules (e.g. unexpected exception text). */
   fallbackMessage?: string;
 }
@@ -34,8 +35,11 @@ export interface PostRunFeedbackViewModel {
 }
 
 /** First actionable diagnostic for toast (excludes catch-all TEST_RUN_FAILED). */
-export function findToastDiagnostic(outputBuffer: string): Diagnostic | undefined {
-  return analyzeDotnetOutput(outputBuffer).find((d) => d.code !== "TEST_RUN_FAILED");
+export function findToastDiagnostic(
+  outputBuffer: string,
+  options?: AnalyzeDotnetOutputOptions,
+): Diagnostic | undefined {
+  return analyzeDotnetOutput(outputBuffer, options).find((d) => d.code !== "TEST_RUN_FAILED");
 }
 
 function truncateOneLine(text: string, maxLen: number): string {
@@ -148,7 +152,7 @@ export function buildPostRunFeedback(input: PostRunFeedbackInput): PostRunFeedba
     return undefined;
   }
 
-  const toastDiagnostic = findToastDiagnostic(input.outputBuffer);
+  const toastDiagnostic = findToastDiagnostic(input.outputBuffer, input.analyzeOptions);
   const hasFailed = (input.summary?.failed ?? 0) > 0;
   const isInfra = completionKind === "infra" || completionKind === "no_results";
   const infraError = isInfra && toastDiagnostic?.severity === "error";

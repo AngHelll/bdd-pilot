@@ -160,6 +160,10 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.filter.featureClassSuffix` | `Feature` | Suffix for `FullyQualifiedName` filters (Reqnroll/SpecFlow default). |
 | `bddPilot.filter.tagTraitName` | `Category` | xUnit trait name for `@tags` in `--filter`. |
 | `bddPilot.filter.outlineRowFilter` | `displayName` | `displayName` = one outline row; `scenarioOnly` = whole Theory. |
+| `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
+| `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. |
+| `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
+| `bddPilot.preRun.bindingGate` | `warn` | Pre-run binding check via BDD Guardian: `off`, `warn`, or `block`. |
 
 Tree items use **label = name only**; tags and run metadata appear in a short
 **description** (e.g. `6 tags`, `2.3 s`). **Hover** shows full tag lists and
@@ -193,7 +197,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.5.0** (pre-run binding gate with BDD Guardian). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.6.0** (diagnostics hygiene). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

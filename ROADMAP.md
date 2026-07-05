@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.4.0 (Marketplace)** · **v1.5.0 local** · **287 unit tests**
+> **Current release: v1.6.0 (Marketplace)** · **292 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.4.0** |
-| 🚧 Local | **v1.5.0** Pre-run binding gate (P2b) — Capa A ✅ · Capa B ☐ |
-| 🎯 Ecosystem | Jarvis Capa B cross-ext · ship v1.5.0 · Jarvis J-P2b-* opcional |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.6.0** |
+| 🎯 Ecosystem | Jarvis cross-ext · tree/dashboard diagnostic slices (post v1.6) |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate 📋) · dotnet flags · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -46,7 +45,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.8** | Run target performance — prefer BDD csproj over solution + debounce list-tests |
 | **1.3.0** | Visual UX v2 — compact status bar hub, hub descriptions, execution feedback (tree icon + activity badge) |
 | **1.4.0** | Ecosystem API — `PilotRunApiV1` via `extension.exports`; `docs/EXTENSION_API.md`; Reqnroll hyphen matching |
-| **1.5.0** | Pre-run binding gate (P2b) — Guardian `resolveStep` scoped al run target · spec `pilot-pre-run-gate-v1.5.0.md` |
+| **1.5.0** | Pre-run binding gate (P2b) — Guardian `resolveStep`; `bddPilot.preRun.bindingGate` |
+| **1.6.0** | Diagnostics hygiene — core/extended rules, Output summary, i18n diagnostics · spec `diagnostics-hygiene-v1.6.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -62,7 +62,8 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 | Index API v1 (+ resolveStep v1.1) | bdd-guardian | 0.8.3 | ✅ | ✅ | — |
 | **Run API v1 producer** | **bdd-pilot** | **1.4.0** | **✅ 1.4.0** | **✅** | — |
 | Run API v1 consumer | bdd-jarvis | 0.8.0 (en 0.9 tree) | 0.2.0 | ☐ cross-ext | Pilot 1.4+ ✅ |
-| **Pre-run binding gate (P2b)** | **bdd-pilot** | **1.5.0** | — | ☐ | Guardian ✅ · implementado |
+| **Pre-run binding gate (P2b)** | **bdd-pilot** | **1.5.0** | **✅ 1.5.0** | **✅** | Guardian ✅ |
+| **Diagnostics hygiene** | **bdd-pilot** | **1.6.0** | **✅ 1.6.0** | **✅** | — |
 | Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
 | MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
 
@@ -163,7 +164,16 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing yet._
 
-### v1.5.0 — Pre-run binding gate (P2b) 🚧 local
+### v1.6.0 — Diagnostics hygiene ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Diagnostics** | Core vs extended rules; `TEST_DATA_SETUP`; generic copy (no CSV dogfood) |
+| **Settings** | `bddPilot.diagnostics.extendedRules`, `bddPilot.feedback.diagnosticsInOutput` |
+| **Output** | Summary line default; env missing once per workspace/stage |
+| **i18n** | Diagnostic titles/hints EN/ES (292 unit tests) |
+
+### v1.5.0 — Pre-run binding gate (P2b) ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -452,4 +462,4 @@ src/
 
 ---
 
-*Last updated: v1.5.0 local — P2b pre-run gate · Capa B pending.*
+*Last updated: v1.6.0 shipped — diagnostics hygiene.*

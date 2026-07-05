@@ -1,5 +1,5 @@
 import * as path from "path";
-import { analyzeDotnetOutput } from "./analyzer";
+import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "./analyzer";
 import { RunTarget } from "../runner/filterBuilder";
 import { sanitize } from "../../security/sanitizer";
 
@@ -43,6 +43,7 @@ export interface BuildAiFailureContextOptions {
   maxOutputLines?: number;
   extensionVersion?: string;
   workspaceRoot?: string;
+  analyzeOptions?: AnalyzeDotnetOutputOptions;
 }
 
 /** Canonical scope label stored on run history for full-suite runs. */
@@ -137,7 +138,7 @@ export function buildAiFailureContext(
     failedSection = `\n## Failed scenarios\n${items.join("\n")}\n`;
   }
 
-  const diagnostics = analyzeDotnetOutput(snapshot.outputForAnalysis);
+  const diagnostics = analyzeDotnetOutput(snapshot.outputForAnalysis, options?.analyzeOptions);
   let diagSection = "";
   if (diagnostics.length > 0) {
     const items = diagnostics.map((d, i) => {

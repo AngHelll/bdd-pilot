@@ -1,9 +1,21 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
+import { formatDiagnosticsOutputLines } from "../core/diagnostics/diagnosticsOutput";
+import { failureBreakdown } from "../core/diagnostics/failureBreakdown";
+import { t } from "../core/i18n";
 
-function codes(output: string): string[] {
-  return analyzeDotnetOutput(output).map((d) => d.code);
+function codes(output: string, extendedRules = false): string[] {
+  return analyzeDotnetOutput(output, { extendedRules }).map((d) => d.code);
+}
+
+function assertNoDogfoodCopy(diags: ReturnType<typeof analyzeDotnetOutput>): void {
+  for (const d of diags) {
+    const combined = `${d.title} ${d.hint}`.toLowerCase();
+    assert.ok(!combined.includes("userprofiletracking"), `dogfood in ${d.code}: ${combined}`);
+    assert.ok(!combined.includes(".csv"), `csv in ${d.code}: ${combined}`);
+    assert.ok(!combined.includes("refit"), `refit in hint/title ${d.code}: ${combined}`);
+  }
 }
 
 describe("diagnostics analyzer", () => {
@@ -72,7 +84,9 @@ describe("diagnostics analyzer", () => {
     ].join("\n");
     const found = codes(out);
     assert.ok(!found.includes("FEED_AUTH"), "API 401 should not trigger FEED_AUTH");
-    assert.ok(found.includes("API_HTTP_ERRORS"));
+    assert.ok(!found.includes("API_HTTP_ERRORS"), "extended off by default");
+    assert.ok(found.includes("TEST_RUN_FAILED"));
+    assert.ok(codes(out, true).includes("API_HTTP_ERRORS"));
   });
 
   it("detects pending step definitions after test run", () => {
@@ -86,22 +100,28 @@ describe("diagnostics analyzer", () => {
     assert.ok(found.includes("TEST_RUN_FAILED"));
   });
 
-  it("detects missing UserProfileTracking users", () => {
+  it("detects test data setup failures with generic copy (TEST_DATA_SETUP)", () => {
     const out = [
       "Test run for /repo/bin/Debug/net8.0/App.dll",
       "System.InvalidOperationException : No available users found in UserProfileTracking CSV for BDD tests",
       "Failed!  - Failed:   2, Passed:     0, Skipped:     0, Total:     2",
     ].join("\n");
-    assert.ok(codes(out).includes("NO_TEST_USERS"));
+    const diags = analyzeDotnetOutput(out);
+    assert.ok(codes(out).includes("TEST_DATA_SETUP"));
+    assert.ok(!codes(out).includes("NO_TEST_USERS"));
+    const setup = diags.find((d) => d.code === "TEST_DATA_SETUP");
+    assert.ok(setup);
+    assertNoDogfoodCopy(diags);
   });
 
-  it("detects invalid AWS credentials for DynamoDB", () => {
+  it("detects invalid AWS credentials only when extended rules enabled", () => {
     const out = [
       "Test run for /repo/bin/Debug/net8.0/App.dll",
       "Amazon.DynamoDBv2.AmazonDynamoDBException : The security token included in the request is invalid.",
       "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
     ].join("\n");
-    assert.ok(codes(out).includes("AWS_CREDENTIALS"));
+    assert.ok(!codes(out).includes("AWS_CREDENTIALS"));
+    assert.ok(codes(out, true).includes("AWS_CREDENTIALS"));
   });
 
   it("detects an incomplete Playwright driver (Cannot find module in .playwright)", () => {
@@ -123,7 +143,6 @@ describe("diagnostics analyzer", () => {
     ].join("\n");
     const codesFound = codes(out);
     assert.ok(codesFound.includes("PLAYWRIGHT_RUNTIME"));
-    // Driver-incomplete is more specific and should not fire here.
     assert.ok(!codesFound.includes("PLAYWRIGHT_DRIVER_INCOMPLETE"));
   });
 
@@ -185,5 +204,61 @@ describe("diagnostics analyzer", () => {
 
   it("returns nothing for clean output", () => {
     assert.deepStrictEqual(analyzeDotnetOutput("Passed!  - Failed: 0, Passed: 10"), []);
+  });
+
+  it("TEST_RUN_FAILED hint does not mention CSV", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    const d = analyzeDotnetOutput(out).find((x) => x.code === "TEST_RUN_FAILED");
+    assert.ok(d);
+    assert.ok(!d!.hint.toLowerCase().includes("csv"));
+  });
+
+  it("failureBreakdown uses generic labels", () => {
+    const out = [
+      "No available users found in UserProfileTracking",
+      "Refit.ApiException : Response status code does not indicate success: 500",
+      "XUnitPendingStepException",
+    ].join("\n");
+    const core = failureBreakdown(out, "en", false);
+    assert.ok(core?.includes("test data / fixture setup"));
+    assert.ok(!core?.includes("UserProfileTracking"));
+    assert.ok(!core?.includes("Refit"));
+    const extended = failureBreakdown(out, "en", true);
+    assert.ok(extended?.includes("API/HTTP error"));
+  });
+
+  it("localizes diagnostic titles in Spanish", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Reqnroll.xUnit.ReqnrollPlugin.XUnitPendingStepException : Test pending",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    const pending = analyzeDotnetOutput(out, { locale: "es" }).find((d) => d.code === "PENDING_STEPS");
+    assert.ok(pending);
+    assert.match(pending!.title, /step/i);
+    assert.strictEqual(pending!.title, t("es", "diagnostic.PENDING_STEPS.title"));
+  });
+});
+
+describe("diagnostics output formatting", () => {
+  it("summary mode shows top diagnostic and (+N more)", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Reqnroll.xUnit.ReqnrollPlugin.XUnitPendingStepException",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    const diagnostics = analyzeDotnetOutput(out);
+    const lines = formatDiagnosticsOutputLines(diagnostics, "summary", "en");
+    assert.strictEqual(lines.length, 1);
+    assert.match(lines[0], /PENDING_STEPS/);
+    assert.match(lines[0], /\+1 more/);
+  });
+
+  it("off mode returns no lines", () => {
+    const diagnostics = analyzeDotnetOutput("zsh: command not found: dotnet");
+    assert.deepStrictEqual(formatDiagnosticsOutputLines(diagnostics, "off", "en"), []);
   });
 });

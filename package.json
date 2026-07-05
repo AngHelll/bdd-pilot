@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -299,6 +299,11 @@
           ],
           "description": "%bddPilot.configuration.preRun.bindingGate.description%"
         },
+        "bddPilot.diagnostics.extendedRules": {
+          "type": "boolean",
+          "default": false,
+          "description": "%bddPilot.configuration.diagnostics.extendedRules.description%"
+        },
         "bddPilot.dotnetPath": {
           "type": "string",
           "default": "dotnet",
@@ -420,6 +425,21 @@
             "Always show one unified post-run toast with pass/fail counts after every completed run."
           ],
           "description": "Unified post-run notification with pass/fail counts, optional diagnostic hint, and quick actions."
+        },
+        "bddPilot.feedback.diagnosticsInOutput": {
+          "type": "string",
+          "enum": [
+            "off",
+            "summary",
+            "full"
+          ],
+          "default": "summary",
+          "enumDescriptions": [
+            "%bddPilot.configuration.feedback.diagnosticsInOutput.enum.off%",
+            "%bddPilot.configuration.feedback.diagnosticsInOutput.enum.summary%",
+            "%bddPilot.configuration.feedback.diagnosticsInOutput.enum.full%"
+          ],
+          "description": "%bddPilot.configuration.feedback.diagnosticsInOutput.description%"
         },
         "bddPilot.outcomes.rehydrateOnActivate": {
           "type": "string",

@@ -1,4 +1,4 @@
-import { Diagnostic, analyzeDotnetOutput } from "../diagnostics/analyzer";
+import { Diagnostic, analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "../diagnostics/analyzer";
 import { sanitize } from "../../security/sanitizer";
 
 export type SessionRunStatus = "completed" | "canceled";
@@ -54,9 +54,10 @@ export function buildSessionRunSnapshot(params: {
   evidence: SessionEvidence[];
   trxPath?: string;
   outputBuffer: string;
+  analyzeOptions?: AnalyzeDotnetOutputOptions;
 }): SessionRunSnapshot {
   const sanitizedOutput = sanitize(params.outputBuffer);
-  const diagnostics = analyzeDotnetOutput(sanitizedOutput).map((d) => ({
+  const diagnostics = analyzeDotnetOutput(sanitizedOutput, params.analyzeOptions).map((d) => ({
     ...d,
     detail: d.detail ? sanitize(d.detail) : undefined,
   }));

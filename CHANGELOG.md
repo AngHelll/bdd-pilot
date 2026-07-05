@@ -8,6 +8,20 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.6.0] — 2026-07-05
+
+### Added
+- **Diagnostics hygiene** — framework-agnostic post-run copy; no dogfood references (CSV, UserProfileTracking) in default hints
+- **`bddPilot.diagnostics.extendedRules`** (default `false`) — opt-in for cloud credentials, X-Ray, and API HTTP diagnostics
+- **`bddPilot.feedback.diagnosticsInOutput`** — `summary` (default) | `full` | `off` for Output channel density
+- **i18n EN/ES** for diagnostic titles, hints, and Output summary lines
+- **Env missing notice** — log once per workspace/stage when `config/.env.{stage}` is absent
+
+### Changed
+- **`NO_TEST_USERS` → `TEST_DATA_SETUP`** in analyzer/CLI JSON output (generic test data / fixture messaging)
+- **`TEST_RUN_FAILED`** hint and failure breakdown use generic category labels
+- **Extended analyzers** (`AWS_CREDENTIALS`, `XRAY_CONFIG`, `API_HTTP_ERRORS`) run only when `extendedRules` is enabled
+
 ## [1.5.0] — 2026-07-05
 
 ### Added
