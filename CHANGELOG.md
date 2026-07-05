@@ -8,6 +8,13 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.5.0] — 2026-07-05
+
+### Added
+- **Pre-run binding gate (P2b)** — optional check via BDD Guardian `resolveStep` before `dotnet test`; setting `bddPilot.preRun.bindingGate`: `off` | `warn` (default) | `block`
+- **Unbound vs ambiguous** — `block` applies only to missing bindings; ambiguous steps always allow Run anyway
+- **Output log** when gate is enabled but Guardian is unavailable (fail-open)
+
 ## [1.4.0] — 2026-07-05
 
 ### Added

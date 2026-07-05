@@ -30,6 +30,7 @@ import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
 import { createPilotRunApi, PilotRunApiV1 } from "./api";
+import { isBindingGateMode, BindingGateMode } from "./core/bindings/resolveBindingGateUx";
 import { RunTarget } from "./core/runner/filterBuilder";
 import {
   formatProgressMessage,
@@ -174,6 +175,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     getTagGroups: () => treeProvider.getTagGroups(),
     getTreeGroupBy: () => readTreeGroupBy(),
     getLocale: () => localeService.getLocale(),
+    getBindingGate: () => readBindingGate(),
     onResultsApplied: (summary: UnifiedSummary) => {
       treeProvider.applyResults(summary);
       managed.refresh();
@@ -789,6 +791,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
             locale: localeService.getLocale(),
             signal: controller.signal,
             totalExpected,
+            bindingGate: readBindingGate(),
+            domains: treeProvider.getDomains(),
             onProgress,
             onOutput: (chunk) => output.append(chunk),
             onStart: (cmd) => output.appendLine(`[bdd-pilot] ${cmd}\n`),
@@ -1094,6 +1098,12 @@ export function deactivate(): void {
 function readStatusBarDisplay(): StatusBarDisplayMode {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
   return readStatusBarDisplayMode(cfg.get<string>("statusBar.display", "compact"));
+}
+
+function readBindingGate(): BindingGateMode {
+  const cfg = vscode.workspace.getConfiguration("bddPilot");
+  const value = cfg.get<string>("preRun.bindingGate", "warn");
+  return isBindingGateMode(value) ? value : "warn";
 }
 
 function readSettings(): RunnerSettings {

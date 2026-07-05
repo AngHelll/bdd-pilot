@@ -193,7 +193,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.3.0** (compact status bar hub, execution feedback in tree and activity bar).
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.5.0** (pre-run binding gate with BDD Guardian). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

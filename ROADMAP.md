@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.4.0** · **273 unit tests**
+> **Current release: v1.4.0 (Marketplace)** · **v1.5.0 local** · **287 unit tests**
 
 ---
 
@@ -9,10 +9,10 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.3.0** |
-| 🚧 Local | **v1.4.0** Run API v1 producer — Capa A ✅ · Capa B ☐ · sin tag/commit |
-| 🎯 Next | Capa B cross-ext Pilot v1.4 + Jarvis v0.8 · ship v1.4.0 · watch issues |
-| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ local) · dotnet flags · MCP post-v1.0 |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.4.0** |
+| 🚧 Local | **v1.5.0** Pre-run binding gate (P2b) — Capa A ✅ · Capa B ☐ |
+| 🎯 Ecosystem | Jarvis Capa B cross-ext · ship v1.5.0 · Jarvis J-P2b-* opcional |
+| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate 📋) · dotnet flags · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
 
@@ -45,7 +45,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.2.7** | Bundle comunicación: post-run unificado + progress i18n + empty-state guide |
 | **1.2.8** | Run target performance — prefer BDD csproj over solution + debounce list-tests |
 | **1.3.0** | Visual UX v2 — compact status bar hub, hub descriptions, execution feedback (tree icon + activity badge) |
-| **1.4.0** | Ecosystem API — `PilotRunApiV1` via `extension.exports`; `docs/EXTENSION_API.md` |
+| **1.4.0** | Ecosystem API — `PilotRunApiV1` via `extension.exports`; `docs/EXTENSION_API.md`; Reqnroll hyphen matching |
+| **1.5.0** | Pre-run binding gate (P2b) — Guardian `resolveStep` scoped al run target · spec `pilot-pre-run-gate-v1.5.0.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -58,15 +59,16 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 
 | Slice | Repo | Versión local | Marketplace | Capa B | Depende de |
 |-------|------|---------------|-------------|--------|------------|
-| Index API v1 (+ resolveStep v1.1) | bdd-guardian | 0.8.3 | publicado | ✅ | — |
-| **Run API v1 producer** | **bdd-pilot** | **1.4.0** | 1.3.0 | ☐ Pilot solo | — |
-| Run API v1 consumer | bdd-jarvis | 0.8.0 | 0.2.0 | ☐ cross-ext | Pilot VSIX 1.4+ |
-| Pre-run gate | bdd-pilot → guardian | — | — | 📋 | Guardian `resolveStep` (slice aparte) |
-| MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto de Run API |
+| Index API v1 (+ resolveStep v1.1) | bdd-guardian | 0.8.3 | ✅ | ✅ | — |
+| **Run API v1 producer** | **bdd-pilot** | **1.4.0** | **✅ 1.4.0** | **✅** | — |
+| Run API v1 consumer | bdd-jarvis | 0.8.0 (en 0.9 tree) | 0.2.0 | ☐ cross-ext | Pilot 1.4+ ✅ |
+| **Pre-run binding gate (P2b)** | **bdd-pilot** | **1.5.0** | — | ☐ | Guardian ✅ · implementado |
+| Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
+| MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
+
+**Orden de validación:** Pilot v1.4 ✅ → Jarvis cross-ext Capa B (repo Jarvis) → **Pilot v1.5 P2b** → Jarvis J-P2b-* opcional.
 
 **Enhanced mode Jarvis:** `isPilotRunApiV1 && isReady && getRunHistory().length > 0` — TRX fallback siempre vigente.
-
-**Orden de validación ship:** Pilot v1.4.0 Capa B → Jarvis v0.8.0 Capa B cross-ext (`minimal-bdd`) → tags/releases por repo.
 
 ---
 
@@ -121,7 +123,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] Output channel has no raw secrets on intentional failure *(dogfood v0.3.5)*
 
 #### Repo & brand
-- [x] `CHANGELOG.md` through current version (v1.3.0)
+- [x] `CHANGELOG.md` through current version (v1.4.0)
 - [x] GitHub Release for latest tag with `.vsix`
 - [x] README links BDD Guardian; Guardian links back *(verify reciprocal link)*
 - [x] Issue templates exist (bug, feature, **dogfood checklist**)
@@ -134,7 +136,7 @@ Use before clicking **Publish** on Marketplace:
 - [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
 
 #### Post-publish
-- [x] Pin Marketplace version to tagged release *(v1.3.0 publish)*
+- [x] Pin Marketplace version to tagged release *(v1.4.0 publish)*
 - [ ] Open “good first issue” for Capa C i18n extras *(enumDescriptions ES, roll-ups TE)*
 - [ ] Watch issues 1–2 weeks; patch **1.2.x** if filter/outline/displayMode regressions
 
@@ -159,9 +161,18 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-**v1.4.0** — Run API v1 implementado; pendiente Capa B + ship (commit/tag/Marketplace).
+_Nothing yet._
 
-### v1.4.0 — Ecosystem API (Run API v1)
+### v1.5.0 — Pre-run binding gate (P2b) 🚧 local
+
+| Area | Change |
+|------|--------|
+| **Pre-run gate** | Guardian `resolveStep` before `dotnet test`; `bddPilot.preRun.bindingGate`: `off` \| `warn` \| `block` |
+| **Severity** | `block` only for unbound; ambiguous always allows Run anyway |
+| **Fail-open** | Skip + Output log when Guardian unavailable |
+| **Core** | `src/core/bindings/*`, `stepLocations.ts` (287 unit tests) |
+
+### v1.4.0 — Ecosystem API (Run API v1) ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -441,4 +452,4 @@ src/
 
 ---
 
-*Last updated: v1.4.0 local — Run API v1 (269 unit tests). Ecosystem: Jarvis v0.8.0 consumer local.*
+*Last updated: v1.5.0 local — P2b pre-run gate · Capa B pending.*

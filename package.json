@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -283,6 +283,21 @@
             "prod"
           ],
           "description": "Environments that require explicit confirmation before running tests."
+        },
+        "bddPilot.preRun.bindingGate": {
+          "type": "string",
+          "enum": [
+            "off",
+            "warn",
+            "block"
+          ],
+          "default": "warn",
+          "enumDescriptions": [
+            "%bddPilot.configuration.preRun.bindingGate.enum.off%",
+            "%bddPilot.configuration.preRun.bindingGate.enum.warn%",
+            "%bddPilot.configuration.preRun.bindingGate.enum.block%"
+          ],
+          "description": "%bddPilot.configuration.preRun.bindingGate.description%"
         },
         "bddPilot.dotnetPath": {
           "type": "string",

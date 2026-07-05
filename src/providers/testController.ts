@@ -28,6 +28,7 @@ import { estimateTestCount } from "../core/runner/runEstimate";
 import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { PilotLocale } from "../core/i18n";
+import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
 import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
@@ -58,6 +59,7 @@ export interface ControllerDeps {
   getTagGroups: () => TagGroup[];
   getTreeGroupBy: () => TreeGroupBy;
   getLocale: () => import("../core/i18n").PilotLocale;
+  getBindingGate: () => BindingGateMode;
   onResultsApplied?: (summary: UnifiedSummary) => void;
   onPostRunFeedback?: (request: PostRunFeedbackRequest) => void;
   acquireRunLock(): boolean;
@@ -310,6 +312,8 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         locale: deps.getLocale(),
         signal: signal.signal,
         totalExpected,
+        bindingGate: deps.getBindingGate(),
+        domains: deps.getDomains(),
         onProgress: (state: LiveProgressState, event?: TestCompletionEvent) => {
           lastProgressState = state;
           if (!event) {

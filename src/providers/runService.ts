@@ -34,6 +34,13 @@ import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../c
 import { runDotnetTest } from "../core/runner/dotnetTest";
 import { evaluateRun } from "../security/envGuard";
 import { sanitize } from "../security/sanitizer";
+import { DomainGroup } from "../core/gherkin/model";
+import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
+import { collectStepsForRunScope } from "../core/bindings/collectStepsForRunScope";
+import { evaluateBindingGate } from "../core/bindings/evaluateBindingGate";
+import { resolveBindingGateUx } from "../core/bindings/resolveBindingGateUx";
+import { formatBindingGateModalMessage } from "../core/bindings/bindingGateMessages";
+import { GuardianSkipReason, tryGetGuardianResolveStep } from "./guardianIntegration";
 
 export interface RunRequest {
   targets: RunTarget[];
@@ -54,6 +61,10 @@ export interface RunRequest {
   totalExpected?: number;
   /** Fired as stdout is parsed; includes per-test completion events. */
   onProgress?: (state: LiveProgressState, event?: TestCompletionEvent) => void;
+  /** Pre-run binding gate mode (Guardian resolveStep). */
+  bindingGate?: BindingGateMode;
+  /** Discovery domains for binding gate scope. */
+  domains?: DomainGroup[];
 }
 
 export interface RunServiceResult {
@@ -155,6 +166,11 @@ export class RunService {
       if (choice !== primaryAction) {
         return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
       }
+    }
+
+    const gateProceed = await this.checkBindingGate(req);
+    if (!gateProceed) {
+      return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
     }
 
     const filter =
@@ -638,6 +654,54 @@ export class RunService {
 
   private notifyRunCompleted(): void {
     this._onCompleteRun.fire();
+  }
+
+  private async checkBindingGate(req: RunRequest): Promise<boolean> {
+    const mode: BindingGateMode = req.bindingGate ?? "off";
+    if (mode === "off") {
+      return true;
+    }
+
+    const locations = collectStepsForRunScope(req.targets, req.domains ?? [], req.rawFilter);
+    if (locations.length === 0) {
+      return true;
+    }
+
+    const guardian = await tryGetGuardianResolveStep();
+    if (guardian.kind === "skip") {
+      this.logBindingGateSkipped(req, guardian.reason);
+      return true;
+    }
+
+    const { unboundIssues, ambiguousIssues } = evaluateBindingGate(
+      locations,
+      guardian.resolveStep,
+    );
+    const ux = resolveBindingGateUx(mode, unboundIssues, ambiguousIssues);
+    if (ux === "proceed") {
+      return true;
+    }
+
+    const message = formatBindingGateModalMessage(req.locale, unboundIssues, ambiguousIssues);
+    if (ux === "modal-warn") {
+      const runAnyway = t(req.locale, "bindingGate.runAnyway");
+      const choice = await vscode.window.showWarningMessage(
+        message,
+        { modal: true },
+        runAnyway,
+      );
+      return choice === runAnyway;
+    }
+
+    const ok = t(req.locale, "bindingGate.ok");
+    await vscode.window.showWarningMessage(message, { modal: true }, ok);
+    return false;
+  }
+
+  private logBindingGateSkipped(req: RunRequest, reason: GuardianSkipReason): void {
+    const reasonText = t(req.locale, `bindingGate.skipReason.${reason}`);
+    const line = t(req.locale, "bindingGate.skipped", { reason: reasonText });
+    req.onOutput?.(`\n[bdd-pilot] ${line}\n`);
   }
 }
 

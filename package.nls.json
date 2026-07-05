@@ -28,5 +28,9 @@
   "bddPilot.configuration.locale.enum.es": "Spanish.",
   "bddPilot.configuration.statusBar.display.description": "Status bar layout: compact (single branded hub, default) or detailed (legacy four items).",
   "bddPilot.configuration.statusBar.display.enum.compact": "Single BDD Pilot hub with stage, mode, and project.",
-  "bddPilot.configuration.statusBar.display.enum.detailed": "Legacy layout with separate STAGE, mode, running, and project items."
+  "bddPilot.configuration.statusBar.display.enum.detailed": "Legacy layout with separate STAGE, mode, running, and project items.",
+  "bddPilot.configuration.preRun.bindingGate.description": "Before dotnet test, check step bindings via BDD Guardian resolveStep (requires anghelll.bdd-guardian v0.8.3+).",
+  "bddPilot.configuration.preRun.bindingGate.enum.off": "Disabled — same behavior as before v1.5.",
+  "bddPilot.configuration.preRun.bindingGate.enum.warn": "Show a modal for unbound or ambiguous bindings; you can cancel or run anyway.",
+  "bddPilot.configuration.preRun.bindingGate.enum.block": "Block runs with missing (unbound) bindings; ambiguous bindings still allow run anyway."
 }

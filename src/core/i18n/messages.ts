@@ -165,6 +165,23 @@ const EN = {
   "action.copyAnyway": "Copy anyway",
   "action.rerunFailed": "Re-run Failed",
 
+  "bindingGate.skipped": "Binding gate skipped: {reason}",
+  "bindingGate.skipReason.notInstalled":
+    "BDD Guardian not installed (install anghelll.bdd-guardian v0.8.3+ to enable pre-run binding checks)",
+  "bindingGate.skipReason.disabled": "BDD Guardian is disabled in this workspace",
+  "bindingGate.skipReason.notReady": "BDD Guardian index is not ready yet",
+  "bindingGate.skipReason.unsupported":
+    "BDD Guardian does not expose resolveStep (upgrade to v0.8.3+)",
+  "bindingGate.skipReason.error": "BDD Guardian could not be activated",
+  "bindingGate.modalSummary":
+    "{total} binding issue(s) in run scope ({unbound} unbound, {ambiguous} ambiguous).",
+  "bindingGate.modalMore": "+{count} more",
+  "bindingGate.issueUnbound": "[unbound]",
+  "bindingGate.issueAmbiguous": "[ambiguous]",
+  "bindingGate.runAnyway": "Run anyway",
+  "bindingGate.cancel": "Cancel",
+  "bindingGate.ok": "OK",
+
   "tooltip.errorLine": "Error: {snippet}",
   "tooltip.skipReasonLine": "Skip: {reason}",
   "log.rehydrateRestored":
@@ -352,6 +369,23 @@ const ES: Record<keyof typeof EN, string> = {
   "action.copyForAi": "Copiar para IA",
   "action.copyAnyway": "Copiar de todos modos",
   "action.rerunFailed": "Reejecutar fallidos",
+
+  "bindingGate.skipped": "Compuerta de bindings omitida: {reason}",
+  "bindingGate.skipReason.notInstalled":
+    "BDD Guardian no está instalado (instala anghelll.bdd-guardian v0.8.3+ para comprobaciones pre-run)",
+  "bindingGate.skipReason.disabled": "BDD Guardian está deshabilitado en este workspace",
+  "bindingGate.skipReason.notReady": "El índice de BDD Guardian aún no está listo",
+  "bindingGate.skipReason.unsupported":
+    "BDD Guardian no expone resolveStep (actualiza a v0.8.3+)",
+  "bindingGate.skipReason.error": "No se pudo activar BDD Guardian",
+  "bindingGate.modalSummary":
+    "{total} problema(s) de binding en el scope ({unbound} unbound, {ambiguous} ambiguous).",
+  "bindingGate.modalMore": "+{count} más",
+  "bindingGate.issueUnbound": "[unbound]",
+  "bindingGate.issueAmbiguous": "[ambiguous]",
+  "bindingGate.runAnyway": "Ejecutar igual",
+  "bindingGate.cancel": "Cancelar",
+  "bindingGate.ok": "Aceptar",
 
   "tooltip.errorLine": "Error: {snippet}",
   "tooltip.skipReasonLine": "Omitido: {reason}",

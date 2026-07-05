@@ -28,5 +28,9 @@
   "bddPilot.configuration.locale.enum.es": "Español.",
   "bddPilot.configuration.statusBar.display.description": "Layout de la barra de estado: compact (hub único con marca, por defecto) o detailed (cuatro ítems legacy).",
   "bddPilot.configuration.statusBar.display.enum.compact": "Hub único BDD Pilot con stage, mode y proyecto.",
-  "bddPilot.configuration.statusBar.display.enum.detailed": "Layout legacy con ítems separados STAGE, mode, running y project."
+  "bddPilot.configuration.statusBar.display.enum.detailed": "Layout legacy con ítems separados STAGE, mode, running y project.",
+  "bddPilot.configuration.preRun.bindingGate.description": "Antes de dotnet test, comprueba bindings de steps vía BDD Guardian resolveStep (requiere anghelll.bdd-guardian v0.8.3+).",
+  "bddPilot.configuration.preRun.bindingGate.enum.off": "Desactivado — mismo comportamiento que antes de v1.5.",
+  "bddPilot.configuration.preRun.bindingGate.enum.warn": "Modal para bindings unbound o ambiguous; puedes cancelar o ejecutar igual.",
+  "bddPilot.configuration.preRun.bindingGate.enum.block": "Bloquea runs con bindings missing (unbound); ambiguous sigue permitiendo ejecutar igual."
 }
