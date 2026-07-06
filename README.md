@@ -75,7 +75,7 @@ toast with **Copy for AI**:
   - Scenario → `FullyQualifiedName~<Feature>Feature.<Scenario>`
   - Outline row → `DisplayName~parameter: %22…%22, value: %22…%22` (single Theory row)
   - Tag → `Category=<tag>`
-- **Tree search** to filter by name, tag, or path.
+- **Tree search** to filter by name, tag, or path. Active filter shows on the summary row; **Run filtered** replaces Run All while filtered. Use `@tag` for tag-only matching. Persists per workspace. **Ctrl+F** highlights in the list only — Pilot Search controls run scope. Test Explorer does not inherit the tree filter.
 - **Re-run failed** from the last run's filter.
 - **Saved execution profiles** for common filters.
 
@@ -157,6 +157,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |
 | `bddPilot.tree.durationDisplay` | `auto` | Durations: `auto`, `ms`, `seconds`, or `compact`. Hover shows exact ms. |
+| `bddPilot.tree.searchRunCap` | `80` | Confirm before **Run filtered** when match count exceeds cap (`0` = never). |
 | `bddPilot.filter.featureClassSuffix` | `Feature` | Suffix for `FullyQualifiedName` filters (Reqnroll/SpecFlow default). |
 | `bddPilot.filter.tagTraitName` | `Category` | xUnit trait name for `@tags` in `--filter`. |
 | `bddPilot.filter.outlineRowFilter` | `displayName` | `displayName` = one outline row; `scenarioOnly` = whole Theory. |
@@ -197,7 +198,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.6.0** (diagnostics hygiene). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.7.0** (tree search visibility + run filtered). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

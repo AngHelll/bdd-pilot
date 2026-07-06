@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -75,6 +75,11 @@
         "icon": "$(run-all)"
       },
       {
+        "command": "bddPilot.runFiltered",
+        "title": "%bddPilot.command.runFiltered.title%",
+        "icon": "$(run-all)"
+      },
+      {
         "command": "bddPilot.cancel",
         "title": "%bddPilot.command.cancel.title%",
         "icon": "$(stop)"
@@ -109,6 +114,16 @@
         "command": "bddPilot.searchTests",
         "title": "%bddPilot.command.searchTests.title%",
         "icon": "$(search)"
+      },
+      {
+        "command": "bddPilot.searchTestsActive",
+        "title": "%bddPilot.command.searchTestsActive.title%",
+        "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "bddPilot.clearSearch",
+        "title": "%bddPilot.command.clearSearch.title%",
+        "icon": "$(close)"
       },
       {
         "command": "bddPilot.rerunFailed",
@@ -155,7 +170,12 @@
       "view/title": [
         {
           "command": "bddPilot.runAll",
-          "when": "view == bddPilot.tests",
+          "when": "view == bddPilot.tests && !bddPilot.searchActive",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bddPilot.runFiltered",
+          "when": "view == bddPilot.tests && bddPilot.searchActive && bddPilot.searchHasMatches",
           "group": "navigation@1"
         },
         {
@@ -175,7 +195,12 @@
         },
         {
           "command": "bddPilot.searchTests",
-          "when": "view == bddPilot.tests",
+          "when": "view == bddPilot.tests && !bddPilot.searchActive",
+          "group": "navigation@5"
+        },
+        {
+          "command": "bddPilot.searchTestsActive",
+          "when": "view == bddPilot.tests && bddPilot.searchActive",
           "group": "navigation@5"
         },
         {
@@ -216,6 +241,14 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "bddPilot.searchTests",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+f",
+        "when": "focusedView == bddPilot.tests"
+      }
+    ],
     "configuration": {
       "title": "BDD Pilot",
       "properties": {
@@ -334,6 +367,12 @@
             "Group by Gherkin @tag — QA smoke/regression suites."
           ],
           "description": "How scenarios are organized in the BDD Pilot test tree."
+        },
+        "bddPilot.tree.searchRunCap": {
+          "type": "number",
+          "default": 80,
+          "minimum": 0,
+          "description": "%bddPilot.configuration.tree.searchRunCap.description%"
         },
         "bddPilot.tree.tagDisplay": {
           "type": "string",

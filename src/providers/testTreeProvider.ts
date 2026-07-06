@@ -32,6 +32,12 @@ import { skipReasonLabelForTreeOutcome } from "../core/results/skipReason";
 import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
 import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
+  collectFilteredRunTargets,
+  filterDomainsBySearch,
+  normalizeSearchQuery,
+  tagGroupMatchesSearch,
+} from "../core/gherkin/treeSearch";
+import {
   DEFAULT_COMPACT_TAG_LIMIT,
   DEFAULT_TAG_DISPLAY,
   TagDisplayMode,
@@ -60,6 +66,8 @@ import {
 } from "../core/runner/runScope";
 import { enrichFeaturesWithTheoryTests, scenarioNeedsTheoryDiscovery } from "../core/gherkin/theoryExamples";
 import {
+  formatFilterChipDescription,
+  formatPilotSummaryFilterTooltip,
   formatPilotSummaryLabel,
   PILOT_SUMMARY_DASHBOARD_COMMAND,
   PilotSummaryViewModel,
@@ -126,6 +134,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private tagGroups: TagGroup[] = [];
   private allDomains: DomainGroup[] = [];
   private searchQuery = "";
+  private searchQueryDisplay = "";
   private refreshPending = false;
 
   constructor(
@@ -135,6 +144,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     private readonly getPilotSummary: () => PilotSummaryViewModel = () => ({
       running: false,
     }),
+    private readonly onSearchQueryChanged?: (displayQuery: string) => void,
   ) {}
 
   /** Refreshes the pilot summary row without re-scanning features. */
@@ -200,19 +210,37 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   setSearchQuery(query: string): void {
-    this.searchQuery = query.trim().toLowerCase();
+    this.searchQueryDisplay = query.trim();
+    this.searchQuery = normalizeSearchQuery(this.searchQueryDisplay);
     this.applySearch();
+    this.onSearchQueryChanged?.(this.searchQueryDisplay);
+  }
+
+  getSearchQuery(): string {
+    return this.searchQueryDisplay;
+  }
+
+  isSearchActive(): boolean {
+    return this.searchQuery.length > 0;
+  }
+
+  getFilteredDomains(): DomainGroup[] {
+    return this.domains;
+  }
+
+  hasFilteredRunnableLeaves(): boolean {
+    return collectFilteredRunTargets(this.domains).length > 0;
+  }
+
+  getFilteredRunTargets(): RunTarget[] {
+    return collectFilteredRunTargets(this.domains);
   }
 
   private applySearch(): void {
     const filtered = filterDomainsBySearch(this.allDomains, this.searchQuery);
     this.domains = filtered;
-    this.tagGroups = groupByTag(filtered).filter(
-      (group) =>
-        !this.searchQuery ||
-        group.tag.toLowerCase().includes(this.searchQuery) ||
-        `@${group.tag}`.toLowerCase().includes(this.searchQuery) ||
-        group.scenarios.length > 0,
+    this.tagGroups = groupByTag(filtered).filter((group) =>
+      tagGroupMatchesSearch(group.tag, group.scenarios.length, this.searchQuery),
     );
     this._onDidChangeTreeData.fire(undefined);
   }
@@ -369,19 +397,31 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const locale = this.getLocale();
     const model = this.getPilotSummary();
     const status = formatPilotSummaryLabel(model, locale);
-    const hint = t(locale, "tree.pilotSummaryHint");
+    const filterActive = !!model.searchQuery;
+    const hint = filterActive
+      ? t(locale, "tree.pilotSummaryEditFilter")
+      : t(locale, "tree.pilotSummaryHint");
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(
       resolvePilotSummaryIcon(model.running, model.debugging ?? false),
     );
     item.command = {
-      command: PILOT_SUMMARY_DASHBOARD_COMMAND,
+      command: filterActive ? "bddPilot.searchTests" : PILOT_SUMMARY_DASHBOARD_COMMAND,
       title: hint,
     };
+    if (filterActive && model.searchQuery) {
+      item.description = formatFilterChipDescription(model.searchQuery, locale);
+      const tooltip = new vscode.MarkdownString(
+        formatPilotSummaryFilterTooltip(model.searchQuery, locale),
+      );
+      tooltip.isTrusted = false;
+      item.tooltip = tooltip;
+    } else {
+      const tooltip = new vscode.MarkdownString(`*${hint}*`);
+      tooltip.isTrusted = false;
+      item.tooltip = tooltip;
+    }
     item.contextValue = "bddPilotSummary";
-    const tooltip = new vscode.MarkdownString(`*${hint}*`);
-    tooltip.isTrusted = false;
-    item.tooltip = tooltip;
     return item;
   }
 
@@ -739,34 +779,3 @@ function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vsco
 }
 
 export { outlineRowKey, scenarioKey } from "../core/runner/runScope";
-
-function filterDomainsBySearch(allDomains: DomainGroup[], query: string): DomainGroup[] {
-  if (!query) {
-    return allDomains;
-  }
-  return allDomains
-    .map((domain) => ({
-      name: domain.name,
-      features: domain.features
-        .map((feature) => ({
-          ...feature,
-          scenarios: feature.scenarios.filter((s) => matchesSearch(query, feature, s)),
-        }))
-        .filter((feature) => matchesSearch(query, feature) || feature.scenarios.length > 0),
-    }))
-    .filter((domain) => domain.features.length > 0 || domain.name.toLowerCase().includes(query));
-}
-
-function matchesSearch(query: string, feature: FeatureInfo, scenario?: ScenarioInfo): boolean {
-  const haystack = [
-    feature.name,
-    feature.filePath,
-    ...feature.tags.map((t) => `@${t}`),
-    scenario?.name ?? "",
-    ...(scenario ? effectiveScenarioTags(feature, scenario).map((t) => `@${t}`) : []),
-    ...(scenario?.examples?.map((ex) => ex.label) ?? []),
-  ]
-    .join(" ")
-    .toLowerCase();
-  return haystack.includes(query);
-}

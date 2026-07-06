@@ -1,3 +1,4 @@
+import { FILTER_CHIP_MAX_LEN } from "../gherkin/treeSearch";
 import { formatRollupDescriptionLocalized, OutcomeRollup } from "../gherkin/outcomeRollup";
 import { TreeEmptyKind } from "../gherkin/treeEmptyState";
 import { PilotLocale, t } from "../i18n";
@@ -15,6 +16,8 @@ export interface PilotSummaryViewModel {
   running: boolean;
   debugging?: boolean;
   emptyKind?: TreeEmptyKind;
+  /** Active tree search filter (display form). */
+  searchQuery?: string;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -25,6 +28,7 @@ export interface BuildPilotSummaryOptions {
   running: boolean;
   debugging?: boolean;
   emptyKind?: TreeEmptyKind;
+  searchQuery?: string;
 }
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
@@ -39,6 +43,7 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     running: options.running,
     debugging: options.debugging,
     emptyKind: options.emptyKind ?? "none",
+    searchQuery: options.searchQuery?.trim() || undefined,
   };
 }
 
@@ -98,4 +103,15 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
     label = `${label.slice(0, LABEL_MAX - 1)}…`;
   }
   return label;
+}
+
+/** Summary row description when a tree search filter is active. */
+export function formatFilterChipDescription(query: string, locale: PilotLocale): string {
+  const truncated =
+    query.length > FILTER_CHIP_MAX_LEN ? `${query.slice(0, FILTER_CHIP_MAX_LEN - 1)}…` : query;
+  return t(locale, "tree.summaryFilterChip", { query: truncated });
+}
+
+export function formatPilotSummaryFilterTooltip(query: string, locale: PilotLocale): string {
+  return t(locale, "tree.summaryFilterTooltip", { query });
 }

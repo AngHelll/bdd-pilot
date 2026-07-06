@@ -91,10 +91,14 @@ const EN = {
   "tree.guideSearch.title": "No matching scenarios",
   "tree.guideSearch.subtitle": "Clear or change the search filter",
   "tree.guideSearch.tooltip":
-    "The active tree filter hid every scenario. Use **Search Tests** to change or clear the filter.",
+    "The active tree filter hid every scenario. Use **Search Tests** to change or clear the filter.\n\n**Pilot Search** filters which scenarios you can run. **Ctrl+F** (Cmd+F on Mac) only highlights rows in the list — it does not change the run scope.",
   "tree.summaryRunning": "Running…",
   "tree.summaryRehydrate": "Restored (not a new run)",
   "tree.pilotSummaryHint": "Click for run summary and history",
+  "tree.pilotSummaryEditFilter": "Click to edit search filter",
+  "tree.summaryFilterChip": "Filter: {query}",
+  "tree.summaryFilterTooltip":
+    "Active filter: **{query}**\n\nPilot Search filters which scenarios you can run. **Ctrl+F** only highlights in the list.\n\nUse **Clear Search Filter** or empty the search box to show all tests.",
   "tree.outlineRowCountOne": "1 row",
   "tree.outlineRowCount": "{count} rows",
 
@@ -135,6 +139,10 @@ const EN = {
   "toast.runSummaryFailures": "{failed} failed, {passed} passed ({total} total)",
   "toast.runInfraFallback":
     "The test run did not complete successfully. Check the BDD Pilot output for details.",
+  "toast.searchNoMatches": "No scenarios match the current filter.",
+  "toast.runFilteredConfirm": "Run {count} filtered tests?",
+  "action.runFiltered": "Run filtered",
+  "action.clearSearch": "Clear filter",
 
   "prompt.searchFilter": "Filter by name, tag (@Smoke), or path…",
   "prompt.searchClear": "Leave empty to clear the filter",
@@ -380,10 +388,14 @@ const ES: Record<keyof typeof EN, string> = {
   "tree.guideSearch.title": "Ningún escenario coincide",
   "tree.guideSearch.subtitle": "Borra o cambia el filtro de búsqueda",
   "tree.guideSearch.tooltip":
-    "El filtro activo ocultó todos los escenarios. Usa **Buscar tests** para cambiar o borrar el filtro.",
+    "El filtro activo ocultó todos los escenarios. Usa **Buscar tests** para cambiar o borrar el filtro.\n\n**Pilot Search** filtra qué escenarios puedes ejecutar. **Ctrl+F** (Cmd+F en Mac) solo resalta filas — no cambia el scope del run.",
   "tree.summaryRunning": "Ejecutando…",
   "tree.summaryRehydrate": "Restaurado (no es una nueva ejecución)",
   "tree.pilotSummaryHint": "Clic para ver resumen e historial",
+  "tree.pilotSummaryEditFilter": "Clic para editar el filtro de búsqueda",
+  "tree.summaryFilterChip": "Filtro: {query}",
+  "tree.summaryFilterTooltip":
+    "Filtro activo: **{query}**\n\nPilot Search filtra qué escenarios puedes ejecutar. **Ctrl+F** solo resalta en la lista.\n\nUsa **Borrar filtro de búsqueda** o deja vacío el cuadro para ver todos los tests.",
   "tree.outlineRowCountOne": "1 fila",
   "tree.outlineRowCount": "{count} filas",
 
@@ -425,6 +437,10 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.runSummaryFailures": "{failed} fallidos, {passed} correctos ({total} total)",
   "toast.runInfraFallback":
     "La ejecución no terminó correctamente. Revisa la salida de BDD Pilot para más detalles.",
+  "toast.searchNoMatches": "Ningún escenario coincide con el filtro actual.",
+  "toast.runFilteredConfirm": "¿Ejecutar {count} tests filtrados?",
+  "action.runFiltered": "Ejecutar filtrados",
+  "action.clearSearch": "Borrar filtro",
 
   "prompt.searchFilter": "Filtrar por nombre, tag (@Smoke) o ruta…",
   "prompt.searchClear": "Deja vacío para quitar el filtro",

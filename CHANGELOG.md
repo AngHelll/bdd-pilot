@@ -8,6 +8,19 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.7.0] — 2026-07-06
+
+### Added
+- **Tree search visibility** — filter chip on summary row; persist per workspace; `bddPilot.clearSearch`; active search toolbar state
+- **Run filtered** — `bddPilot.runFiltered` runs only visible scenarios when a filter is active (toolbar swaps with Run All)
+- **`@tag` syntax** — tag-only matching when query starts with `@`
+- **`bddPilot.tree.searchRunCap`** — confirmation before large filtered runs (default 80)
+- **Keybinding** — `Ctrl+Alt+F` / `Cmd+Alt+F` to open search when BDD Pilot tree is focused
+
+### Changed
+- Summary row click opens search editor when a filter is active (dashboard when no filter)
+- Search guide tooltips document Pilot Search vs workbench **Ctrl+F**
+
 ## [1.6.0] — 2026-07-05
 
 ### Added

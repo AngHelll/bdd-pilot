@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { describe, it } from "node:test";
 import {
   buildPilotSummaryViewModel,
+  formatFilterChipDescription,
   formatPilotSummaryLabel,
   resolvePilotSummaryIcon,
 } from "../core/results/pilotSummaryViewModel";
@@ -152,5 +153,15 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(resolvePilotSummaryIcon(false, false), "history");
     assert.strictEqual(resolvePilotSummaryIcon(true, false), "loading~spin");
     assert.strictEqual(resolvePilotSummaryIcon(true, true), "debug-alt");
+  });
+
+  it("formatFilterChipDescription shows truncated filter chip", () => {
+    const chip = formatFilterChipDescription("smoke", "en");
+    assert.ok(chip.includes("Filter:"));
+    assert.ok(chip.includes("smoke"));
+    const long = "a".repeat(50);
+    const truncated = formatFilterChipDescription(long, "en");
+    assert.ok(truncated.includes("…"));
+    assert.ok(truncated.length < long.length + 20);
   });
 });

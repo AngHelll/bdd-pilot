@@ -26,6 +26,7 @@ import {
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
 import { buildDashboardActionsViewModel, buildRerunFilterFromHistoryEntry, DashboardWebviewCommand } from "./core/results/dashboardActions";
 import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
+import { TREE_SEARCH_WORKSPACE_KEY, shouldConfirmSearchRunCap } from "./core/gherkin/treeSearch";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
@@ -110,14 +111,33 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       running: !!activeRun || runService.isDebugActive(),
       debugging: runService.isDebugActive() && !activeRun,
       emptyKind: treeProvider.getEmptyKind(),
+      searchQuery: treeProvider.getSearchQuery() || undefined,
     });
   }
+
+  const updateSearchContext = (): void => {
+    const active = treeProvider.isSearchActive();
+    const hasMatches = treeProvider.hasFilteredRunnableLeaves();
+    void vscode.commands.executeCommand("setContext", "bddPilot.searchActive", active);
+    void vscode.commands.executeCommand(
+      "setContext",
+      "bddPilot.searchHasMatches",
+      active && hasMatches,
+    );
+  };
+
+  const onSearchQueryChanged = (displayQuery: string): void => {
+    void context.workspaceState.update(TREE_SEARCH_WORKSPACE_KEY, displayQuery);
+    updateSearchContext();
+    refreshPilotSurfaces();
+  };
 
   const treeProvider = new TestTreeProvider(
     () => getDiscoveryRoot(),
     outcomeStore,
     () => localeService.getLocale(),
     buildPilotSummaryFromState,
+    onSearchQueryChanged,
   );
   const treeView = vscode.window.createTreeView("bddPilot.tests", {
     treeDataProvider: treeProvider,
@@ -275,6 +295,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         }
       : undefined;
     void vscode.commands.executeCommand("setContext", "bddPilot.running", running);
+    updateSearchContext();
     const feedbackKey = `${running}:${debugging}`;
     if (lastExecutionFeedbackKey !== feedbackKey) {
       lastExecutionFeedbackKey = feedbackKey;
@@ -522,12 +543,42 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
     vscode.commands.registerCommand("bddPilot.searchTests", async () => {
       const query = await vscode.window.showInputBox({
+        value: treeProvider.getSearchQuery(),
         placeHolder: tr("prompt.searchFilter"),
         prompt: tr("prompt.searchClear"),
       });
       if (query !== undefined) {
         treeProvider.setSearchQuery(query);
       }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.searchTestsActive", () => {
+      void vscode.commands.executeCommand("bddPilot.searchTests");
+    }),
+
+    vscode.commands.registerCommand("bddPilot.clearSearch", () => {
+      treeProvider.setSearchQuery("");
+    }),
+
+    vscode.commands.registerCommand("bddPilot.runFiltered", async () => {
+      const targets = treeProvider.getFilteredRunTargets();
+      if (targets.length === 0) {
+        void vscode.window.showInformationMessage(tr("toast.searchNoMatches"));
+        return;
+      }
+      const cap = readSearchRunCap();
+      if (shouldConfirmSearchRunCap(targets.length, cap)) {
+        const runLabel = tr("action.runFiltered");
+        const choice = await vscode.window.showWarningMessage(
+          tr("toast.runFilteredConfirm", { count: targets.length }),
+          { modal: true },
+          runLabel,
+        );
+        if (choice !== runLabel) {
+          return;
+        }
+      }
+      await executeRun(targets);
     }),
 
     vscode.commands.registerCommand("bddPilot.selectProject", () => selectProject()),
@@ -682,6 +733,12 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   managed.refresh();
   refreshUi();
   refreshPilotSurfaces();
+  const savedSearch = context.workspaceState.get<string>(TREE_SEARCH_WORKSPACE_KEY, "");
+  if (savedSearch) {
+    treeProvider.setSearchQuery(savedSearch);
+  } else {
+    updateSearchContext();
+  }
   void bootstrapWorkspace();
   void maybePromptProjectSelection();
 
@@ -718,7 +775,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   }
 
   async function executeRun(
-    target: RunTarget,
+    target: RunTarget | RunTarget[],
     opts?: { debug?: boolean; rawFilter?: string },
   ): Promise<void> {
     if (activeRun || runService.isDebugActive()) {
@@ -745,7 +802,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       return;
     }
 
-    const runTargets = opts?.rawFilter ? [] : normalizeTargets(target);
+    const runTargets = opts?.rawFilter ? [] : resolveRunTargets(target);
     const totalExpected =
       opts?.rawFilter || opts?.debug
         ? undefined
@@ -946,6 +1003,13 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     return [target];
   }
 
+  function resolveRunTargets(target: RunTarget | RunTarget[]): RunTarget[] {
+    if (Array.isArray(target)) {
+      return target;
+    }
+    return normalizeTargets(target);
+  }
+
   function getWorkspaceRoots(): string[] {
     return (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
   }
@@ -1129,6 +1193,11 @@ export function deactivate(): void {
 function readStatusBarDisplay(): StatusBarDisplayMode {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
   return readStatusBarDisplayMode(cfg.get<string>("statusBar.display", "compact"));
+}
+
+function readSearchRunCap(): number {
+  const cfg = vscode.workspace.getConfiguration("bddPilot");
+  return Math.max(0, cfg.get<number>("tree.searchRunCap", 80));
 }
 
 function readBindingGate(): BindingGateMode {
