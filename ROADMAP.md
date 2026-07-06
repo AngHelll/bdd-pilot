@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.7.1 (Marketplace)** · **299 unit tests**
+> **Current release: v1.7.2 (Marketplace)** · **306 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.1** |
-| 🎯 Ecosystem | Jarvis cross-ext · tree/dashboard diagnostic slices |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.2** |
+| 🎯 Ecosystem | Jarvis cross-ext · dashboard diagnostic card |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate 📋) · dotnet flags · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -49,6 +49,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.6.0** | Diagnostics hygiene — core/extended rules, Output summary, i18n diagnostics · spec `diagnostics-hygiene-v1.6.md` |
 | **1.7.0** | Tree search visibility + run filtered — chip, persist, `@tag` syntax · spec `tree-search-visibility-v1.7.md` |
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
+| **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -68,6 +69,7 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 | **Diagnostics hygiene** | **bdd-pilot** | **1.6.0** | **✅ 1.6.0** | **✅** | — |
 | **Tree search + run filtered** | **bdd-pilot** | **1.7.0** | **✅ 1.7.0** | **✅** | — |
 | **Controls polish (Slice C)** | **bdd-pilot** | **1.7.1** | **✅ 1.7.1** | **✅** | — |
+| **Tree summary diagnostics** | **bdd-pilot** | **1.7.2** | **✅ 1.7.2** | **✅** | — |
 | Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
 | MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
 
@@ -167,6 +169,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.7.2 — Diagnostics on tree summary row ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Summary** | Top-1 post-run diagnostic chip + tooltip from last run snapshot |
+| **Icon** | `warning` / `info` by diagnostic severity |
+| **Core** | `pickPrimaryDiagnostic` shared with toast (306 unit tests) |
 
 ### v1.7.1 — Controls polish (Slice C) ✅ shipped
 
@@ -482,4 +492,4 @@ src/
 
 ---
 
-*Last updated: v1.7.1 shipped — controls polish (Slice C).*
+*Last updated: v1.7.2 shipped — tree summary diagnostics.*

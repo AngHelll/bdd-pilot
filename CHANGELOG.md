@@ -8,6 +8,15 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.7.2] — 2026-07-06
+
+### Added
+- **Tree summary diagnostic** — top post-run diagnostic on the BDD tree summary row (chip + tooltip with hint)
+
+### Changed
+- Summary row icon shows `warning` / `info` when the last run has an error/warning diagnostic
+- Shared `pickPrimaryDiagnostic` helper for toast and tree (same selection rules)
+
 ## [1.7.1] — 2026-07-06
 
 ### Added

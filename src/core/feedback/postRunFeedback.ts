@@ -1,4 +1,5 @@
 import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions, Diagnostic } from "../diagnostics/analyzer";
+import { pickPrimaryDiagnostic } from "../diagnostics/primaryDiagnostic";
 import { classifyRunCompletion } from "../diagnostics/runOutcomeClass";
 import { PilotLocale, t } from "../i18n";
 import { UnifiedSummary } from "../results/resultLoader";
@@ -34,12 +35,16 @@ export interface PostRunFeedbackViewModel {
   actions: PostRunFeedbackAction[];
 }
 
-/** First actionable diagnostic for toast (excludes catch-all TEST_RUN_FAILED). */
+/** First actionable diagnostic for toast (excludes catch-all TEST_RUN_FAILED when alone). */
 export function findToastDiagnostic(
   outputBuffer: string,
   options?: AnalyzeDotnetOutputOptions,
 ): Diagnostic | undefined {
-  return analyzeDotnetOutput(outputBuffer, options).find((d) => d.code !== "TEST_RUN_FAILED");
+  const primary = pickPrimaryDiagnostic(analyzeDotnetOutput(outputBuffer, options));
+  if (!primary || primary.code === "TEST_RUN_FAILED") {
+    return undefined;
+  }
+  return primary;
 }
 
 function truncateOneLine(text: string, maxLen: number): string {

@@ -99,6 +99,8 @@ const EN = {
   "tree.summaryFilterChip": "Filter: {query}",
   "tree.summaryFilterTooltip":
     "Active filter: **{query}**\n\nPilot Search filters which scenarios you can run. **Ctrl+F** only highlights in the list.\n\nUse **Clear Search Filter** or empty the search box to show all tests.",
+  "tree.summaryDiagnosticChip": "⚠ {title}",
+  "tree.summaryDiagnosticTooltip": "**{code}** — {title}\n\n{hint}",
   "tree.outlineRowCountOne": "1 row",
   "tree.outlineRowCount": "{count} rows",
 
@@ -396,6 +398,8 @@ const ES: Record<keyof typeof EN, string> = {
   "tree.summaryFilterChip": "Filtro: {query}",
   "tree.summaryFilterTooltip":
     "Filtro activo: **{query}**\n\nPilot Search filtra qué escenarios puedes ejecutar. **Ctrl+F** solo resalta en la lista.\n\nUsa **Borrar filtro de búsqueda** o deja vacío el cuadro para ver todos los tests.",
+  "tree.summaryDiagnosticChip": "⚠ {title}",
+  "tree.summaryDiagnosticTooltip": "**{code}** — {title}\n\n{hint}",
   "tree.outlineRowCountOne": "1 fila",
   "tree.outlineRowCount": "{count} filas",
 

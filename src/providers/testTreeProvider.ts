@@ -69,9 +69,12 @@ import {
   formatFilterChipDescription,
   formatPilotSummaryFilterTooltip,
   formatPilotSummaryLabel,
+  formatSummaryDiagnosticChip,
+  formatSummaryDiagnosticTooltip,
   PILOT_SUMMARY_DASHBOARD_COMMAND,
   PilotSummaryViewModel,
   resolvePilotSummaryIcon,
+  resolveSummaryDiagnostic,
 } from "../core/results/pilotSummaryViewModel";
 import { t } from "../core/i18n";
 import { OutcomeStore } from "./outcomeStore";
@@ -398,12 +401,13 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const model = this.getPilotSummary();
     const status = formatPilotSummaryLabel(model, locale);
     const filterActive = !!model.searchQuery;
+    const diagnostic = resolveSummaryDiagnostic(model);
     const hint = filterActive
       ? t(locale, "tree.pilotSummaryEditFilter")
       : t(locale, "tree.pilotSummaryHint");
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(
-      resolvePilotSummaryIcon(model.running, model.debugging ?? false),
+      resolvePilotSummaryIcon(model.running, model.debugging ?? false, diagnostic),
     );
     item.command = {
       command: filterActive ? "bddPilot.searchTests" : PILOT_SUMMARY_DASHBOARD_COMMAND,
@@ -411,9 +415,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     };
     if (filterActive && model.searchQuery) {
       item.description = formatFilterChipDescription(model.searchQuery, locale);
-      const tooltip = new vscode.MarkdownString(
-        formatPilotSummaryFilterTooltip(model.searchQuery, locale),
-      );
+    } else if (diagnostic) {
+      item.description = formatSummaryDiagnosticChip(diagnostic, locale);
+    }
+    const tooltipParts: string[] = [];
+    if (filterActive && model.searchQuery) {
+      tooltipParts.push(formatPilotSummaryFilterTooltip(model.searchQuery, locale));
+    }
+    if (diagnostic) {
+      tooltipParts.push(formatSummaryDiagnosticTooltip(diagnostic, locale));
+    }
+    if (tooltipParts.length > 0) {
+      const tooltip = new vscode.MarkdownString(tooltipParts.join("\n\n"));
       tooltip.isTrusted = false;
       item.tooltip = tooltip;
     } else {

@@ -1,6 +1,8 @@
 import { FILTER_CHIP_MAX_LEN } from "../gherkin/treeSearch";
 import { formatRollupDescriptionLocalized, OutcomeRollup } from "../gherkin/outcomeRollup";
 import { TreeEmptyKind } from "../gherkin/treeEmptyState";
+import { Diagnostic } from "../diagnostics/analyzer";
+import { diagnosticHint } from "../diagnostics/diagnosticCatalog";
 import { PilotLocale, t } from "../i18n";
 import { resolveLastKnownSnapshot, LastKnownSnapshot } from "./dashboardLastKnown";
 import { RehydrateNotice } from "./rehydrateNotice";
@@ -18,6 +20,8 @@ export interface PilotSummaryViewModel {
   emptyKind?: TreeEmptyKind;
   /** Active tree search filter (display form). */
   searchQuery?: string;
+  /** Top diagnostic from last run (hidden while running). */
+  topDiagnostic?: Diagnostic;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -29,6 +33,7 @@ export interface BuildPilotSummaryOptions {
   debugging?: boolean;
   emptyKind?: TreeEmptyKind;
   searchQuery?: string;
+  topDiagnostic?: Diagnostic;
 }
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
@@ -44,18 +49,39 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     debugging: options.debugging,
     emptyKind: options.emptyKind ?? "none",
     searchQuery: options.searchQuery?.trim() || undefined,
+    topDiagnostic: options.running ? undefined : options.topDiagnostic,
   };
 }
 
+const SUMMARY_DIAGNOSTIC_CHIP_MAX = 48;
+
+/** Active diagnostic for summary row UI (none while running). */
+export function resolveSummaryDiagnostic(model: PilotSummaryViewModel): Diagnostic | undefined {
+  if (model.running) {
+    return undefined;
+  }
+  return model.topDiagnostic;
+}
+
 /** Codicon id for the pilot summary tree row. */
-export function resolvePilotSummaryIcon(running: boolean, debugging: boolean): string {
-  if (!running) {
-    return "history";
+export function resolvePilotSummaryIcon(
+  running: boolean,
+  debugging: boolean,
+  diagnostic?: Diagnostic,
+): string {
+  if (running) {
+    if (debugging) {
+      return "debug-alt";
+    }
+    return "loading~spin";
   }
-  if (debugging) {
-    return "debug-alt";
+  if (diagnostic?.severity === "error") {
+    return "warning";
   }
-  return "loading~spin";
+  if (diagnostic?.severity === "warning") {
+    return "info";
+  }
+  return "history";
 }
 
 function emptyStateSummaryLabel(kind: TreeEmptyKind, locale: PilotLocale): string {
@@ -114,4 +140,25 @@ export function formatFilterChipDescription(query: string, locale: PilotLocale):
 
 export function formatPilotSummaryFilterTooltip(query: string, locale: PilotLocale): string {
   return t(locale, "tree.summaryFilterTooltip", { query });
+}
+
+export function formatSummaryDiagnosticChip(diagnostic: Diagnostic, locale: PilotLocale): string {
+  let title = diagnostic.title;
+  if (title.length > SUMMARY_DIAGNOSTIC_CHIP_MAX) {
+    title = `${title.slice(0, SUMMARY_DIAGNOSTIC_CHIP_MAX - 1)}…`;
+  }
+  return t(locale, "tree.summaryDiagnosticChip", { title });
+}
+
+export function formatSummaryDiagnosticTooltip(diagnostic: Diagnostic, locale: PilotLocale): string {
+  const hint = diagnostic.hint || diagnosticHint(locale, diagnostic.code);
+  const body = t(locale, "tree.summaryDiagnosticTooltip", {
+    code: diagnostic.code,
+    title: diagnostic.title,
+    hint,
+  });
+  if (diagnostic.detail) {
+    return `${diagnostic.detail}\n\n${body}`;
+  }
+  return body;
 }

@@ -39,6 +39,7 @@ import {
   TestCompletionEvent,
 } from "./core/runner/liveProgress";
 import { estimateTestCount } from "./core/runner/runEstimate";
+import { pickPrimaryDiagnostic } from "./core/diagnostics/primaryDiagnostic";
 import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "./core/diagnostics/analyzer";
 import { buildAiFailureContext } from "./core/diagnostics/aiFailureContext";
 import {
@@ -112,6 +113,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       debugging: runService.isDebugActive() && !activeRun,
       emptyKind: treeProvider.getEmptyKind(),
       searchQuery: treeProvider.getSearchQuery() || undefined,
+      topDiagnostic: pickPrimaryDiagnostic(runService.getLastRunSnapshot()?.diagnostics ?? []),
     });
   }
 

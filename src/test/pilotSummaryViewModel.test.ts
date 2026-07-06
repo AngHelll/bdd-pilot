@@ -4,8 +4,12 @@ import {
   buildPilotSummaryViewModel,
   formatFilterChipDescription,
   formatPilotSummaryLabel,
+  formatSummaryDiagnosticChip,
+  formatSummaryDiagnosticTooltip,
   resolvePilotSummaryIcon,
+  resolveSummaryDiagnostic,
 } from "../core/results/pilotSummaryViewModel";
+import { Diagnostic } from "../core/diagnostics/analyzer";
 
 describe("pilotSummaryViewModel", () => {
   it("buildPilotSummaryViewModel returns empty snapshot when no data", () => {
@@ -149,10 +153,66 @@ describe("pilotSummaryViewModel", () => {
     assert.ok(label.length <= 160);
   });
 
-  it("resolvePilotSummaryIcon returns history, spin, or debug-alt", () => {
+  it("resolvePilotSummaryIcon returns history, spin, debug-alt, or diagnostic severity", () => {
     assert.strictEqual(resolvePilotSummaryIcon(false, false), "history");
     assert.strictEqual(resolvePilotSummaryIcon(true, false), "loading~spin");
     assert.strictEqual(resolvePilotSummaryIcon(true, true), "debug-alt");
+    const errorDiag: Diagnostic = {
+      code: "PENDING_STEPS",
+      severity: "error",
+      title: "Pending",
+      hint: "hint",
+    };
+    assert.strictEqual(resolvePilotSummaryIcon(false, false, errorDiag), "warning");
+    const warnDiag: Diagnostic = { ...errorDiag, severity: "warning" };
+    assert.strictEqual(resolvePilotSummaryIcon(false, false, warnDiag), "info");
+    assert.strictEqual(resolvePilotSummaryIcon(true, false, errorDiag), "loading~spin");
+  });
+
+  it("resolveSummaryDiagnostic hides diagnostic while running", () => {
+    const diag: Diagnostic = {
+      code: "SDK_NOT_FOUND",
+      severity: "error",
+      title: "SDK missing",
+      hint: "hint",
+    };
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      topDiagnostic: diag,
+    });
+    assert.strictEqual(resolveSummaryDiagnostic(vm), undefined);
+    assert.strictEqual(vm.topDiagnostic, undefined);
+  });
+
+  it("formatSummaryDiagnosticChip truncates long titles", () => {
+    const diag: Diagnostic = {
+      code: "X",
+      severity: "error",
+      title: "a".repeat(60),
+      hint: "hint",
+    };
+    const chip = formatSummaryDiagnosticChip(diag, "en");
+    assert.ok(chip.startsWith("⚠ "));
+    assert.ok(chip.includes("…"));
+  });
+
+  it("formatSummaryDiagnosticTooltip includes code, title, hint, and detail", () => {
+    const diag: Diagnostic = {
+      code: "PENDING_STEPS",
+      severity: "error",
+      title: "Pending step definitions",
+      detail: "line detail",
+      hint: "Add bindings",
+    };
+    const tooltip = formatSummaryDiagnosticTooltip(diag, "en");
+    assert.ok(tooltip.includes("PENDING_STEPS"));
+    assert.ok(tooltip.includes("Pending step definitions"));
+    assert.ok(tooltip.includes("Add bindings"));
+    assert.ok(tooltip.startsWith("line detail"));
   });
 
   it("formatFilterChipDescription shows truncated filter chip", () => {
