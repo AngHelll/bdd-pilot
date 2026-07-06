@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -68,6 +68,11 @@
         "command": "bddPilot.runNode",
         "title": "%bddPilot.command.runNode.title%",
         "icon": "$(run)"
+      },
+      {
+        "command": "bddPilot.debugNode",
+        "title": "%bddPilot.command.debugNode.title%",
+        "icon": "$(debug)"
       },
       {
         "command": "bddPilot.runAll",
@@ -146,7 +151,16 @@
       },
       {
         "command": "bddPilot.cycleTreeGroupBy",
-        "title": "%bddPilot.command.cycleTreeGroupBy.title%",
+        "title": "%bddPilot.command.cycleTreeGroupBy.title%"
+      },
+      {
+        "command": "bddPilot.cycleTreeGroupByDomain",
+        "title": "%bddPilot.command.cycleTreeGroupByDomain.title%",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "bddPilot.cycleTreeGroupByTag",
+        "title": "%bddPilot.command.cycleTreeGroupByTag.title%",
         "icon": "$(tag)"
       },
       {
@@ -160,6 +174,11 @@
       }
     ],
     "submenus": [
+      {
+        "id": "bddPilot.moreMenu",
+        "label": "%bddPilot.submenu.more.label%",
+        "icon": "$(ellipsis)"
+      },
       {
         "id": "bddPilot.profilesMenu",
         "label": "%bddPilot.submenu.profiles.label%",
@@ -179,44 +198,54 @@
           "group": "navigation@1"
         },
         {
-          "command": "bddPilot.refresh",
-          "when": "view == bddPilot.tests",
-          "group": "navigation@2"
-        },
-        {
-          "command": "bddPilot.showDashboard",
-          "when": "view == bddPilot.tests",
-          "group": "navigation@3"
-        },
-        {
-          "command": "bddPilot.cancel",
-          "when": "view == bddPilot.tests",
-          "group": "navigation@4"
-        },
-        {
           "command": "bddPilot.searchTests",
           "when": "view == bddPilot.tests && !bddPilot.searchActive",
-          "group": "navigation@5"
+          "group": "navigation@2"
         },
         {
           "command": "bddPilot.searchTestsActive",
           "when": "view == bddPilot.tests && bddPilot.searchActive",
+          "group": "navigation@2"
+        },
+        {
+          "command": "bddPilot.cancel",
+          "when": "view == bddPilot.tests && bddPilot.running",
+          "group": "navigation@3"
+        },
+        {
+          "command": "bddPilot.showDashboard",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@4"
+        },
+        {
+          "command": "bddPilot.refresh",
+          "when": "view == bddPilot.tests",
           "group": "navigation@5"
         },
         {
-          "command": "bddPilot.rerunFailed",
-          "when": "view == bddPilot.tests",
+          "command": "bddPilot.cycleTreeGroupByDomain",
+          "when": "view == bddPilot.tests && bddPilot.treeGroupBy == domain",
           "group": "navigation@6"
         },
         {
-          "command": "bddPilot.cycleTreeGroupBy",
+          "command": "bddPilot.cycleTreeGroupByTag",
+          "when": "view == bddPilot.tests && bddPilot.treeGroupBy == tag",
+          "group": "navigation@6"
+        },
+        {
+          "submenu": "bddPilot.moreMenu",
           "when": "view == bddPilot.tests",
-          "group": "navigation@8"
+          "group": "navigation@7"
+        }
+      ],
+      "bddPilot.moreMenu": [
+        {
+          "command": "bddPilot.rerunFailed",
+          "group": "1_more@1"
         },
         {
           "submenu": "bddPilot.profilesMenu",
-          "when": "view == bddPilot.tests",
-          "group": "navigation@9"
+          "group": "1_more@2"
         }
       ],
       "bddPilot.profilesMenu": [
@@ -238,6 +267,11 @@
           "command": "bddPilot.runNode",
           "when": "view == bddPilot.tests && viewItem =~ /^bddRunnable/",
           "group": "inline@1"
+        },
+        {
+          "command": "bddPilot.debugNode",
+          "when": "view == bddPilot.tests && viewItem =~ /^bddRunnable/",
+          "group": "inline@2"
         }
       ]
     },

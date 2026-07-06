@@ -8,6 +8,17 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.7.1] — 2026-07-06
+
+### Added
+- **Debug inline** — `bddPilot.debugNode` on BDD tree rows (parity with CodeLens / Test Explorer)
+- **More menu** — toolbar overflow (`…`) for Re-run Failed and Execution Profiles
+
+### Changed
+- **GroupBy toolbar** — icon reflects current mode (`$(folder)` domain / `$(tag)` tag) with descriptive tooltips
+- **Cancel** — visible in tree toolbar only while a run is active
+- **Toolbar order** — Run · Search · Dashboard · Refresh · GroupBy · More
+
 ## [1.7.0] — 2026-07-06
 
 ### Added

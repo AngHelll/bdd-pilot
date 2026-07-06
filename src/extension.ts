@@ -126,6 +126,10 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     );
   };
 
+  const updateTreeGroupByContext = (): void => {
+    void vscode.commands.executeCommand("setContext", "bddPilot.treeGroupBy", readTreeGroupBy());
+  };
+
   const onSearchQueryChanged = (displayQuery: string): void => {
     void context.workspaceState.update(TREE_SEARCH_WORKSPACE_KEY, displayQuery);
     updateSearchContext();
@@ -296,6 +300,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       : undefined;
     void vscode.commands.executeCommand("setContext", "bddPilot.running", running);
     updateSearchContext();
+    updateTreeGroupByContext();
     const feedbackKey = `${running}:${debugging}`;
     if (lastExecutionFeedbackKey !== feedbackKey) {
       lastExecutionFeedbackKey = feedbackKey;
@@ -633,6 +638,13 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       }
     }),
 
+    vscode.commands.registerCommand("bddPilot.debugNode", async (node: TreeNode) => {
+      const target = toRunTarget(node);
+      if (target) {
+        await executeRun(target, { debug: true });
+      }
+    }),
+
     vscode.commands.registerCommand("bddPilot.runFromCodeLens", async (target: RunTarget, debug?: boolean) => {
       await executeRun(target, { debug: !!debug });
     }),
@@ -703,9 +715,18 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       const current = cfg.get<string>("tree.groupBy", "domain");
       const next = current === "tag" ? "domain" : "tag";
       await cfg.update("tree.groupBy", next, vscode.ConfigurationTarget.Workspace);
+      updateTreeGroupByContext();
       void vscode.window.showInformationMessage(
         next === "tag" ? tr("toast.treeGroupByTag") : tr("toast.treeGroupByDomain"),
       );
+    }),
+
+    vscode.commands.registerCommand("bddPilot.cycleTreeGroupByDomain", () => {
+      void vscode.commands.executeCommand("bddPilot.cycleTreeGroupBy");
+    }),
+
+    vscode.commands.registerCommand("bddPilot.cycleTreeGroupByTag", () => {
+      void vscode.commands.executeCommand("bddPilot.cycleTreeGroupBy");
     }),
 
     vscode.workspace.onDidChangeConfiguration((e) => {

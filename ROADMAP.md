@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.7.0 (Marketplace)** · **299 unit tests**
+> **Current release: v1.7.1 (Marketplace)** · **299 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.0** |
-| 🎯 Ecosystem | Jarvis cross-ext · tree/dashboard diagnostic slices · controls polish (post v1.7) |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.1** |
+| 🎯 Ecosystem | Jarvis cross-ext · tree/dashboard diagnostic slices |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate 📋) · dotnet flags · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
@@ -48,6 +48,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.5.0** | Pre-run binding gate (P2b) — Guardian `resolveStep`; `bddPilot.preRun.bindingGate` |
 | **1.6.0** | Diagnostics hygiene — core/extended rules, Output summary, i18n diagnostics · spec `diagnostics-hygiene-v1.6.md` |
 | **1.7.0** | Tree search visibility + run filtered — chip, persist, `@tag` syntax · spec `tree-search-visibility-v1.7.md` |
+| **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -66,6 +67,7 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 | **Pre-run binding gate (P2b)** | **bdd-pilot** | **1.5.0** | **✅ 1.5.0** | **✅** | Guardian ✅ |
 | **Diagnostics hygiene** | **bdd-pilot** | **1.6.0** | **✅ 1.6.0** | **✅** | — |
 | **Tree search + run filtered** | **bdd-pilot** | **1.7.0** | **✅ 1.7.0** | **✅** | — |
+| **Controls polish (Slice C)** | **bdd-pilot** | **1.7.1** | **✅ 1.7.1** | **✅** | — |
 | Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
 | MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
 
@@ -165,6 +167,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.7.1 — Controls polish (Slice C) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Debug** | `bddPilot.debugNode` inline on tree rows |
+| **GroupBy** | Dynamic toolbar icon (`folder` / `tag`) + tooltips EN/ES |
+| **Toolbar** | More overflow menu; Cancel only while running (299 unit tests) |
 
 ### v1.7.0 — Tree search visibility + run filtered ✅ shipped
 
@@ -472,4 +482,4 @@ src/
 
 ---
 
-*Last updated: v1.7.0 shipped — tree search visibility + run filtered.*
+*Last updated: v1.7.1 shipped — controls polish (Slice C).*
