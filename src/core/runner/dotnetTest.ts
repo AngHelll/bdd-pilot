@@ -15,11 +15,22 @@ export interface RunRequest {
   resultsDir: string;
   /** File name for the TRX logger output. */
   trxFileName: string;
+  /** `Debug` or `Release`; omit flag when unset. */
+  configuration?: string;
+  /** When true, passes `--no-build`. */
+  noBuild?: boolean;
+  /** Absolute path to `.runsettings` for `--settings`. */
+  settingsPath?: string;
   /**
    * Extra environment variables (e.g. parsed from config/.env.<stage>) merged
    * into the child process environment. Never logged or persisted.
    */
   extraEnv?: Record<string, string>;
+}
+
+export interface BuildArgsOptions {
+  /** When false, omits xUnit RunSettings after `--` (debug launch). Default true. */
+  includeXUnitRunSettings?: boolean;
 }
 
 export interface RunResult {
@@ -37,25 +48,40 @@ export interface RunCallbacks {
 /**
  * Builds the argument vector for `dotnet test`. Kept pure for unit testing.
  */
-export function buildArgs(req: RunRequest): string[] {
+export function buildArgs(req: RunRequest, options: BuildArgsOptions = {}): string[] {
+  const includeXUnit = options.includeXUnitRunSettings !== false;
   const args = ["test"];
   if (req.testTarget && isExplicitTestTarget(req.testTarget)) {
     args.push(req.testTarget);
   }
+
+  const configuration = req.configuration?.trim();
+  if (configuration) {
+    args.push("--configuration", configuration);
+  }
+  if (req.noBuild) {
+    args.push("--no-build");
+  }
+  if (req.settingsPath?.trim()) {
+    args.push("--settings", req.settingsPath.trim());
+  }
+
   args.push("--nologo", "--logger", `trx;LogFileName=${req.trxFileName}`, "--results-directory", req.resultsDir);
 
   if (req.filter && req.filter.trim().length > 0) {
     args.push("--filter", req.filter);
   }
 
-  // Pass xUnit parallelism as RunSettings on the command line so we don't have
-  // to mutate the project's xunit.runner.json on disk.
-  args.push(
-    "--",
-    `xUnit.MaxParallelThreads=${req.mode.maxParallelThreads}`,
-    `xUnit.ParallelizeTestCollections=${req.mode.parallelizeTestCollections}`,
-    `xUnit.ParallelizeAssembly=${req.mode.parallelizeAssembly}`,
-  );
+  if (includeXUnit) {
+    // Pass xUnit parallelism as RunSettings on the command line so we don't have
+    // to mutate the project's xunit.runner.json on disk.
+    args.push(
+      "--",
+      `xUnit.MaxParallelThreads=${req.mode.maxParallelThreads}`,
+      `xUnit.ParallelizeTestCollections=${req.mode.parallelizeTestCollections}`,
+      `xUnit.ParallelizeAssembly=${req.mode.parallelizeAssembly}`,
+    );
+  }
 
   return args;
 }

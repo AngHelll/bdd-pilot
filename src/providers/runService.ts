@@ -13,11 +13,17 @@ import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 import { findRecentEvidence } from "../core/results/evidence";
 import { loadRunResults, UnifiedSummary } from "../core/results/resultLoader";
 import {
-  appendTrxLoggerArgs,
   createDebugTrxFileName,
   createRunTrxFileName,
   resolveTrxPath,
 } from "../core/runner/trxArgs";
+import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filterBuilder";
+import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
+import { buildArgs, runDotnetTest, RunRequest as DotnetRunRequest } from "../core/runner/dotnetTest";
+import {
+  formatRunSettingsMissingMessage,
+  resolveRunSettingsPath,
+} from "../core/runner/runSettingsPath";
 import {
   RunHistoryEntry,
   ScenarioRunRecord,
@@ -30,9 +36,6 @@ import {
 } from "../core/results/sessionRunSnapshot";
 import { matchesScenario } from "../core/results/trxParser";
 import { findOutlineExampleMatch } from "../core/results/scenarioMatch";
-import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filterBuilder";
-import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
-import { runDotnetTest } from "../core/runner/dotnetTest";
 import { evaluateRun } from "../security/envGuard";
 import { sanitize } from "../security/sanitizer";
 import { DomainGroup } from "../core/gherkin/model";
@@ -191,6 +194,13 @@ export class RunService {
     this.runStartedAt = Date.now();
     const progressParser = new LiveProgressParser(req.totalExpected);
 
+    const { dotnetReq, preCommandMessages } = this.buildDotnetRunRequest(
+      req,
+      filter,
+      trxFileName,
+      loadedEnv.vars,
+    );
+
     let buffer = "";
     const capture = (chunk: string): string => {
       const clean = sanitize(chunk);
@@ -203,19 +213,12 @@ export class RunService {
     };
 
     const result = await runDotnetTest(
-      {
-        dotnetPath: req.settings.dotnetPath,
-        projectDir: req.projectDir,
-        testTarget: req.testTarget,
-        filter,
-        stage: req.stage,
-        mode: MODE_PROFILES[req.mode],
-        resultsDir: "TestResults",
-        trxFileName,
-        extraEnv: loadedEnv.vars,
-      },
+      dotnetReq,
       {
         onStart: (cmd) => {
+          for (const msg of preCommandMessages) {
+            capture(`${msg}\n`);
+          }
           req.onStart?.(cmd);
           capture(`[bdd-pilot] ${sanitize(cmd)}\n`);
         },
@@ -317,6 +320,38 @@ export class RunService {
     };
   }
 
+  private buildDotnetRunRequest(
+    req: RunRequest,
+    filter: string | undefined,
+    trxFileName: string,
+    extraEnv?: Record<string, string>,
+  ): { dotnetReq: DotnetRunRequest; preCommandMessages: string[] } {
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const resolution = resolveRunSettingsPath(workspaceRoot, req.settings.runSettingsPath);
+    const preCommandMessages: string[] = [];
+    if (resolution.missingPath) {
+      preCommandMessages.push(formatRunSettingsMissingMessage(resolution.missingPath));
+    }
+    const configuration = req.settings.runConfiguration.trim() || undefined;
+    return {
+      dotnetReq: {
+        dotnetPath: req.settings.dotnetPath,
+        projectDir: req.projectDir,
+        testTarget: req.testTarget,
+        filter,
+        stage: req.stage,
+        mode: MODE_PROFILES[req.mode],
+        resultsDir: "TestResults",
+        trxFileName,
+        configuration,
+        noBuild: req.settings.runNoBuild,
+        settingsPath: resolution.settingsPath,
+        extraEnv,
+      },
+      preCommandMessages,
+    };
+  }
+
   private async runDebug(req: RunRequest, filter?: string): Promise<RunServiceResult> {
     if (this.debugActive) {
       return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
@@ -332,14 +367,8 @@ export class RunService {
     const trxPath = resolveTrxPath(req.projectDir, "TestResults", trxFileName);
     this.runStartedAt = Date.now();
 
-    const args = ["test"];
-    if (req.testTarget && /\.(csproj|sln)$/i.test(req.testTarget)) {
-      args.push(req.testTarget);
-    }
-    if (filter) {
-      args.push("--filter", filter);
-    }
-    appendTrxLoggerArgs(args, trxFileName);
+    const { dotnetReq, preCommandMessages } = this.buildDotnetRunRequest(req, filter, trxFileName);
+    const args = buildArgs(dotnetReq, { includeXUnitRunSettings: false });
 
     const config: vscode.DebugConfiguration = {
       type: "coreclr",
@@ -353,6 +382,9 @@ export class RunService {
     };
 
     this.pendingDebug = { trxPath, req, filter };
+    for (const msg of preCommandMessages) {
+      req.onOutput?.(`${msg}\n`);
+    }
     req.onOutput?.(
       `[bdd-pilot] Starting debugger: ${req.settings.dotnetPath} ${args.join(" ")}\n`,
     );

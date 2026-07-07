@@ -8,6 +8,13 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.8.0] — 2026-07-07
+
+### Added
+- **`bddPilot.run.configuration`** — optional `dotnet test --configuration` (`Debug` / `Release`)
+- **`bddPilot.run.noBuild`** — pass `--no-build` when enabled
+- **`bddPilot.run.runSettings`** — optional `.runsettings` path for `--settings` (run + debug parity)
+
 ## [1.7.3] — 2026-07-07
 
 ### Added

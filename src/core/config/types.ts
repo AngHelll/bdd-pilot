@@ -40,6 +40,8 @@ export const MODE_PROFILES: Record<ParallelismMode, ModeProfile> = {
   },
 };
 
+export type RunConfiguration = "" | "Debug" | "Release";
+
 export interface RunnerSettings {
   projectPath: string;
   defaultStage: Stage;
@@ -47,6 +49,11 @@ export interface RunnerSettings {
   requireConfirmationForStages: Stage[];
   dotnetPath: string;
   filterMapping: FilterMappingConfig;
+  /** Empty = omit `--configuration`. */
+  runConfiguration: RunConfiguration;
+  runNoBuild: boolean;
+  /** Raw path from settings; resolved at run time. */
+  runSettingsPath: string;
 }
 
 export const DEFAULT_SETTINGS: RunnerSettings = {
@@ -56,6 +63,9 @@ export const DEFAULT_SETTINGS: RunnerSettings = {
   requireConfirmationForStages: ["stg", "prod"],
   dotnetPath: "dotnet",
   filterMapping: DEFAULT_FILTER_MAPPING,
+  runConfiguration: "",
+  runNoBuild: false,
+  runSettingsPath: "",
 };
 
 export function isStage(value: string): value is Stage {

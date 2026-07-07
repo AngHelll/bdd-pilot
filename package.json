@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.7.3",
+  "version": "1.8.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -375,6 +375,31 @@
           "type": "string",
           "default": "dotnet",
           "description": "Path to the dotnet executable."
+        },
+        "bddPilot.run.configuration": {
+          "type": "string",
+          "enum": [
+            "",
+            "Debug",
+            "Release"
+          ],
+          "default": "",
+          "enumDescriptions": [
+            "%bddPilot.configuration.run.configuration.enum.default%",
+            "%bddPilot.configuration.run.configuration.enum.debug%",
+            "%bddPilot.configuration.run.configuration.enum.release%"
+          ],
+          "description": "%bddPilot.configuration.run.configuration.description%"
+        },
+        "bddPilot.run.noBuild": {
+          "type": "boolean",
+          "default": false,
+          "description": "%bddPilot.configuration.run.noBuild.description%"
+        },
+        "bddPilot.run.runSettings": {
+          "type": "string",
+          "default": "",
+          "description": "%bddPilot.configuration.run.runSettings.description%"
         },
         "bddPilot.tree.displayMode": {
           "type": "string",

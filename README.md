@@ -164,6 +164,9 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.defaultMode` | `debug` | Default parallelism mode. |
 | `bddPilot.requireConfirmationForStages` | `["stg","prod"]` | Stages that require confirmation. |
 | `bddPilot.dotnetPath` | `dotnet` | Path to the `dotnet` executable. |
+| `bddPilot.run.configuration` | `""` | Optional `dotnet test --configuration`: `Debug`, `Release`, or empty (omit). |
+| `bddPilot.run.noBuild` | `false` | When `true`, pass `--no-build` (skip build; requires prior successful build). |
+| `bddPilot.run.runSettings` | `""` | Path to a `.runsettings` file (workspace-relative or absolute) for `--settings`. |
 | `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (less duplicate roll-ups). |
 | `bddPilot.tree.groupBy` | `domain` | Tree grouping: `domain` (folder layout) or `tag` (`@smoke` folders). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
@@ -211,7 +214,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.7.3** (README refresh + dashboard last-run diagnostic). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.8.0** (dotnet run flags P1). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

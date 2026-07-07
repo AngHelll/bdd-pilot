@@ -18,6 +18,7 @@ import { readStatusBarDisplayMode, StatusBarDisplayMode } from "./core/config/st
 import {
   DEFAULT_SETTINGS,
   ParallelismMode,
+  RunConfiguration,
   RunnerSettings,
   Stage,
   isMode,
@@ -1234,6 +1235,10 @@ function readBindingGate(): BindingGateMode {
   return isBindingGateMode(value) ? value : "warn";
 }
 
+function isRunConfiguration(value: string): value is RunConfiguration {
+  return value === "" || value === "Debug" || value === "Release";
+}
+
 function readSettings(): RunnerSettings {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
   const stage = cfg.get<string>("defaultStage", DEFAULT_SETTINGS.defaultStage);
@@ -1241,6 +1246,7 @@ function readSettings(): RunnerSettings {
   const confirmStages = cfg
     .get<string[]>("requireConfirmationForStages", DEFAULT_SETTINGS.requireConfirmationForStages)
     .filter(isStage);
+  const runConfiguration = cfg.get<string>("run.configuration", DEFAULT_SETTINGS.runConfiguration);
   return {
     projectPath: cfg.get<string>("projectPath", DEFAULT_SETTINGS.projectPath),
     defaultStage: isStage(stage) ? stage : DEFAULT_SETTINGS.defaultStage,
@@ -1248,6 +1254,11 @@ function readSettings(): RunnerSettings {
     requireConfirmationForStages: confirmStages as Stage[],
     dotnetPath: cfg.get<string>("dotnetPath", DEFAULT_SETTINGS.dotnetPath),
     filterMapping: readFilterMapping(cfg),
+    runConfiguration: isRunConfiguration(runConfiguration)
+      ? runConfiguration
+      : DEFAULT_SETTINGS.runConfiguration,
+    runNoBuild: cfg.get<boolean>("run.noBuild", DEFAULT_SETTINGS.runNoBuild),
+    runSettingsPath: cfg.get<string>("run.runSettings", DEFAULT_SETTINGS.runSettingsPath),
   };
 }
 

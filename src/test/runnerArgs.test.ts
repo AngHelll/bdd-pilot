@@ -73,4 +73,35 @@ describe("dotnet test args", () => {
     });
     assert.notStrictEqual(args[1], "/proj/src");
   });
+
+  it("includes configuration, no-build, and settings in order before trx logger", () => {
+    const args = buildArgs({
+      ...base,
+      configuration: "Release",
+      noBuild: true,
+      settingsPath: "/proj/test.runsettings",
+    });
+    const configIdx = args.indexOf("--configuration");
+    const noBuildIdx = args.indexOf("--no-build");
+    const settingsIdx = args.indexOf("--settings");
+    const loggerIdx = args.indexOf("--logger");
+    assert.ok(configIdx >= 0 && args[configIdx + 1] === "Release");
+    assert.ok(noBuildIdx >= 0);
+    assert.ok(settingsIdx >= 0 && args[settingsIdx + 1] === "/proj/test.runsettings");
+    assert.ok(configIdx < noBuildIdx && noBuildIdx < settingsIdx && settingsIdx < loggerIdx);
+  });
+
+  it("omits run flags when unset", () => {
+    const args = buildArgs({ ...base });
+    assert.ok(!args.includes("--configuration"));
+    assert.ok(!args.includes("--no-build"));
+    assert.ok(!args.includes("--settings"));
+  });
+
+  it("can omit xUnit RunSettings for debug launches", () => {
+    const args = buildArgs({ ...base, filter: "Category=smoke" }, { includeXUnitRunSettings: false });
+    assert.ok(!args.includes("--"));
+    assert.ok(!args.some((a) => a.startsWith("xUnit.")));
+    assert.ok(args.includes("--filter"));
+  });
 });

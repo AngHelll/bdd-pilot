@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.7.3 (Marketplace)** · **Next: v1.x ecosystem** · **313 unit tests**
+> **Current release: v1.8.0 (Marketplace)** · **Next: v1.x ecosystem** · **322 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.3** |
-| 🎯 Next | **v1.x** ecosystem APIs · dotnet flags · MCP post-v1.0 |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.0** |
+| 🎯 Next | **v1.x** ecosystem APIs · MCP post-v1.0 |
 | 🎯 Ecosystem | Jarvis cross-ext |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅) · dotnet flags · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.8.0** | dotnet run flags P1 — configuration, no-build, runsettings · spec `dotnet-run-flags-v1.8.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -172,6 +173,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.8.0 — dotnet run flags (P1) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Settings** | `bddPilot.run.configuration`, `run.noBuild`, `run.runSettings` |
+| **Runner** | `buildArgs` order: configuration → no-build → settings → TRX → filter → xUnit |
+| **Debug** | Same flags via shared `buildArgs` (no xUnit inline) |
+| **Core** | `runSettingsPath.ts` resolver + tests (322 unit tests) |
 
 ### v1.7.3 — README refresh + dashboard last-run diagnostic ✅ shipped
 
@@ -503,4 +513,4 @@ src/
 
 ---
 
-*Last updated: v1.7.3 shipped — README + dashboard diagnostic.*
+*Last updated: v1.8.0 shipped — dotnet run flags P1.*
