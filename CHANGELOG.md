@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.7.3] — 2026-07-07
+
+### Added
+- **Dashboard last-run diagnostic** — top post-run diagnostic card in the webview dashboard (parity with tree summary v1.7.2)
+
+### Changed
+- **README** — v1.7.x features, who it's for / not for, configuration table, diagnostics surfacing
+
 ## [1.7.2] — 2026-07-06
 
 ### Added

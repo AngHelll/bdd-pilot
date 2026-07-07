@@ -1,8 +1,13 @@
 import * as crypto from "crypto";
 import * as vscode from "vscode";
+import { Diagnostic } from "../core/diagnostics/analyzer";
 import { PilotLocale, t } from "../core/i18n";
 import { formatRollupDescriptionLocalized } from "../core/gherkin/outcomeRollup";
 import { DashboardActionsViewModel, DashboardWebviewCommand, parseDashboardWebviewMessage } from "../core/results/dashboardActions";
+import {
+  dashboardDiagnosticSeverityClass,
+  formatDashboardDiagnosticLines,
+} from "../core/results/dashboardDiagnostic";
 import { computeDashboardTotals, formatHistoryScopeDisplay } from "../core/results/dashboardFormat";
 import { isCanceledRun, LastKnownSnapshot, runHistoryStatus } from "../core/results/dashboardLastKnown";
 import { formatDuration } from "../core/results/durationFormat";
@@ -13,6 +18,7 @@ export interface DashboardContext {
   lastKnown?: LastKnownSnapshot;
   rehydrateNotice?: RehydrateNotice;
   actions?: DashboardActionsViewModel;
+  primaryDiagnostic?: Diagnostic;
 }
 
 export class DashboardPanel {
@@ -98,6 +104,10 @@ export class DashboardPanel {
       ? renderLastKnownSection(context.lastKnown, locale)
       : "";
 
+    const primaryDiagnosticSection = context.primaryDiagnostic
+      ? renderPrimaryDiagnosticSection(context.primaryDiagnostic, locale)
+      : "";
+
     const actionsSection = context.actions
       ? renderActionsSection(context.actions, locale, nonce)
       : "";
@@ -137,6 +147,12 @@ export class DashboardPanel {
     }
     .action-btn:hover:not(:disabled) { background: var(--vscode-button-hoverBackground); }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .diagnostic-card { background: var(--vscode-editor-inactiveSelectionBackground); padding: 12px 16px; border-radius: 6px; margin: 12px 0; max-width: 560px; }
+    .diagnostic-card .diag-title { font-weight: 600; margin: 0 0 6px 0; }
+    .diagnostic-card.diag-error { border-left: 3px solid var(--vscode-errorForeground); }
+    .diagnostic-card.diag-warning { border-left: 3px solid var(--vscode-editorWarning-foreground); }
+    .diagnostic-card.diag-error .diag-title { color: var(--vscode-errorForeground); }
+    .diagnostic-card.diag-warning .diag-title { color: var(--vscode-editorWarning-foreground); }
   </style>
 </head>
 <body>
@@ -149,6 +165,7 @@ export class DashboardPanel {
     <div class="stat"><strong class="fail">${totals.failed}</strong> ${escapeHtml(t(locale, "dashboard.statFailed"))}</div>
     ${canceledStat}
   </div>
+  ${primaryDiagnosticSection}
   ${lastKnownSection}
   ${actionsSection}
   <h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
@@ -158,6 +175,21 @@ export class DashboardPanel {
 </body>
 </html>`;
   }
+}
+
+function renderPrimaryDiagnosticSection(diagnostic: Diagnostic, locale: PilotLocale): string {
+  const lines = formatDashboardDiagnosticLines(diagnostic, locale);
+  const severityClass = dashboardDiagnosticSeverityClass(diagnostic);
+  const detailLine = lines.detailLine
+    ? `<p class="hint">${escapeHtml(lines.detailLine)}</p>`
+    : "";
+
+  return `<h2>${escapeHtml(t(locale, "dashboard.primaryDiagnosticTitle"))}</h2>
+  <div class="diagnostic-card ${severityClass}">
+    <p class="diag-title">${escapeHtml(lines.titleLine)}</p>
+    ${detailLine}
+    <p class="hint">${escapeHtml(lines.hintLine)}</p>
+  </div>`;
 }
 
 function renderActionsSection(

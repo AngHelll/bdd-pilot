@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.7.2 (Marketplace)** · **306 unit tests**
+> **Current release: v1.7.3 (Marketplace)** · **Next: v1.x ecosystem** · **313 unit tests**
 
 ---
 
@@ -9,9 +9,10 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.2** |
-| 🎯 Ecosystem | Jarvis cross-ext · dashboard diagnostic card |
-| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate 📋) · dotnet flags · MCP post-v1.0 |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.7.3** |
+| 🎯 Next | **v1.x** ecosystem APIs · dotnet flags · MCP post-v1.0 |
+| 🎯 Ecosystem | Jarvis cross-ext |
+| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅) · dotnet flags · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
 
@@ -50,6 +51,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.0** | Tree search visibility + run filtered — chip, persist, `@tag` syntax · spec `tree-search-visibility-v1.7.md` |
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
+| **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
 
@@ -70,6 +72,7 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 | **Tree search + run filtered** | **bdd-pilot** | **1.7.0** | **✅ 1.7.0** | **✅** | — |
 | **Controls polish (Slice C)** | **bdd-pilot** | **1.7.1** | **✅ 1.7.1** | **✅** | — |
 | **Tree summary diagnostics** | **bdd-pilot** | **1.7.2** | **✅ 1.7.2** | **✅** | — |
+| **README + dashboard diagnostic** | **bdd-pilot** | **✅ 1.7.3** | **✅ 1.7.3** | **✅** | — |
 | Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
 | MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
 
@@ -169,6 +172,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.7.3 — README refresh + dashboard last-run diagnostic ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **README** | v1.7.x features, who it's for / not for, config table (`groupBy`, `locale`), diagnostics surfacing |
+| **Dashboard** | Top-1 post-run diagnostic card below stats (parity tree v1.7.2) |
+| **Core** | `dashboardDiagnostic.ts`, `resolveDashboardPrimaryDiagnostic` (313 unit tests) |
 
 ### v1.7.2 — Diagnostics on tree summary row ✅ shipped
 
@@ -492,4 +503,4 @@ src/
 
 ---
 
-*Last updated: v1.7.2 shipped — tree summary diagnostics.*
+*Last updated: v1.7.3 shipped — README + dashboard diagnostic.*

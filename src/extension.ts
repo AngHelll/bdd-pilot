@@ -40,6 +40,7 @@ import {
 } from "./core/runner/liveProgress";
 import { estimateTestCount } from "./core/runner/runEstimate";
 import { pickPrimaryDiagnostic } from "./core/diagnostics/primaryDiagnostic";
+import { resolveDashboardPrimaryDiagnostic } from "./core/results/dashboardDiagnostic";
 import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "./core/diagnostics/analyzer";
 import { buildAiFailureContext } from "./core/diagnostics/aiFailureContext";
 import {
@@ -167,6 +168,10 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     return {
       lastKnown: summary.lastKnown,
       rehydrateNotice: summary.rehydrateNotice,
+      primaryDiagnostic: resolveDashboardPrimaryDiagnostic(
+        summary.running,
+        runService.getLastRunSnapshot()?.diagnostics,
+      ),
       actions: buildDashboardActionsViewModel({
         history: runService.getHistory(),
         sessionSnapshot,

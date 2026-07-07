@@ -57,6 +57,13 @@ toast with **Copy for AI**:
 - **Manual / pre-release:** download the `.vsix` from [GitHub Releases](https://github.com/AngHelll/bdd-pilot/releases) → Extensions → `…` → **Install from VSIX…**
 - **Try the sample:** open [`samples/minimal-bdd/`](./samples/minimal-bdd/) as the workspace after installing.
 
+## Who it's for
+
+| | |
+|---|---|
+| **For** | Reqnroll, SpecFlow, and Cucumber-style **.NET BDD** projects with `.feature` files — run, debug, and diagnose from VS Code or Cursor |
+| **Not for** | Repos **without** `.feature` files, or generic xUnit/NUnit test runners (use [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) instead) |
+
 ## Features
 
 ### Discovery & run
@@ -64,8 +71,11 @@ toast with **Copy for AI**:
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
 - **Pilot summary row** at the top of the tree — last run status (`3 passed`, `Running…`);
-  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); click for dashboard and history.
+  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); **post-run diagnostic chip**
+  (top actionable hint from the last run) with severity icon (`warning` / `info`); **filter chip** when
+  tree search is active. Click for dashboard and history.
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
+- **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); **Cancel** only while a run is active.
 - **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
   or `compact` (less duplicate roll-ups; outcomes emphasized on leaves).
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
@@ -91,10 +101,11 @@ toast with **Copy for AI**:
 
 ### Results & diagnostics
 - **TRX + Cucumber JSON**: scenarios decorated with pass / fail / skip and duration.
-- **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, and flaky scenario table.
+- **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, flaky scenario table, and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
-  errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, etc.
+  errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, pending step definitions, etc.
+  Surfaced in **Output** (`summary` or `full`), **post-run toast**, **tree summary chip**, and **dashboard card**.
 - **AI-ready failure context**: copy structured markdown of the last failed run to the
   clipboard for Cursor/Copilot (no embedded LLM — review before sharing externally).
 - **Post-run feedback**: error snippets on failed scenarios (hover + description), localized
@@ -154,6 +165,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.requireConfirmationForStages` | `["stg","prod"]` | Stages that require confirmation. |
 | `bddPilot.dotnetPath` | `dotnet` | Path to the `dotnet` executable. |
 | `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (less duplicate roll-ups). |
+| `bddPilot.tree.groupBy` | `domain` | Tree grouping: `domain` (folder layout) or `tag` (`@smoke` folders). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |
 | `bddPilot.tree.durationDisplay` | `auto` | Durations: `auto`, `ms`, `seconds`, or `compact`. Hover shows exact ms. |
@@ -161,6 +173,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.filter.featureClassSuffix` | `Feature` | Suffix for `FullyQualifiedName` filters (Reqnroll/SpecFlow default). |
 | `bddPilot.filter.tagTraitName` | `Category` | xUnit trait name for `@tags` in `--filter`. |
 | `bddPilot.filter.outlineRowFilter` | `displayName` | `displayName` = one outline row; `scenarioOnly` = whole Theory. |
+| `bddPilot.locale` | `auto` | UI language: `auto` (follow VS Code), `en`, or `es`. |
 | `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
 | `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. |
 | `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
@@ -198,7 +211,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.7.0** (tree search visibility + run filtered). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.7.3** (README refresh + dashboard last-run diagnostic). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 
