@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.9.2] — 2026-07-08
+
+### Changed
+- **Scoped run summary** — pilot summary shows only live progress while running (no global rollup from other domains/scopes); `0/N` from run start
+- **Progress notification** — no longer cancelable on dismiss; use toolbar Stop instead
+- **Failure visibility** — progress message prefixes `! N failed —` when tests fail mid-run
+- **Binding gate** — ambiguous-only runs append Output line that execution continues
+
 ## [1.9.1] — 2026-07-08
 
 ### Changed

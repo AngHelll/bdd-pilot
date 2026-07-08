@@ -101,7 +101,7 @@ describe("pilotSummaryViewModel", () => {
     assert.ok(!label.includes("No .feature files"));
   });
 
-  it("formatPilotSummaryLabel includes rollup and running prefix", () => {
+  it("formatPilotSummaryLabel shows running without global rollup during run", () => {
     const vm = buildPilotSummaryViewModel({
       storeRollup: { passed: 5, failed: 2, skipped: 0, withResults: 7 },
       storeNonEmpty: true,
@@ -111,8 +111,26 @@ describe("pilotSummaryViewModel", () => {
     });
     const label = formatPilotSummaryLabel(vm, "en");
     assert.ok(label.startsWith("Running…"));
-    assert.ok(label.includes("2 failed"));
-    assert.ok(label.includes("5 passed"));
+    assert.ok(!label.includes("2 failed"));
+    assert.ok(!label.includes("5 passed"));
+  });
+
+  it("formatPilotSummaryLabel appends live progress while running", () => {
+    const parser = new LiveProgressParser(8);
+    parser.feed("[xUnit.net]     Passed A.Test1 [1 ms]\n");
+    parser.feed("[xUnit.net]     Passed A.Test2 [1 ms]\n");
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 17, failed: 0, skipped: 0, withResults: 17 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      liveProgress: parser.getState(),
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.startsWith("Running…"));
+    assert.ok(label.includes("2/8"));
+    assert.ok(!label.includes("17 passed"));
   });
 
   it("formatPilotSummaryLabel appends rehydrate suffix without filename", () => {
@@ -263,7 +281,19 @@ describe("pilotSummaryViewModel", () => {
     assert.ok(description?.includes("smoke"));
   });
 
-  it("formatPilotSummaryDescription hides live progress when completed is zero", () => {
+  it("formatPilotSummaryDescription shows 0/N before first test completes", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      liveProgress: new LiveProgressParser(12).getState(),
+    });
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "0/12");
+  });
+
+  it("formatPilotSummaryDescription hides live progress when no expected and completed zero", () => {
     const vm = buildPilotSummaryViewModel({
       storeRollup: undefined,
       storeNonEmpty: false,

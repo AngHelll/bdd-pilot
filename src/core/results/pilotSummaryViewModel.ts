@@ -107,15 +107,32 @@ function emptyStateSummaryLabel(kind: TreeEmptyKind, locale: PilotLocale): strin
   }
 }
 
+/** Live progress text for summary row when meaningful (not "Starting…"). */
+function resolveLiveProgressSummaryText(
+  model: PilotSummaryViewModel,
+  locale: PilotLocale,
+): string | undefined {
+  if (!model.running || !model.liveProgress) {
+    return undefined;
+  }
+  const message = formatProgressMessage(model.liveProgress, locale);
+  if (message === t(locale, "progress.starting")) {
+    return undefined;
+  }
+  return message;
+}
+
 /** Tree row label for the global pilot summary (Capa 1). */
 export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: PilotLocale): string {
   const parts: string[] = [];
 
   if (model.running) {
     parts.push(t(locale, "tree.summaryRunning"));
-  }
-
-  if (model.lastKnown) {
+    const liveText = resolveLiveProgressSummaryText(model, locale);
+    if (liveText) {
+      parts.push(liveText);
+    }
+  } else if (model.lastKnown) {
     const rollup = {
       passed: model.lastKnown.passed,
       failed: model.lastKnown.failed,
@@ -126,7 +143,7 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
     if (body) {
       parts.push(body);
     }
-  } else if (!model.running) {
+  } else {
     parts.push(emptyStateSummaryLabel(model.emptyKind ?? "none", locale));
   }
 
@@ -149,8 +166,9 @@ export function formatPilotSummaryDescription(
   if (model.searchQuery) {
     return formatFilterChipDescription(model.searchQuery, locale);
   }
-  if (model.running && model.liveProgress && model.liveProgress.completed > 0) {
-    return formatProgressMessage(model.liveProgress, locale);
+  const liveText = resolveLiveProgressSummaryText(model, locale);
+  if (liveText) {
+    return liveText;
   }
   const diagnostic = resolveSummaryDiagnostic(model);
   if (diagnostic) {

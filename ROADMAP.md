@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.9.1 (Marketplace)** · **Next: v1.x backlog** · **350 unit tests**
+> **Current release: v1.9.2 (Marketplace)** · **Next: v1.x backlog** · **353 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.1** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.2** |
 | 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.9.2** | Scoped run progress — summary sin rollup global, 0/N, notif no-cancel, fallos en message, ambiguous continue · spec `scoped-run-progress-v1.9.2.md` |
 | **1.9.1** | Cancel polish — pre-run discovery cancel + generic cancel toast · spec `cancel-polish-v1.9.1.md` |
 | **1.9.0** | Worktree ecosystem parity — TRX mapping report, tree `not_in_trx`, rehydrate↔history gate, summary chip lite, `matchRunTarget` domain/tag · spec `worktree-ecosystem-parity-v1.9.0.md` |
 | **1.8.4** | Binding gate UX — ambiguous → Output; unbound warn non-modal · spec `binding-gate-ux-v1.8.4.md` |
@@ -180,6 +181,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.9.2 — scoped run progress ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Summary** | Live progress only while running; no global store rollup mixed with partial runs |
+| **Progress** | `0/N` from start; `! N failed —` prefix on failures; notification not dismiss-cancelable |
+| **Binding gate** | Ambiguous-only scope logs continue line in Output (353 unit tests) |
 
 ### v1.9.1 — cancel polish ✅ shipped
 
@@ -551,4 +560,4 @@ src/
 
 ---
 
-*Last updated: v1.9.1 shipped — cancel polish.*
+*Last updated: v1.9.2 shipped — scoped run progress.*

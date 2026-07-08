@@ -168,6 +168,7 @@ const EN = {
   "progress.discovering": "Discovering outline rows…",
   "progress.debugging": "Debugging tests ({stage})",
   "progress.starting": "Starting…",
+  "progress.failurePrefix": "! {count} failed — ",
   "progress.doneCount": "{count} done",
 
   "envGuard.prodConfirm":
@@ -195,6 +196,8 @@ const EN = {
     "{total} binding issue(s) in run scope ({unbound} unbound, {ambiguous} ambiguous).",
   "bindingGate.outputHeader": "[bdd-pilot] Binding check:",
   "bindingGate.outputAmbiguousSummary": "{count} ambiguous binding(s) in run scope.",
+  "bindingGate.ambiguousContinue":
+    "Ambiguous bindings do not block this run — tests will execute.",
   "bindingGate.promptUnboundSummary": "{count} unbound step(s) in run scope.",
   "bindingGate.modalMore": "+{count} more",
   "bindingGate.issueUnbound": "[unbound]",
@@ -483,6 +486,7 @@ const ES: Record<keyof typeof EN, string> = {
   "progress.discovering": "Descubriendo filas de outline…",
   "progress.debugging": "Depurando tests ({stage})",
   "progress.starting": "Iniciando…",
+  "progress.failurePrefix": "! {count} fallidos — ",
   "progress.doneCount": "{count} listos",
 
   "envGuard.prodConfirm":
@@ -510,6 +514,8 @@ const ES: Record<keyof typeof EN, string> = {
     "{total} problema(s) de binding en el scope ({unbound} unbound, {ambiguous} ambiguous).",
   "bindingGate.outputHeader": "[bdd-pilot] Comprobación de bindings:",
   "bindingGate.outputAmbiguousSummary": "{count} binding(s) ambiguo(s) en el scope.",
+  "bindingGate.ambiguousContinue":
+    "Los bindings ambiguos no bloquean esta ejecución — los tests se ejecutarán.",
   "bindingGate.promptUnboundSummary": "{count} step(s) sin binding en el scope.",
   "bindingGate.modalMore": "+{count} más",
   "bindingGate.issueUnbound": "[sin binding]",

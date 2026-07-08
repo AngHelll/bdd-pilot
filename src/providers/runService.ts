@@ -723,6 +723,9 @@ export class RunService {
 
     if (shouldLogAmbiguousIssues(ambiguousIssues)) {
       this.logAmbiguousBindingIssues(req, ambiguousIssues);
+      if (unboundIssues.length === 0) {
+        req.onOutput?.(`${t(req.locale, "bindingGate.ambiguousContinue")}\n`);
+      }
     }
 
     if (!shouldPromptForUnboundIssues(unboundIssues)) {

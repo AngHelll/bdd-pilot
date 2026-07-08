@@ -942,7 +942,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         title: opts?.debug
           ? tr("progress.debugging", { stage: currentStage })
           : tr("progress.running", { stage: currentStage, mode: currentMode }),
-        cancellable: !opts?.debug,
+        cancellable: false,
       },
       async (progress, token) => {
         token.onCancellationRequested(() => controller.abort());

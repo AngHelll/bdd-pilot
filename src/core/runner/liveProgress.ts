@@ -139,7 +139,11 @@ export function formatProgressMessage(state: LiveProgressState, locale: PilotLoc
   if (parts.length === 0) {
     return t(locale, "progress.starting");
   }
-  return parts.join(sep);
+  const body = parts.join(sep);
+  if (failed > 0) {
+    return `${t(locale, "progress.failurePrefix", { count: String(failed) })}${body}`;
+  }
+  return body;
 }
 
 export function formatProgressTitle(
