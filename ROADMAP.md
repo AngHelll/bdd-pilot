@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.8.3 (Marketplace)** · **Next: v1.x backlog** · **334 unit tests**
+> **Current release: v1.8.4 (Marketplace)** · **Next: v1.x backlog** · **339 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.3** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.4** |
 | 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.8.4** | Binding gate UX — ambiguous → Output; unbound warn non-modal · spec `binding-gate-ux-v1.8.4.md` |
 | **1.8.3** | Fix flaky dashboard scenario links (webview script + path resolve) |
 | **1.8.2** | Live progress on pilot summary row — `formatProgressMessage` in description during run · spec `live-progress-summary-v1.8.2.md` |
 | **1.8.1** | Flaky dashboard enriched — avg duration, last error, open scenario · spec `flaky-enriched-v1.8.1.md` |

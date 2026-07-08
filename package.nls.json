@@ -39,7 +39,7 @@
   "bddPilot.configuration.statusBar.display.enum.detailed": "Legacy layout with separate STAGE, mode, running, and project items.",
   "bddPilot.configuration.preRun.bindingGate.description": "Before dotnet test, check step bindings via BDD Guardian resolveStep (requires anghelll.bdd-guardian v0.8.3+).",
   "bddPilot.configuration.preRun.bindingGate.enum.off": "Disabled — same behavior as before v1.5.",
-  "bddPilot.configuration.preRun.bindingGate.enum.warn": "Show a modal for unbound or ambiguous bindings; you can cancel or run anyway.",
+  "bddPilot.configuration.preRun.bindingGate.enum.warn": "Log ambiguous bindings to Output; notify (non-modal) for unbound — Run anyway or Cancel.",
   "bddPilot.configuration.preRun.bindingGate.enum.block": "Block runs with missing (unbound) bindings; ambiguous bindings still allow run anyway.",
   "bddPilot.configuration.run.configuration.description": "Optional dotnet test --configuration (Debug or Release). Empty omits the flag (project default).",
   "bddPilot.configuration.run.configuration.enum.default": "Omit --configuration (use project/CLI default).",

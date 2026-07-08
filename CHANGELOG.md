@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.8.4] — 2026-07-08
+
+### Changed
+- **Pre-run binding gate UX** — ambiguous bindings log to Output only (no modal); unbound in `warn` mode uses a non-modal notification with Run anyway / Cancel (EN/ES)
+
 ## [1.8.3] — 2026-07-07
 
 ### Fixed

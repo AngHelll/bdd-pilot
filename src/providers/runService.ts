@@ -43,7 +43,16 @@ import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
 import { collectStepsForRunScope } from "../core/bindings/collectStepsForRunScope";
 import { evaluateBindingGate } from "../core/bindings/evaluateBindingGate";
 import { resolveBindingGateUx } from "../core/bindings/resolveBindingGateUx";
-import { formatBindingGateModalMessage } from "../core/bindings/bindingGateMessages";
+import {
+  formatBindingGateAmbiguousOutput,
+  formatBindingGateUnboundPrompt,
+} from "../core/bindings/bindingGateMessages";
+import {
+  resolveUnboundPromptKind,
+  shouldLogAmbiguousIssues,
+  shouldPromptForUnboundIssues,
+} from "../core/bindings/bindingGatePresentation";
+import { BindingGateIssue } from "../core/bindings/evaluateBindingGate";
 import { GuardianSkipReason, tryGetGuardianResolveStep } from "./guardianIntegration";
 
 export interface RunRequest {
@@ -713,18 +722,30 @@ export class RunService {
       locations,
       guardian.resolveStep,
     );
-    const ux = resolveBindingGateUx(mode, unboundIssues, ambiguousIssues);
-    if (ux === "proceed") {
+
+    if (shouldLogAmbiguousIssues(ambiguousIssues)) {
+      this.logAmbiguousBindingIssues(req, ambiguousIssues);
+    }
+
+    if (!shouldPromptForUnboundIssues(unboundIssues)) {
       return true;
     }
 
-    const message = formatBindingGateModalMessage(req.locale, unboundIssues, ambiguousIssues);
-    if (ux === "modal-warn") {
+    const ux = resolveBindingGateUx(mode, unboundIssues, ambiguousIssues);
+    const promptKind = resolveUnboundPromptKind(ux);
+    if (!promptKind) {
+      return true;
+    }
+
+    const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues);
+    if (promptKind === "warn-non-modal") {
       const runAnyway = t(req.locale, "bindingGate.runAnyway");
+      const cancel = t(req.locale, "bindingGate.cancel");
       const choice = await vscode.window.showWarningMessage(
         message,
-        { modal: true },
+        { modal: false },
         runAnyway,
+        cancel,
       );
       return choice === runAnyway;
     }
@@ -732,6 +753,12 @@ export class RunService {
     const ok = t(req.locale, "bindingGate.ok");
     await vscode.window.showWarningMessage(message, { modal: true }, ok);
     return false;
+  }
+
+  private logAmbiguousBindingIssues(req: RunRequest, ambiguousIssues: BindingGateIssue[]): void {
+    const header = t(req.locale, "bindingGate.outputHeader");
+    const body = formatBindingGateAmbiguousOutput(req.locale, ambiguousIssues);
+    req.onOutput?.(`\n${header}\n${body}\n`);
   }
 
   private logBindingGateSkipped(req: RunRequest, reason: GuardianSkipReason): void {

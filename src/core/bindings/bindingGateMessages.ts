@@ -17,24 +17,34 @@ function formatIssueLine(locale: PilotLocale, issue: BindingGateIssue): string {
   return `${prefix} ${featureBaseName(issue.featurePath)}: line ${line1} — ${issue.stepText}`;
 }
 
-export function formatBindingGateModalMessage(
-  locale: PilotLocale,
-  unboundIssues: BindingGateIssue[],
-  ambiguousIssues: BindingGateIssue[],
-): string {
-  const summary = t(locale, "bindingGate.modalSummary", {
-    unbound: String(unboundIssues.length),
-    ambiguous: String(ambiguousIssues.length),
-    total: String(unboundIssues.length + ambiguousIssues.length),
-  });
-
-  const ordered = [...unboundIssues, ...ambiguousIssues];
-  const shown = ordered.slice(0, MAX_DETAIL_LINES);
+function formatDetailLines(locale: PilotLocale, issues: BindingGateIssue[]): string[] {
+  const shown = issues.slice(0, MAX_DETAIL_LINES);
   const lines = shown.map((issue) => formatIssueLine(locale, issue));
-  const remaining = ordered.length - shown.length;
+  const remaining = issues.length - shown.length;
   if (remaining > 0) {
     lines.push(t(locale, "bindingGate.modalMore", { count: String(remaining) }));
   }
+  return lines;
+}
 
-  return `${summary}\n\n${lines.join("\n")}`;
+/** Ambiguous-only binding issues for the BDD Pilot Output channel (no modal). */
+export function formatBindingGateAmbiguousOutput(
+  locale: PilotLocale,
+  ambiguousIssues: BindingGateIssue[],
+): string {
+  const summary = t(locale, "bindingGate.outputAmbiguousSummary", {
+    count: String(ambiguousIssues.length),
+  });
+  return `${summary}\n${formatDetailLines(locale, ambiguousIssues).join("\n")}`;
+}
+
+/** Unbound issues for pre-run warn notification or block modal. */
+export function formatBindingGateUnboundPrompt(
+  locale: PilotLocale,
+  unboundIssues: BindingGateIssue[],
+): string {
+  const summary = t(locale, "bindingGate.promptUnboundSummary", {
+    count: String(unboundIssues.length),
+  });
+  return `${summary}\n\n${formatDetailLines(locale, unboundIssues).join("\n")}`;
 }
