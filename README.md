@@ -71,7 +71,8 @@ toast with **Copy for AI**:
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
   with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
 - **Pilot summary row** at the top of the tree — last run status (`3 passed`, `Running…`);
-  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); **post-run diagnostic chip**
+  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); **live progress** in the
+  description during runs (`7/19 · 2 failed`); **post-run diagnostic chip**
   (top actionable hint from the last run) with severity icon (`warning` / `info`); **filter chip** when
   tree search is active. Click for dashboard and history.
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
@@ -214,7 +215,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.8.1** (flaky dashboard enriched). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.8.2** (live progress on summary row). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

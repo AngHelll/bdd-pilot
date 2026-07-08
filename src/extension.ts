@@ -96,6 +96,26 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   let currentStage: Stage = readStoredStage(context) ?? readSettings().defaultStage;
   let currentMode: ParallelismMode = readStoredMode(context) ?? readSettings().defaultMode;
   let activeRun: AbortController | undefined;
+  let activeLiveProgress: LiveProgressState | undefined;
+  let progressSummaryRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const scheduleProgressSummaryRefresh = (): void => {
+    if (progressSummaryRefreshTimer) {
+      return;
+    }
+    progressSummaryRefreshTimer = setTimeout(() => {
+      progressSummaryRefreshTimer = undefined;
+      treeProvider.refreshPilotSummary();
+    }, 120);
+  };
+
+  const clearActiveLiveProgress = (): void => {
+    activeLiveProgress = undefined;
+    if (progressSummaryRefreshTimer) {
+      clearTimeout(progressSummaryRefreshTimer);
+      progressSummaryRefreshTimer = undefined;
+    }
+  };
 
   const runService = new RunService(() =>
     context.workspaceState.get<RunHistoryEntry[]>(HISTORY_KEY, []),
@@ -116,6 +136,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       emptyKind: treeProvider.getEmptyKind(),
       searchQuery: treeProvider.getSearchQuery() || undefined,
       topDiagnostic: pickPrimaryDiagnostic(runService.getLastRunSnapshot()?.diagnostics ?? []),
+      liveProgress: activeLiveProgress,
     });
   }
 
@@ -223,11 +244,13 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         return false;
       }
       activeRun = new AbortController();
+      clearActiveLiveProgress();
       refreshUi();
       return true;
     },
     releaseRunLock: () => {
       activeRun = undefined;
+      clearActiveLiveProgress();
       refreshUi();
     },
     abortActiveRun: () => activeRun?.abort(),
@@ -840,6 +863,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     const controller = new AbortController();
     if (!opts?.debug) {
       activeRun = controller;
+      clearActiveLiveProgress();
       refreshUi();
       output.clear();
       output.show(true);
@@ -881,6 +905,10 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
         const onProgress = (state: LiveProgressState, event?: TestCompletionEvent) => {
           lastProgressState = state;
+          if (!opts?.debug) {
+            activeLiveProgress = state;
+            scheduleProgressSummaryRefresh();
+          }
           const message = formatProgressMessage(state, localeService.getLocale());
           if (event && progressIncrement > 0) {
             lastMessage = message;
@@ -974,6 +1002,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         } finally {
           if (!opts?.debug) {
             activeRun = undefined;
+            clearActiveLiveProgress();
             refreshUi();
           }
         }

@@ -66,10 +66,9 @@ import {
 } from "../core/runner/runScope";
 import { enrichFeaturesWithTheoryTests, scenarioNeedsTheoryDiscovery } from "../core/gherkin/theoryExamples";
 import {
-  formatFilterChipDescription,
+  formatPilotSummaryDescription,
   formatPilotSummaryFilterTooltip,
   formatPilotSummaryLabel,
-  formatSummaryDiagnosticChip,
   formatSummaryDiagnosticTooltip,
   PILOT_SUMMARY_DASHBOARD_COMMAND,
   PilotSummaryViewModel,
@@ -413,10 +412,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       command: filterActive ? "bddPilot.searchTests" : PILOT_SUMMARY_DASHBOARD_COMMAND,
       title: hint,
     };
-    if (filterActive && model.searchQuery) {
-      item.description = formatFilterChipDescription(model.searchQuery, locale);
-    } else if (diagnostic) {
-      item.description = formatSummaryDiagnosticChip(diagnostic, locale);
+    const description = formatPilotSummaryDescription(model, locale);
+    if (description) {
+      item.description = description;
     }
     const tooltipParts: string[] = [];
     if (filterActive && model.searchQuery) {

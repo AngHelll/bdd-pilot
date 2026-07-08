@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.8.2] — 2026-07-07
+
+### Added
+- **Live progress on pilot summary row** — tree summary description shows aggregated progress (`7/19 · 2 failed`) during runs via `formatProgressMessage` (EN/ES)
+
 ## [1.8.1] — 2026-07-07
 
 ### Added

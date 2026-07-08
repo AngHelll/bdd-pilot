@@ -3,12 +3,14 @@ import { describe, it } from "node:test";
 import {
   buildPilotSummaryViewModel,
   formatFilterChipDescription,
+  formatPilotSummaryDescription,
   formatPilotSummaryLabel,
   formatSummaryDiagnosticChip,
   formatSummaryDiagnosticTooltip,
   resolvePilotSummaryIcon,
   resolveSummaryDiagnostic,
 } from "../core/results/pilotSummaryViewModel";
+import { LiveProgressParser } from "../core/runner/liveProgress";
 import { Diagnostic } from "../core/diagnostics/analyzer";
 
 describe("pilotSummaryViewModel", () => {
@@ -223,5 +225,70 @@ describe("pilotSummaryViewModel", () => {
     const truncated = formatFilterChipDescription(long, "en");
     assert.ok(truncated.includes("…"));
     assert.ok(truncated.length < long.length + 20);
+  });
+
+  it("formatPilotSummaryDescription shows live progress while running", () => {
+    const parser = new LiveProgressParser(2);
+    parser.feed("[xUnit.net]     Passed A.Test1 [1 ms]\n");
+    parser.feed("[xUnit.net]     Failed A.Test2 [2 ms]\n");
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 1, failed: 1, skipped: 0, withResults: 2 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      liveProgress: parser.getState(),
+    });
+    const description = formatPilotSummaryDescription(vm, "en");
+    assert.ok(description?.includes("2"));
+    assert.ok(description?.includes("failed"));
+  });
+
+  it("formatPilotSummaryDescription prefers filter chip over live progress", () => {
+    const parser = new LiveProgressParser(1);
+    parser.feed("[xUnit.net]     Passed A.Test1 [1 ms]\n");
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      searchQuery: "@smoke",
+      liveProgress: parser.getState(),
+    });
+    const description = formatPilotSummaryDescription(vm, "en");
+    assert.ok(description?.includes("Filter:"));
+    assert.ok(description?.includes("smoke"));
+  });
+
+  it("formatPilotSummaryDescription hides live progress when completed is zero", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      liveProgress: new LiveProgressParser().getState(),
+    });
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), undefined);
+  });
+
+  it("formatPilotSummaryDescription shows diagnostic chip when idle", () => {
+    const diag: Diagnostic = {
+      code: "SDK_NOT_FOUND",
+      severity: "error",
+      title: "SDK missing",
+      hint: "hint",
+    };
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      topDiagnostic: diag,
+    });
+    const description = formatPilotSummaryDescription(vm, "en");
+    assert.ok(description?.includes("SDK missing"));
   });
 });

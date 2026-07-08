@@ -4,6 +4,7 @@ import { TreeEmptyKind } from "../gherkin/treeEmptyState";
 import { Diagnostic } from "../diagnostics/analyzer";
 import { diagnosticHint } from "../diagnostics/diagnosticCatalog";
 import { PilotLocale, t } from "../i18n";
+import { LiveProgressState, formatProgressMessage } from "../runner/liveProgress";
 import { resolveLastKnownSnapshot, LastKnownSnapshot } from "./dashboardLastKnown";
 import { RehydrateNotice } from "./rehydrateNotice";
 import { RunHistoryEntry } from "./runHistory";
@@ -22,6 +23,8 @@ export interface PilotSummaryViewModel {
   searchQuery?: string;
   /** Top diagnostic from last run (hidden while running). */
   topDiagnostic?: Diagnostic;
+  /** Live stdout progress during an active run (normal run only). */
+  liveProgress?: LiveProgressState;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -34,6 +37,7 @@ export interface BuildPilotSummaryOptions {
   emptyKind?: TreeEmptyKind;
   searchQuery?: string;
   topDiagnostic?: Diagnostic;
+  liveProgress?: LiveProgressState;
 }
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
@@ -50,6 +54,7 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     emptyKind: options.emptyKind ?? "none",
     searchQuery: options.searchQuery?.trim() || undefined,
     topDiagnostic: options.running ? undefined : options.topDiagnostic,
+    liveProgress: options.running ? options.liveProgress : undefined,
   };
 }
 
@@ -129,6 +134,24 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
     label = `${label.slice(0, LABEL_MAX - 1)}…`;
   }
   return label;
+}
+
+/** Tree row description: filter chip, live progress, or post-run diagnostic chip. */
+export function formatPilotSummaryDescription(
+  model: PilotSummaryViewModel,
+  locale: PilotLocale,
+): string | undefined {
+  if (model.searchQuery) {
+    return formatFilterChipDescription(model.searchQuery, locale);
+  }
+  if (model.running && model.liveProgress && model.liveProgress.completed > 0) {
+    return formatProgressMessage(model.liveProgress, locale);
+  }
+  const diagnostic = resolveSummaryDiagnostic(model);
+  if (diagnostic) {
+    return formatSummaryDiagnosticChip(diagnostic, locale);
+  }
+  return undefined;
 }
 
 /** Summary row description when a tree search filter is active. */
