@@ -125,8 +125,13 @@ export class DashboardPanel {
       : "";
 
     const actionsSection = context.actions
-      ? renderActionsSection(context.actions, locale, nonce)
+      ? renderActionsSection(context.actions, locale)
       : "";
+    const flakyRows = flaky;
+    const flakySection =
+      flakyRows.length === 0
+        ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>`
+        : flakyTable(flakyRows, locale);
 
     return `<!DOCTYPE html>
 <html lang="${lang}">
@@ -200,7 +205,8 @@ export class DashboardPanel {
   <h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
   ${recent.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.noRuns"))}</p><p class="hint">${t(locale, "dashboard.emptyHint")}</p>` : recentRunsTable(recent, locale)}
   <h2>${escapeHtml(t(locale, "dashboard.flakyTitle"))}</h2>
-  ${flaky.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>` : flakyTableSection(flaky, locale, nonce)}
+  ${flakySection}
+  ${renderDashboardScript(nonce)}
 </body>
 </html>`;
   }
@@ -224,7 +230,6 @@ function renderPrimaryDiagnosticSection(diagnostic: Diagnostic, locale: PilotLoc
 function renderActionsSection(
   actions: DashboardActionsViewModel,
   locale: PilotLocale,
-  nonce: string,
 ): string {
   if (!actions.target) {
     return "";
@@ -258,14 +263,27 @@ function renderActionsSection(
     <button type="button" class="action-btn" data-command="rerunFailed"${rerunTitle}${actions.canRerunFailed ? "" : " disabled"}>${escapeHtml(t(locale, "dashboard.actionRerunFailed"))}</button>
     ${copyButton}
   </div>
-  <p class="hint muted">${targetLine}</p>
-  <script nonce="${nonce}">
+  <p class="hint muted">${targetLine}</p>`;
+}
+
+/** Single webview script — acquireVsCodeApi() may only be called once per page load. */
+function renderDashboardScript(nonce: string): string {
+  return `<script nonce="${nonce}">
     (function() {
       const vscode = acquireVsCodeApi();
       document.querySelectorAll("[data-command]").forEach(function(btn) {
         btn.addEventListener("click", function() {
           if (btn.hasAttribute("disabled")) return;
           vscode.postMessage({ command: btn.getAttribute("data-command") });
+        });
+      });
+      document.querySelectorAll(".flaky-open-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          vscode.postMessage({
+            command: "openFlakyScenario",
+            featurePath: btn.getAttribute("data-feature-path"),
+            scenarioLine: parseInt(btn.getAttribute("data-scenario-line") || "0", 10),
+          });
         });
       });
     })();
@@ -336,29 +354,6 @@ function scopeCell(entry: RunHistoryEntry, locale: PilotLocale): string {
   const full = entry.scopeLabel?.trim() || entry.filter?.trim() || "";
   const title = full && full !== display ? ` title="${escapeHtml(full)}"` : "";
   return `<span${title}>${escapeHtml(display)}</span>`;
-}
-
-function flakyTableSection(rows: FlakyDashboardRow[], locale: PilotLocale, nonce: string): string {
-  const table = flakyTable(rows, locale);
-  const hasOpen = rows.some((r) => r.canOpen);
-  if (!hasOpen) {
-    return table;
-  }
-  return `${table}
-  <script nonce="${nonce}">
-    (function() {
-      const vscode = acquireVsCodeApi();
-      document.querySelectorAll(".flaky-open-btn").forEach(function(btn) {
-        btn.addEventListener("click", function() {
-          vscode.postMessage({
-            command: "openFlakyScenario",
-            featurePath: btn.getAttribute("data-feature-path"),
-            scenarioLine: parseInt(btn.getAttribute("data-scenario-line") || "0", 10),
-          });
-        });
-      });
-    })();
-  </script>`;
 }
 
 function flakyTable(rows: FlakyDashboardRow[], locale: PilotLocale): string {

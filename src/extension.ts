@@ -26,6 +26,7 @@ import {
 } from "./core/config/types";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "./core/runner/filterMapping";
 import { buildDashboardActionsViewModel, buildRerunFilterFromHistoryEntry, DashboardWebviewCommand } from "./core/results/dashboardActions";
+import { resolveFlakyFeaturePath } from "./core/results/flakyDashboard";
 import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
 import { TREE_SEARCH_WORKSPACE_KEY, shouldConfirmSearchRunCap } from "./core/gherkin/treeSearch";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
@@ -1060,7 +1061,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   async function openFlakyScenario(target: { featurePath: string; scenarioLine: number }): Promise<void> {
     try {
-      const uri = vscode.Uri.file(target.featurePath);
+      const roots = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
+      const resolvedPath = resolveFlakyFeaturePath(target.featurePath, roots);
+      const uri = vscode.Uri.file(resolvedPath);
       const doc = await vscode.workspace.openTextDocument(uri);
       const line = Math.max(0, target.scenarioLine - 1);
       const position = new vscode.Position(line, 0);

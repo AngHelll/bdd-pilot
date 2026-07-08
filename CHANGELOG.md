@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.8.3] — 2026-07-07
+
+### Fixed
+- **Dashboard flaky scenario links** — single webview script (`acquireVsCodeApi` once); resolve relative feature paths when opening `.feature`
+
 ## [1.8.2] — 2026-07-07
 
 ### Added

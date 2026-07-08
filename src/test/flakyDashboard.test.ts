@@ -1,9 +1,11 @@
 import * as assert from "assert";
+import * as path from "path";
 import { describe, it } from "node:test";
 import {
   buildFlakyDashboardRows,
   lastScenarioFailureMessage,
   parseFlakyOpenMessage,
+  resolveFlakyFeaturePath,
 } from "../core/results/flakyDashboard";
 import { RunHistoryEntry, scenarioHistoryKey } from "../core/results/runHistory";
 
@@ -95,6 +97,14 @@ describe("flakyDashboard", () => {
       featurePath: "/f.feature",
       scenarioLine: 0,
     }), undefined);
+  });
+
+  it("resolveFlakyFeaturePath joins relative paths to workspace root", () => {
+    assert.strictEqual(
+      resolveFlakyFeaturePath("Features/Smoke.feature", ["/repo"]),
+      path.join("/repo", "Features/Smoke.feature"),
+    );
+    assert.strictEqual(resolveFlakyFeaturePath("/abs/F.feature", ["/repo"]), "/abs/F.feature");
   });
 });
 

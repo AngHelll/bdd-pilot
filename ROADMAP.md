@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.8.2 (Marketplace)** · **Next: v1.x backlog** · **333 unit tests**
+> **Current release: v1.8.3 (Marketplace)** · **Next: v1.x backlog** · **334 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.2** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.3** |
 | 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.8.3** | Fix flaky dashboard scenario links (webview script + path resolve) |
 | **1.8.2** | Live progress on pilot summary row — `formatProgressMessage` in description during run · spec `live-progress-summary-v1.8.2.md` |
 | **1.8.1** | Flaky dashboard enriched — avg duration, last error, open scenario · spec `flaky-enriched-v1.8.1.md` |
 | **1.8.0** | dotnet run flags P1 — configuration, no-build, runsettings · spec `dotnet-run-flags-v1.8.md` |
@@ -175,6 +176,13 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.8.3 — flaky dashboard link fix ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Fix** | Flaky scenario click — unified dashboard webview script (single `acquireVsCodeApi`) |
+| **Fix** | `resolveFlakyFeaturePath` for relative paths in run history (334 unit tests) |
 
 ### v1.8.2 — live progress on pilot summary row ✅ shipped
 
@@ -531,4 +539,4 @@ src/
 
 ---
 
-*Last updated: v1.8.2 shipped — live progress on pilot summary row.*
+*Last updated: v1.8.3 shipped — flaky dashboard link fix.*

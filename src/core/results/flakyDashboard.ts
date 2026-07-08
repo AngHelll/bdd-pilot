@@ -1,3 +1,4 @@
+import * as path from "path";
 import { runHistoryStatus } from "./dashboardLastKnown";
 import { sanitizeErrorForStore, truncateErrorSnippet } from "./outcomeFeedback";
 import {
@@ -135,4 +136,20 @@ export function parseFlakyOpenMessage(message: unknown): FlakyOpenTarget | undef
     return undefined;
   }
   return { featurePath: featurePath.trim(), scenarioLine };
+}
+
+/** Resolve stored feature path to an absolute filesystem path for openTextDocument. */
+export function resolveFlakyFeaturePath(featurePath: string, workspaceRoots: string[]): string {
+  const trimmed = featurePath.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+  if (path.isAbsolute(trimmed)) {
+    return trimmed;
+  }
+  const root = workspaceRoots[0];
+  if (root) {
+    return path.join(root, trimmed);
+  }
+  return trimmed;
 }
