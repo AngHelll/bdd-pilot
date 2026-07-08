@@ -133,6 +133,7 @@ const EN = {
   "toast.debugAlreadyActive": "A BDD Pilot debug session is already active.",
   "toast.debugNoTrx":
     "Debug session ended. No test results file was produced — check the terminal.",
+  "toast.runCanceled": "Run canceled.",
   "toast.runCanceledPartial": "Run canceled — {completed}/{expected} tests finished.",
   "toast.projectNotFound":
     "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
@@ -164,6 +165,7 @@ const EN = {
   "prompt.selectProject": "Select test project or solution for BDD Pilot",
 
   "progress.running": "Running tests ({stage}/{mode})",
+  "progress.discovering": "Discovering outline rows…",
   "progress.debugging": "Debugging tests ({stage})",
   "progress.starting": "Starting…",
   "progress.doneCount": "{count} done",
@@ -445,6 +447,7 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.debugAlreadyActive": "Ya hay una sesión de depuración BDD Pilot activa.",
   "toast.debugNoTrx":
     "Sesión de depuración finalizada. No se generó archivo de resultados — revisa la terminal.",
+  "toast.runCanceled": "Ejecución cancelada.",
   "toast.runCanceledPartial": "Ejecución cancelada — {completed}/{expected} tests completados.",
   "toast.projectNotFound":
     "BDD Pilot: no se encontró el proyecto .NET de tests. Usa 'Select Test Project' o configura 'bddPilot.projectPath'.",
@@ -477,6 +480,7 @@ const ES: Record<keyof typeof EN, string> = {
   "prompt.selectProject": "Selecciona proyecto o solución de tests para BDD Pilot",
 
   "progress.running": "Ejecutando tests ({stage}/{mode})",
+  "progress.discovering": "Descubriendo filas de outline…",
   "progress.debugging": "Depurando tests ({stage})",
   "progress.starting": "Iniciando…",
   "progress.doneCount": "{count} listos",

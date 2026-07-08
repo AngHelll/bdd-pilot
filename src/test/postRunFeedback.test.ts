@@ -130,6 +130,30 @@ describe("postRunFeedback", () => {
     assert.strictEqual(vm!.actions.length, 0);
   });
 
+  it("cancel without expected shows generic toast", () => {
+    const vm = buildPostRunFeedback({
+      ...baseInput,
+      canceled: true,
+      outputBuffer: "",
+      exitCode: null,
+    });
+    assert.ok(vm);
+    assert.strictEqual(vm!.message, "Run canceled.");
+    assert.strictEqual(vm!.actions.length, 0);
+  });
+
+  it("cancel with zero completed shows partial ratio", () => {
+    const vm = buildPostRunFeedback({
+      ...baseInput,
+      canceled: true,
+      cancelProgress: { completed: 0, expected: 19 },
+      outputBuffer: "",
+      exitCode: null,
+    });
+    assert.ok(vm);
+    assert.match(vm!.message, /0\/19/);
+  });
+
   it("off mode shows no toast", () => {
     const vm = buildPostRunFeedback({
       ...baseInput,

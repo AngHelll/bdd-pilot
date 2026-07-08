@@ -8,6 +8,12 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.9.1] — 2026-07-08
+
+### Changed
+- **Cancel during prep** — toolbar Stop and progress notification X work while `list-tests` discovers outline rows (before `dotnet test` starts)
+- **Cancel toast** — generic *Run canceled* when no expected count; partial `N/M` preserved (including `0/M` before first test)
+
 ## [1.9.0] — 2026-07-08
 
 ### Added

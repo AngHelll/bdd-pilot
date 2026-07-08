@@ -196,7 +196,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   /** Fills missing outline rows from `dotnet test --list-tests` when needed. */
-  enrichTheoryRows(listTests: () => Promise<string[]>): Promise<boolean> {
+  enrichTheoryRows(listTests: () => Promise<string[]>, signal?: AbortSignal): Promise<boolean> {
     const needsDiscovery = this.allDomains.some((domain) =>
       domain.features.some((feature) =>
         feature.scenarios.some((scenario) => scenarioNeedsTheoryDiscovery(scenario)),
@@ -218,7 +218,12 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         }
         return false;
       })
-      .catch(() => false);
+      .catch((err) => {
+        if (signal?.aborted) {
+          throw err;
+        }
+        return false;
+      });
   }
 
   setSearchQuery(query: string): void {

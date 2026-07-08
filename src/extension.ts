@@ -298,18 +298,23 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }, FEATURE_ENRICH_DEBOUNCE_MS);
   };
 
-  const enrichTheoryRows = async (): Promise<void> => {
+  const enrichTheoryRows = async (signal?: AbortSignal): Promise<void> => {
     const ctx = getProjectContext();
     if (!ctx) {
       return;
     }
     const settings = readSettings();
-    const enriched = await treeProvider.enrichTheoryRows(() =>
-      listDotnetTests({
-        dotnetPath: settings.dotnetPath,
-        projectDir: ctx.projectDir,
-        testTarget: ctx.testTarget,
-      }),
+    const enriched = await treeProvider.enrichTheoryRows(
+      () =>
+        listDotnetTests(
+          {
+            dotnetPath: settings.dotnetPath,
+            projectDir: ctx.projectDir,
+            testTarget: ctx.testTarget,
+          },
+          signal,
+        ),
+      signal,
     );
     if (enriched) {
       managed.refresh();
@@ -905,7 +910,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         ? undefined
         : estimateTestCount(runTargets, project.discoveryRoot);
 
-    if (!opts?.debug && treeProvider.needsTheoryDiscovery()) {
+    if (opts?.debug && treeProvider.needsTheoryDiscovery()) {
       await enrichTheoryRows();
     }
 
@@ -914,29 +919,22 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       activeRun = controller;
       clearActiveLiveProgress();
       refreshUi();
-      output.clear();
-      output.show(true);
-      if (!opts?.rawFilter) {
-        const scopeTargets = runTargets.length > 0 ? runTargets : [{ kind: "all" as const }];
-        treeProvider.clearResultsForRunScope(scopeTargets);
-      }
-
-      const loadedEnv = loadStageEnv(project.projectDir, currentStage);
-      const envMissingKey = `bddPilot.envMissingNotified.${currentStage}`;
-      if (loadedEnv.loadedFiles.length > 0) {
-        void context.workspaceState.update(envMissingKey, undefined);
-        const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
-        output.appendLine(
-          tr("log.envLoaded", {
-            files: names,
-            count: Object.keys(loadedEnv.vars).length,
-          }),
-        );
-      } else if (!context.workspaceState.get<boolean>(envMissingKey)) {
-        output.appendLine(tr("log.envMissing", { stage: currentStage }));
-        void context.workspaceState.update(envMissingKey, true);
-      }
     }
+
+    const resolveRunCancelProgress = (
+      lastProgressState: LiveProgressState | undefined,
+    ): { completed: number; expected: number } | undefined => {
+      if (lastProgressState?.totalExpected != null) {
+        return {
+          completed: lastProgressState.completed,
+          expected: lastProgressState.totalExpected,
+        };
+      }
+      if (totalExpected != null) {
+        return { completed: 0, expected: totalExpected };
+      }
+      return undefined;
+    };
 
     await vscode.window.withProgress(
       {
@@ -948,6 +946,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       },
       async (progress, token) => {
         token.onCancellationRequested(() => controller.abort());
+
         const progressIncrement = totalExpected && totalExpected > 0 ? 100 / totalExpected : 0;
         let lastMessage = "";
         let lastProgressState: LiveProgressState | undefined;
@@ -972,6 +971,50 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         };
 
         try {
+          if (!opts?.debug && treeProvider.needsTheoryDiscovery()) {
+            progress.report({ message: tr("progress.discovering") });
+            try {
+              await enrichTheoryRows(controller.signal);
+            } catch {
+              // list-tests canceled — handled below via signal.aborted
+            }
+            if (controller.signal.aborted) {
+              output.appendLine("\n[bdd-pilot] Run canceled.");
+              notifyPostRunFeedback({
+                canceled: true,
+                debug: false,
+                outputBuffer: "",
+                exitCode: null,
+              });
+              return;
+            }
+          }
+
+          if (!opts?.debug) {
+            output.clear();
+            output.show(true);
+            if (!opts?.rawFilter) {
+              const scopeTargets = runTargets.length > 0 ? runTargets : [{ kind: "all" as const }];
+              treeProvider.clearResultsForRunScope(scopeTargets);
+            }
+
+            const loadedEnv = loadStageEnv(project.projectDir, currentStage);
+            const envMissingKey = `bddPilot.envMissingNotified.${currentStage}`;
+            if (loadedEnv.loadedFiles.length > 0) {
+              void context.workspaceState.update(envMissingKey, undefined);
+              const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
+              output.appendLine(
+                tr("log.envLoaded", {
+                  files: names,
+                  count: Object.keys(loadedEnv.vars).length,
+                }),
+              );
+            } else if (!context.workspaceState.get<boolean>(envMissingKey)) {
+              output.appendLine(tr("log.envMissing", { stage: currentStage }));
+              void context.workspaceState.update(envMissingKey, true);
+            }
+          }
+
           const result = await runService.run({
             targets: runTargets,
             rawFilter: opts?.rawFilter,
@@ -1000,19 +1043,14 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
                 `[bdd-pilot] Partial results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
               );
             }
-            if (lastProgressState?.totalExpected) {
-              notifyPostRunFeedback({
-                canceled: true,
-                debug: false,
-                outputBuffer: result.outputBuffer,
-                exitCode: result.exitCode,
-                summary: result.summary,
-                cancelProgress: {
-                  completed: lastProgressState.completed,
-                  expected: lastProgressState.totalExpected,
-                },
-              });
-            }
+            notifyPostRunFeedback({
+              canceled: true,
+              debug: false,
+              outputBuffer: result.outputBuffer,
+              exitCode: result.exitCode,
+              summary: result.summary,
+              cancelProgress: resolveRunCancelProgress(lastProgressState),
+            });
             return;
           }
 

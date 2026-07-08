@@ -369,12 +369,15 @@ export function createManagedController(deps: ControllerDeps): ManagedController
           outputBuffer: result.outputBuffer,
           exitCode: result.exitCode,
           summary: result.summary,
-          cancelProgress: lastProgressState?.totalExpected
-            ? {
-                completed: lastProgressState.completed,
-                expected: lastProgressState.totalExpected,
-              }
-            : undefined,
+          cancelProgress:
+            lastProgressState?.totalExpected != null
+              ? {
+                  completed: lastProgressState.completed,
+                  expected: lastProgressState.totalExpected,
+                }
+              : totalExpected != null
+                ? { completed: 0, expected: totalExpected }
+                : undefined,
         });
         run.end();
         return;

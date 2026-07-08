@@ -129,14 +129,15 @@ export function buildPostRunFeedback(input: PostRunFeedbackInput): PostRunFeedba
   }
 
   if (input.canceled) {
-    if (!input.cancelProgress?.expected) {
-      return undefined;
-    }
+    const message =
+      input.cancelProgress?.expected != null
+        ? t(input.locale, "toast.runCanceledPartial", {
+            completed: input.cancelProgress.completed,
+            expected: input.cancelProgress.expected,
+          })
+        : t(input.locale, "toast.runCanceled");
     return {
-      message: t(input.locale, "toast.runCanceledPartial", {
-        completed: input.cancelProgress.completed,
-        expected: input.cancelProgress.expected,
-      }),
+      message,
       severity: "info",
       actions: [],
     };
