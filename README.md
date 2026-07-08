@@ -101,7 +101,7 @@ toast with **Copy for AI**:
 
 ### Results & diagnostics
 - **TRX + Cucumber JSON**: scenarios decorated with pass / fail / skip and duration.
-- **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, flaky scenario table, and **last-run diagnostic card** (same top-1 rule as the tree summary row).
+- **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
   errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, pending step definitions, etc.
@@ -214,7 +214,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.8.0** (dotnet run flags P1). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.8.1** (flaky dashboard enriched). Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

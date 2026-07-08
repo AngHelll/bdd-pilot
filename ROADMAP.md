@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.8.0 (Marketplace)** · **Next: v1.x ecosystem** · **322 unit tests**
+> **Current release: v1.8.1 (Marketplace)** · **Next: v1.x backlog** · **329 unit tests**
 
 ---
 
@@ -9,10 +9,10 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.0** |
-| 🎯 Next | **v1.x** ecosystem APIs · MCP post-v1.0 |
-| 🎯 Ecosystem | Jarvis cross-ext |
-| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅) · dotnet flags · MCP post-v1.0 |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.1** |
+| 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
+| 🎯 Ecosystem | Jarvis cross-ext ✅ |
+| 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
 **Companion extension:** [BDD Guardian](https://github.com/AngHelll/bdd-guardian) (navigation & bindings). Pilot = execution.
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.8.1** | Flaky dashboard enriched — avg duration, last error, open scenario · spec `flaky-enriched-v1.8.1.md` |
 | **1.8.0** | dotnet run flags P1 — configuration, no-build, runsettings · spec `dotnet-run-flags-v1.8.md` |
 
 Internal labels **Phase A / B / C** track *scope*, not the published version number.
@@ -61,13 +62,13 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 ## Ecosystem alignment (ForgeOne)
 
 > Contratos congelados en `bdd-jarvis/docs-internal/specs/CONTRACT-*.md`.  
-> **Actualizado:** 2026-07-05 · modo producto
+> **Actualizado:** 2026-07-07 · watch Jarvis Capa B cerrado
 
 | Slice | Repo | Versión local | Marketplace | Capa B | Depende de |
 |-------|------|---------------|-------------|--------|------------|
 | Index API v1 (+ resolveStep v1.1) | bdd-guardian | 0.8.3 | ✅ | ✅ | — |
 | **Run API v1 producer** | **bdd-pilot** | **1.4.0** | **✅ 1.4.0** | **✅** | — |
-| Run API v1 consumer | bdd-jarvis | 0.8.0 (en 0.9 tree) | 0.2.0 | ☐ cross-ext | Pilot 1.4+ ✅ |
+| Run API v1 consumer | bdd-jarvis | 0.8.0 (en 0.9 tree) | 0.2.0 | ✅ cross-ext | Pilot 1.4+ ✅ |
 | **Pre-run binding gate (P2b)** | **bdd-pilot** | **1.5.0** | **✅ 1.5.0** | **✅** | Guardian ✅ |
 | **Diagnostics hygiene** | **bdd-pilot** | **1.6.0** | **✅ 1.6.0** | **✅** | — |
 | **Tree search + run filtered** | **bdd-pilot** | **1.7.0** | **✅ 1.7.0** | **✅** | — |
@@ -77,7 +78,7 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 | Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
 | MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
 
-**Orden de validación:** Pilot v1.4 ✅ → Jarvis cross-ext Capa B (repo Jarvis) → **Pilot v1.5 P2b** → Jarvis J-P2b-* opcional.
+**Orden de validación:** Pilot v1.4 ✅ → Jarvis cross-ext Capa B ✅ → Pilot v1.5 P2b ✅ → Jarvis J-P2b-* opcional.
 
 **Enhanced mode Jarvis:** `isPilotRunApiV1 && isReady && getRunHistory().length > 0` — TRX fallback siempre vigente.
 
@@ -173,6 +174,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.8.1 — flaky dashboard enriched ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Dashboard** | Flaky table: avg duration, last error snippet, click → open `.feature` at scenario line |
+| **Core** | `flakyDashboard.ts` — row builder, last failure message, webview parse (329 unit tests) |
+| **i18n** | Column labels EN/ES |
 
 ### v1.8.0 — dotnet run flags (P1) ✅ shipped
 
@@ -513,4 +522,4 @@ src/
 
 ---
 
-*Last updated: v1.8.0 shipped — dotnet run flags P1.*
+*Last updated: v1.8.1 shipped — flaky dashboard enriched.*

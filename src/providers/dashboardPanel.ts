@@ -5,14 +5,20 @@ import { PilotLocale, t } from "../core/i18n";
 import { formatRollupDescriptionLocalized } from "../core/gherkin/outcomeRollup";
 import { DashboardActionsViewModel, DashboardWebviewCommand, parseDashboardWebviewMessage } from "../core/results/dashboardActions";
 import {
+  buildFlakyDashboardRows,
+  FlakyDashboardRow,
+  FlakyOpenTarget,
+  parseFlakyOpenMessage,
+} from "../core/results/flakyDashboard";
+import {
   dashboardDiagnosticSeverityClass,
   formatDashboardDiagnosticLines,
 } from "../core/results/dashboardDiagnostic";
 import { computeDashboardTotals, formatHistoryScopeDisplay } from "../core/results/dashboardFormat";
-import { isCanceledRun, LastKnownSnapshot, runHistoryStatus } from "../core/results/dashboardLastKnown";
+import { isCanceledRun, LastKnownSnapshot } from "../core/results/dashboardLastKnown";
 import { formatDuration } from "../core/results/durationFormat";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
-import { RunHistoryEntry, flakyRate, scenarioHistoryKey } from "../core/results/runHistory";
+import { RunHistoryEntry } from "../core/results/runHistory";
 
 export interface DashboardContext {
   lastKnown?: LastKnownSnapshot;
@@ -26,9 +32,14 @@ export class DashboardPanel {
   private lastHistory: RunHistoryEntry[] = [];
   private lastContext: DashboardContext = {};
   private messageHandler?: (command: DashboardWebviewCommand) => void;
+  private flakyOpenHandler?: (target: FlakyOpenTarget) => void;
 
   setMessageHandler(handler: (command: DashboardWebviewCommand) => void): void {
     this.messageHandler = handler;
+  }
+
+  setFlakyOpenHandler(handler: (target: FlakyOpenTarget) => void): void {
+    this.flakyOpenHandler = handler;
   }
 
   show(history: RunHistoryEntry[], locale: PilotLocale, context: DashboardContext = {}): void {
@@ -48,6 +59,11 @@ export class DashboardPanel {
       { enableScripts: true, retainContextWhenHidden: true },
     );
     this.panel.webview.onDidReceiveMessage((message) => {
+      const flakyTarget = parseFlakyOpenMessage(message);
+      if (flakyTarget) {
+        this.flakyOpenHandler?.(flakyTarget);
+        return;
+      }
       const command = parseDashboardWebviewMessage(message);
       if (command) {
         this.messageHandler?.(command);
@@ -85,7 +101,7 @@ export class DashboardPanel {
   ): string {
     const recent = [...history].reverse().slice(0, 20);
     const totals = computeDashboardTotals(history);
-    const flaky = collectFlaky(history);
+    const flaky = buildFlakyDashboardRows(history);
     const lang = locale === "es" ? "es" : "en";
     const nonce = crypto.randomBytes(16).toString("base64");
 
@@ -153,6 +169,19 @@ export class DashboardPanel {
     .diagnostic-card.diag-warning { border-left: 3px solid var(--vscode-editorWarning-foreground); }
     .diagnostic-card.diag-error .diag-title { color: var(--vscode-errorForeground); }
     .diagnostic-card.diag-warning .diag-title { color: var(--vscode-editorWarning-foreground); }
+    .flaky-open-btn {
+      font-family: var(--vscode-font-family);
+      font-size: inherit;
+      color: var(--vscode-textLink-foreground);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: underline;
+    }
+    .flaky-open-btn:hover { color: var(--vscode-textLink-activeForeground); }
+    .flaky-error { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -171,7 +200,7 @@ export class DashboardPanel {
   <h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
   ${recent.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.noRuns"))}</p><p class="hint">${t(locale, "dashboard.emptyHint")}</p>` : recentRunsTable(recent, locale)}
   <h2>${escapeHtml(t(locale, "dashboard.flakyTitle"))}</h2>
-  ${flaky.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>` : flakyTable(flaky, locale)}
+  ${flaky.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>` : flakyTableSection(flaky, locale, nonce)}
 </body>
 </html>`;
   }
@@ -309,35 +338,50 @@ function scopeCell(entry: RunHistoryEntry, locale: PilotLocale): string {
   return `<span${title}>${escapeHtml(display)}</span>`;
 }
 
-function flakyTable(
-  items: { name: string; rate: number; key: string }[],
-  locale: PilotLocale,
-): string {
-  const rows = items
-    .map((f) => `<tr><td>${escapeHtml(f.name)}</td><td>${Math.round(f.rate * 100)}%</td></tr>`)
-    .join("");
-  return `<table><thead><tr><th>${t(locale, "dashboard.colScenario")}</th><th>${t(locale, "dashboard.colFailureRate")}</th></tr></thead><tbody>${rows}</tbody></table>`;
+function flakyTableSection(rows: FlakyDashboardRow[], locale: PilotLocale, nonce: string): string {
+  const table = flakyTable(rows, locale);
+  const hasOpen = rows.some((r) => r.canOpen);
+  if (!hasOpen) {
+    return table;
+  }
+  return `${table}
+  <script nonce="${nonce}">
+    (function() {
+      const vscode = acquireVsCodeApi();
+      document.querySelectorAll(".flaky-open-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          vscode.postMessage({
+            command: "openFlakyScenario",
+            featurePath: btn.getAttribute("data-feature-path"),
+            scenarioLine: parseInt(btn.getAttribute("data-scenario-line") || "0", 10),
+          });
+        });
+      });
+    })();
+  </script>`;
 }
 
-function collectFlaky(history: RunHistoryEntry[]): { name: string; rate: number; key: string }[] {
-  const keys = new Set<string>();
-  for (const entry of history) {
-    if (runHistoryStatus(entry) === "canceled") {
-      continue;
-    }
-    for (const s of entry.scenarios) {
-      keys.add(scenarioHistoryKey(s.featurePath, s.scenarioLine, s.scenarioName));
-    }
-  }
-  const out: { name: string; rate: number; key: string }[] = [];
-  for (const key of keys) {
-    const rate = flakyRate(history, key);
-    if (rate > 0) {
-      const name = key.split("::").pop() ?? key;
-      out.push({ name, rate, key });
-    }
-  }
-  return out.sort((a, b) => b.rate - a.rate).slice(0, 10);
+function flakyTable(rows: FlakyDashboardRow[], locale: PilotLocale): string {
+  const body = rows
+    .map((row) => {
+      const scenarioCell = row.canOpen
+        ? `<button type="button" class="flaky-open-btn" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}">${escapeHtml(row.scenarioName)}</button>`
+        : escapeHtml(row.scenarioName);
+      const avgDuration =
+        row.averageDurationMs !== undefined
+          ? formatDuration(row.averageDurationMs, "auto")
+          : "—";
+      const errorCell = row.lastErrorSnippet
+        ? `<td class="flaky-error" title="${escapeAttr(row.lastErrorSnippet.slice(0, 500))}">${escapeHtml(row.lastErrorSnippet)}</td>`
+        : `<td class="muted">${escapeHtml(t(locale, "dashboard.flakyNoError"))}</td>`;
+      return `<tr><td>${scenarioCell}</td><td>${Math.round(row.failureRate * 100)}%</td><td>${escapeHtml(avgDuration)}</td>${errorCell}</tr>`;
+    })
+    .join("");
+  return `<table><thead><tr><th>${t(locale, "dashboard.colScenario")}</th><th>${t(locale, "dashboard.colFailureRate")}</th><th>${t(locale, "dashboard.colAvgDuration")}</th><th>${t(locale, "dashboard.colLastError")}</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function escapeAttr(s: string): string {
+  return escapeHtml(s).replace(/"/g, "&quot;");
 }
 
 function escapeHtml(s: string): string {

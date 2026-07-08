@@ -1025,6 +1025,24 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     void handleDashboardCommand(command);
   });
 
+  dashboard.setFlakyOpenHandler((target) => {
+    void openFlakyScenario(target);
+  });
+
+  async function openFlakyScenario(target: { featurePath: string; scenarioLine: number }): Promise<void> {
+    try {
+      const uri = vscode.Uri.file(target.featurePath);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      const line = Math.max(0, target.scenarioLine - 1);
+      const position = new vscode.Position(line, 0);
+      const range = new vscode.Range(position, position);
+      const editor = await vscode.window.showTextDocument(doc, { selection: range });
+      editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+    } catch {
+      void vscode.window.showWarningMessage(tr("dashboard.flakyOpenFailed"));
+    }
+  }
+
   function normalizeTargets(target: RunTarget): RunTarget[] {
     if (target.kind === "all") {
       return [{ kind: "all" }];

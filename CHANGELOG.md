@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.8.1] — 2026-07-07
+
+### Added
+- **Dashboard flaky table enriched** — average duration, last sanitized error snippet, click scenario to open `.feature` at scenario line (EN/ES)
+
 ## [1.8.0] — 2026-07-07
 
 ### Added
