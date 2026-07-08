@@ -28,7 +28,17 @@ import {
   prependFailedOutcomeToDescription,
   truncateErrorSnippet,
 } from "../core/results/outcomeFeedback";
-import { skipReasonLabelForTreeOutcome } from "../core/results/skipReason";
+import {
+  appendSkipReasonToDescription,
+  skipReasonLabelForTreeOutcome,
+  skipReasonMessage,
+  SkipReason,
+} from "../core/results/skipReason";
+import {
+  applyScopedTrxResults,
+  applyTrxMatchesToStore,
+  TreeMappingStats,
+} from "../core/results/trxTreeMapping";
 import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
 import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
@@ -249,30 +259,35 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   /** Applies TRX/Cucumber results, decorating scenarios and outline rows. */
   applyResults(summary: TrxSummary | UnifiedSummary): void {
-    for (const domain of this.allDomains) {
-      for (const feature of domain.features) {
-        for (const scenario of feature.scenarios) {
-          if (scenario.examples && scenario.examples.length > 0) {
-            for (const example of scenario.examples) {
-              const match = summary.results.find((r) =>
-                findOutlineExampleMatch(r.testName, scenario.name, [example]),
-              );
-              if (match) {
-                const key = outlineRowKey(feature, scenario, example.rowIndex);
-                this.outcomeStore.set(key, match.outcome, match.durationMs, match.errorMessage);
-              }
-            }
-          } else {
-            const match = summary.results.find((r) => matchesScenario(r.testName, scenario.name));
-            if (match) {
-              const key = scenarioKey(feature, scenario);
-              this.outcomeStore.set(key, match.outcome, match.durationMs, match.errorMessage);
-            }
-          }
-        }
-      }
-    }
+    applyTrxMatchesToStore(this.outcomeStore, this.allDomains, summary);
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  /**
+   * Applies TRX for a scoped run, marks unmapped leaves, and returns mapping stats.
+   */
+  applyScopedResults(
+    summary: TrxSummary | UnifiedSummary,
+    targets: RunTarget[],
+    options?: { canceled?: boolean },
+  ): TreeMappingStats | undefined {
+    const stats = applyScopedTrxResults(
+      this.outcomeStore,
+      this.allDomains,
+      summary,
+      targets,
+      options,
+    );
+    this._onDidChangeTreeData.fire(undefined);
+    return stats;
+  }
+
+  needsTheoryDiscovery(): boolean {
+    return this.allDomains.some((domain) =>
+      domain.features.some((feature) =>
+        feature.scenarios.some((scenario) => scenarioNeedsTheoryDiscovery(scenario)),
+      ),
+    );
   }
 
   clearResults(): void {
@@ -401,12 +416,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const status = formatPilotSummaryLabel(model, locale);
     const filterActive = !!model.searchQuery;
     const diagnostic = resolveSummaryDiagnostic(model);
+    const storeFailure = model.storeFailureSnippet;
     const hint = filterActive
       ? t(locale, "tree.pilotSummaryEditFilter")
       : t(locale, "tree.pilotSummaryHint");
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(
-      resolvePilotSummaryIcon(model.running, model.debugging ?? false, diagnostic),
+      resolvePilotSummaryIcon(
+        model.running,
+        model.debugging ?? false,
+        diagnostic,
+        !!storeFailure,
+      ),
     );
     item.command = {
       command: filterActive ? "bddPilot.searchTests" : PILOT_SUMMARY_DASHBOARD_COMMAND,
@@ -422,6 +443,8 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
     if (diagnostic) {
       tooltipParts.push(formatSummaryDiagnosticTooltip(diagnostic, locale));
+    } else if (storeFailure) {
+      tooltipParts.push(storeFailure);
     }
     if (tooltipParts.length > 0) {
       const tooltip = new vscode.MarkdownString(tooltipParts.join("\n\n"));
@@ -556,6 +579,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const rollup = hasExamples ? this.rollupScenarioOutcomes(node.feature, node.scenario) : undefined;
     const key = scenarioKey(node.feature, node.scenario);
     const outcome = hasExamples ? rollupToOutcome(rollup) : this.outcomeStore.get(key);
+    const skipReason = hasExamples ? undefined : this.outcomeStore.getSkipReason(key);
     const durationMs = hasExamples ? undefined : this.outcomeStore.getDuration(key);
     const errorMessage = hasExamples ? undefined : this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
@@ -585,6 +609,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         featureHint,
       );
       base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
+      if (skipReason) {
+        base = appendSkipReasonToDescription(base, skipReason, locale);
+      }
       item.description = base;
     }
 
@@ -609,7 +636,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             outcome === "failed" && errorMessage
               ? truncateErrorSnippet(errorMessage)
               : undefined,
-          skipReasonLabel: skipReasonLabelForTreeOutcome(outcome, locale),
+          skipReasonLabel: skipReason
+            ? skipReasonMessage(skipReason, locale)
+            : skipReasonLabelForTreeOutcome(outcome, locale),
         },
         locale,
       ),
@@ -617,7 +646,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
 
-    item.iconPath = outcomeIcon(outcome, node.scenario.isOutline && !hasExamples);
+    item.iconPath = treeOutcomeIcon(outcome, skipReason, node.scenario.isOutline && !hasExamples);
     item.contextValue = "bddRunnableScenario";
     item.command = {
       command: "vscode.open",
@@ -634,6 +663,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const locale = this.getLocale();
     const key = outlineRowKey(node.feature, node.scenario, node.example.rowIndex);
     const outcome = this.outcomeStore.get(key);
+    const skipReason = this.outcomeStore.getSkipReason(key);
     const durationMs = this.outcomeStore.getDuration(key);
     const errorMessage = this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
@@ -647,6 +677,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       formatDurationLabel(durationMs, display.durationDisplay),
     );
     base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
+    if (skipReason) {
+      base = appendSkipReasonToDescription(base, skipReason, locale);
+    }
     item.description = base;
 
     const tooltip = new vscode.MarkdownString(
@@ -666,15 +699,25 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             outcome === "failed" && errorMessage
               ? truncateErrorSnippet(errorMessage)
               : undefined,
-          skipReasonLabel: skipReasonLabelForTreeOutcome(outcome, locale),
+          skipReasonLabel: skipReason
+            ? skipReasonMessage(skipReason, locale)
+            : skipReasonLabelForTreeOutcome(outcome, locale),
         },
         locale,
       ),
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
-    item.iconPath = outcomeIcon(outcome, false);
+    item.iconPath = treeOutcomeIcon(outcome, skipReason, false);
     item.contextValue = "bddRunnableScenario";
+    item.command = {
+      command: "vscode.open",
+      title: "Open Feature",
+      arguments: [
+        vscode.Uri.file(node.feature.filePath),
+        { selection: new vscode.Range(node.scenario.line - 1, 0, node.scenario.line - 1, 0) },
+      ],
+    };
     return item;
   }
 
@@ -774,6 +817,17 @@ function rollupToOutcome(rollup: ReturnType<typeof computeRollup> | undefined): 
     return "skipped";
   }
   return undefined;
+}
+
+function treeOutcomeIcon(
+  outcome: TestOutcome | undefined,
+  skipReason: SkipReason | undefined,
+  isOutline: boolean,
+): vscode.ThemeIcon {
+  if (skipReason === "not_in_trx" || skipReason === "canceled") {
+    return new vscode.ThemeIcon("circle-slash", new vscode.ThemeColor("testing.iconSkipped"));
+  }
+  return outcomeIcon(outcome, isOutline);
 }
 
 function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vscode.ThemeIcon {

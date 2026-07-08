@@ -47,6 +47,11 @@ export interface ProjectContext {
   selectedKind: ProjectTargetKind;
 }
 
+export interface ResultsAppliedContext {
+  targets: RunTarget[];
+  canceled: boolean;
+}
+
 export interface ControllerDeps {
   getProjectContext(): ProjectContext | undefined;
   getStage(): Stage;
@@ -61,7 +66,7 @@ export interface ControllerDeps {
   getLocale: () => import("../core/i18n").PilotLocale;
   getAnalyzeOptions: () => AnalyzeDotnetOutputOptions;
   getBindingGate: () => BindingGateMode;
-  onResultsApplied?: (summary: UnifiedSummary) => void;
+  onResultsApplied?: (summary: UnifiedSummary, context: ResultsAppliedContext) => void;
   onPostRunFeedback?: (request: PostRunFeedbackRequest) => void;
   acquireRunLock(): boolean;
   releaseRunLock(): void;
@@ -356,7 +361,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
           exitCode: result.exitCode,
         });
         if (result.summary) {
-          deps.onResultsApplied?.(result.summary);
+          deps.onResultsApplied?.(result.summary, { targets, canceled: true });
         }
         deps.onPostRunFeedback?.({
           canceled: true,
@@ -402,7 +407,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         exitCode: result.exitCode,
       });
       if (result.summary) {
-        deps.onResultsApplied?.(result.summary);
+        deps.onResultsApplied?.(result.summary, { targets, canceled: false });
       }
 
       deps.onPostRunFeedback?.({

@@ -5,6 +5,7 @@ import {
   formatFilterChipDescription,
   formatPilotSummaryDescription,
   formatPilotSummaryLabel,
+  formatStoreFailureChip,
   formatSummaryDiagnosticChip,
   formatSummaryDiagnosticTooltip,
   resolvePilotSummaryIcon,
@@ -168,6 +169,7 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(resolvePilotSummaryIcon(false, false, errorDiag), "warning");
     const warnDiag: Diagnostic = { ...errorDiag, severity: "warning" };
     assert.strictEqual(resolvePilotSummaryIcon(false, false, warnDiag), "info");
+    assert.strictEqual(resolvePilotSummaryIcon(false, false, undefined, true), "warning");
     assert.strictEqual(resolvePilotSummaryIcon(true, false, errorDiag), "loading~spin");
   });
 
@@ -290,5 +292,18 @@ describe("pilotSummaryViewModel", () => {
     });
     const description = formatPilotSummaryDescription(vm, "en");
     assert.ok(description?.includes("SDK missing"));
+  });
+
+  it("formatPilotSummaryDescription shows store failure chip when no diagnostic", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 0, failed: 1, skipped: 0, withResults: 1 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      storeFailureSnippet: "Expected true but was false",
+    });
+    const description = formatPilotSummaryDescription(vm, "en");
+    assert.strictEqual(description, formatStoreFailureChip("Expected true but was false", "en"));
   });
 });

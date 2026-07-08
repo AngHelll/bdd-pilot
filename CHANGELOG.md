@@ -8,6 +8,18 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.9.0] — 2026-07-08
+
+### Added
+- **Tree mapping report** — post-run Output line `{mapped}/{inScope} scenarios matched TRX` for scoped runs (EN/ES)
+- **Tree `not_in_trx` parity** — scoped leaves without TRX match show skip icon + tooltip (Test Explorer parity)
+- **Summary chip from store** — first failed error snippet on pilot summary row after rehydrate when no session diagnostic
+- **`matchRunTarget` domain/tag** — run history attributes `featurePath` / `scenarioLine` for domain and tag runs
+
+### Changed
+- **Rehydrate gate** — restore outcomes only when on-disk TRX matches last history `trxPath`
+- **Theory enrichment** — await `enrichTheoryRows()` before non-debug runs when outline discovery is pending
+
 ## [1.8.4] — 2026-07-08
 
 ### Changed

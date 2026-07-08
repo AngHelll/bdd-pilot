@@ -29,7 +29,9 @@ import { buildDashboardActionsViewModel, buildRerunFilterFromHistoryEntry, Dashb
 import { resolveFlakyFeaturePath } from "./core/results/flakyDashboard";
 import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
 import { TREE_SEARCH_WORKSPACE_KEY, shouldConfirmSearchRunCap } from "./core/gherkin/treeSearch";
+import { resolveFirstStoreFailureSnippet } from "./core/results/storeFailureFeedback";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
+import { TreeMappingStats } from "./core/results/trxTreeMapping";
 import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
 import { createPilotRunApi, PilotRunApiV1 } from "./api";
@@ -127,16 +129,23 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   function buildPilotSummaryFromState(): PilotSummaryViewModel {
     const storeRollup = summarizeOutcomeStore(outcomeStore, treeProvider.getDomains());
+    const topDiagnostic = pickPrimaryDiagnostic(runService.getLastRunSnapshot()?.diagnostics ?? []);
+    const running = !!activeRun || runService.isDebugActive();
+    const storeFailureSnippet =
+      !running && !topDiagnostic
+        ? resolveFirstStoreFailureSnippet(outcomeStore, treeProvider.getDomains())
+        : undefined;
     return buildPilotSummaryViewModel({
       storeRollup,
       storeNonEmpty: !outcomeStore.isEmpty(),
       lastHistory: runService.getHistory().at(-1),
       rehydrateNotice,
-      running: !!activeRun || runService.isDebugActive(),
+      running,
       debugging: runService.isDebugActive() && !activeRun,
       emptyKind: treeProvider.getEmptyKind(),
       searchQuery: treeProvider.getSearchQuery() || undefined,
-      topDiagnostic: pickPrimaryDiagnostic(runService.getLastRunSnapshot()?.diagnostics ?? []),
+      topDiagnostic,
+      storeFailureSnippet,
       liveProgress: activeLiveProgress,
     });
   }
@@ -235,9 +244,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     getLocale: () => localeService.getLocale(),
     getAnalyzeOptions: () => readAnalyzeOptions(),
     getBindingGate: () => readBindingGate(),
-    onResultsApplied: (summary: UnifiedSummary) => {
-      treeProvider.applyResults(summary);
-      managed.refresh();
+    onResultsApplied: (summary: UnifiedSummary, context) => {
+      applyRunSummaryToTree(summary, context.targets, { canceled: context.canceled });
     },
     onPostRunFeedback: (request: PostRunFeedbackRequest) => notifyPostRunFeedback(request),
     acquireRunLock: () => {
@@ -379,6 +387,35 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     tryRehydrateOutcomes();
   }
 
+  function logTreeMapping(stats: TreeMappingStats | undefined): void {
+    if (!stats || stats.inScope === 0) {
+      return;
+    }
+    output.appendLine(
+      `[bdd-pilot] ${tr("log.treeMapping", {
+        mapped: stats.mapped,
+        inScope: stats.inScope,
+        unmapped: stats.unmapped,
+      })}`,
+    );
+  }
+
+  function applyRunSummaryToTree(
+    summary: UnifiedSummary,
+    targets: RunTarget[],
+    options?: { canceled?: boolean; rawFilter?: boolean },
+  ): void {
+    if (options?.rawFilter || targets.length === 0) {
+      treeProvider.applyResults(summary);
+    } else {
+      const stats = treeProvider.applyScopedResults(summary, targets, {
+        canceled: options?.canceled,
+      });
+      logTreeMapping(stats);
+    }
+    managed.refresh();
+  }
+
   function tryRehydrateOutcomes(): void {
     const rehydrate = readOutcomeRehydrateSettings();
     if (!rehydrate.enabled) {
@@ -400,6 +437,13 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       maxAgeMs: rehydrate.maxAgeMs,
     });
     if (!latest) {
+      return;
+    }
+
+    const lastHistory = runService.getHistory().at(-1);
+    const historyTrx = lastHistory?.trxPath ? path.resolve(lastHistory.trxPath) : undefined;
+    if (historyTrx && path.resolve(latest.absolutePath) !== historyTrx) {
+      output.appendLine(`[bdd-pilot] ${tr("log.rehydrateSkippedHistoryMismatch")}`);
       return;
     }
 
@@ -861,6 +905,10 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         ? undefined
         : estimateTestCount(runTargets, project.discoveryRoot);
 
+    if (!opts?.debug && treeProvider.needsTheoryDiscovery()) {
+      await enrichTheoryRows();
+    }
+
     const controller = new AbortController();
     if (!opts?.debug) {
       activeRun = controller;
@@ -947,7 +995,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
           if (result.canceled) {
             output.appendLine("\n[bdd-pilot] Run canceled.");
             if (result.summary) {
-              treeProvider.applyResults(result.summary);
+              applyRunSummaryToTree(result.summary, runTargets, { canceled: true });
               output.appendLine(
                 `[bdd-pilot] Partial results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
               );
@@ -977,7 +1025,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
           output.appendLine(`\n[bdd-pilot] Process exited with code ${result.exitCode}.`);
           if (result.summary) {
-            treeProvider.applyResults(result.summary);
+            applyRunSummaryToTree(result.summary, runTargets, { rawFilter: !!opts?.rawFilter });
             output.appendLine(
               `[bdd-pilot] Results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
             );

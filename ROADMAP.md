@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.8.4 (Marketplace)** · **Next: v1.x backlog** · **339 unit tests**
+> **Current release: v1.9.0 (Marketplace)** · **Next: v1.x backlog** · **348 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.8.4** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.0** |
 | 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.9.0** | Worktree ecosystem parity — TRX mapping report, tree `not_in_trx`, rehydrate↔history gate, summary chip lite, `matchRunTarget` domain/tag · spec `worktree-ecosystem-parity-v1.9.0.md` |
 | **1.8.4** | Binding gate UX — ambiguous → Output; unbound warn non-modal · spec `binding-gate-ux-v1.8.4.md` |
 | **1.8.3** | Fix flaky dashboard scenario links (webview script + path resolve) |
 | **1.8.2** | Live progress on pilot summary row — `formatProgressMessage` in description during run · spec `live-progress-summary-v1.8.2.md` |
@@ -78,6 +79,7 @@ Internal labels **Phase A / B / C** track *scope*, not the published version num
 | **Controls polish (Slice C)** | **bdd-pilot** | **1.7.1** | **✅ 1.7.1** | **✅** | — |
 | **Tree summary diagnostics** | **bdd-pilot** | **1.7.2** | **✅ 1.7.2** | **✅** | — |
 | **README + dashboard diagnostic** | **bdd-pilot** | **✅ 1.7.3** | **✅ 1.7.3** | **✅** | — |
+| **Worktree ecosystem parity** | **bdd-pilot** | **1.9.0** | **✅ 1.9.0** | **✅** | — |
 | Jarvis P2b complement | bdd-jarvis | 📋 v0.9.1 opc. | — | post Pilot gate | Pilot P2b VSIX |
 | MCP | bdd-pilot | — | — | 📋 post-v1.0 | scope distinto |
 

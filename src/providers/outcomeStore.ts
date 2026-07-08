@@ -1,5 +1,6 @@
 import { DomainGroup } from "../core/gherkin/model";
 import { sanitizeErrorForStore } from "../core/results/outcomeFeedback";
+import { SkipReason } from "../core/results/skipReason";
 import { collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { TestOutcome } from "../core/results/trxParser";
@@ -9,6 +10,7 @@ export class OutcomeStore {
   private outcomes = new Map<string, TestOutcome>();
   private durations = new Map<string, number>();
   private errors = new Map<string, string>();
+  private skipReasons = new Map<string, SkipReason>();
 
   set(key: string, outcome: TestOutcome, durationMs?: number, errorMessage?: string): void {
     this.outcomes.set(key, outcome);
@@ -25,10 +27,25 @@ export class OutcomeStore {
     } else if (outcome !== "failed") {
       this.errors.delete(key);
     }
+    if (isMappedOutcome(outcome)) {
+      this.skipReasons.delete(key);
+    }
   }
 
   get(key: string): TestOutcome | undefined {
     return this.outcomes.get(key);
+  }
+
+  getSkipReason(key: string): SkipReason | undefined {
+    return this.skipReasons.get(key);
+  }
+
+  setSkipReason(key: string, reason: SkipReason): void {
+    this.skipReasons.set(key, reason);
+  }
+
+  clearSkipReason(key: string): void {
+    this.skipReasons.delete(key);
   }
 
   getDuration(key: string): number | undefined {
@@ -47,6 +64,7 @@ export class OutcomeStore {
     this.outcomes.clear();
     this.durations.clear();
     this.errors.clear();
+    this.skipReasons.clear();
   }
 
   clearForRunScope(targets: RunTarget[], domains: DomainGroup[]): void {
@@ -62,8 +80,13 @@ export class OutcomeStore {
       this.outcomes.delete(key);
       this.durations.delete(key);
       this.errors.delete(key);
+      this.skipReasons.delete(key);
     }
   }
+}
+
+function isMappedOutcome(outcome: TestOutcome): boolean {
+  return outcome === "passed" || outcome === "failed" || outcome === "skipped";
 }
 
 export function outcomeDescription(outcome: TestOutcome | undefined): string | undefined {

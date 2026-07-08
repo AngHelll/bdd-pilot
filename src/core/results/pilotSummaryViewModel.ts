@@ -23,6 +23,8 @@ export interface PilotSummaryViewModel {
   searchQuery?: string;
   /** Top diagnostic from last run (hidden while running). */
   topDiagnostic?: Diagnostic;
+  /** First store failure snippet when no session diagnostic (e.g. post-rehydrate). */
+  storeFailureSnippet?: string;
   /** Live stdout progress during an active run (normal run only). */
   liveProgress?: LiveProgressState;
 }
@@ -37,6 +39,7 @@ export interface BuildPilotSummaryOptions {
   emptyKind?: TreeEmptyKind;
   searchQuery?: string;
   topDiagnostic?: Diagnostic;
+  storeFailureSnippet?: string;
   liveProgress?: LiveProgressState;
 }
 
@@ -54,6 +57,7 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     emptyKind: options.emptyKind ?? "none",
     searchQuery: options.searchQuery?.trim() || undefined,
     topDiagnostic: options.running ? undefined : options.topDiagnostic,
+    storeFailureSnippet: options.running ? undefined : options.storeFailureSnippet,
     liveProgress: options.running ? options.liveProgress : undefined,
   };
 }
@@ -73,6 +77,7 @@ export function resolvePilotSummaryIcon(
   running: boolean,
   debugging: boolean,
   diagnostic?: Diagnostic,
+  hasStoreFailures?: boolean,
 ): string {
   if (running) {
     if (debugging) {
@@ -80,7 +85,7 @@ export function resolvePilotSummaryIcon(
     }
     return "loading~spin";
   }
-  if (diagnostic?.severity === "error") {
+  if (diagnostic?.severity === "error" || hasStoreFailures) {
     return "warning";
   }
   if (diagnostic?.severity === "warning") {
@@ -151,6 +156,9 @@ export function formatPilotSummaryDescription(
   if (diagnostic) {
     return formatSummaryDiagnosticChip(diagnostic, locale);
   }
+  if (model.storeFailureSnippet) {
+    return formatStoreFailureChip(model.storeFailureSnippet, locale);
+  }
   return undefined;
 }
 
@@ -163,6 +171,14 @@ export function formatFilterChipDescription(query: string, locale: PilotLocale):
 
 export function formatPilotSummaryFilterTooltip(query: string, locale: PilotLocale): string {
   return t(locale, "tree.summaryFilterTooltip", { query });
+}
+
+export function formatStoreFailureChip(snippet: string, locale: PilotLocale): string {
+  let title = snippet;
+  if (title.length > SUMMARY_DIAGNOSTIC_CHIP_MAX) {
+    title = `${title.slice(0, SUMMARY_DIAGNOSTIC_CHIP_MAX - 1)}…`;
+  }
+  return t(locale, "tree.summaryStoreFailureChip", { title });
 }
 
 export function formatSummaryDiagnosticChip(diagnostic: Diagnostic, locale: PilotLocale): string {

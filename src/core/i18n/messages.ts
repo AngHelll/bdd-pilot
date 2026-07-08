@@ -105,6 +105,7 @@ const EN = {
   "tree.summaryFilterTooltip":
     "Active filter: **{query}**\n\nPilot Search filters which scenarios you can run. **Ctrl+F** only highlights in the list.\n\nUse **Clear Search Filter** or empty the search box to show all tests.",
   "tree.summaryDiagnosticChip": "⚠ {title}",
+  "tree.summaryStoreFailureChip": "⚠ {title}",
   "tree.summaryDiagnosticTooltip": "**{code}** — {title}\n\n{hint}",
   "tree.outlineRowCountOne": "1 row",
   "tree.outlineRowCount": "{count} rows",
@@ -204,6 +205,10 @@ const EN = {
   "tooltip.skipReasonLine": "Skip: {reason}",
   "log.rehydrateRestored":
     "Restored test outcomes from TestResults/{file} ({passed} passed, {failed} failed, {skipped} skipped, {total} total).",
+  "log.rehydrateSkippedHistoryMismatch":
+    "Skipped outcome rehydrate: TRX on disk does not match last run history.",
+  "log.treeMapping":
+    "Tree mapping: {mapped}/{inScope} scenarios matched TRX ({unmapped} unmapped in run scope).",
   "log.envLoaded":
     "[bdd-pilot] Loaded environment from {files} ({count} variables, values hidden).",
   "log.envMissing":
@@ -412,6 +417,7 @@ const ES: Record<keyof typeof EN, string> = {
   "tree.summaryFilterTooltip":
     "Filtro activo: **{query}**\n\nPilot Search filtra qué escenarios puedes ejecutar. **Ctrl+F** solo resalta en la lista.\n\nUsa **Borrar filtro de búsqueda** o deja vacío el cuadro para ver todos los tests.",
   "tree.summaryDiagnosticChip": "⚠ {title}",
+  "tree.summaryStoreFailureChip": "⚠ {title}",
   "tree.summaryDiagnosticTooltip": "**{code}** — {title}\n\n{hint}",
   "tree.outlineRowCountOne": "1 fila",
   "tree.outlineRowCount": "{count} filas",
@@ -512,6 +518,10 @@ const ES: Record<keyof typeof EN, string> = {
   "tooltip.skipReasonLine": "Omitido: {reason}",
   "log.rehydrateRestored":
     "Resultados restaurados desde TestResults/{file} ({passed} correctos, {failed} fallidos, {skipped} omitidos, {total} total).",
+  "log.rehydrateSkippedHistoryMismatch":
+    "Rehidratación omitida: el TRX en disco no coincide con el último historial de ejecución.",
+  "log.treeMapping":
+    "Mapeo árbol: {mapped}/{inScope} escenarios coincidieron con TRX ({unmapped} sin mapear en el scope).",
   "log.envLoaded":
     "[bdd-pilot] Entorno cargado desde {files} ({count} variables, valores ocultos).",
   "log.envMissing":

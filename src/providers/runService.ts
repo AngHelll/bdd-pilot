@@ -9,7 +9,7 @@ import { AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { loadStageEnv } from "../core/config/envFile";
 import { MODE_PROFILES, ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
-import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
+import { DomainGroup } from "../core/gherkin/model";
 import { findRecentEvidence } from "../core/results/evidence";
 import { loadRunResults, UnifiedSummary } from "../core/results/resultLoader";
 import {
@@ -34,11 +34,9 @@ import {
   cloneSessionRunSnapshot,
   SessionRunSnapshot,
 } from "../core/results/sessionRunSnapshot";
-import { matchesScenario } from "../core/results/trxParser";
-import { findOutlineExampleMatch } from "../core/results/scenarioMatch";
+import { matchRunTarget } from "../core/runner/matchRunTarget";
 import { evaluateRun } from "../security/envGuard";
 import { sanitize } from "../security/sanitizer";
-import { DomainGroup } from "../core/gherkin/model";
 import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
 import { collectStepsForRunScope } from "../core/bindings/collectStepsForRunScope";
 import { evaluateBindingGate } from "../core/bindings/evaluateBindingGate";
@@ -488,7 +486,7 @@ export class RunService {
   private buildScenarioRecords(req: RunRequest, summary: UnifiedSummary): ScenarioRunRecord[] {
     const scenarios: ScenarioRunRecord[] = [];
     for (const r of summary.results) {
-      const match = matchTarget(req.targets, r.testName);
+      const match = matchRunTarget(req.targets, r.testName, req.domains ?? []);
       if (match) {
         scenarios.push({
           featurePath: match.feature.filePath,
@@ -521,7 +519,7 @@ export class RunService {
       if (r.outcome !== "failed") {
         continue;
       }
-      const match = matchTarget(req.targets, r.testName);
+      const match = matchRunTarget(req.targets, r.testName, req.domains ?? []);
       if (match) {
         failedTargets.push(match.target);
       }
@@ -535,7 +533,7 @@ export class RunService {
     if (failedResults.length > 0) {
       this.lastFailedFilter = failedResults
         .map((r) => {
-          const match = matchTarget(req.targets, r.testName);
+          const match = matchRunTarget(req.targets, r.testName, req.domains ?? []);
           if (match) {
             const clause = buildFilter(match.target, req.settings.filterMapping);
             if (clause) {
@@ -766,40 +764,6 @@ export class RunService {
     const line = t(req.locale, "bindingGate.skipped", { reason: reasonText });
     req.onOutput?.(`\n[bdd-pilot] ${line}\n`);
   }
-}
-
-function matchTarget(
-  targets: RunTarget[],
-  testName: string,
-): { target: RunTarget; feature: FeatureInfo; scenario: ScenarioInfo } | undefined {
-  for (const t of targets) {
-    if (t.kind === "outlineRow") {
-      if (
-        findOutlineExampleMatch(testName, t.scenario.name, [t.example])
-      ) {
-        return { target: t, feature: t.feature, scenario: t.scenario };
-      }
-    }
-  }
-  for (const t of targets) {
-    if (t.kind === "scenario" && matchesScenario(testName, t.scenario.name)) {
-      return { target: t, feature: t.feature, scenario: t.scenario };
-    }
-  }
-  for (const t of targets) {
-    if (t.kind === "feature") {
-      for (const s of t.feature.scenarios) {
-        if (matchesScenario(testName, s.name)) {
-          return {
-            target: { kind: "scenario", feature: t.feature, scenario: s },
-            feature: t.feature,
-            scenario: s,
-          };
-        }
-      }
-    }
-  }
-  return undefined;
 }
 
 function shortTestName(fqn: string): string {
