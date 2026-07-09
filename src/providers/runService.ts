@@ -51,6 +51,7 @@ import {
   shouldPromptForUnboundIssues,
 } from "../core/bindings/bindingGatePresentation";
 import { BindingGateIssue } from "../core/bindings/evaluateBindingGate";
+import { RunPreflightResult } from "../core/bindings/runPreflight";
 import { GuardianSkipReason, tryGetGuardianResolveStep } from "./guardianIntegration";
 
 export interface RunRequest {
@@ -164,28 +165,29 @@ export class RunService {
     return this.debugActive;
   }
 
-  async run(req: RunRequest): Promise<RunServiceResult> {
-    const decision = evaluateRun(req.stage, req.settings.requireConfirmationForStages);
-    if (decision.requiresConfirmation && decision.messageKey) {
-      const message = t(req.locale, decision.messageKey, { stage: req.stage });
-      const primaryAction = req.debug
-        ? t(req.locale, "action.debug")
-        : t(req.locale, "action.run");
-      const choice = await vscode.window.showWarningMessage(
-        message,
-        { modal: true },
-        primaryAction,
-      );
-      if (choice !== primaryAction) {
-        return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
-      }
+  async runPreflight(req: RunRequest): Promise<RunPreflightResult> {
+    const stageProceed = await this.checkStageConfirmation(req);
+    if (!stageProceed) {
+      return { proceed: false, reason: "stage-declined" };
     }
 
     const gateProceed = await this.checkBindingGate(req);
     if (!gateProceed) {
-      return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
+      return { proceed: false, reason: "gate-declined" };
     }
 
+    return { proceed: true };
+  }
+
+  async run(req: RunRequest): Promise<RunServiceResult> {
+    const preflight = await this.runPreflight(req);
+    if (!preflight.proceed) {
+      return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
+    }
+    return this.runExecution(req);
+  }
+
+  async runExecution(req: RunRequest): Promise<RunServiceResult> {
     const filter =
       req.rawFilter?.trim() ||
       (req.targets.length === 0 || req.targets.some((t) => t.kind === "all")
@@ -699,6 +701,24 @@ export class RunService {
     this._onCompleteRun.fire();
   }
 
+  private async checkStageConfirmation(req: RunRequest): Promise<boolean> {
+    const decision = evaluateRun(req.stage, req.settings.requireConfirmationForStages);
+    if (!decision.requiresConfirmation || !decision.messageKey) {
+      return true;
+    }
+
+    const message = t(req.locale, decision.messageKey, { stage: req.stage });
+    const primaryAction = req.debug
+      ? t(req.locale, "action.debug")
+      : t(req.locale, "action.run");
+    const choice = await vscode.window.showWarningMessage(
+      message,
+      { modal: true },
+      primaryAction,
+    );
+    return choice === primaryAction;
+  }
+
   private async checkBindingGate(req: RunRequest): Promise<boolean> {
     const mode: BindingGateMode = req.bindingGate ?? "off";
     if (mode === "off") {
@@ -738,7 +758,9 @@ export class RunService {
       return true;
     }
 
-    const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues);
+    const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues, {
+      preflightTitle: true,
+    });
     if (promptKind === "warn-non-modal") {
       const runAnyway = t(req.locale, "bindingGate.runAnyway");
       const cancel = t(req.locale, "bindingGate.cancel");

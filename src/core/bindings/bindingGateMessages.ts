@@ -38,13 +38,23 @@ export function formatBindingGateAmbiguousOutput(
   return `${summary}\n${formatDetailLines(locale, ambiguousIssues).join("\n")}`;
 }
 
+export interface BindingGateUnboundPromptOptions {
+  preflightTitle?: boolean;
+}
+
 /** Unbound issues for pre-run warn notification or block modal. */
 export function formatBindingGateUnboundPrompt(
   locale: PilotLocale,
   unboundIssues: BindingGateIssue[],
+  options?: BindingGateUnboundPromptOptions,
 ): string {
   const summary = t(locale, "bindingGate.promptUnboundSummary", {
     count: String(unboundIssues.length),
   });
-  return `${summary}\n\n${formatDetailLines(locale, unboundIssues).join("\n")}`;
+  const body = `${summary}\n\n${formatDetailLines(locale, unboundIssues).join("\n")}`;
+  if (options?.preflightTitle) {
+    const title = t(locale, "bindingGate.preflightTitle");
+    return `${title}\n\n${body}`;
+  }
+  return body;
 }

@@ -8,6 +8,14 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.9.3] — 2026-07-09
+
+### Changed
+- **Binding gate pre-flight** — stage confirmation and binding gate run before “Running tests” progress and scope clear
+- **Decline ≠ cancel** — rejecting gate or stage logs *Run not started* without cancel toast or clearing tree icons
+- **Unbound prompt** — prefixed with *Before running tests* / *Antes de ejecutar tests* (EN/ES)
+- **Test Explorer** — `run.started` and scope clear only after pre-flight passes
+
 ## [1.9.2] — 2026-07-08
 
 ### Changed

@@ -29,6 +29,7 @@ import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgr
 import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { PilotLocale } from "../core/i18n";
 import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
+import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
 import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
@@ -271,6 +272,39 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       return;
     }
 
+    const runningAll = !request.include;
+    const leafData = scenarioItems
+      .map((item) => itemData.get(item))
+      .filter((data): data is TestExplorerItemData => data !== undefined);
+    const targets = resolveTestExplorerRunTargets(includedRootData, leafData, runningAll);
+    const locale = deps.getLocale();
+
+    const preflight = await deps.runService.runPreflight({
+      targets,
+      stage: deps.getStage(),
+      mode: deps.getMode(),
+      settings: deps.getSettings(),
+      projectDir: project.projectDir,
+      testTarget: project.testTarget,
+      debug,
+      locale,
+      bindingGate: deps.getBindingGate(),
+      domains: deps.getDomains(),
+      analyzeOptions: deps.getAnalyzeOptions(),
+      onOutput: (chunk) => {
+        deps.output.show(true);
+        deps.output.append(chunk);
+      },
+    });
+    if (!preflight.proceed) {
+      deps.output.show(true);
+      for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
+        deps.output.appendLine(line);
+      }
+      run.end();
+      return;
+    }
+
     if (!deps.acquireRunLock()) {
       scenarioItems.forEach((i) =>
         run.errored(i, new vscode.TestMessage("Another test run is already in progress.")),
@@ -284,11 +318,6 @@ export function createManagedController(deps: ControllerDeps): ManagedController
 
     scenarioItems.forEach((i) => run.started(i));
 
-    const runningAll = !request.include;
-    const leafData = scenarioItems
-      .map((item) => itemData.get(item))
-      .filter((data): data is TestExplorerItemData => data !== undefined);
-    const targets = resolveTestExplorerRunTargets(includedRootData, leafData, runningAll);
     if (!debug) {
       deps.outcomeStore.clearForRunScope(
         runningAll ? [{ kind: "all" }] : targets,
@@ -307,7 +336,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     });
 
     try {
-      const result = await deps.runService.run({
+      const result = await deps.runService.runExecution({
         targets,
         stage: deps.getStage(),
         mode: deps.getMode(),

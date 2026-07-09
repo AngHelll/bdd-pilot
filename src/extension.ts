@@ -36,6 +36,7 @@ import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
 import { createPilotRunApi, PilotRunApiV1 } from "./api";
 import { isBindingGateMode, BindingGateMode } from "./core/bindings/resolveBindingGateUx";
+import { formatRunNotStartedLines } from "./core/bindings/runPreflight";
 import { RunTarget } from "./core/runner/filterBuilder";
 import {
   formatProgressMessage,
@@ -914,6 +915,33 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       await enrichTheoryRows();
     }
 
+    const locale = localeService.getLocale();
+    const preflight = await runService.runPreflight({
+      targets: runTargets,
+      rawFilter: opts?.rawFilter,
+      stage: currentStage,
+      mode: currentMode,
+      settings,
+      projectDir: project.projectDir,
+      testTarget: project.testTarget,
+      debug: opts?.debug,
+      locale,
+      bindingGate: readBindingGate(),
+      domains: treeProvider.getDomains(),
+      analyzeOptions: readAnalyzeOptions(),
+      onOutput: (chunk) => {
+        output.show(true);
+        output.append(chunk);
+      },
+    });
+    if (!preflight.proceed) {
+      output.show(true);
+      for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
+        output.appendLine(line);
+      }
+      return;
+    }
+
     const controller = new AbortController();
     if (!opts?.debug) {
       activeRun = controller;
@@ -1015,7 +1043,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
             }
           }
 
-          const result = await runService.run({
+          const result = await runService.runExecution({
             targets: runTargets,
             rawFilter: opts?.rawFilter,
             stage: currentStage,

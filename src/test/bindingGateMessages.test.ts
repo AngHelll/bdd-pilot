@@ -58,4 +58,15 @@ describe("bindingGateMessages", () => {
     const message = formatBindingGateUnboundPrompt("en", issues);
     assert.match(message, /\+2 more/);
   });
+
+  it("prefixes unbound prompt with preflight title when requested", () => {
+    const message = formatBindingGateUnboundPrompt("en", [unbound], { preflightTitle: true });
+    assert.match(message, /^Before running tests\n\n/);
+    assert.match(message, /1 unbound step/);
+  });
+
+  it("uses Spanish preflight title", () => {
+    const message = formatBindingGateUnboundPrompt("es", [unbound], { preflightTitle: true });
+    assert.match(message, /^Antes de ejecutar tests\n\n/);
+  });
 });

@@ -198,6 +198,7 @@ const EN = {
   "bindingGate.outputAmbiguousSummary": "{count} ambiguous binding(s) in run scope.",
   "bindingGate.ambiguousContinue":
     "Ambiguous bindings do not block this run — tests will execute.",
+  "bindingGate.preflightTitle": "Before running tests",
   "bindingGate.promptUnboundSummary": "{count} unbound step(s) in run scope.",
   "bindingGate.modalMore": "+{count} more",
   "bindingGate.issueUnbound": "[unbound]",
@@ -218,6 +219,9 @@ const EN = {
     "[bdd-pilot] Loaded environment from {files} ({count} variables, values hidden).",
   "log.envMissing":
     "[bdd-pilot] No config/.env.{stage} found. Tests will rely on the current process environment.",
+  "log.runNotStarted": "[bdd-pilot] Run not started.",
+  "log.runNotStartedStage": "[bdd-pilot] Stage confirmation declined.",
+  "log.runNotStartedGate": "[bdd-pilot] Binding gate declined.",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnostics:",
   "diagnostic.output.summaryLine":
@@ -516,6 +520,7 @@ const ES: Record<keyof typeof EN, string> = {
   "bindingGate.outputAmbiguousSummary": "{count} binding(s) ambiguo(s) en el scope.",
   "bindingGate.ambiguousContinue":
     "Los bindings ambiguos no bloquean esta ejecución — los tests se ejecutarán.",
+  "bindingGate.preflightTitle": "Antes de ejecutar tests",
   "bindingGate.promptUnboundSummary": "{count} step(s) sin binding en el scope.",
   "bindingGate.modalMore": "+{count} más",
   "bindingGate.issueUnbound": "[sin binding]",
@@ -536,6 +541,9 @@ const ES: Record<keyof typeof EN, string> = {
     "[bdd-pilot] Entorno cargado desde {files} ({count} variables, valores ocultos).",
   "log.envMissing":
     "[bdd-pilot] No se encontró config/.env.{stage}. Los tests usarán el entorno del proceso actual.",
+  "log.runNotStarted": "[bdd-pilot] Ejecución no iniciada.",
+  "log.runNotStartedStage": "[bdd-pilot] Confirmación de stage rechazada.",
+  "log.runNotStartedGate": "[bdd-pilot] Compuerta de bindings rechazada.",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnósticos:",
   "diagnostic.output.summaryLine":
