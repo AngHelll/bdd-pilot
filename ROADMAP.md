@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.9.3 (Marketplace)** · **Next: v1.x backlog** · **360 unit tests**
+> **Current release: v1.9.4 (Marketplace)** · **Next: v1.x backlog** · **360 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.3** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.4** |
 | 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.9.4** | Iconography polish — README assets, palette icons, Iconography docs · spec `iconography-polish-v1.9.4.md` |
 | **1.9.3** | Binding gate pre-flight — stage/gate antes de progress; decline ≠ cancel; TE paridad · spec `binding-gate-pre-flight-v1.9.3.md` |
 | **1.9.2** | Scoped run progress — summary sin rollup global, 0/N, notif no-cancel, fallos en message, ambiguous continue · spec `scoped-run-progress-v1.9.2.md` |
 | **1.9.1** | Cancel polish — pre-run discovery cancel + generic cancel toast · spec `cancel-polish-v1.9.1.md` |
@@ -182,6 +183,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.9.4 — iconography polish ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **README** | Tree preview asset (`pilot.svg`, summary row, toolbar); **Iconography** section (codicon vocabulary + dual brand) |
+| **Palette** | Icons on `selectProject`, `openStatusBarHub`, `selectStage`, `selectMode`, `cycleTreeGroupBy`, `copyFailureContextForAi` |
+| **Brand** | Opción A — `icon.png` Marketplace + `pilot.svg` sidebar documented; no asset redesign (360 unit tests) |
 
 ### v1.9.3 — binding gate pre-flight ✅ shipped
 
@@ -570,4 +579,4 @@ src/
 
 ---
 
-*Last updated: v1.9.3 shipped — binding gate pre-flight.*
+*Last updated: v1.9.4 shipped — iconography polish.*

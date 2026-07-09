@@ -8,6 +8,12 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.9.4] — 2026-07-09
+
+### Changed
+- **Iconography polish** — README tree preview asset updated (`pilot.svg`, summary row, toolbar); **Iconography** section documents codicon vocabulary and dual brand (`icon.png` vs `pilot.svg`)
+- **Command palette icons** — `selectProject`, `openStatusBarHub`, `selectStage`, `selectMode`, `cycleTreeGroupBy`, `copyFailureContextForAi`
+
 ## [1.9.3] — 2026-07-09
 
 ### Changed

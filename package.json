@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -91,19 +91,23 @@
       },
       {
         "command": "bddPilot.selectProject",
-        "title": "%bddPilot.command.selectProject.title%"
+        "title": "%bddPilot.command.selectProject.title%",
+        "icon": "$(folder-opened)"
       },
       {
         "command": "bddPilot.openStatusBarHub",
-        "title": "%bddPilot.command.openStatusBarHub.title%"
+        "title": "%bddPilot.command.openStatusBarHub.title%",
+        "icon": "$(beaker)"
       },
       {
         "command": "bddPilot.selectStage",
-        "title": "%bddPilot.command.selectStage.title%"
+        "title": "%bddPilot.command.selectStage.title%",
+        "icon": "$(symbol-environment)"
       },
       {
         "command": "bddPilot.selectMode",
-        "title": "%bddPilot.command.selectMode.title%"
+        "title": "%bddPilot.command.selectMode.title%",
+        "icon": "$(zap)"
       },
       {
         "command": "bddPilot.showOutput",
@@ -151,7 +155,8 @@
       },
       {
         "command": "bddPilot.cycleTreeGroupBy",
-        "title": "%bddPilot.command.cycleTreeGroupBy.title%"
+        "title": "%bddPilot.command.cycleTreeGroupBy.title%",
+        "icon": "$(list-tree)"
       },
       {
         "command": "bddPilot.cycleTreeGroupByDomain",
@@ -170,7 +175,8 @@
       },
       {
         "command": "bddPilot.copyFailureContextForAi",
-        "title": "%bddPilot.command.copyFailureContextForAi.title%"
+        "title": "%bddPilot.command.copyFailureContextForAi.title%",
+        "icon": "$(sparkle)"
       }
     ],
     "submenus": [

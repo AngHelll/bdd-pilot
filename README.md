@@ -48,6 +48,10 @@ toast with **Copy for AI**:
 
 ![BDD Pilot: dashboard, @tag tree, flaky scenarios, Copy for AI](./media/readme-dashboard.png)
 
+**Tree & toolbar** — pilot summary row, codicon toolbar, and domain tree:
+
+![BDD Pilot: tree preview with summary row and toolbar](./media/readme-tree-preview.png)
+
 ## Install
 
 - **VS Code Marketplace:** search **BDD Pilot** (publisher [anghelll](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot)), or run:
@@ -111,6 +115,24 @@ toast with **Copy for AI**:
   clipboard for Cursor/Copilot (no embedded LLM — review before sharing externally).
 - **Post-run feedback**: error snippets on failed scenarios (hover + description), localized
   outcomes, optional summary toast (`bddPilot.feedback.postRunToast`).
+
+### Iconography
+
+BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand assets**:
+
+- **`media/icon.png`** — Marketplace listing (color, discovery).
+- **`media/pilot.svg`** — Activity bar sidebar icon (monochrome, theme-aware).
+
+| Area | Icons | Meaning |
+|------|-------|---------|
+| Activity bar | `pilot.svg` | BDD Pilot entry; badge `1` during run/debug |
+| Status bar | `$(beaker) Pilot` | Execution hub (STAGE, mode, project) |
+| Toolbar | `run-all`, `search` / `search-fuzzy`, `stop`, `graph`, `refresh`, `folder` / `tag`, `ellipsis` | Run · Search · Cancel (running) · Dashboard · Refresh · GroupBy · More |
+| Summary row | `history`, `loading~spin`, `debug-alt`, `warning`, `info` | Idle · running · debugging · error · warning |
+| Tree outcomes | `pass`, `error`, `circle-slash`, `beaker`, `list-tree` | Passed / failed / skipped / pending scenario / pending outline |
+| Containers | `folder`, `file-code`, `tag` + tint `testing.icon*` | Domain / feature / tag group roll-up |
+
+Step binding navigation uses [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) — Pilot focuses on execution icons only.
 
 ## Security
 
@@ -215,7 +237,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.8.3**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.9.4**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

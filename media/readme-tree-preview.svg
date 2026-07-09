@@ -11,37 +11,52 @@
   <rect width="720" height="420" rx="10" fill="#1e1e1e"/>
   <rect x="0" y="0" width="48" height="420" fill="#333333"/>
   <rect x="48" y="0" width="672" height="36" fill="#323233"/>
-  <text x="64" y="23" fill="#cccccc" font-family="Segoe UI, system-ui, sans-serif" font-size="12">samples/minimal-bdd  Visual Studio Code</text>
+  <text x="64" y="23" fill="#cccccc" font-family="Segoe UI, system-ui, sans-serif" font-size="12">samples/minimal-bdd - Visual Studio Code</text>
 
-  <!-- Activity bar icon -->
-  <circle cx="24" cy="56" r="14" fill="#007acc"/>
-  <path d="M18 56 L24 50 L30 56 L27 56 L27 62 L21 62 L21 56 Z" fill="#ffffff"/>
+  <!-- Activity bar: pilot.svg (monochrome) -->
+  <g transform="translate(12, 44) scale(0.85)" fill="#cccccc" stroke="#cccccc">
+    <path fill="currentColor" d="M12 2.9 13.05 4.8h-2.1L12 2.9z"/>
+    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke-width="1.3" d="M5.4 14.8a8.6 8.6 0 0 1 13.2 0"/>
+      <path stroke-width="1.15" d="M7.1 12.2a5.9 5.9 0 0 1 9.8 0"/>
+      <path stroke-width="1" d="M7.2 16.6h9.6M8.3 18.3h7.4M9.6 19.8h4.8"/>
+      <path stroke-width="0.85" d="M9.2 11.1v.9M10.6 10.5v.9M12 10.2v.9M13.4 10.5v.9M14.8 11.1v.9"/>
+    </g>
+    <path fill="currentColor" d="M12 6.75c2.05 0 3.55 2.85 3.55 4.55 0 .95-.55 1.75-1.35 2.1l-.25 2.35H9.05l-.25-2.35c-.8-.35-1.35-1.15-1.35-2.1C7.45 9.6 8.95 6.75 12 6.75zm0 1.35c-1.15 0-2.05 1.75-2.05 3.2 0 .55.3 1 .75 1.2l.15 1.55h2.3l.15-1.55c.45-.2.75-.65.75-1.2 0-1.45-.9-3.2-2.05-3.2z"/>
+  </g>
 
   <!-- Sidebar -->
   <rect x="48" y="36" width="260" height="384" fill="url(#sidebar)"/>
-  <text x="64" y="62" fill="#bbbbbb" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">BDD PILOT: TESTS</text>
+  <text x="64" y="58" fill="#bbbbbb" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">BDD PILOT: TESTS</text>
 
-  <!-- Status chips -->
-  <rect x="64" y="74" width="52" height="18" rx="4" fill="#3c3c3c"/>
-  <text x="72" y="87" fill="#4fc1ff" font-family="Segoe UI, system-ui, sans-serif" font-size="10">STAGE test</text>
-  <rect x="122" y="74" width="48" height="18" rx="4" fill="#3c3c3c"/>
-  <text x="130" y="87" fill="#cccccc" font-family="Segoe UI, system-ui, sans-serif" font-size="10">debug</text>
+  <!-- Toolbar -->
+  <text x="64" y="86" fill="#6a6a6a" font-family="Segoe UI, system-ui, sans-serif" font-size="8">Run - Search - Dashboard - Refresh - GroupBy - More</text>
+
+  <!-- Pilot summary row -->
+  <g font-family="Segoe UI, system-ui, sans-serif" font-size="11">
+    <circle cx="70" cy="104" r="5" fill="none" stroke="#cccccc" stroke-width="1"/>
+    <path d="M67 104h6M70 101v6" stroke="#cccccc" stroke-width="1"/>
+    <text x="80" y="107" fill="#cccccc">Last run</text>
+    <text x="140" y="107" fill="#858585" font-size="10">3 passed - 1 failed</text>
+  </g>
 
   <!-- Tree -->
   <g font-family="Segoe UI, system-ui, sans-serif" font-size="12">
-    <text x="64" y="118" fill="#cccccc">¾ Smoke</text>
-    <text x="220" y="118" fill="#858585" font-size="10">2 tags</text>
+    <text x="64" y="132" fill="#cccccc">&gt; Smoke</text>
+    <text x="220" y="132" fill="#858585" font-size="10">2 tags</text>
 
-    <text x="80" y="142" fill="#89d185"> System is ready</text>
-    <text x="250" y="142" fill="#858585" font-size="10">15 ms</text>
+    <text x="80" y="156" fill="#89d185">+ System is ready</text>
+    <text x="250" y="156" fill="#858585" font-size="10">15 ms</text>
 
-    <text x="80" y="166" fill="#cccccc">¾ Add two numbers</text>
+    <text x="80" y="180" fill="#cccccc">&gt; Add two numbers</text>
 
-    <text x="96" y="190" fill="#89d185"> first=1, second=2, result=3</text>
-    <text x="96" y="214" fill="#89d185"> first=5, second=7, result=12</text>
-
-    <text x="64" y="248" fill="#858585" font-size="11">Run All · Refresh · Search</text>
+    <text x="96" y="204" fill="#89d185">+ first=1, second=2, result=3</text>
+    <text x="96" y="228" fill="#f48771">x first=5, second=7, result=12</text>
   </g>
+
+  <!-- Status bar hub -->
+  <rect x="48" y="396" width="672" height="24" fill="#007acc"/>
+  <text x="64" y="412" fill="#ffffff" font-family="Segoe UI, system-ui, sans-serif" font-size="10">Pilot  test - parallel - MinimalBdd.Tests</text>
 
   <!-- Editor panel mock -->
   <rect x="308" y="36" width="412" height="384" fill="#1e1e1e" filter="url(#shadow)"/>
@@ -56,11 +71,9 @@
     <text x="320" y="176" fill="#4ec9b0">    Given</text><text x="370" y="176" fill="#cccccc"> the system is ready</text>
     <text x="320" y="196" fill="#4ec9b0">    Then</text><text x="360" y="196" fill="#cccccc"> the smoke check should succeed</text>
 
-    <!-- CodeLens mock -->
     <rect x="320" y="202" width="220" height="16" rx="3" fill="#2d2d30"/>
-    <text x="328" y="213" fill="#3794ff" font-size="10" font-family="Segoe UI, system-ui, sans-serif">Run · Debug</text>
+    <text x="328" y="213" fill="#3794ff" font-size="10" font-family="Segoe UI, system-ui, sans-serif">Run - Debug</text>
   </g>
 
-  <!-- Caption -->
-  <text x="360" y="400" text-anchor="middle" fill="#858585" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Tree, CodeLens, and live results on samples/minimal-bdd</text>
+  <text x="360" y="400" text-anchor="middle" fill="#858585" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Pilot summary row, toolbar, and live results on samples/minimal-bdd</text>
 </svg>
