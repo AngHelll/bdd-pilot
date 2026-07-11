@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.10.0 (Marketplace pending)** · **Next: MCP Fase 1 · backlog Tier 2/3** · **361 unit tests**
+> **Current release: v1.11.0 (Marketplace pending)** · **Next: MCP Fase 1 · backlog Tier 2/3** · **381 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.10.0** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.11.0** |
 | 🎯 Next | MCP Fase 1 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.11.0** | pilot-cli v2 — `discover`, `build-filter`, `failure-context` (JSON); pre-MCP · spec `pilot-cli-v2-v1.11.md` |
 | **1.10.0** | Modularize `extension.ts` — `src/activation/` wiring modules · spec `extension-modularize-v1.10.md` |
 | **1.9.5** | Env Tier 0 — env.example load order, generic stg confirm, sample `.env.test` · spec `env-tier0-v1.9.5.md` |
 | **1.9.4** | Iconography polish — README assets, palette icons, Iconography docs · spec `iconography-polish-v1.9.4.md` |
@@ -185,6 +186,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.11.0 — pilot-cli v2 ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **CLI** | `discover`, `build-filter`, `failure-context` on `npm run pilot` — JSON stdout for agents/CI |
+| **Core** | Filter resolution + failure snapshot from TRX/log artifacts (sanitize parity with Copy for AI) |
+| **Tooling** | Auto-compile `out-test/` when headless CLI runs without prior `test:unit` (381 unit tests) |
 
 ### v1.10.0 — extension modularization ✅ shipped
 

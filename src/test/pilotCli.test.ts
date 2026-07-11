@@ -76,7 +76,7 @@ describe("pilot-cli analyze", () => {
     const { status, stderr } = runPilot(["analyze"]);
     assert.strictEqual(status, 2);
     assert.match(stderr, /Missing log file path/);
-    assert.match(stderr, /Usage: npm run pilot -- analyze/);
+    assert.match(stderr, /npm run pilot -- analyze <log-file>/);
   });
 
   it("exits 2 when log file does not exist", () => {
@@ -88,8 +88,122 @@ describe("pilot-cli analyze", () => {
   });
 
   it("exits 2 for unknown subcommand", () => {
-    const { status, stderr } = runPilot(["discover", "."]);
+    const { status, stderr } = runPilot(["not-a-command"]);
     assert.strictEqual(status, 2);
-    assert.match(stderr, /Unknown subcommand: discover/);
+    assert.match(stderr, /Unknown subcommand: not-a-command/);
+  });
+});
+
+describe("pilot-cli discover", () => {
+  it("returns JSON map for minimal-bdd with smoke tag", () => {
+    const sampleDir = path.join(ROOT, "samples/minimal-bdd");
+    const { status, stdout } = runPilot(["discover", sampleDir]);
+    assert.strictEqual(status, 0);
+
+    const parsed = JSON.parse(stdout) as {
+      featureCount: number;
+      tags: Array<{ tag: string; scenarioCount: number }>;
+      domains: Array<{ features: Array<{ name: string }> }>;
+    };
+    assert.ok(parsed.featureCount >= 1);
+    assert.ok(parsed.tags.some((entry) => entry.tag === "smoke"));
+    const smokeFeature = parsed.domains.flatMap((d) => d.features).find((f) => f.name === "Smoke");
+    assert.ok(smokeFeature);
+  });
+
+  it("exits 2 when project directory is missing", () => {
+    const { status, stderr } = runPilot(["discover"]);
+    assert.strictEqual(status, 2);
+    assert.match(stderr, /Missing project directory/);
+  });
+});
+
+describe("pilot-cli build-filter", () => {
+  it("returns Category=smoke for --tag smoke", () => {
+    const sampleDir = path.join(ROOT, "samples/minimal-bdd");
+    const { status, stdout } = runPilot(["build-filter", sampleDir, "--tag", "smoke"]);
+    assert.strictEqual(status, 0);
+
+    const parsed = JSON.parse(stdout) as { filter: string; scopeLabel: string };
+    assert.strictEqual(parsed.filter, "Category=smoke");
+    assert.strictEqual(parsed.scopeLabel, "@smoke (tag)");
+  });
+
+  it("returns null filter for --all", () => {
+    const sampleDir = path.join(ROOT, "samples/minimal-bdd");
+    const { status, stdout } = runPilot(["build-filter", sampleDir, "--all"]);
+    assert.strictEqual(status, 0);
+
+    const parsed = JSON.parse(stdout) as { filter: string | null };
+    assert.strictEqual(parsed.filter, null);
+  });
+
+  it("exits 2 when scope flags are missing", () => {
+    const sampleDir = path.join(ROOT, "samples/minimal-bdd");
+    const { status, stderr } = runPilot(["build-filter", sampleDir]);
+    assert.strictEqual(status, 2);
+    assert.match(stderr, /Specify one scope/);
+  });
+});
+
+describe("pilot-cli failure-context", () => {
+  it("returns markdown JSON for TRX+log fixture", () => {
+    const trx = writeTempLog(`<?xml version="1.0" encoding="UTF-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Results>
+    <UnitTestResult testName="SmokeFeature.SystemIsReady" outcome="Failed">
+      <Output><ErrorInfo><Message>Expected true but was false</Message></ErrorInfo></Output>
+    </UnitTestResult>
+  </Results>
+</TestRun>`);
+    const log = writeTempLog(PENDING_STEPS_LOG);
+    const sampleDir = path.join(ROOT, "samples/minimal-bdd");
+    try {
+      const { status, stdout } = runPilot([
+        "failure-context",
+        "--project-dir",
+        sampleDir,
+        "--trx",
+        trx,
+        "--log",
+        log,
+      ]);
+      assert.strictEqual(status, 0);
+
+      const parsed = JSON.parse(stdout) as {
+        markdown: string;
+        summary: { failed: number };
+        primaryDiagnostic: string | null;
+      };
+      assert.match(parsed.markdown, /## Run/);
+      assert.ok(parsed.summary.failed >= 1);
+      assert.strictEqual(parsed.primaryDiagnostic, "PENDING_STEPS");
+    } finally {
+      fs.unlinkSync(trx);
+      fs.unlinkSync(log);
+    }
+  });
+
+  it("exits 2 when no failure context is available", () => {
+    const trx = writeTempLog(`<?xml version="1.0" encoding="UTF-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Results>
+    <UnitTestResult testName="SmokeFeature.SystemIsReady" outcome="Passed" />
+  </Results>
+</TestRun>`);
+    const sampleDir = path.join(ROOT, "samples/minimal-bdd");
+    try {
+      const { status, stderr } = runPilot([
+        "failure-context",
+        "--project-dir",
+        sampleDir,
+        "--trx",
+        trx,
+      ]);
+      assert.strictEqual(status, 2);
+      assert.match(stderr, /no failure context/);
+    } finally {
+      fs.unlinkSync(trx);
+    }
   });
 });

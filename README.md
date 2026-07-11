@@ -240,7 +240,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.9.4**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.11.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

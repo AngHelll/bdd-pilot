@@ -8,6 +8,13 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.11.0] — 2026-07-10
+
+### Added
+- **pilot-cli v2** — headless subcommands on `npm run pilot`: `discover`, `build-filter`, `failure-context` (JSON stdout; stepping stone to MCP Fase 1)
+- **Core** — `resolveCliFilterTarget()`, `buildCliDiscoverReport()`, `buildFailureSnapshotFromArtifacts()` with unit tests
+- **CLI** — auto-compile `out-test/` when missing (`tsc -p tsconfig.test.json`)
+
 ## [1.10.0] — 2026-07-10
 
 ### Changed
