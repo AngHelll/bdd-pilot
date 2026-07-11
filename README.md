@@ -159,6 +159,9 @@ from VS Code. This is **optional** — your project may already load its own
 Load order: `config/.env.<stage>` then `config/.env.local` (overrides). Values
 are merged in memory only; see [Security](#security) above.
 
+The [`samples/minimal-bdd`](./samples/minimal-bdd) project includes a tracked
+`config/.env.test` placeholder for dogfood and Capa B verification.
+
 ## Architecture
 
 ```

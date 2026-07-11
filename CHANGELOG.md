@@ -8,6 +8,13 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.9.5] — 2026-07-10
+
+### Changed
+- **Env docs** — `config/env.example` documents real load order (`.env.<stage>` → `.env.local`); removed misleading `.env.test.local` pattern
+- **Stage confirmation copy** — generic `stg` prompt EN/ES (no vendor-specific tooling references)
+- **Sample env** — `samples/minimal-bdd/config/.env.test` placeholder for dogfood and Capa B env-loaded verification
+
 ## [1.9.4] — 2026-07-09
 
 ### Changed

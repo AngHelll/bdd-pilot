@@ -174,7 +174,7 @@ const EN = {
   "envGuard.prodConfirm":
     "You are about to run tests against PRODUCTION. This may affect live data and trigger external reporting. Continue?",
   "envGuard.stageConfirm":
-    "You are about to run tests against '{stage}', which reports to X-Ray. Continue?",
+    "You are about to run tests against the '{stage}' environment. This may use staging data or external services. Continue?",
 
   "action.run": "Run",
   "action.debug": "Debug",
@@ -496,7 +496,7 @@ const ES: Record<keyof typeof EN, string> = {
   "envGuard.prodConfirm":
     "Vas a ejecutar tests contra PRODUCCIÓN. Puede afectar datos reales y reportes externos. ¿Continuar?",
   "envGuard.stageConfirm":
-    "Vas a ejecutar tests contra '{stage}', que reporta a X-Ray. ¿Continuar?",
+    "Vas a ejecutar tests contra el entorno '{stage}'. Puede usar datos de staging o servicios externos. ¿Continuar?",
 
   "action.run": "Ejecutar",
   "action.debug": "Depurar",

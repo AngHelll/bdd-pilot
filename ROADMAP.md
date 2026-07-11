@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.9.4 (Marketplace)** · **Next: v1.x backlog** · **360 unit tests**
+> **Current release: v1.9.5 (Marketplace)** · **Next: v1.x backlog** · **361 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.4** |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.5** |
 | 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.9.5** | Env Tier 0 — env.example load order, generic stg confirm, sample `.env.test` · spec `env-tier0-v1.9.5.md` |
 | **1.9.4** | Iconography polish — README assets, palette icons, Iconography docs · spec `iconography-polish-v1.9.4.md` |
 | **1.9.3** | Binding gate pre-flight — stage/gate antes de progress; decline ≠ cancel; TE paridad · spec `binding-gate-pre-flight-v1.9.3.md` |
 | **1.9.2** | Scoped run progress — summary sin rollup global, 0/N, notif no-cancel, fallos en message, ambiguous continue · spec `scoped-run-progress-v1.9.2.md` |
@@ -183,6 +184,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.9.5 — env Tier 0 ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Docs** | `config/env.example` load order honest (`.env.<stage>` → `.env.local`); README mentions sample env |
+| **i18n** | Generic `envGuard.stageConfirm` EN/ES — no X-Ray reference |
+| **Sample** | `samples/minimal-bdd/config/.env.test` — Capa B exercises `log.envLoaded` (361 unit tests) |
 
 ### v1.9.4 — iconography polish ✅ shipped
 
@@ -579,4 +588,4 @@ src/
 
 ---
 
-*Last updated: v1.9.4 shipped — iconography polish.*
+*Last updated: v1.9.5 shipped — env Tier 0.*

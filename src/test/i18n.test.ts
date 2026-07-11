@@ -20,6 +20,15 @@ describe("i18n", () => {
     assert.match(t("es", "envGuard.prodConfirm"), /PRODUCCIÓN/);
   });
 
+  it("envGuard.stageConfirm is generic (no vendor-specific tooling)", () => {
+    const en = t("en", "envGuard.stageConfirm", { stage: "stg" });
+    const es = t("es", "envGuard.stageConfirm", { stage: "stg" });
+    assert.match(en, /stg/);
+    assert.match(es, /stg/);
+    assert.doesNotMatch(en, /x-ray/i);
+    assert.doesNotMatch(es, /x-ray/i);
+  });
+
   it("t interpolates params", () => {
     assert.strictEqual(
       t("en", "toast.profileSaved", { name: "Smoke" }),
