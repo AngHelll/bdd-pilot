@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.10.0] — 2026-07-10
+
+### Changed
+- **Extension modularization** — extract activation wiring from `extension.ts` into `src/activation/` (commands, run execution, post-run, rehydrate, project hub, settings readers); no UX or API behavior change
+
 ## [1.9.5] — 2026-07-10
 
 ### Changed

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.9.5 (Marketplace)** · **Next: v1.x backlog** · **361 unit tests**
+> **Current release: v1.10.0 (Marketplace pending)** · **Next: MCP Fase 1 · backlog Tier 2/3** · **361 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.9.5** |
-| 🎯 Next | MCP post-v1.0 · backlog Tier 2/3 |
+| ✅ Shipped (Marketplace) | v0.1.0 → **v1.10.0** |
+| 🎯 Next | MCP Fase 1 · backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.10.0** | Modularize `extension.ts` — `src/activation/` wiring modules · spec `extension-modularize-v1.10.md` |
 | **1.9.5** | Env Tier 0 — env.example load order, generic stg confirm, sample `.env.test` · spec `env-tier0-v1.9.5.md` |
 | **1.9.4** | Iconography polish — README assets, palette icons, Iconography docs · spec `iconography-polish-v1.9.4.md` |
 | **1.9.3** | Binding gate pre-flight — stage/gate antes de progress; decline ≠ cancel; TE paridad · spec `binding-gate-pre-flight-v1.9.3.md` |
@@ -184,6 +185,13 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.10.0 — extension modularization ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Architecture** | `extension.ts` ~517 lines; wiring in `src/activation/` (commands, run, post-run, rehydrate, project hub, settings) |
+| **UX/API** | No behavior change — refactor only (361 unit tests) |
 
 ### v1.9.5 — env Tier 0 ✅ shipped
 
@@ -572,6 +580,7 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 
 ```
 src/
+├── activation/     # Extension wiring — commands, run orchestration (v1.10.0)
 ├── api/            # PilotRunApiV1 — extension.exports (v1.4.0)
 ├── core/           # Pure logic — unit tested, no VS Code API
 │   ├── gherkin/    # parser, grouping, discovery, treeLabels
@@ -581,11 +590,11 @@ src/
 │   └── config/     # stages, modes, profiles, projectLocator, envFile
 ├── providers/      # Tree, TestController, CodeLens, RunService, dashboard
 ├── security/       # envGuard, sanitizer
-└── extension.ts
+└── extension.ts    # activate/deactivate orchestration
 ```
 
 **Principles:** framework-agnostic · no credentials stored/logged · optional `.env` in memory only · filter mapping configurable for Reqnroll/SpecFlow.
 
 ---
 
-*Last updated: v1.9.5 shipped — env Tier 0.*
+*Last updated: v1.10.0 shipped — extension modularization.*
