@@ -8,6 +8,12 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.15.1] — 2026-07-12
+
+### Changed
+- **Settings i18n (Capa C parcial)** — Spanish `enumDescriptions` + descriptions for 7 tree/feedback/outcomes settings via `package.nls.es.json`
+- **Tests** — `packageNls.test.ts` validates configuration nls key parity EN/ES
+
 ## [1.15.0] — 2026-07-12
 
 ### Added

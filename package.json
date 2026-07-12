@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -421,8 +421,8 @@
           ],
           "default": "detailed",
           "enumDescriptions": [
-            "Less duplicate roll-ups: global summary row, structural folder labels, outcomes on leaves only.",
-            "Default layout: roll-up on every folder and tinted container icons (v1.3 behavior)."
+            "%bddPilot.configuration.tree.displayMode.enum.compact%",
+            "%bddPilot.configuration.tree.displayMode.enum.detailed%"
           ],
           "description": "%bddPilot.configuration.tree.displayMode.description%"
         },
@@ -434,10 +434,10 @@
           ],
           "default": "domain",
           "enumDescriptions": [
-            "Group by feature folder domain (Features/Trading/...).",
-            "Group by Gherkin @tag — QA smoke/regression suites."
+            "%bddPilot.configuration.tree.groupBy.enum.domain%",
+            "%bddPilot.configuration.tree.groupBy.enum.tag%"
           ],
-          "description": "How scenarios are organized in the BDD Pilot test tree."
+          "description": "%bddPilot.configuration.tree.groupBy.description%"
         },
         "bddPilot.tree.searchRunCap": {
           "type": "number",
@@ -455,12 +455,12 @@
           ],
           "default": "count",
           "enumDescriptions": [
-            "Do not show tags in the tree (tags still appear in the hover tooltip).",
-            "Show a short summary such as \"6 tags\" instead of listing every @tag.",
-            "Show up to N tags, then \"+M\" for the rest (see compactTagLimit).",
-            "List every @tag in the description (can truncate on narrow panels)."
+            "%bddPilot.configuration.tree.tagDisplay.enum.hidden%",
+            "%bddPilot.configuration.tree.tagDisplay.enum.count%",
+            "%bddPilot.configuration.tree.tagDisplay.enum.compact%",
+            "%bddPilot.configuration.tree.tagDisplay.enum.full%"
           ],
-          "description": "How scenario and feature tags appear in the BDD Pilot test tree."
+          "description": "%bddPilot.configuration.tree.tagDisplay.description%"
         },
         "bddPilot.tree.compactTagLimit": {
           "type": "number",
@@ -479,12 +479,12 @@
           ],
           "default": "auto",
           "enumDescriptions": [
-            "Readable unit by magnitude: 450 ms, 2.3 s, 2m 15s. Hover shows exact ms.",
-            "Always milliseconds (useful for benchmarks).",
-            "Always seconds with decimals.",
-            "Short form: 45s, 2m 30s (GitHub Actions style)."
+            "%bddPilot.configuration.tree.durationDisplay.enum.auto%",
+            "%bddPilot.configuration.tree.durationDisplay.enum.ms%",
+            "%bddPilot.configuration.tree.durationDisplay.enum.seconds%",
+            "%bddPilot.configuration.tree.durationDisplay.enum.compact%"
           ],
-          "description": "How test run durations appear in the tree description."
+          "description": "%bddPilot.configuration.tree.durationDisplay.description%"
         },
         "bddPilot.filter.featureClassSuffix": {
           "type": "string",
@@ -504,10 +504,10 @@
           ],
           "default": "displayName",
           "enumDescriptions": [
-            "Run a single Scenario Outline row via VSTest DisplayName~ (Reqnroll/xUnit Theory).",
-            "Run the whole Scenario Outline / Theory method (all example rows)."
+            "%bddPilot.configuration.filter.outlineRowFilter.enum.displayName%",
+            "%bddPilot.configuration.filter.outlineRowFilter.enum.scenarioOnly%"
           ],
-          "description": "How clicking Run on an outline row builds the dotnet test filter."
+          "description": "%bddPilot.configuration.filter.outlineRowFilter.description%"
         },
         "bddPilot.ai.enabled": {
           "type": "boolean",
@@ -530,11 +530,11 @@
           ],
           "default": "failures",
           "enumDescriptions": [
-            "No post-run toast.",
-            "One unified toast when tests failed or the run did not complete (counts plus actionable hint when available).",
-            "Always show one unified post-run toast with pass/fail counts after every completed run."
+            "%bddPilot.configuration.feedback.postRunToast.enum.off%",
+            "%bddPilot.configuration.feedback.postRunToast.enum.failures%",
+            "%bddPilot.configuration.feedback.postRunToast.enum.always%"
           ],
-          "description": "Unified post-run notification with pass/fail counts, optional diagnostic hint, and quick actions."
+          "description": "%bddPilot.configuration.feedback.postRunToast.description%"
         },
         "bddPilot.feedback.diagnosticsInOutput": {
           "type": "string",
@@ -559,10 +559,10 @@
           ],
           "default": "on",
           "enumDescriptions": [
-            "Restore pass/fail icons from the latest BDD Pilot TRX in TestResults/ when the extension activates (if no outcomes in this session yet).",
-            "Do not restore outcomes from disk on activate."
+            "%bddPilot.configuration.outcomes.rehydrateOnActivate.enum.on%",
+            "%bddPilot.configuration.outcomes.rehydrateOnActivate.enum.off%"
           ],
-          "description": "Restore tree and Test Explorer outcomes from the latest Pilot TRX file when opening the workspace."
+          "description": "%bddPilot.configuration.outcomes.rehydrateOnActivate.description%"
         },
         "bddPilot.outcomes.rehydrateMaxAgeHours": {
           "type": "number",

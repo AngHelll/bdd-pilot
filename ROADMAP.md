@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.15.0 (GitHub)** · **Marketplace: v1.9.5 (catch-up pospuesto)** · **Next: backlog Tier 2/3 · i18n polish** · **426 unit tests**
+> **Current release: v1.15.1** · **Marketplace: v1.15.1** · **Next: dashboard `runKind` · backlog Tier 2/3** · **428 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub) | v0.1.0 → **v1.15.0** |
-| 📦 Marketplace | **v1.9.5** (catch-up pospuesto) |
-| 🎯 Next | backlog Tier 2/3 · i18n enumDescriptions ES · dashboard `runKind` |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.15.1** |
+| 🎯 Next | dashboard `runKind` · backlog Tier 2/3 · Tree↔TE parity tests |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.15.1** | Settings i18n — enumDescriptions ES for 7 tree/feedback/outcomes settings · spec `i18n-settings-enums-v1.15.1.md` |
 | **1.15.0** | Env Tier 1 — `.env.<stage>.local` loader, hub env tooltip · spec `env-tier1-v1.15.0.md` |
 | **1.14.0** | Agent Surface — discover enrich, rehydrate last-failure artifact, README recipes · spec `mcp-agent-surface-v1.14.md` |
 | **1.13.0** | MCP Fase 2 — extension MCP provider, VSIX headless bundle, last-failure artifact · spec `mcp-fase2-v1.13.md` |
@@ -191,6 +191,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.15.1 — Settings i18n (Capa C parcial) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Settings** | 7 properties: tree display/group/tags/duration, outline filter, post-run toast, rehydrate — ES enumDescriptions via nls |
+| **Tests** | `packageNls.test.ts` EN/ES key parity (428 unit tests) |
+| **Marketplace** | Published v1.15.1 (catch-up from v1.9.5) |
 
 ### v1.15.0 — Env Tier 1 ✅ shipped
 
