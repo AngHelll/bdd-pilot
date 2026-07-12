@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { LastRunSnapshot } from "./aiFailureContext";
+import { UnifiedSummary } from "../results/resultLoader";
 import { sanitize } from "../../security/sanitizer";
 
 export const LAST_FAILURE_ARTIFACT_NAME = "bdd-pilot-last-failure.json";
@@ -188,4 +189,65 @@ export function clearLastFailureArtifact(projectDir: string): void {
   if (fs.existsSync(logPath)) {
     fs.unlinkSync(logPath);
   }
+}
+
+export interface RehydrateArtifactHistory {
+  stage?: string;
+  mode?: string;
+  filter?: string;
+}
+
+export interface MaybeWriteLastFailureArtifactFromRehydrateInput {
+  projectDir: string;
+  trxAbsolutePath: string;
+  summary: UnifiedSummary;
+  trxMtimeMs: number;
+  workspaceRoot?: string;
+  history?: RehydrateArtifactHistory;
+}
+
+export function shouldSkipRehydrateArtifactWrite(projectDir: string, trxMtimeMs: number): boolean {
+  const existing = readLastFailureArtifact(projectDir);
+  return !!existing && existing.writtenAt > trxMtimeMs;
+}
+
+export function maybeWriteLastFailureArtifactFromRehydrate(
+  input: MaybeWriteLastFailureArtifactFromRehydrateInput,
+): WriteLastFailureArtifactResult {
+  if (input.summary.failed <= 0) {
+    return { written: false };
+  }
+  if (shouldSkipRehydrateArtifactWrite(input.projectDir, input.trxMtimeMs)) {
+    return { written: false };
+  }
+
+  const projectDir = path.resolve(input.projectDir);
+  const snapshot: LastRunSnapshot = {
+    timestamp: input.trxMtimeMs,
+    stage: sanitize(input.history?.stage ?? "unknown"),
+    mode: sanitize(input.history?.mode ?? "unknown"),
+    filter: input.history?.filter ? sanitize(input.history.filter) : undefined,
+    scopeLabels: [],
+    projectDir,
+    exitCode: 1,
+    summary: {
+      passed: input.summary.passed,
+      failed: input.summary.failed,
+      skipped: input.summary.skipped,
+      total: input.summary.total,
+      source: input.summary.source,
+    },
+    outputForAnalysis: "",
+    failedScenarios: [],
+    evidence: [],
+    trxPath: path
+      .relative(projectDir, path.resolve(input.trxAbsolutePath))
+      .split(path.sep)
+      .join("/"),
+  };
+
+  return writeLastFailureArtifact({
+    snapshot,
+    workspaceRoot: input.workspaceRoot,
+  });
 }

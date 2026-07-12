@@ -35,12 +35,20 @@ server.registerTool(
 server.registerTool(
   "pilot_discover_bdd",
   {
-    description: `Discover BDD features, scenarios, and tags under a project directory. ${READ_ONLY_NOTICE}`,
+    description: `Discover BDD features, scenarios, and tags under a project directory. Set enrich=true to invoke dotnet test --list-tests (slow; optional outline row detail). ${READ_ONLY_NOTICE}`,
     inputSchema: {
       projectDir: z.string().describe(`BDD project root directory. ${pathHint}`),
+      enrich: z
+        .boolean()
+        .optional()
+        .describe("When true, runs dotnet test --list-tests to enrich outline rows (default false)"),
+      testTarget: z
+        .string()
+        .optional()
+        .describe(`Optional .csproj or .slnx for list-tests when enrich=true. ${pathHint}`),
     },
   },
-  async ({ projectDir }) => toMcpToolResult(handleDiscoverBdd({ projectDir }, getWorkspaceRoot())),
+  async (params) => toMcpToolResult(handleDiscoverBdd(params, getWorkspaceRoot())),
 );
 
 server.registerTool(

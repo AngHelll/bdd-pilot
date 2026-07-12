@@ -8,8 +8,10 @@ import {
   clearLastFailureArtifact,
   computeMaxFailureLogBytes,
   LAST_FAILURE_ARTIFACT_REL,
+  maybeWriteLastFailureArtifactFromRehydrate,
   readLastFailureArtifact,
   resolveLastFailureArtifactPath,
+  shouldSkipRehydrateArtifactWrite,
   writeLastFailureArtifact,
 } from "../core/diagnostics/lastFailureArtifact";
 import { LastRunSnapshot } from "../core/diagnostics/aiFailureContext";
@@ -98,6 +100,73 @@ describe("lastFailureArtifact", () => {
       fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
       fs.writeFileSync(artifactPath, "{not-json", "utf8");
       assert.strictEqual(readLastFailureArtifact(projectDir), undefined);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("writes rehydrate artifact without log when TRX has failures", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-rehydrate-"));
+    try {
+      const projectDir = path.join(root, "proj");
+      fs.mkdirSync(path.join(projectDir, "TestResults"), { recursive: true });
+      const trx = path.join(projectDir, "TestResults/run.trx");
+      fs.writeFileSync(trx, "<TestRun/>", "utf8");
+
+      const result = maybeWriteLastFailureArtifactFromRehydrate({
+        projectDir,
+        trxAbsolutePath: trx,
+        trxMtimeMs: 1_700_000_000_000,
+        summary: { passed: 1, failed: 1, skipped: 0, total: 2, source: "trx", results: [] },
+        history: { stage: "dev", mode: "parallel", filter: "Category=smoke" },
+      });
+      assert.strictEqual(result.written, true);
+      const artifact = readLastFailureArtifact(projectDir);
+      assert.ok(artifact);
+      assert.strictEqual(artifact.trxPath, "TestResults/run.trx");
+      assert.strictEqual(artifact.logPath, undefined);
+      assert.strictEqual(artifact.stage, "dev");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("skips rehydrate artifact when existing live artifact is newer", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-rehydrate-"));
+    try {
+      const projectDir = path.join(root, "proj");
+      writeLastFailureArtifact({
+        snapshot: makeSnapshot({
+          projectDir,
+          timestamp: 2_000_000_000_000,
+          outputForAnalysis: "",
+        }),
+      });
+      assert.strictEqual(shouldSkipRehydrateArtifactWrite(projectDir, 1_000_000_000_000), true);
+
+      const result = maybeWriteLastFailureArtifactFromRehydrate({
+        projectDir,
+        trxAbsolutePath: path.join(projectDir, "TestResults/old.trx"),
+        trxMtimeMs: 1_000_000_000_000,
+        summary: { passed: 0, failed: 1, skipped: 0, total: 1, source: "trx", results: [] },
+      });
+      assert.strictEqual(result.written, false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("does not write rehydrate artifact when all tests passed", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-rehydrate-"));
+    try {
+      const projectDir = path.join(root, "proj");
+      const result = maybeWriteLastFailureArtifactFromRehydrate({
+        projectDir,
+        trxAbsolutePath: path.join(projectDir, "TestResults/clean.trx"),
+        trxMtimeMs: Date.now(),
+        summary: { passed: 3, failed: 0, skipped: 0, total: 3, source: "trx", results: [] },
+      });
+      assert.strictEqual(result.written, false);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

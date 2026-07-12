@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
+import { maybeWriteLastFailureArtifactFromRehydrate } from "../core/diagnostics/lastFailureArtifact";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { UnifiedSummary } from "../core/results/resultLoader";
@@ -116,6 +117,24 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
         total: summary.total,
       })}`,
     );
+
+    const artifactResult = maybeWriteLastFailureArtifactFromRehydrate({
+      projectDir: ctx.projectDir,
+      trxAbsolutePath: latest.absolutePath,
+      summary,
+      trxMtimeMs: latest.mtimeMs,
+      workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+      history: lastHistory
+        ? {
+            stage: lastHistory.stage,
+            mode: lastHistory.mode,
+            filter: lastHistory.filter,
+          }
+        : undefined,
+    });
+    if (!artifactResult.written && artifactResult.error) {
+      deps.output.appendLine(`[bdd-pilot] last failure artifact: ${artifactResult.error}`);
+    }
   }
 
   return { tryRehydrateOutcomes, applyRunSummaryToTree, logTreeMapping };

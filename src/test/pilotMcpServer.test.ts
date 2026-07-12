@@ -39,8 +39,22 @@ describe("pilot-mcp-lib", () => {
   it("discovers minimal-bdd with smoke tag", () => {
     const result = handleDiscoverBdd({ projectDir: SAMPLE }, ROOT);
     assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.structuredContent.enriched, undefined);
     assert.ok(result.structuredContent.featureCount >= 1);
     assert.ok(result.structuredContent.tags.some((entry: { tag: string }) => entry.tag === "smoke"));
+  });
+
+  it("discovers with enrich when list-tests succeeds via CLI", () => {
+    const result = handleDiscoverBdd(
+      { projectDir: SAMPLE, enrich: true },
+      ROOT,
+    );
+    assert.strictEqual(result.ok, true);
+    if (result.structuredContent.enriched) {
+      assert.ok(typeof result.structuredContent.executableTestCount === "number");
+    } else if (result.structuredContent.listTestsWarnings) {
+      assert.ok(result.structuredContent.listTestsWarnings.length >= 1);
+    }
   });
 
   it("builds Category=smoke filter", () => {

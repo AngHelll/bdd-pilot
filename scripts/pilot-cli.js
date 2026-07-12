@@ -13,7 +13,7 @@ const SCRIPT_DIR = __dirname;
 const USAGE = [
   "Usage:",
   "  npm run pilot -- analyze <log-file>",
-  "  npm run pilot -- discover <project-dir>",
+  "  npm run pilot -- discover <project-dir> [--enrich] [--test-target <csproj-or-slnx>]",
   "  npm run pilot -- build-filter <project-dir> (--tag <name> | --feature <path> [--scenario <name>] | --all)",
   "  npm run pilot -- failure-context --project-dir <dir> (--trx <path> | --log <path> | both) [--max-output-lines <n>]",
 ].join("\n");
@@ -94,11 +94,42 @@ function runAnalyze(logPath) {
   });
 }
 
-function runDiscover(projectDir) {
+async function runDiscover(projectDir, options = {}) {
   ensureOutTest(SCRIPT_DIR);
   resolveExistingDir(projectDir);
+  if (options.testTarget) {
+    resolveExistingPath(options.testTarget, "test target");
+  }
   const { buildCliDiscoverReport } = requireOutTest(SCRIPT_DIR, "core/gherkin/cliDiscoverReport");
-  emitJson(buildCliDiscoverReport(projectDir));
+  emitJson(await buildCliDiscoverReport(projectDir, options));
+}
+
+function parseDiscoverArgs(args) {
+  const projectDir = args[0];
+  if (!projectDir) {
+    usageError("Missing project directory.");
+  }
+
+  let enrich = false;
+  let testTarget;
+
+  for (let i = 1; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === "--enrich") {
+      enrich = true;
+      continue;
+    }
+    if (arg === "--test-target") {
+      testTarget = args[++i];
+      if (!testTarget) {
+        usageError("Missing value for --test-target.");
+      }
+      continue;
+    }
+    usageError(`Unknown discover argument: ${arg}`);
+  }
+
+  return { projectDir, enrich, testTarget };
 }
 
 function parseBuildFilterArgs(args) {
@@ -298,7 +329,7 @@ function runFailureContext(args) {
   });
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
     usageError();
@@ -317,11 +348,11 @@ function main() {
       break;
     }
     case "discover": {
-      const projectDir = rest[0];
-      if (!projectDir) {
-        usageError("Missing project directory.");
-      }
-      runDiscover(projectDir);
+      const parsed = parseDiscoverArgs(rest);
+      await runDiscover(parsed.projectDir, {
+        enrich: parsed.enrich,
+        testTarget: parsed.testTarget,
+      });
       break;
     }
     case "build-filter":
@@ -335,8 +366,6 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (err) {
+main().catch((err) => {
   fatalError(err instanceof Error ? err.message : String(err));
-}
+});

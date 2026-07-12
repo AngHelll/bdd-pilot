@@ -159,7 +159,7 @@ function handleAnalyzeLog({ logPath }, workspaceRoot = getWorkspaceRoot()) {
   return mapCliResult(runPilotCli(["analyze", logPath]));
 }
 
-function handleDiscoverBdd({ projectDir }, workspaceRoot = getWorkspaceRoot()) {
+function handleDiscoverBdd({ projectDir, enrich, testTarget }, workspaceRoot = getWorkspaceRoot()) {
   if (!projectDir) {
     return toolError("projectDir is required");
   }
@@ -167,7 +167,21 @@ function handleDiscoverBdd({ projectDir }, workspaceRoot = getWorkspaceRoot()) {
   if (jailError) {
     return jailError;
   }
-  return mapCliResult(runPilotCli(["discover", projectDir]));
+  if (testTarget) {
+    const targetError = assertArtifactFile(testTarget, workspaceRoot);
+    if (targetError) {
+      return targetError;
+    }
+  }
+
+  const args = ["discover", projectDir];
+  if (enrich) {
+    args.push("--enrich");
+  }
+  if (testTarget) {
+    args.push("--test-target", testTarget);
+  }
+  return mapCliResult(runPilotCli(args));
 }
 
 function handleBuildFilter(params, workspaceRoot = getWorkspaceRoot()) {

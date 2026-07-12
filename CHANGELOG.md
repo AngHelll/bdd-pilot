@@ -8,6 +8,17 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.14.0] — 2026-07-12
+
+### Added
+- **Discover enrich** — `pilot discover [--enrich]` and MCP `pilot_discover_bdd` param `enrich` (opt-in `dotnet test --list-tests`; outline examples + `executableTestCount`)
+- **Rehydrate artifact** — TRX rehydrate with failures writes `bdd-pilot-last-failure.json` when no newer live artifact exists (TRX-only, no log)
+- **README Agent recipes** — Copilot/Cursor workflow: map → filter → failure context → reopen workspace
+
+### Changed
+- **`buildCliDiscoverReport`** — async with 90s timeout, partial success via `listTestsWarnings`
+- **MCP T2** — optional `testTarget` for enrich list-tests scope
+
 ## [1.13.0] — 2026-07-12
 
 ### Added
