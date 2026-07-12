@@ -19,6 +19,8 @@ const EN = {
   "statusBar.hubTooltipStage": "Environment (STAGE)",
   "statusBar.hubTooltipMode": "Parallelism",
   "statusBar.hubTooltipProject": "Test target",
+  "statusBar.hubTooltipEnv": "Env files: {files}",
+  "statusBar.hubTooltipEnvMissing": "Env: no file for this stage (optional)",
   "statusBar.hubTooltipAction": "Click to change settings",
   "statusBar.hubRunningHint": "Run in progress — cancel from sidebar toolbar or command palette",
   "statusBar.hubSectionStage": "Environment (STAGE)",
@@ -339,6 +341,8 @@ const ES: Record<keyof typeof EN, string> = {
   "statusBar.hubTooltipStage": "Entorno (STAGE)",
   "statusBar.hubTooltipMode": "Paralelismo",
   "statusBar.hubTooltipProject": "Objetivo de tests",
+  "statusBar.hubTooltipEnv": "Archivos env: {files}",
+  "statusBar.hubTooltipEnvMissing": "Env: sin archivo para este stage (opcional)",
   "statusBar.hubTooltipAction": "Clic para cambiar configuración",
   "statusBar.hubRunningHint":
     "Ejecución en curso — cancelar desde toolbar lateral o paleta",

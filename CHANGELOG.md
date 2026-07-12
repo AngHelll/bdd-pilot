@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.15.0] — 2026-07-12
+
+### Added
+- **Env Tier 1 — `.env.<stage>.local`** — loader merges `config/.env.<stage>` → `.env.<stage>.local` → `.env.local` (last wins)
+- **Hub env indicator** — execution hub tooltip shows env file basenames (or optional-missing hint) without values
+
+### Changed
+- **`resolveStageEnvFileStatus`** — core helper for file existence only (hub + tests)
+- **Docs** — `env.example` and README document three-step load order and gitignore hints
+
 ## [1.14.0] — 2026-07-12
 
 ### Added

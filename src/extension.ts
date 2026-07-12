@@ -14,6 +14,7 @@ import { resolveDashboardPrimaryDiagnostic } from "./core/results/dashboardDiagn
 import { PostRunFeedbackRequest } from "./core/feedback/postRunFeedback";
 import { UnifiedSummary } from "./core/results/resultLoader";
 import { ParallelismMode, Stage } from "./core/config/types";
+import { resolveStageEnvFileStatus } from "./core/config/envFile";
 import { listDotnetTests } from "./core/runner/listTests";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
@@ -257,6 +258,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         solutionSelected: ctx?.selectedKind === "sln",
       },
       readStatusBarDisplay(),
+      ctx?.projectDir ? resolveStageEnvFileStatus(ctx.projectDir, currentStage) : undefined,
     );
     treeView.badge = running
       ? {

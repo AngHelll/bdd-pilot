@@ -3,9 +3,11 @@ import {
   CompactStatusBarInput,
   formatCompactStatusBarLabel,
   formatCompactStatusBarTooltip,
+  formatDetailedStageTooltip,
   StatusBarDisplayMode,
   statusBarNeedsWarning,
 } from "../core/config/statusBarViewModel";
+import { StageEnvFileStatus } from "../core/config/envFile";
 import { ParallelismMode, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
 
@@ -49,15 +51,16 @@ export class StatusBar implements vscode.Disposable {
     projectLabel: string | undefined,
     activity: StatusBarActivity | undefined,
     displayMode: StatusBarDisplayMode,
+    envStatus?: StageEnvFileStatus,
   ): void {
     if (displayMode === "compact") {
-      this.updateCompact(stage, mode, locale, projectLabel, activity);
+      this.updateCompact(stage, mode, locale, projectLabel, activity, envStatus);
       this.hideDetailed();
       return;
     }
 
     this.hubItem.hide();
-    this.updateDetailed(stage, mode, locale, projectLabel, activity);
+    this.updateDetailed(stage, mode, locale, projectLabel, activity, envStatus);
   }
 
   private updateCompact(
@@ -66,6 +69,7 @@ export class StatusBar implements vscode.Disposable {
     locale: PilotLocale,
     projectLabel: string | undefined,
     activity?: StatusBarActivity,
+    envStatus?: StageEnvFileStatus,
   ): void {
     const input: CompactStatusBarInput = {
       stage,
@@ -75,6 +79,7 @@ export class StatusBar implements vscode.Disposable {
       running: activity?.running,
       solutionSelected: activity?.solutionSelected,
       debugging: activity?.debugging,
+      envStatus,
     };
     this.hubItem.text = formatCompactStatusBarLabel(input);
     this.hubItem.tooltip = formatCompactStatusBarTooltip(input);
@@ -90,10 +95,11 @@ export class StatusBar implements vscode.Disposable {
     locale: PilotLocale,
     projectLabel: string | undefined,
     activity?: StatusBarActivity,
+    envStatus?: StageEnvFileStatus,
   ): void {
     const isProtected = stage === "stg" || stage === "prod";
     this.stageItem.text = `$(globe) ${t(locale, "statusBar.stageLabel")}: ${stage}`;
-    this.stageItem.tooltip = t(locale, "statusBar.stageTooltip");
+    this.stageItem.tooltip = formatDetailedStageTooltip(locale, envStatus);
     this.stageItem.backgroundColor = isProtected
       ? new vscode.ThemeColor("statusBarItem.warningBackground")
       : undefined;

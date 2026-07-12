@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   formatCompactStatusBarLabel,
   formatCompactStatusBarTooltip,
+  formatDetailedStageTooltip,
   readStatusBarDisplayMode,
   statusBarNeedsWarning,
   truncateStatusBarProjectLabel,
@@ -64,5 +65,46 @@ describe("statusBarViewModel", () => {
     assert.ok(tooltip.includes("Environment (STAGE): test"));
     assert.ok(tooltip.includes("slower"));
     assert.ok(tooltip.includes("Click to change settings"));
+  });
+
+  it("formatCompactStatusBarTooltip includes env files when present", () => {
+    const tooltip = formatCompactStatusBarTooltip({
+      stage: "test",
+      mode: "parallel",
+      locale: "en",
+      projectLabel: "App.Tests",
+      envStatus: { existingBasenames: [".env.test", ".env.test.local"] },
+    });
+    assert.ok(tooltip.includes("Env files: .env.test, .env.test.local"));
+  });
+
+  it("formatCompactStatusBarTooltip shows optional missing env line", () => {
+    const tooltip = formatCompactStatusBarTooltip({
+      stage: "stg",
+      mode: "parallel",
+      locale: "en",
+      projectLabel: "App.Tests",
+      envStatus: { existingBasenames: [] },
+    });
+    assert.ok(tooltip.includes("Env: no file for this stage (optional)"));
+  });
+
+  it("formatCompactStatusBarTooltip omits env line without project context", () => {
+    const tooltip = formatCompactStatusBarTooltip({
+      stage: "test",
+      mode: "parallel",
+      locale: "en",
+      projectLabel: "App.Tests",
+    });
+    assert.ok(!tooltip.includes("Env files:"));
+    assert.ok(!tooltip.includes("Env: no file"));
+  });
+
+  it("formatDetailedStageTooltip includes env line on stage item", () => {
+    const tooltip = formatDetailedStageTooltip("en", {
+      existingBasenames: [".env.test"],
+    });
+    assert.ok(tooltip.includes("select environment"));
+    assert.ok(tooltip.includes("Env files: .env.test"));
   });
 });

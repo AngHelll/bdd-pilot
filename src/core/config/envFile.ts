@@ -38,10 +38,42 @@ export function parseEnvFile(content: string): Record<string, string> {
 
 /**
  * Locates the repo-level `config` directory by walking up from the project dir,
- * then loads `config/.env.<stage>` followed by `config/.env.local` overrides.
+ * then loads env files in order: `.env.<stage>` → `.env.<stage>.local` → `.env.local`.
  * Mirrors what `scripts/switch-test-env.sh` does, so tests authenticate the same
  * way they do from the terminal. Missing files are simply skipped.
  */
+export interface StageEnvFileStatus {
+  /** Basenames of existing env files for this stage, in load order. */
+  existingBasenames: string[];
+}
+
+function stageEnvCandidatePaths(configDir: string, stage: string): string[] {
+  return [
+    path.join(configDir, `.env.${stage}`),
+    path.join(configDir, `.env.${stage}.local`),
+    path.join(configDir, ".env.local"),
+  ];
+}
+
+/** File existence only — does not read or parse env values. */
+export function resolveStageEnvFileStatus(projectDir: string, stage: string): StageEnvFileStatus {
+  const configDir = findConfigDir(projectDir);
+  if (!configDir) {
+    return { existingBasenames: [] };
+  }
+  const existingBasenames: string[] = [];
+  for (const file of stageEnvCandidatePaths(configDir, stage)) {
+    try {
+      if (fs.existsSync(file)) {
+        existingBasenames.push(path.basename(file));
+      }
+    } catch {
+      // Ignore unreadable paths.
+    }
+  }
+  return { existingBasenames };
+}
+
 export function loadStageEnv(projectDir: string, stage: string): LoadedEnv {
   const result: LoadedEnv = { vars: {}, loadedFiles: [] };
   const configDir = findConfigDir(projectDir);
@@ -49,8 +81,7 @@ export function loadStageEnv(projectDir: string, stage: string): LoadedEnv {
     return result;
   }
 
-  const candidates = [path.join(configDir, `.env.${stage}`), path.join(configDir, ".env.local")];
-  for (const file of candidates) {
+  for (const file of stageEnvCandidatePaths(configDir, stage)) {
     try {
       if (fs.existsSync(file)) {
         const parsed = parseEnvFile(fs.readFileSync(file, "utf8"));

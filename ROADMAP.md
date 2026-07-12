@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.14.0 (Marketplace pending)** · **Next: backlog Tier 2/3 · Marketplace catch-up** · **418 unit tests**
+> **Current release: v1.15.0 (GitHub)** · **Marketplace: v1.9.5 (catch-up pospuesto)** · **Next: backlog Tier 2/3 · i18n polish** · **426 unit tests**
 
 ---
 
@@ -9,8 +9,9 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (Marketplace) | v0.1.0 → **v1.14.0** |
-| 🎯 Next | backlog Tier 2/3 · Marketplace catch-up · env Tier 1 / i18n polish |
+| ✅ Shipped (GitHub) | v0.1.0 → **v1.15.0** |
+| 📦 Marketplace | **v1.9.5** (catch-up pospuesto) |
+| 🎯 Next | backlog Tier 2/3 · i18n enumDescriptions ES · dashboard `runKind` |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +53,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.15.0** | Env Tier 1 — `.env.<stage>.local` loader, hub env tooltip · spec `env-tier1-v1.15.0.md` |
 | **1.14.0** | Agent Surface — discover enrich, rehydrate last-failure artifact, README recipes · spec `mcp-agent-surface-v1.14.md` |
 | **1.13.0** | MCP Fase 2 — extension MCP provider, VSIX headless bundle, last-failure artifact · spec `mcp-fase2-v1.13.md` |
 | **1.12.0** | MCP Fase 1 — stdio server, 4 read-only tools, path jail + sanitize · spec `mcp-fase1-v1.12.md` |
@@ -189,6 +191,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.15.0 — Env Tier 1 ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Env loader** | `config/.env.<stage>` → `.env.<stage>.local` → `.env.local`; last file wins on duplicate keys |
+| **Hub UX** | Status bar tooltip lists env basenames or optional-missing hint (no secret values) |
+| **Docs** | `env.example` + README load order (426 unit tests) |
 
 ### v1.14.0 — Agent Surface ✅ shipped
 

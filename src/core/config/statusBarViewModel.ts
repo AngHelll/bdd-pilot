@@ -1,4 +1,5 @@
 import { PilotLocale, t } from "../i18n";
+import { StageEnvFileStatus } from "./envFile";
 import { ParallelismMode, Stage } from "./types";
 
 export type StatusBarDisplayMode = "compact" | "detailed";
@@ -13,6 +14,8 @@ export interface CompactStatusBarInput {
   running?: boolean;
   solutionSelected?: boolean;
   debugging?: boolean;
+  /** When undefined, env line is omitted (no project resolved). */
+  envStatus?: StageEnvFileStatus;
 }
 
 export function readStatusBarDisplayMode(value: string | undefined): StatusBarDisplayMode {
@@ -33,6 +36,31 @@ export function statusBarNeedsWarning(stage: Stage, projectLabel?: string): bool
   return !projectLabel;
 }
 
+export function formatHubEnvTooltipLine(
+  locale: PilotLocale,
+  envStatus: StageEnvFileStatus | undefined,
+): string | undefined {
+  if (envStatus === undefined) {
+    return undefined;
+  }
+  if (envStatus.existingBasenames.length > 0) {
+    return t(locale, "statusBar.hubTooltipEnv", { files: envStatus.existingBasenames.join(", ") });
+  }
+  return t(locale, "statusBar.hubTooltipEnvMissing");
+}
+
+export function formatDetailedStageTooltip(
+  locale: PilotLocale,
+  envStatus: StageEnvFileStatus | undefined,
+): string {
+  const lines = [t(locale, "statusBar.stageTooltip")];
+  const envLine = formatHubEnvTooltipLine(locale, envStatus);
+  if (envLine) {
+    lines.push("", envLine);
+  }
+  return lines.join("\n");
+}
+
 export function formatCompactStatusBarLabel(input: CompactStatusBarInput): string {
   const project = input.projectLabel
     ? truncateStatusBarProjectLabel(input.projectLabel)
@@ -50,6 +78,10 @@ export function formatCompactStatusBarTooltip(input: CompactStatusBarInput): str
     `${t(input.locale, "statusBar.hubTooltipMode")}: ${input.mode}`,
     `${t(input.locale, "statusBar.hubTooltipProject")}: ${project}`,
   ];
+  const envLine = formatHubEnvTooltipLine(input.locale, input.envStatus);
+  if (envLine) {
+    lines.push(envLine);
+  }
   if (input.solutionSelected && input.projectLabel) {
     lines.push("", t(input.locale, "statusBar.solutionSlowHint"));
   }

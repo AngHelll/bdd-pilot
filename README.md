@@ -156,8 +156,10 @@ from VS Code. This is **optional** — your project may already load its own
    (or `.env.dev`, `.env.stg`, `.env.prod`).
 3. Select the matching **STAGE** in the status bar execution hub before running.
 
-Load order: `config/.env.<stage>` then `config/.env.local` (overrides). Values
-are merged in memory only; see [Security](#security) above.
+Load order: `config/.env.<stage>` → `config/.env.<stage>.local` →
+`config/.env.local` (each step overrides earlier keys). Values are merged in
+memory only; see [Security](#security) above. Gitignore per-stage locals such as
+`config/.env.*.local` and/or `config/.env.local` in your repo.
 
 The [`samples/minimal-bdd`](./samples/minimal-bdd) project includes a tracked
 `config/.env.test` placeholder for dogfood and Capa B verification.
@@ -274,7 +276,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.14.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.15.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 
