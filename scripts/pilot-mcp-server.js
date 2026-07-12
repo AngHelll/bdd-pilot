@@ -64,11 +64,15 @@ server.registerTool(
 server.registerTool(
   "pilot_failure_context",
   {
-    description: `Build sanitized markdown failure context from TRX and/or log artifacts (Copy for AI parity). ${READ_ONLY_NOTICE}`,
+    description: `Build sanitized markdown failure context from TRX and/or log artifacts (Copy for AI parity). Omit trxPath/logPath to use the last failed run artifact written by the extension. ${READ_ONLY_NOTICE}`,
     inputSchema: {
       projectDir: z.string().describe(`BDD project root directory. ${pathHint}`),
       trxPath: z.string().optional().describe(`TRX file path. ${pathHint}`),
       logPath: z.string().optional().describe(`Log file path. ${pathHint}`),
+      useLastFailure: z
+        .boolean()
+        .optional()
+        .describe("When true (or when trxPath/logPath omitted), read TestResults/bdd-pilot-last-failure.json"),
       maxOutputLines: z
         .number()
         .int()

@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -40,6 +40,12 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "bdd-pilot",
+        "label": "BDD Pilot"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -569,11 +575,13 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "node esbuild.js --production",
+    "build": "npm run build:headless && npm run build:mcp && node esbuild.js --production",
+    "build:headless": "tsc -p tsconfig.headless.json",
+    "build:mcp": "node scripts/build-pilot-mcp.js",
     "watch": "node esbuild.js --watch",
     "compile": "tsc -p ./ --noEmit",
     "lint": "eslint src --ext ts",
-    "test:unit": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
+    "test:unit": "rm -rf out-test && tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
     "pilot": "node scripts/pilot-cli.js",
     "pilot:mcp": "node scripts/pilot-mcp-server.js",
     "dogfood": "bash scripts/dogfood-smoke.sh",

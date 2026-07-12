@@ -1,11 +1,14 @@
 // Headless CLI for BDD Pilot core utilities (agents / CI).
-// Requires out-test/: auto-compiled via ensureOutTest() when missing.
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const {
+  getRepoRoot,
+  getOutTestDir,
+  ensureOutTest,
+  requireOutTest,
+} = require("./pilot-out-test");
 
-const ROOT = path.join(__dirname, "..");
-const OUT_TEST_MARKER = path.join(ROOT, "out-test/core/diagnostics/analyzer.js");
+const SCRIPT_DIR = __dirname;
 
 const USAGE = [
   "Usage:",
@@ -26,21 +29,6 @@ function usageError(message) {
 function fatalError(message) {
   console.error(`error: ${message}`);
   process.exit(1);
-}
-
-function ensureOutTest() {
-  if (fs.existsSync(OUT_TEST_MARKER)) {
-    return;
-  }
-  try {
-    execSync("npx tsc -p tsconfig.test.json", { cwd: ROOT, stdio: "pipe" });
-  } catch (err) {
-    const detail = err.stderr?.toString()?.trim() || err.message;
-    fatalError(`failed to compile out-test/: ${detail}`);
-  }
-  if (!fs.existsSync(OUT_TEST_MARKER)) {
-    fatalError("out-test/ still missing after compile");
-  }
 }
 
 function emitJson(payload) {
@@ -70,8 +58,8 @@ function resolveExistingDir(rawPath) {
 }
 
 function serializeDiagnostics(diagnostics) {
-  ensureOutTest();
-  const { sanitize } = require("../out-test/security/sanitizer");
+  ensureOutTest(SCRIPT_DIR);
+  const { sanitize } = requireOutTest(SCRIPT_DIR, "security/sanitizer");
   return diagnostics.map((d) => {
     const item = {
       code: d.code,
@@ -87,7 +75,7 @@ function serializeDiagnostics(diagnostics) {
 }
 
 function runAnalyze(logPath) {
-  ensureOutTest();
+  ensureOutTest(SCRIPT_DIR);
   const resolved = resolveExistingPath(logPath, "file");
 
   let text;
@@ -98,7 +86,7 @@ function runAnalyze(logPath) {
     process.exit(2);
   }
 
-  const { analyzeDotnetOutput } = require("../out-test/core/diagnostics/analyzer");
+  const { analyzeDotnetOutput } = requireOutTest(SCRIPT_DIR, "core/diagnostics/analyzer");
   const diagnostics = serializeDiagnostics(analyzeDotnetOutput(text));
   emitJson({
     diagnostics,
@@ -107,9 +95,9 @@ function runAnalyze(logPath) {
 }
 
 function runDiscover(projectDir) {
-  ensureOutTest();
+  ensureOutTest(SCRIPT_DIR);
   resolveExistingDir(projectDir);
-  const { buildCliDiscoverReport } = require("../out-test/core/gherkin/cliDiscoverReport");
+  const { buildCliDiscoverReport } = requireOutTest(SCRIPT_DIR, "core/gherkin/cliDiscoverReport");
   emitJson(buildCliDiscoverReport(projectDir));
 }
 
@@ -169,13 +157,16 @@ function parseBuildFilterArgs(args) {
 }
 
 function runBuildFilter(args) {
-  ensureOutTest();
+  ensureOutTest(SCRIPT_DIR);
   const parsed = parseBuildFilterArgs(args);
   resolveExistingDir(parsed.projectDir);
 
-  const { resolveCliFilterTarget, CliFilterNotFoundError } = require("../out-test/core/runner/cliFilterTarget");
-  const { buildFilter } = require("../out-test/core/runner/filterBuilder");
-  const { DEFAULT_FILTER_MAPPING } = require("../out-test/core/runner/filterMapping");
+  const { resolveCliFilterTarget, CliFilterNotFoundError } = requireOutTest(
+    SCRIPT_DIR,
+    "core/runner/cliFilterTarget",
+  );
+  const { buildFilter } = requireOutTest(SCRIPT_DIR, "core/runner/filterBuilder");
+  const { DEFAULT_FILTER_MAPPING } = requireOutTest(SCRIPT_DIR, "core/runner/filterMapping");
 
   let opts;
   if (parsed.all) {
@@ -260,7 +251,7 @@ function parseFailureContextArgs(args) {
 }
 
 function runFailureContext(args) {
-  ensureOutTest();
+  ensureOutTest(SCRIPT_DIR);
   const parsed = parseFailureContextArgs(args);
   resolveExistingDir(parsed.projectDir);
 
@@ -274,9 +265,9 @@ function runFailureContext(args) {
   const {
     buildFailureSnapshotFromArtifacts,
     NoFailureContextError,
-  } = require("../out-test/core/diagnostics/failureSnapshotFromArtifacts");
-  const { buildAiFailureContext } = require("../out-test/core/diagnostics/aiFailureContext");
-  const { analyzeDotnetOutput } = require("../out-test/core/diagnostics/analyzer");
+  } = requireOutTest(SCRIPT_DIR, "core/diagnostics/failureSnapshotFromArtifacts");
+  const { buildAiFailureContext } = requireOutTest(SCRIPT_DIR, "core/diagnostics/aiFailureContext");
+  const { analyzeDotnetOutput } = requireOutTest(SCRIPT_DIR, "core/diagnostics/analyzer");
 
   let snapshot;
   try {

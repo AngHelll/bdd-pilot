@@ -8,6 +8,18 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.13.0] — 2026-07-12
+
+### Added
+- **MCP Fase 2** — `registerMcpServerDefinitionProvider` auto-registers **BDD Pilot** MCP in VS Code 1.101+ / Cursor (no manual `mcp.json` when installed from VSIX)
+- **VSIX headless bundle** — `dist/pilot-mcp.cjs` + `dist/headless/` at prepublish; packaged MCP skips runtime `tsc`
+- **Last-failure artifact** — `TestResults/bdd-pilot-last-failure.json` (+ optional sanitized log) written after failed runs; cleared on all-pass
+- **MCP T4** — `pilot_failure_context` accepts only `projectDir` when artifact exists (implicit `useLastFailure`)
+
+### Changed
+- **pilot-cli / pilot-mcp** — shared `pilot-out-test.js` resolves `BDD_PILOT_OUT_TEST` for VSIX vs repo dev
+- **README** — Agent/MCP section documents VSIX auto-discovery path
+
 ## [1.12.0] — 2026-07-12
 
 ### Added

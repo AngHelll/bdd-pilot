@@ -4,6 +4,11 @@ import * as os from "os";
 import * as path from "path";
 import { createRequire } from "node:module";
 import { describe, it } from "node:test";
+import {
+  clearLastFailureArtifact,
+  writeLastFailureArtifact,
+} from "../core/diagnostics/lastFailureArtifact";
+import { LastRunSnapshot } from "../core/diagnostics/aiFailureContext";
 
 const requireLib = createRequire(__filename);
 const ROOT = path.join(__dirname, "../..");
@@ -142,6 +147,85 @@ describe("pilot-mcp-lib", () => {
   it("returns error for invalid scope", () => {
     const result = handleBuildFilter({ projectDir: SAMPLE, scope: "nope" }, ROOT);
     assert.strictEqual(result.ok, false);
+  });
+
+  it("uses last failure artifact when trx/log omitted", () => {
+    const snapshot: LastRunSnapshot = {
+      timestamp: Date.now(),
+      stage: "dev",
+      mode: "parallel",
+      scopeLabels: ["@smoke (tag)"],
+      projectDir: SAMPLE,
+      exitCode: 1,
+      summary: { passed: 0, failed: 1, skipped: 0, total: 1 },
+      outputForAnalysis: PENDING_STEPS_LOG,
+      failedScenarios: [],
+      evidence: [],
+    };
+    const trxDir = path.join(SAMPLE, "TestResults");
+    fs.mkdirSync(trxDir, { recursive: true });
+    const trx = path.join(trxDir, `bdd-pilot-mcp-artifact-${Date.now()}.trx`);
+    fs.writeFileSync(
+      trx,
+      `<?xml version="1.0" encoding="UTF-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Results>
+    <UnitTestResult testName="SmokeFeature.SystemIsReady" outcome="Failed">
+      <Output><ErrorInfo><Message>Expected true but was false</Message></ErrorInfo></Output>
+    </UnitTestResult>
+  </Results>
+</TestRun>`,
+      "utf8",
+    );
+    try {
+      writeLastFailureArtifact({
+        snapshot: {
+          ...snapshot,
+          trxPath: path.relative(SAMPLE, trx).split(path.sep).join("/"),
+        },
+        workspaceRoot: ROOT,
+      });
+      const result = handleFailureContext({ projectDir: SAMPLE }, ROOT);
+      assert.strictEqual(result.ok, true);
+      assert.match(result.structuredContent.markdown, /## Run/);
+    } finally {
+      fs.unlinkSync(trx);
+      clearLastFailureArtifact(SAMPLE);
+    }
+  });
+
+  it("returns error when last failure artifact is missing", () => {
+    clearLastFailureArtifact(SAMPLE);
+    const result = handleFailureContext({ projectDir: SAMPLE }, ROOT);
+    assert.strictEqual(result.ok, false);
+    assert.match(result.message, /no last failure artifact/);
+  });
+});
+
+describe("pilot-out-test packaged", () => {
+  it("throws when packaged extension path is set but headless bundle is missing", () => {
+    const { ensureOutTest } = requireLib("../../scripts/pilot-out-test");
+    const prevExt = process.env.BDD_PILOT_EXTENSION_PATH;
+    const prevOut = process.env.BDD_PILOT_OUT_TEST;
+    process.env.BDD_PILOT_EXTENSION_PATH = "/nonexistent/bdd-pilot";
+    process.env.BDD_PILOT_OUT_TEST = "/nonexistent/bdd-pilot/dist/headless";
+    try {
+      assert.throws(
+        () => ensureOutTest(path.join(ROOT, "scripts")),
+        /headless bundle missing/,
+      );
+    } finally {
+      if (prevExt) {
+        process.env.BDD_PILOT_EXTENSION_PATH = prevExt;
+      } else {
+        delete process.env.BDD_PILOT_EXTENSION_PATH;
+      }
+      if (prevOut) {
+        process.env.BDD_PILOT_OUT_TEST = prevOut;
+      } else {
+        delete process.env.BDD_PILOT_OUT_TEST;
+      }
+    }
   });
 });
 

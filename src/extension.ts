@@ -39,6 +39,7 @@ import { createProjectHub } from "./activation/projectHub";
 import { registerExtensionCommands } from "./activation/registerCommands";
 import { createRehydrateHandlers } from "./activation/rehydrate";
 import { createRunExecutor } from "./activation/runExecution";
+import { registerMcpServerProvider } from "./activation/mcpServerProvider";
 import { HISTORY_KEY } from "./activation/storageKeys";
 
 export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
@@ -503,6 +504,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   }
   void bootstrapWorkspace();
   void projectHub.maybePromptProjectSelection();
+  registerMcpServerProvider(context);
 
   return createPilotRunApi({
     runService,

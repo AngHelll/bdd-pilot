@@ -4,6 +4,10 @@ import {
   formatRunTargetScopeLabels,
   LastRunSnapshot,
 } from "../core/diagnostics/aiFailureContext";
+import {
+  clearLastFailureArtifact,
+  writeLastFailureArtifact,
+} from "../core/diagnostics/lastFailureArtifact";
 import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
 import { AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { loadStageEnv } from "../core/config/envFile";
@@ -588,6 +592,11 @@ export class RunService {
     }
     if (result.exitCode === 0 && summary.failed === 0) {
       this.lastFailedRunSnapshot = undefined;
+      try {
+        clearLastFailureArtifact(req.projectDir);
+      } catch {
+        // P3.8 — artifact cleanup must not fail the run
+      }
       return;
     }
 
@@ -628,6 +637,15 @@ export class RunService {
         ? path.relative(req.projectDir, result.trxPath).split(path.sep).join("/")
         : undefined,
     };
+
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const artifactResult = writeLastFailureArtifact({
+      snapshot: this.lastFailedRunSnapshot,
+      workspaceRoot,
+    });
+    if (!artifactResult.written && artifactResult.error) {
+      console.warn(`[bdd-pilot] last failure artifact: ${artifactResult.error}`);
+    }
   }
 
   private updateSessionRunSnapshot(

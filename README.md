@@ -232,7 +232,9 @@ npm run dogfood      # automated pre-release smoke (lint, tests, VSIX, sample do
 
 ### Agent / CLI / MCP
 
-Headless tooling for agents and CI (requires a clone of this repo — not bundled in the VSIX):
+**VSIX (recommended):** Install BDD Pilot from a `.vsix`. On VS Code **1.101+** or Cursor with MCP support, the extension registers an MCP server (**BDD Pilot**) in agent mode — no manual `mcp.json` required. After a **failed test run**, the extension writes `TestResults/bdd-pilot-last-failure.json` so the `pilot_failure_context` tool can run with only `projectDir`.
+
+**Repo dev / CI** (clone required):
 
 ```bash
 npm run pilot -- discover samples/minimal-bdd
@@ -241,7 +243,7 @@ npm run pilot -- failure-context --project-dir samples/minimal-bdd --log path/to
 npm run pilot:mcp    # MCP stdio server (Cursor / Claude Desktop)
 ```
 
-For Cursor MCP, copy [`config/mcp.json.example`](./config/mcp.json.example) to `.cursor/mcp.json` and set absolute paths for `bddPilotRepo` and `workspaceFolder`. Set `BDD_PILOT_WORKSPACE_ROOT` to your BDD project root so tool paths stay within the workspace.
+For manual MCP config (repo clone), copy [`config/mcp.json.example`](./config/mcp.json.example) to `.cursor/mcp.json` and set absolute paths for `bddPilotRepo` and `workspaceFolder`. Set `BDD_PILOT_WORKSPACE_ROOT` to your BDD project root so tool paths stay within the workspace.
 
 **Security:** MCP tool output may include test failure data. Paths are restricted to the workspace root; logs/TRX are size-capped and sanitized — still **review before sharing with external AI** (same as Copy for AI in the extension).
 

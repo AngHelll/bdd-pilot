@@ -2,32 +2,33 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const {
+  getRepoRoot,
+  ensureOutTest,
+  requireOutTest,
+} = require("./pilot-out-test");
 
-const ROOT = path.join(__dirname, "..");
-const CLI = path.join(ROOT, "scripts/pilot-cli.js");
-const OUT_TEST_MARKER = path.join(ROOT, "out-test/core/diagnostics/analyzer.js");
+const SCRIPT_DIR = __dirname;
+const ROOT = getRepoRoot(SCRIPT_DIR);
 const MAX_ARTIFACT_BYTES = 5 * 1024 * 1024;
 
 const READ_ONLY_NOTICE =
   "Read-only. Output may contain test failure data; review before sharing with external AI.";
 
-function ensureOutTest() {
-  if (fs.existsSync(OUT_TEST_MARKER)) {
-    return;
+function getCliPath() {
+  const ext = process.env.BDD_PILOT_EXTENSION_PATH?.trim();
+  if (ext) {
+    return path.join(ext, "dist/pilot-cli.js");
   }
-  const { execSync } = require("child_process");
-  execSync("npx tsc -p tsconfig.test.json", { cwd: ROOT, stdio: "pipe" });
-  if (!fs.existsSync(OUT_TEST_MARKER)) {
-    throw new Error("out-test/ still missing after compile");
-  }
+  return path.join(ROOT, "scripts/pilot-cli.js");
 }
 
 function loadSecurityModules() {
-  ensureOutTest();
+  ensureOutTest(SCRIPT_DIR);
   return {
-    assertPathUnderRoot: require("../out-test/security/pathJail").assertPathUnderRoot,
-    PathJailError: require("../out-test/security/pathJail").PathJailError,
-    sanitizeToolPayload: require("../out-test/security/sanitizeToolPayload").sanitizeToolPayload,
+    assertPathUnderRoot: requireOutTest(SCRIPT_DIR, "security/pathJail").assertPathUnderRoot,
+    PathJailError: requireOutTest(SCRIPT_DIR, "security/pathJail").PathJailError,
+    sanitizeToolPayload: requireOutTest(SCRIPT_DIR, "security/sanitizeToolPayload").sanitizeToolPayload,
   };
 }
 
@@ -89,9 +90,10 @@ function assertProjectDir(projectDir, workspaceRoot) {
 }
 
 function runPilotCli(args) {
-  const result = spawnSync(process.execPath, [CLI, ...args], {
+  const result = spawnSync(process.execPath, [getCliPath(), ...args], {
     cwd: ROOT,
     encoding: "utf8",
+    env: process.env,
   });
   return {
     status: result.status,
@@ -121,6 +123,29 @@ function mapCliResult(result) {
       ? (result.stderr.trim().split("\n")[0] || "pilot-cli usage error")
       : result.stderr.trim() || "pilot-cli internal error";
   return toolError(message);
+}
+
+function readLastFailurePaths(projectDir) {
+  ensureOutTest(SCRIPT_DIR);
+  const {
+    readLastFailureArtifact,
+    resolveArtifactRelativePath,
+  } = requireOutTest(SCRIPT_DIR, "core/diagnostics/lastFailureArtifact");
+  const artifact = readLastFailureArtifact(projectDir);
+  if (!artifact) {
+    return toolError("no last failure artifact");
+  }
+  const resolvedProjectDir = path.resolve(projectDir);
+  const trxPath = artifact.trxPath
+    ? resolveArtifactRelativePath(resolvedProjectDir, artifact.trxPath)
+    : undefined;
+  const logPath = artifact.logPath
+    ? resolveArtifactRelativePath(resolvedProjectDir, artifact.logPath)
+    : undefined;
+  if (!trxPath && !logPath) {
+    return toolError("no last failure artifact");
+  }
+  return { ok: true, trxPath, logPath };
 }
 
 function handleAnalyzeLog({ logPath }, workspaceRoot = getWorkspaceRoot()) {
@@ -186,18 +211,32 @@ function handleBuildFilter(params, workspaceRoot = getWorkspaceRoot()) {
 }
 
 function handleFailureContext(params, workspaceRoot = getWorkspaceRoot()) {
-  const { projectDir, trxPath, logPath, maxOutputLines = 80 } = params;
+  const { projectDir, maxOutputLines = 80 } = params;
+  let { trxPath, logPath, useLastFailure } = params;
+
   if (!projectDir) {
     return toolError("projectDir is required");
-  }
-  if (!trxPath && !logPath) {
-    return toolError("at least one of trxPath or logPath is required");
   }
 
   const jailError = assertProjectDir(projectDir, workspaceRoot);
   if (jailError) {
     return jailError;
   }
+
+  const implicitLastFailure = !trxPath && !logPath;
+  if (implicitLastFailure || useLastFailure) {
+    const lastFailure = readLastFailurePaths(projectDir);
+    if (!lastFailure.ok) {
+      return lastFailure;
+    }
+    trxPath = trxPath ?? lastFailure.trxPath;
+    logPath = logPath ?? lastFailure.logPath;
+  }
+
+  if (!trxPath && !logPath) {
+    return toolError("at least one of trxPath or logPath is required");
+  }
+
   if (trxPath) {
     const trxError = assertArtifactFile(trxPath, workspaceRoot);
     if (trxError) {
@@ -239,6 +278,7 @@ module.exports = {
   READ_ONLY_NOTICE,
   MAX_ARTIFACT_BYTES,
   getWorkspaceRoot,
+  getCliPath,
   handleAnalyzeLog,
   handleDiscoverBdd,
   handleBuildFilter,
