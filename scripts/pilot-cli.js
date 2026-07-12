@@ -70,15 +70,17 @@ function resolveExistingDir(rawPath) {
 }
 
 function serializeDiagnostics(diagnostics) {
+  ensureOutTest();
+  const { sanitize } = require("../out-test/security/sanitizer");
   return diagnostics.map((d) => {
     const item = {
       code: d.code,
       severity: d.severity,
-      title: d.title,
-      hint: d.hint,
+      title: sanitize(d.title),
+      hint: sanitize(d.hint),
     };
     if (d.detail !== undefined) {
-      item.detail = d.detail;
+      item.detail = sanitize(d.detail);
     }
     return item;
   });

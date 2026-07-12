@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -575,6 +575,7 @@
     "lint": "eslint src --ext ts",
     "test:unit": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
     "pilot": "node scripts/pilot-cli.js",
+    "pilot:mcp": "node scripts/pilot-mcp-server.js",
     "dogfood": "bash scripts/dogfood-smoke.sh",
     "verify:local": "bash scripts/verify-local.sh",
     "publish:check": "bash scripts/publish-check.sh",
@@ -583,6 +584,7 @@
     "package": "vsce package --no-dependencies -o bdd-pilot.vsix"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.13.0",

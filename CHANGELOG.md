@@ -8,6 +8,17 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.12.0] — 2026-07-12
+
+### Added
+- **MCP Fase 1** — stdio server (`npm run pilot:mcp`) with 4 read-only tools: `pilot_analyze_log`, `pilot_discover_bdd`, `pilot_build_filter`, `pilot_failure_context` (thin wrapper over pilot-cli)
+- **Security** — path jail (`BDD_PILOT_WORKSPACE_ROOT`), 5 MB artifact cap, sanitize on CLI diagnostics + failure-context + MCP payloads
+- **Docs** — `config/mcp.json.example`, README Agent/CLI/MCP section
+
+### Changed
+- **pilot-cli analyze** — sanitizes diagnostic fields in JSON output
+- **failure-context** — sanitizes failed-scenario error snippets and diagnostic lines in markdown
+
 ## [1.11.0] — 2026-07-10
 
 ### Added

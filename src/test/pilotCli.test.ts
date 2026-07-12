@@ -59,6 +59,24 @@ describe("pilot-cli analyze", () => {
     }
   });
 
+  it("sanitizes secrets in analyze diagnostics JSON", () => {
+    const log = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "Reqnroll.xUnit.ReqnrollPlugin.XUnitPendingStepException : Test pending: No matching step definition",
+      "in Login_password=super-secret-token.feature:line 12",
+      "Failed!  - Failed:   6, Passed:     0, Skipped:     0, Total:     6",
+    ].join("\n");
+    const logPath = writeTempLog(log);
+    try {
+      const { status, stdout } = runPilot(["analyze", logPath]);
+      assert.strictEqual(status, 0);
+      assert.ok(!stdout.includes("super-secret-token"));
+      assert.ok(stdout.includes("***REDACTED***"));
+    } finally {
+      fs.unlinkSync(logPath);
+    }
+  });
+
   it("returns empty diagnostics for log with no matches", () => {
     const logPath = writeTempLog("Passed!  - Failed: 0, Passed: 10, Skipped: 0, Total: 10\n");
     try {

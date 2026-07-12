@@ -100,6 +100,22 @@ describe("aiFailureContext", () => {
     assert.ok(!md.includes("super-secret-token"));
   });
 
+  it("redacts secrets in failed scenario error snippets", () => {
+    const md = buildAiFailureContext(
+      baseSnapshot({
+        failedScenarios: [
+          {
+            featurePath: "/repo/Features/Login.feature",
+            scenarioName: "User can log in",
+            errorMessage: "password=super-secret-token",
+          },
+        ],
+      }),
+    );
+    assert.match(md, /password=\*\*\*REDACTED\*\*\*/);
+    assert.ok(!md.includes("super-secret-token"));
+  });
+
   it("formats tag and scenario scope labels", () => {
     const feature: FeatureInfo = {
       name: "Login",

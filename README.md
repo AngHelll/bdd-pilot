@@ -230,6 +230,21 @@ npm run package      # produce a .vsix
 npm run dogfood      # automated pre-release smoke (lint, tests, VSIX, sample dotnet test)
 ```
 
+### Agent / CLI / MCP
+
+Headless tooling for agents and CI (requires a clone of this repo — not bundled in the VSIX):
+
+```bash
+npm run pilot -- discover samples/minimal-bdd
+npm run pilot -- build-filter samples/minimal-bdd --tag smoke
+npm run pilot -- failure-context --project-dir samples/minimal-bdd --log path/to/run.log
+npm run pilot:mcp    # MCP stdio server (Cursor / Claude Desktop)
+```
+
+For Cursor MCP, copy [`config/mcp.json.example`](./config/mcp.json.example) to `.cursor/mcp.json` and set absolute paths for `bddPilotRepo` and `workspaceFolder`. Set `BDD_PILOT_WORKSPACE_ROOT` to your BDD project root so tool paths stay within the workspace.
+
+**Security:** MCP tool output may include test failure data. Paths are restricted to the workspace root; logs/TRX are size-capped and sanitized — still **review before sharing with external AI** (same as Copy for AI in the extension).
+
 Press `F5` in VS Code to launch the Extension Development Host.
 
 ### Sample BDD project
@@ -240,7 +255,7 @@ workspace to dogfood BDD Pilot on a clean layout.
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.11.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.12.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

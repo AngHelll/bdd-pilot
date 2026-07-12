@@ -132,7 +132,7 @@ export function buildAiFailureContext(
     const items = snapshot.failedScenarios.map((s) => {
       const feature = path.basename(s.featurePath) || s.featurePath;
       const err = s.errorMessage?.trim();
-      const errPart = err ? ` — _${truncateSingleLine(err, 120)}_` : "";
+      const errPart = err ? ` — _${truncateSingleLine(sanitize(err), 120)}_` : "";
       return `- \`${feature}\` · ${s.scenarioName}${errPart}`;
     });
     failedSection = `\n## Failed scenarios\n${items.join("\n")}\n`;
@@ -142,8 +142,8 @@ export function buildAiFailureContext(
   let diagSection = "";
   if (diagnostics.length > 0) {
     const items = diagnostics.map((d, i) => {
-      const detail = d.detail ? `\n   - ${d.detail}` : "";
-      return `${i + 1}. **[${d.code}]** ${d.title}${detail}\n   - Hint: ${d.hint}`;
+      const detail = d.detail ? `\n   - ${sanitize(d.detail)}` : "";
+      return `${i + 1}. **[${d.code}]** ${sanitize(d.title)}${detail}\n   - Hint: ${sanitize(d.hint)}`;
     });
     diagSection = `\n## Diagnostics (BDD Pilot analyzer)\n${items.join("\n\n")}\n`;
   } else if (snapshot.outputForAnalysis.trim()) {

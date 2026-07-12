@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "bdd-pilot": {
+      "command": "node",
+      "args": ["${bddPilotRepo}/scripts/pilot-mcp-server.js"],
+      "env": {
+        "BDD_PILOT_REPO": "${bddPilotRepo}",
+        "BDD_PILOT_WORKSPACE_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}
