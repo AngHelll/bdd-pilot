@@ -64,8 +64,8 @@ import {
 } from "../core/results/durationFormat";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import {
-  findOutlineExampleMatch,
-  matchesScenario,
+  findOutlineExampleMatchInFeature,
+  matchesScenarioInFeature,
 } from "../core/results/scenarioMatch";
 import { TestOutcome, TrxSummary } from "../core/results/trxParser";
 import { RunTarget } from "../core/runner/filterBuilder";
@@ -323,12 +323,17 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       for (const feature of domain.features) {
         for (const scenario of feature.scenarios) {
           if (scenario.examples && scenario.examples.length > 0) {
-            const example = findOutlineExampleMatch(testName, scenario.name, scenario.examples);
+            const example = findOutlineExampleMatchInFeature(
+              testName,
+              feature,
+              scenario,
+              scenario.examples,
+            );
             if (example) {
               this.outcomeStore.set(outlineRowKey(feature, scenario, example.rowIndex), outcome);
               matched = true;
             }
-          } else if (matchesScenario(testName, scenario.name)) {
+          } else if (matchesScenarioInFeature(testName, feature, scenario)) {
             this.outcomeStore.set(scenarioKey(feature, scenario), outcome);
             matched = true;
           }

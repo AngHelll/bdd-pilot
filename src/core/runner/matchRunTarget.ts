@@ -1,7 +1,10 @@
 import { tagsMatch } from "../gherkin/groupByTag";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "../gherkin/model";
 import { effectiveScenarioTags } from "../gherkin/tags";
-import { findOutlineExampleMatch, matchesScenario } from "../results/scenarioMatch";
+import {
+  findOutlineExampleMatchInFeature,
+  matchesScenarioInFeature,
+} from "../results/scenarioMatch";
 import { RunTarget } from "./filterBuilder";
 
 export interface RunTargetMatch {
@@ -18,14 +21,21 @@ export function matchRunTarget(
 ): RunTargetMatch | undefined {
   for (const target of targets) {
     if (target.kind === "outlineRow") {
-      if (findOutlineExampleMatch(testName, target.scenario.name, [target.example])) {
+      if (
+        findOutlineExampleMatchInFeature(testName, target.feature, target.scenario, [
+          target.example,
+        ])
+      ) {
         return { target, feature: target.feature, scenario: target.scenario };
       }
     }
   }
 
   for (const target of targets) {
-    if (target.kind === "scenario" && matchesScenario(testName, target.scenario.name)) {
+    if (
+      target.kind === "scenario" &&
+      matchesScenarioInFeature(testName, target.feature, target.scenario)
+    ) {
       return { target, feature: target.feature, scenario: target.scenario };
     }
   }
@@ -33,7 +43,7 @@ export function matchRunTarget(
   for (const target of targets) {
     if (target.kind === "feature") {
       for (const scenario of target.feature.scenarios) {
-        if (matchesScenario(testName, scenario.name)) {
+        if (matchesScenarioInFeature(testName, target.feature, scenario)) {
           return {
             target: { kind: "scenario", feature: target.feature, scenario },
             feature: target.feature,
@@ -48,7 +58,7 @@ export function matchRunTarget(
     if (target.kind === "domain") {
       for (const feature of target.group.features) {
         for (const scenario of feature.scenarios) {
-          if (matchesScenario(testName, scenario.name)) {
+          if (matchesScenarioInFeature(testName, feature, scenario)) {
             return {
               target: { kind: "scenario", feature, scenario },
               feature,
@@ -68,7 +78,7 @@ export function matchRunTarget(
             if (!effectiveScenarioTags(feature, scenario).some((tag) => tagsMatch(tag, target.tag))) {
               continue;
             }
-            if (matchesScenario(testName, scenario.name)) {
+            if (matchesScenarioInFeature(testName, feature, scenario)) {
               return {
                 target: { kind: "scenario", feature, scenario },
                 feature,

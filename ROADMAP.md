@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.16.0** · **Marketplace: v1.16.0** · **Next: backlog Tier 2/3 · Tree↔TE parity tests** · **432 unit tests**
+> **Current release: v1.17.0** · **Marketplace: v1.16.0** · **Next: backlog Tier 2/3 · Tree↔TE parity tests** · **440 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.16.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.16.0** Marketplace; **v1.17.0** local (matching v2) |
 | 🎯 Next | backlog Tier 2/3 · Tree↔TE parity tests · i18n descriptions restantes |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.17.0** | Matching v2 — TRX↔Gherkin FQN / Theory-first · spec `matching-v2-v1.17.0.md` |
 | **1.16.0** | Dashboard runKind — distinguish run/debug/profile in history + API · spec `dashboard-run-kind-v1.16.0.md` |
 | **1.15.1** | Settings i18n — enumDescriptions ES for 7 tree/feedback/outcomes settings · spec `i18n-settings-enums-v1.15.1.md` |
 | **1.15.0** | Env Tier 1 — `.env.<stage>.local` loader, hub env tooltip · spec `env-tier1-v1.15.0.md` |
@@ -192,6 +193,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.17.0 — Matching v2 (FQN / Theory-first) ✅ shipped locally
+
+| Area | Change |
+|------|--------|
+| **Core** | `matchesScenarioInFeature` / `findOutlineExampleMatchInFeature` — FQN-first + Theory params; legacy `includes` only without feature-class FQN |
+| **Apply** | Tree, TE, `trxTreeMapping`, `matchRunTarget`, failure artifacts use shared helpers |
+| **Tests** | Collision fixtures (same title / prefix / Theory); 440 unit tests |
 
 ### v1.16.0 — Dashboard runKind ✅ shipped
 

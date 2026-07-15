@@ -1,7 +1,7 @@
 import { DomainGroup } from "../gherkin/model";
 import { collectOutcomeKeysForTargets, outlineRowKey, scenarioKey } from "../runner/runScope";
 import { RunTarget } from "../runner/filterBuilder";
-import { findOutlineExampleMatch, matchesScenario } from "./scenarioMatch";
+import { findOutlineExampleMatchInFeature, matchesScenarioInFeature } from "./scenarioMatch";
 import { SkipReason } from "./skipReason";
 import { TestOutcome, TestResult } from "./trxParser";
 import { UnifiedSummary } from "./resultLoader";
@@ -39,7 +39,7 @@ export function applyTrxMatchesToStore(
         if (scenario.examples && scenario.examples.length > 0) {
           for (const example of scenario.examples) {
             const match = summary.results.find((r) =>
-              findOutlineExampleMatch(r.testName, scenario.name, [example]),
+              findOutlineExampleMatchInFeature(r.testName, feature, scenario, [example]),
             );
             if (!match) {
               continue;
@@ -50,7 +50,9 @@ export function applyTrxMatchesToStore(
             matchedKeys.add(key);
           }
         } else {
-          const match = summary.results.find((r) => matchesScenario(r.testName, scenario.name));
+          const match = summary.results.find((r) =>
+            matchesScenarioInFeature(r.testName, feature, scenario),
+          );
           if (!match) {
             continue;
           }

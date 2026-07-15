@@ -8,7 +8,10 @@ import {
 } from "./aiFailureContext";
 import { discoverDomains } from "../gherkin/discovery";
 import { DomainGroup } from "../gherkin/model";
-import { findOutlineExampleMatch, matchesScenario } from "../results/scenarioMatch";
+import {
+  findOutlineExampleMatchInFeature,
+  matchesScenarioInFeature,
+} from "../results/scenarioMatch";
 import { parseTrx, TrxSummary } from "../results/trxParser";
 
 export interface FailureSnapshotInput {
@@ -85,13 +88,18 @@ function mapFailedScenariosFromTrx(
       for (const feature of domain.features) {
         for (const scenario of feature.scenarios) {
           if (scenario.examples && scenario.examples.length > 0) {
-            const exampleMatch = findOutlineExampleMatch(result.testName, scenario.name, scenario.examples);
+            const exampleMatch = findOutlineExampleMatchInFeature(
+              result.testName,
+              feature,
+              scenario,
+              scenario.examples,
+            );
             if (exampleMatch) {
               featurePath = feature.filePath;
               scenarioName = scenario.name;
               break outer;
             }
-          } else if (matchesScenario(result.testName, scenario.name)) {
+          } else if (matchesScenarioInFeature(result.testName, feature, scenario)) {
             featurePath = feature.filePath;
             scenarioName = scenario.name;
             break outer;

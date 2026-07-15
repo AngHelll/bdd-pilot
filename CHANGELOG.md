@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.17.0] — 2026-07-15
+
+### Changed
+- **Matching v2** — TRX / live / history → Gherkin leaves prefer Reqnroll `FeatureClass.ScenarioMethod` FQN tokens (and Theory `name: "value"` for Outline rows) over bare name `includes`
+- **Call sites** — `trxTreeMapping`, `matchRunTarget`, tree live updates, Test Explorer apply, and failure artifact mapping share the FQN-first helpers
+
+### Fixed
+- Same scenario title in different features no longer cross-attributes outcomes when TRX carries a feature-class FQN
+- Prefix siblings (e.g. `Place order` vs `Place order batch`) no longer collide under FQN matching
+
 ## [1.16.0] — 2026-07-15
 
 ### Added

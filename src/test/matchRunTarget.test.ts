@@ -50,4 +50,39 @@ describe("matchRunTarget", () => {
     const match = matchRunTarget([{ kind: "tag", tag: "smoke" }], testName, domains);
     assert.strictEqual(match, undefined);
   });
+
+  it("disambiguates same scenario title across features via FQN class", () => {
+    const twin: FeatureInfo = {
+      name: "Archive",
+      filePath: "/proj/Features/Trading/Archive.feature",
+      tags: [],
+      scenarios: [{ name: "Place order", tags: ["smoke"], line: 3, isOutline: false }],
+    };
+    const group: DomainGroup = { name: "Trading", features: [featureA, twin] };
+    const match = matchRunTarget(
+      [{ kind: "domain", group }],
+      "ArchiveFeature.PlaceOrder",
+      [group],
+    );
+    assert.ok(match);
+    assert.strictEqual(match!.feature.filePath, twin.filePath);
+  });
+
+  it("does not match prefix sibling scenario names under FQN", () => {
+    const withPrefix: FeatureInfo = {
+      name: "Orders",
+      filePath: featureA.filePath,
+      tags: [],
+      scenarios: [
+        { name: "Place order", tags: [], line: 5, isOutline: false },
+        { name: "Place order batch", tags: [], line: 20, isOutline: false },
+      ],
+    };
+    const match = matchRunTarget(
+      [{ kind: "feature", feature: withPrefix }],
+      "OrdersFeature.PlaceOrder",
+    );
+    assert.ok(match);
+    assert.strictEqual(match!.scenario.name, "Place order");
+  });
 });

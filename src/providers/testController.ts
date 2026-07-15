@@ -12,7 +12,10 @@ import {
 } from "../core/gherkin/testExplorerLabels";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
-import { findOutlineExampleMatch, matchesScenario } from "../core/results/scenarioMatch";
+import {
+  findOutlineExampleMatchInFeature,
+  matchesScenarioInFeature,
+} from "../core/results/scenarioMatch";
 import { appendSkipReasonToDescription, SkipReason } from "../core/results/skipReason";
 import {
   resolveCanceledLeafOutcome,
@@ -652,11 +655,15 @@ function applyLiveTestRunResult(
     if (data?.kind !== "scenario" && data?.kind !== "outlineRow") {
       continue;
     }
-    const scenarioName = data.scenario.name;
     const matched =
       data.kind === "outlineRow"
-        ? !!findOutlineExampleMatch(event.testName, scenarioName, [data.example])
-        : matchesScenario(event.testName, scenarioName);
+        ? !!findOutlineExampleMatchInFeature(
+            event.testName,
+            data.feature,
+            data.scenario,
+            [data.example],
+          )
+        : matchesScenarioInFeature(event.testName, data.feature, data.scenario);
     if (!matched) {
       continue;
     }
@@ -741,13 +748,19 @@ function applyLeafRunResult(item: vscode.TestItem, opts: ApplyRunResultsOptions)
     return;
   }
 
-  const scenarioName = data.scenario.name;
   const match = opts.summary
     ? data.kind === "outlineRow"
       ? opts.summary.results.find((r) =>
-          findOutlineExampleMatch(r.testName, scenarioName, [data.example]),
+          findOutlineExampleMatchInFeature(
+            r.testName,
+            data.feature,
+            data.scenario,
+            [data.example],
+          ),
         )
-      : opts.summary.results.find((r) => matchesScenario(r.testName, scenarioName))
+      : opts.summary.results.find((r) =>
+          matchesScenarioInFeature(r.testName, data.feature, data.scenario),
+        )
     : undefined;
 
   if (match) {

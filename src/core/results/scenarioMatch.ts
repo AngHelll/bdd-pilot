@@ -34,6 +34,23 @@ export function containsFeatureClassToken(testName: string, className: string): 
 }
 
 /**
+ * True when the test name already looks like a Reqnroll/SpecFlow feature-class
+ * FQN (configured suffix, default `Feature`). Used to suppress legacy
+ * `includes` fallback that would cross-attribute same-titled scenarios.
+ */
+export function looksLikeFeatureClassFqn(
+  testName: string,
+  mapping: FilterMappingConfig = DEFAULT_FILTER_MAPPING,
+): boolean {
+  const suffix = mapping.featureClassSuffix;
+  if (suffix) {
+    const re = new RegExp(`(^|[.])[A-Za-z_][A-Za-z0-9_]*${escapeRegExp(suffix)}\\.`, "i");
+    return re.test(testName);
+  }
+  return /(?:^|[.])[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*(?=$|[.(])/.test(testName);
+}
+
+/**
  * True when `Class.Method` appears as a FQN segment (method may be followed by
  * end-of-string, `.`, or `(` for Theory args).
  */
@@ -54,8 +71,8 @@ export function matchesScenarioFqn(
 
 /**
  * FQN-first match: prefer `FeatureClass.ScenarioMethod` tokens (Reqnroll), then
- * fall back to legacy name includes when the feature class is absent from the
- * test name (odd / legacy formats).
+ * fall back to legacy name includes only when the test name does not look like
+ * a feature-class FQN (odd / legacy formats).
  */
 export function matchesScenarioInFeature(
   testName: string,
@@ -67,6 +84,9 @@ export function matchesScenarioInFeature(
   const methodName = sanitizeIdentifier(scenario.name);
   if (className && methodName && containsFeatureClassToken(testName, className)) {
     return matchesScenarioFqn(testName, className, methodName);
+  }
+  if (looksLikeFeatureClassFqn(testName, mapping)) {
+    return false;
   }
   return matchesScenario(testName, scenario.name);
 }

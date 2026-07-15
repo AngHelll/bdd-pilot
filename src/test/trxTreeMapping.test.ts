@@ -103,4 +103,40 @@ describe("trxTreeMapping", () => {
     assert.strictEqual(stats, undefined);
     assert.strictEqual(store.getSkipReason(scenarioKey(feature, feature.scenarios[0])), undefined);
   });
+
+  it("maps TRX to the feature class when scenario titles collide", () => {
+    const twinDomains: DomainGroup[] = [
+      {
+        name: "General",
+        features: [
+          {
+            name: "Alpha",
+            filePath: "/x/Alpha.feature",
+            tags: [],
+            scenarios: [{ name: "Shared", tags: [], line: 2, isOutline: false }],
+          },
+          {
+            name: "Beta",
+            filePath: "/x/Beta.feature",
+            tags: [],
+            scenarios: [{ name: "Shared", tags: [], line: 2, isOutline: false }],
+          },
+        ],
+      },
+    ];
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      results: [{ testName: "BetaFeature.Shared", outcome: "passed", durationMs: 5 }],
+    };
+    applyScopedTrxResults(store, twinDomains, summary, [{ kind: "all" }]);
+    const alpha = twinDomains[0].features[0];
+    const beta = twinDomains[0].features[1];
+    assert.strictEqual(store.get(scenarioKey(alpha, alpha.scenarios[0])), undefined);
+    assert.strictEqual(store.get(scenarioKey(beta, beta.scenarios[0])), "passed");
+  });
 });
