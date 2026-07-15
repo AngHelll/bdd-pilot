@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.20.0** · **Marketplace: v1.19.0** · **Next: backlog Tier 2/3** · **459 unit tests**
+> **Current release: v1.20.0** · **Marketplace: v1.20.0** · **Next: backlog Tier 2/3** · **459 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.19.0** Marketplace; **v1.20.0** GitHub (Mapping UX) · pending Marketplace |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.20.0** |
 | 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -205,6 +205,7 @@ _Nothing yet._
 | **Core** | `TreeMappingReport` + `listUnmappedScopedLeaves` (labels; session memory) |
 | **UX** | Output lista capped · `showUnmappedScenarios` QuickPick · summary chip |
 | **Docs** | README tree/results + CHANGELOG |
+| **Marketplace** | Published v1.20.0 |
 
 ### v1.19.0 — Security audit + strict prod ✅ shipped
 
