@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.17.0** · **Marketplace: v1.17.0** · **Next: backlog Tier 2/3 · Tree↔TE parity tests** · **440 unit tests**
+> **Current release: v1.18.0** · **Marketplace: v1.17.0** · **Next: backlog Tier 2/3 · i18n leftovers** · **448 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.17.0** |
-| 🎯 Next | backlog Tier 2/3 · Tree↔TE parity tests · i18n descriptions restantes |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.17.0** Marketplace; **v1.18.0** local (Tree↔TE parity) |
+| 🎯 Next | backlog Tier 2/3 · i18n leftovers (`defaultStage`/`defaultMode`) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.18.0** | Tree↔TE parity tests + display settings core · spec `tree-te-parity-v1.18.0.md` |
 | **1.17.0** | Matching v2 — TRX↔Gherkin FQN / Theory-first · spec `matching-v2-v1.17.0.md` |
 | **1.16.0** | Dashboard runKind — distinguish run/debug/profile in history + API · spec `dashboard-run-kind-v1.16.0.md` |
 | **1.15.1** | Settings i18n — enumDescriptions ES for 7 tree/feedback/outcomes settings · spec `i18n-settings-enums-v1.15.1.md` |
@@ -193,6 +194,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.18.0 — Tree ↔ TE parity ✅ shipped locally
+
+| Area | Change |
+|------|--------|
+| **Core** | `treeDisplaySettings` parsers + shared domain/tag structural bases |
+| **Tests** | `treeTeParity.test.ts` — labels compact/detailed, leaf tags, keys, TRX collision; 448 unit tests |
+| **Providers** | `treeSettings.ts` wrappers; TE no longer depends on tree provider settings types |
 
 ### v1.17.0 — Matching v2 (FQN / Theory-first) ✅ shipped
 

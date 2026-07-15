@@ -1,5 +1,5 @@
 import { PilotLocale, t } from "../i18n";
-import { formatDuration, DurationDisplayMode } from "../results/durationFormat";
+import { formatDuration } from "../results/durationFormat";
 import { TestOutcome } from "../results/trxParser";
 import { outlineRowKey, scenarioKey } from "../runner/runScope";
 import { TagGroup } from "./groupByTag";
@@ -10,21 +10,20 @@ import {
   buildContainerDescription,
   buildOutlineParentDescription,
   effectiveLeafTagDisplay,
-  TreeDisplayMode,
 } from "./treeContainerLabels";
 import {
   buildFeatureDescription,
   buildScenarioDescription,
   joinDescriptionParts,
-  TagDisplayMode,
 } from "./treeLabels";
+import {
+  buildDomainStructuralBase,
+  buildTagGroupStructuralBase,
+  TestExplorerDisplaySettings,
+  TreeDisplaySettings,
+} from "./treeDisplaySettings";
 
-export interface TestExplorerDisplaySettings {
-  displayMode: TreeDisplayMode;
-  tagDisplay: TagDisplayMode;
-  compactTagLimit: number;
-  durationDisplay: DurationDisplayMode;
-}
+export type { TestExplorerDisplaySettings, TreeDisplaySettings };
 
 export interface OutcomeReader {
   get(key: string): TestOutcome | undefined;
@@ -168,10 +167,7 @@ export function buildTestExplorerDomainDescription(
     }
   }
   const rollup = computeRollup(values);
-  const featurePart =
-    domain.features.length === 1 ? "1 feature" : `${domain.features.length} features`;
-  const scenarioPart = scenarioCount === 1 ? "1 scenario" : `${scenarioCount} scenarios`;
-  const base = `${featurePart} · ${scenarioPart}`;
+  const base = buildDomainStructuralBase(domain.features.length, scenarioCount);
   return buildContainerDescription(display.displayMode, rollup, base, locale);
 }
 
@@ -185,6 +181,6 @@ export function buildTestExplorerTagDescription(
     collectScenarioOutcomeValues(ref.feature, ref.scenario, store),
   );
   const rollup = computeRollup(values);
-  const base = `${group.scenarios.length} scenario${group.scenarios.length === 1 ? "" : "s"}`;
+  const base = buildTagGroupStructuralBase(group.scenarios.length);
   return buildContainerDescription(display.displayMode, rollup, base, locale);
 }

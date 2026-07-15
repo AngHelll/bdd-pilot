@@ -36,7 +36,8 @@ import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
 import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
-import { readTreeDisplaySettings, TreeGroupBy } from "./testTreeProvider";
+import { readTreeDisplaySettings } from "./treeSettings";
+import type { TreeGroupBy } from "../core/gherkin/treeDisplaySettings";
 import {
   TestExplorerItemData,
   resolveTestExplorerRunTargets,

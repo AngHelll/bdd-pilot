@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.18.0] — 2026-07-15
+
+### Added
+- **Tree ↔ TE parity tests** — core contract suite for `displayMode` / container labels, leaf tags, outcome keys, and shared TRX mapping
+- **`treeDisplaySettings` core** — typed `TreeDisplaySettings` / `TreeGroupBy` + pure parsers shared by tree and Test Explorer
+
+### Changed
+- Domain / tag container structural bases unified (`1 feature` singularization matches TE)
+- Test Explorer reads display settings via `providers/treeSettings` (no longer coupled to `testTreeProvider` types)
+
 ## [1.17.0] — 2026-07-15
 
 ### Changed

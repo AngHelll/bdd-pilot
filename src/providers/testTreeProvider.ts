@@ -17,9 +17,7 @@ import {
 import {
   buildContainerDescription,
   buildOutlineParentDescription,
-  DEFAULT_TREE_DISPLAY_MODE,
   effectiveLeafTagDisplay,
-  isTreeDisplayMode,
   shouldTintContainerIcon,
   TreeDisplayMode,
 } from "../core/gherkin/treeContainerLabels";
@@ -48,9 +46,6 @@ import {
   tagGroupMatchesSearch,
 } from "../core/gherkin/treeSearch";
 import {
-  DEFAULT_COMPACT_TAG_LIMIT,
-  DEFAULT_TAG_DISPLAY,
-  TagDisplayMode,
   buildFeatureDescription,
   buildDomainTooltipMarkdown,
   buildFeatureTooltipMarkdown,
@@ -58,10 +53,13 @@ import {
   buildScenarioTooltipMarkdown,
 } from "../core/gherkin/treeLabels";
 import {
-  DEFAULT_DURATION_DISPLAY,
-  DurationDisplayMode,
-  formatDuration,
-} from "../core/results/durationFormat";
+  buildDomainStructuralBase,
+  buildTagGroupStructuralBase,
+  TreeDisplaySettings,
+  TreeGroupBy,
+} from "../core/gherkin/treeDisplaySettings";
+import { readTreeDisplaySettings, readTreeGroupBy } from "./treeSettings";
+import { DurationDisplayMode, formatDuration } from "../core/results/durationFormat";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import {
   findOutlineExampleMatchInFeature,
@@ -88,8 +86,8 @@ import {
 import { t } from "../core/i18n";
 import { OutcomeStore } from "./outcomeStore";
 
-export type TreeGroupBy = "domain" | "tag";
-
+export type { TreeGroupBy, TreeDisplaySettings };
+export { readTreeDisplaySettings, readTreeGroupBy } from "./treeSettings";
 export type TreeNode =
   | PilotSummaryNode
   | EmptyGuideNode
@@ -520,7 +518,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const rollup = computeRollup(
       refs.flatMap((ref) => this.collectScenarioOutcomeValues(ref.feature, ref.scenario)),
     );
-    const base = `${refs.length} scenario${refs.length === 1 ? "" : "s"}`;
+    const base = buildTagGroupStructuralBase(refs.length);
     const item = new vscode.TreeItem(`@${node.group.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
     item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
     item.iconPath = containerIcon("tag", rollup, display.displayMode);
@@ -535,7 +533,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const locale = this.getLocale();
     const scenarioCount = node.group.features.reduce((n, f) => n + f.scenarios.length, 0);
     const rollup = this.rollupFeatureOutcomes(node.group.features);
-    const base = `${node.group.features.length} features · ${scenarioCount} scenarios`;
+    const base = buildDomainStructuralBase(node.group.features.length, scenarioCount);
     const item = new vscode.TreeItem(node.group.name, vscode.TreeItemCollapsibleState.Collapsed);
     item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
     item.iconPath = containerIcon("folder", rollup, display.displayMode);
@@ -756,36 +754,6 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
     return [this.outcomeStore.get(scenarioKey(feature, scenario))];
   }
-}
-
-interface TreeDisplaySettings {
-  displayMode: TreeDisplayMode;
-  tagDisplay: TagDisplayMode;
-  compactTagLimit: number;
-  durationDisplay: DurationDisplayMode;
-}
-
-export type { TreeDisplaySettings };
-
-export function readTreeGroupBy(): TreeGroupBy {
-  const raw = vscode.workspace.getConfiguration("bddPilot").get<string>("tree.groupBy", "domain");
-  return raw === "tag" ? "tag" : "domain";
-}
-
-export function readTreeDisplaySettings(): TreeDisplaySettings {
-  const cfg = vscode.workspace.getConfiguration("bddPilot");
-  const modeRaw = cfg.get<string>("tree.displayMode", DEFAULT_TREE_DISPLAY_MODE);
-  const displayMode: TreeDisplayMode = isTreeDisplayMode(modeRaw) ? modeRaw : DEFAULT_TREE_DISPLAY_MODE;
-  const raw = cfg.get<string>("tree.tagDisplay", DEFAULT_TAG_DISPLAY);
-  const tagDisplay: TagDisplayMode =
-    raw === "hidden" || raw === "count" || raw === "compact" || raw === "full" ? raw : DEFAULT_TAG_DISPLAY;
-  const compactTagLimit = Math.max(1, cfg.get<number>("tree.compactTagLimit", DEFAULT_COMPACT_TAG_LIMIT));
-  const durationRaw = cfg.get<string>("tree.durationDisplay", DEFAULT_DURATION_DISPLAY);
-  const durationDisplay: DurationDisplayMode =
-    durationRaw === "auto" || durationRaw === "ms" || durationRaw === "seconds" || durationRaw === "compact"
-      ? durationRaw
-      : DEFAULT_DURATION_DISPLAY;
-  return { displayMode, tagDisplay, compactTagLimit, durationDisplay };
 }
 
 function formatDurationLabel(durationMs: number | undefined, mode: DurationDisplayMode): string | undefined {
