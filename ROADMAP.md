@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.17.0** · **Marketplace: v1.16.0** · **Next: backlog Tier 2/3 · Tree↔TE parity tests** · **440 unit tests**
+> **Current release: v1.17.0** · **Marketplace: v1.17.0** · **Next: backlog Tier 2/3 · Tree↔TE parity tests** · **440 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.16.0** Marketplace; **v1.17.0** local (matching v2) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.17.0** |
 | 🎯 Next | backlog Tier 2/3 · Tree↔TE parity tests · i18n descriptions restantes |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -194,13 +194,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing yet._
 
-### v1.17.0 — Matching v2 (FQN / Theory-first) ✅ shipped locally
+### v1.17.0 — Matching v2 (FQN / Theory-first) ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Core** | `matchesScenarioInFeature` / `findOutlineExampleMatchInFeature` — FQN-first + Theory params; legacy `includes` only without feature-class FQN |
 | **Apply** | Tree, TE, `trxTreeMapping`, `matchRunTarget`, failure artifacts use shared helpers |
 | **Tests** | Collision fixtures (same title / prefix / Theory); 440 unit tests |
+| **Marketplace** | Published v1.17.0 |
 
 ### v1.16.0 — Dashboard runKind ✅ shipped
 
