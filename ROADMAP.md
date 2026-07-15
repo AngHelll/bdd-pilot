@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.18.0** · **Marketplace: v1.18.0** · **Next: backlog Tier 2/3 · i18n leftovers** · **448 unit tests**
+> **Current release: v1.18.1** · **Marketplace: v1.18.0** · **Next: backlog Tier 2/3 · security audit** · **448 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.18.0** |
-| 🎯 Next | backlog Tier 2/3 · i18n leftovers (`defaultStage`/`defaultMode`) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.18.0** Marketplace; **v1.18.1** local (i18n stage/mode) |
+| 🎯 Next | backlog Tier 2/3 · security audit + strict prod |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.18.1** | Settings i18n — defaultStage/defaultMode enumDescriptions EN/ES · spec `i18n-default-stage-mode-v1.18.1.md` |
 | **1.18.0** | Tree↔TE parity tests + display settings core · spec `tree-te-parity-v1.18.0.md` |
 | **1.17.0** | Matching v2 — TRX↔Gherkin FQN / Theory-first · spec `matching-v2-v1.17.0.md` |
 | **1.16.0** | Dashboard runKind — distinguish run/debug/profile in history + API · spec `dashboard-run-kind-v1.16.0.md` |
@@ -194,6 +195,13 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.18.1 — i18n defaultStage / defaultMode ✅ shipped locally
+
+| Area | Change |
+|------|--------|
+| **Settings** | `defaultStage` / `defaultMode` description + enumDescriptions via nls EN/ES |
+| **Copy** | Mode clarifies xUnit parallelism ≠ Debug session / runKind |
 
 ### v1.18.0 — Tree ↔ TE parity ✅ shipped
 

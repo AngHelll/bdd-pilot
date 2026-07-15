@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.18.1] — 2026-07-15
+
+### Changed
+- **Settings i18n** — `defaultStage` / `defaultMode` descriptions + enumDescriptions via `package.nls` EN/ES (Mode copy clarifies xUnit parallelism ≠ Debug session / runKind)
+
 ## [1.18.0] — 2026-07-15
 
 ### Added

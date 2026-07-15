@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.18.0",
+  "version": "1.18.1",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -340,7 +340,13 @@
             "prod"
           ],
           "default": "test",
-          "description": "Default environment (STAGE) used when running tests."
+          "enumDescriptions": [
+            "%bddPilot.configuration.defaultStage.enum.dev%",
+            "%bddPilot.configuration.defaultStage.enum.test%",
+            "%bddPilot.configuration.defaultStage.enum.stg%",
+            "%bddPilot.configuration.defaultStage.enum.prod%"
+          ],
+          "description": "%bddPilot.configuration.defaultStage.description%"
         },
         "bddPilot.defaultMode": {
           "type": "string",
@@ -350,7 +356,12 @@
             "ci"
           ],
           "default": "debug",
-          "description": "Default xUnit parallelism mode."
+          "enumDescriptions": [
+            "%bddPilot.configuration.defaultMode.enum.debug%",
+            "%bddPilot.configuration.defaultMode.enum.parallel%",
+            "%bddPilot.configuration.defaultMode.enum.ci%"
+          ],
+          "description": "%bddPilot.configuration.defaultMode.description%"
         },
         "bddPilot.requireConfirmationForStages": {
           "type": "array",
