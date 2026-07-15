@@ -4,6 +4,7 @@ import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
 import { loadStageEnv } from "../core/config/envFile";
 import { ParallelismMode, Stage } from "../core/config/types";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
+import { resolveRunKind, RunKind } from "../core/results/runHistory";
 import { RunTarget } from "../core/runner/filterBuilder";
 import {
   formatProgressMessage,
@@ -54,7 +55,7 @@ export interface RunExecutionDeps {
 export function createRunExecutor(deps: RunExecutionDeps) {
   return async function executeRun(
     target: RunTarget | RunTarget[],
-    opts?: { debug?: boolean; rawFilter?: string },
+    opts?: { debug?: boolean; rawFilter?: string; runKind?: RunKind },
   ): Promise<void> {
     if (deps.getActiveRun() || deps.runService.isDebugActive()) {
       if (opts?.debug) {
@@ -93,6 +94,8 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       await deps.enrichTheoryRows();
     }
 
+    const sessionRunKind = resolveRunKind({ debug: opts?.debug, runKind: opts?.runKind });
+
     const locale = deps.localeService.getLocale();
     const preflight = await deps.runService.runPreflight({
       targets: runTargets,
@@ -103,6 +106,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       projectDir: project.projectDir,
       testTarget: project.testTarget,
       debug: opts?.debug,
+      runKind: sessionRunKind,
       locale,
       bindingGate: readBindingGate(),
       domains: deps.treeProvider.getDomains(),
@@ -230,6 +234,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             projectDir: project.projectDir,
             testTarget: project.testTarget,
             debug: opts?.debug,
+            runKind: sessionRunKind,
             locale: deps.localeService.getLocale(),
             signal: controller.signal,
             totalExpected,

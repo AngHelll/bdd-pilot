@@ -3,6 +3,7 @@ import { DashboardWebviewCommand, buildRerunFilterFromHistoryEntry } from "../co
 import { resolveFlakyFeaturePath } from "../core/results/flakyDashboard";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { MessageKey } from "../core/i18n";
+import { RunKind } from "../core/results/runHistory";
 import { DashboardContext } from "../providers/dashboardPanel";
 import { RunService } from "../providers/runService";
 import { TestTreeProvider } from "../providers/testTreeProvider";
@@ -10,7 +11,7 @@ import { readSettings } from "./extensionSettings";
 
 export type ExecuteRunFn = (
   target: RunTarget | RunTarget[],
-  opts?: { debug?: boolean; rawFilter?: string },
+  opts?: { debug?: boolean; rawFilter?: string; runKind?: RunKind },
 ) => Promise<void>;
 
 export interface DashboardCommandsDeps {

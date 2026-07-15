@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.16.0] — 2026-07-15
+
+### Added
+- **Dashboard `runKind`** — history entries record session kind (`run` | `debug` | `profile`), independent of xUnit parallelism `mode`
+- **Recent runs badges** — Debug / Profile badges on Env column (normal runs stay quiet)
+- **Run API** — optional additive `runKind` on `PilotRunHistoryEntryDto` (no `apiVersion` bump)
+
+### Changed
+- **Execution profiles** — `bddPilot.runProfile` sets `runKind: profile` (Re-run Failed stays `run`)
+
 ## [1.15.1] — 2026-07-12
 
 ### Changed

@@ -129,6 +129,34 @@ describe("pilotRunApiMapper", () => {
     assert.strictEqual(dto.trxPath, "/proj/TestResults/bdd-pilot-1.trx");
   });
 
+  it("mapHistoryEntry includes runKind when present and omits when absent", () => {
+    const withKind: RunHistoryEntry = {
+      id: "run-2",
+      timestamp: 2,
+      stage: "test",
+      mode: "parallel",
+      runKind: "debug",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      scenarios: [],
+    };
+    const withoutKind: RunHistoryEntry = {
+      id: "run-3",
+      timestamp: 3,
+      stage: "test",
+      mode: "parallel",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      scenarios: [],
+    };
+    assert.strictEqual(mapHistoryEntry(withKind).runKind, "debug");
+    assert.strictEqual(mapHistoryEntry(withoutKind).runKind, undefined);
+  });
+
   it("mapRunHistory returns deep copies", () => {
     const entries: RunHistoryEntry[] = [
       {

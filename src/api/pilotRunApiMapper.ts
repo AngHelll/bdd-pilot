@@ -36,7 +36,7 @@ export function toAbsolutePath(value: string | undefined, projectDir?: string): 
 }
 
 export function mapHistoryEntry(entry: RunHistoryEntry): PilotRunHistoryEntryDto {
-  return {
+  const dto: PilotRunHistoryEntryDto = {
     id: entry.id,
     timestamp: entry.timestamp,
     stage: entry.stage,
@@ -59,6 +59,10 @@ export function mapHistoryEntry(entry: RunHistoryEntry): PilotRunHistoryEntryDto
       errorMessage: s.errorMessage ? sanitize(s.errorMessage) : undefined,
     })),
   };
+  if (entry.runKind) {
+    dto.runKind = entry.runKind;
+  }
+  return dto;
 }
 
 export function mapRunHistory(entries: RunHistoryEntry[]): PilotRunHistoryEntryDto[] {

@@ -216,7 +216,7 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
         { placeHolder: deps.tr("prompt.selectProfileRun") },
       );
       if (picked) {
-        await deps.executeRun({ kind: "all" }, { rawFilter: picked.profile.filter });
+        await deps.executeRun({ kind: "all" }, { rawFilter: picked.profile.filter, runKind: "profile" });
       }
     }),
 

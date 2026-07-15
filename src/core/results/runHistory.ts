@@ -11,6 +11,9 @@ export interface ScenarioRunRecord {
 
 export type RunHistoryStatus = "completed" | "canceled";
 
+/** Session kind — independent of xUnit parallelism `mode`. */
+export type RunKind = "run" | "debug" | "profile";
+
 export interface RunHistoryEntry {
   id: string;
   timestamp: number;
@@ -27,8 +30,41 @@ export interface RunHistoryEntry {
   scenarios: ScenarioRunRecord[];
   /** Omitted on legacy entries — treated as completed. */
   status?: RunHistoryStatus;
+  /**
+   * How the session was launched. Omitted on legacy entries — treated as `"run"`.
+   * Distinct from `mode` (xUnit parallelism: debug/parallel/ci).
+   */
+  runKind?: RunKind;
   /** Absolute path to TRX when generated. */
   trxPath?: string;
+}
+
+/** Legacy entries without `runKind` behave as a normal run. */
+export function effectiveRunKind(entry: Pick<RunHistoryEntry, "runKind">): RunKind {
+  return entry.runKind ?? "run";
+}
+
+/**
+ * Resolves session kind from launch signals.
+ * `debug` wins; `profile` only when explicitly requested (never inferred from rawFilter).
+ */
+export function resolveRunKind(input: { debug?: boolean; runKind?: RunKind }): RunKind {
+  if (input.debug) {
+    return "debug";
+  }
+  if (input.runKind === "profile") {
+    return "profile";
+  }
+  if (input.runKind === "debug") {
+    return "debug";
+  }
+  return "run";
+}
+
+/** Non-run kinds shown as dashboard badges; normal runs stay quiet. */
+export function runKindBadgeKind(entry: Pick<RunHistoryEntry, "runKind">): "debug" | "profile" | undefined {
+  const kind = effectiveRunKind(entry);
+  return kind === "run" ? undefined : kind;
 }
 
 export function scenarioHistoryKey(featurePath: string, scenarioLine: number, scenarioName: string): string {

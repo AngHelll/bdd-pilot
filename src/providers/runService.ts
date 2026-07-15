@@ -29,7 +29,9 @@ import {
   resolveRunSettingsPath,
 } from "../core/runner/runSettingsPath";
 import {
+  resolveRunKind,
   RunHistoryEntry,
+  RunKind,
   ScenarioRunRecord,
   trimHistory,
 } from "../core/results/runHistory";
@@ -60,7 +62,7 @@ import { GuardianSkipReason, tryGetGuardianResolveStep } from "./guardianIntegra
 
 export interface RunRequest {
   targets: RunTarget[];
-  /** When set, bypasses target-derived filter (execution profiles). */
+  /** When set, bypasses target-derived filter (execution profiles / re-run failed). */
   rawFilter?: string;
   stage: Stage;
   mode: ParallelismMode;
@@ -68,6 +70,11 @@ export interface RunRequest {
   projectDir: string;
   testTarget?: string;
   debug?: boolean;
+  /**
+   * Explicit session kind. Prefer `resolveRunKind` at the call site.
+   * Do not infer `profile` from `rawFilter` alone (re-run failed also uses rawFilter).
+   */
+  runKind?: RunKind;
   /** UI locale for confirmation dialogs. */
   locale: PilotLocale;
   signal?: AbortSignal;
@@ -444,6 +451,7 @@ export class RunService {
       durationMs: Date.now() - this.runStartedAt,
       scenarios,
       status: "completed",
+      runKind: resolveRunKind({ debug: req.debug, runKind: req.runKind }),
       trxPath,
     };
     this.history.push(entry);
@@ -483,6 +491,7 @@ export class RunService {
       durationMs: Date.now() - this.runStartedAt,
       scenarios,
       status: "canceled",
+      runKind: resolveRunKind({ debug: req.debug, runKind: req.runKind }),
       trxPath,
     };
     this.history.push(entry);

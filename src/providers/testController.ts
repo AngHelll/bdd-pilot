@@ -344,6 +344,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         projectDir: project.projectDir,
         testTarget: project.testTarget,
         debug,
+        runKind: debug ? "debug" : "run",
         locale: deps.getLocale(),
         signal: signal.signal,
         totalExpected,

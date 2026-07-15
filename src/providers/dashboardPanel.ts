@@ -18,7 +18,7 @@ import { computeDashboardTotals, formatHistoryScopeDisplay } from "../core/resul
 import { isCanceledRun, LastKnownSnapshot } from "../core/results/dashboardLastKnown";
 import { formatDuration } from "../core/results/durationFormat";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
-import { RunHistoryEntry } from "../core/results/runHistory";
+import { RunHistoryEntry, runKindBadgeKind } from "../core/results/runHistory";
 
 export interface DashboardContext {
   lastKnown?: LastKnownSnapshot;
@@ -339,9 +339,18 @@ function recentRunsTable(runs: RunHistoryEntry[], locale: PilotLocale): string {
     .map((r) => {
       const canceled = isCanceledRun(r);
       const rowClass = canceled ? ' class="canceled-row"' : "";
-      const envCell = canceled
-        ? `${escapeHtml(r.stage)}/${escapeHtml(r.mode)} <span class="badge">(${escapeHtml(t(locale, "dashboard.statusCanceled"))})</span>`
-        : `${escapeHtml(r.stage)}/${escapeHtml(r.mode)}`;
+      const badges: string[] = [];
+      const kindBadge = runKindBadgeKind(r);
+      if (kindBadge === "debug") {
+        badges.push(`<span class="badge">${escapeHtml(t(locale, "dashboard.runKind.debug"))}</span>`);
+      } else if (kindBadge === "profile") {
+        badges.push(`<span class="badge">${escapeHtml(t(locale, "dashboard.runKind.profile"))}</span>`);
+      }
+      if (canceled) {
+        badges.push(`<span class="badge">(${escapeHtml(t(locale, "dashboard.statusCanceled"))})</span>`);
+      }
+      const badgeHtml = badges.length > 0 ? ` ${badges.join(" ")}` : "";
+      const envCell = `${escapeHtml(r.stage)}/${escapeHtml(r.mode)}${badgeHtml}`;
       const scope = scopeCell(r, locale);
       return `<tr${rowClass}><td>${new Date(r.timestamp).toLocaleString()}</td><td>${envCell}</td><td>${scope}</td><td class="pass">${r.passed}</td><td class="fail">${r.failed}</td><td>${r.skipped}</td><td title="${r.durationMs ?? ""} ms">${r.durationMs !== undefined ? formatDuration(r.durationMs, "auto") : "—"}</td></tr>`;
     })

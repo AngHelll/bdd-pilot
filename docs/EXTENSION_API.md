@@ -56,9 +56,11 @@ function isPilotRunApiV1(v: unknown): v is PilotRunApiV1 {
 
 ### Run history (`PilotRunHistoryEntryDto`)
 
-Per-run metadata: `stage`, `mode`, `scopeLabel`, `filter`, counts, `status`, per-scenario outcomes (`featurePath`, `scenarioLine`, `scenarioName`), optional `trxPath` (absolute).
+Per-run metadata: `stage`, `mode` (xUnit parallelism), optional `runKind` (`run` | `debug` | `profile` — session launch kind; omitted on legacy entries ≡ `run`), `scopeLabel`, `filter`, counts, `status`, per-scenario outcomes (`featurePath`, `scenarioLine`, `scenarioName`), optional `trxPath` (absolute).
 
 Primary source for flaky/runtime trends across passes and failures.
+
+`runKind` is **additive** (optional on the wire). Do not bump `apiVersion` — consumers may ignore unknown fields.
 
 ### Last run (`PilotLastRunDto`)
 

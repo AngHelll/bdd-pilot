@@ -19,6 +19,8 @@ export interface PilotRunHistoryEntryDto {
   timestamp: number;
   stage: string;
   mode: string;
+  /** Session kind — independent of xUnit `mode`. Omitted on legacy entries (treat as `"run"`). */
+  runKind?: "run" | "debug" | "profile";
   scopeLabel?: string;
   filter?: string;
   passed: number;

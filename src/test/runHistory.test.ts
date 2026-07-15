@@ -3,7 +3,10 @@ import { describe, it } from "node:test";
 import {
   RunHistoryEntry,
   averageDuration,
+  effectiveRunKind,
   flakyRate,
+  resolveRunKind,
+  runKindBadgeKind,
   scenarioHistoryKey,
   trimHistory,
 } from "../core/results/runHistory";
@@ -36,6 +39,27 @@ describe("runHistory", () => {
       makeEntry("2", key, "passed", 200),
     ];
     assert.strictEqual(averageDuration(history, key), 150);
+  });
+
+  it("effectiveRunKind defaults legacy entries to run", () => {
+    assert.strictEqual(effectiveRunKind({}), "run");
+    assert.strictEqual(effectiveRunKind({ runKind: "run" }), "run");
+    assert.strictEqual(effectiveRunKind({ runKind: "debug" }), "debug");
+    assert.strictEqual(effectiveRunKind({ runKind: "profile" }), "profile");
+  });
+
+  it("resolveRunKind prefers debug over profile", () => {
+    assert.strictEqual(resolveRunKind({}), "run");
+    assert.strictEqual(resolveRunKind({ runKind: "profile" }), "profile");
+    assert.strictEqual(resolveRunKind({ debug: true }), "debug");
+    assert.strictEqual(resolveRunKind({ debug: true, runKind: "profile" }), "debug");
+  });
+
+  it("runKindBadgeKind omits normal runs", () => {
+    assert.strictEqual(runKindBadgeKind({}), undefined);
+    assert.strictEqual(runKindBadgeKind({ runKind: "run" }), undefined);
+    assert.strictEqual(runKindBadgeKind({ runKind: "debug" }), "debug");
+    assert.strictEqual(runKindBadgeKind({ runKind: "profile" }), "profile");
   });
 });
 
