@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.18.0** · **Marketplace: v1.17.0** · **Next: backlog Tier 2/3 · i18n leftovers** · **448 unit tests**
+> **Current release: v1.18.0** · **Marketplace: v1.18.0** · **Next: backlog Tier 2/3 · i18n leftovers** · **448 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.17.0** Marketplace; **v1.18.0** local (Tree↔TE parity) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.18.0** |
 | 🎯 Next | backlog Tier 2/3 · i18n leftovers (`defaultStage`/`defaultMode`) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -195,13 +195,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing yet._
 
-### v1.18.0 — Tree ↔ TE parity ✅ shipped locally
+### v1.18.0 — Tree ↔ TE parity ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Core** | `treeDisplaySettings` parsers + shared domain/tag structural bases |
 | **Tests** | `treeTeParity.test.ts` — labels compact/detailed, leaf tags, keys, TRX collision; 448 unit tests |
 | **Providers** | `treeSettings.ts` wrappers; TE no longer depends on tree provider settings types |
+| **Marketplace** | Published v1.18.0 |
 
 ### v1.17.0 — Matching v2 (FQN / Theory-first) ✅ shipped
 
