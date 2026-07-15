@@ -8,6 +8,12 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.20.0] — 2026-07-15
+
+### Added
+- **Mapping UX** — scoped runs with `unmapped > 0` list labels in Output (capped), command **Show Unmapped Scenarios** (QuickPick → reveal `.feature`), and pilot summary chip `{n} unmapped`
+- **Core** — `TreeMappingReport` / `listUnmappedScopedLeaves` with stable labels (session report in memory only)
+
 ## [1.19.0] — 2026-07-15
 
 ### Added

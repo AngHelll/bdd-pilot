@@ -5,7 +5,9 @@ import { OutcomeStore } from "../providers/outcomeStore";
 import {
   applyScopedTrxResults,
   computeTreeMappingStats,
+  listUnmappedScopedLeaves,
 } from "../core/results/trxTreeMapping";
+import { selectUnmappedForOutput } from "../core/results/mappingReportFormat";
 import { outlineRowKey, scenarioKey } from "../core/runner/runScope";
 import { UnifiedSummary } from "../core/results/resultLoader";
 
@@ -68,6 +70,11 @@ describe("trxTreeMapping", () => {
     assert.strictEqual(stats!.inScope, 4);
     assert.strictEqual(stats!.mapped, 1);
     assert.strictEqual(stats!.unmapped, 3);
+    assert.strictEqual(stats!.unmappedLeaves.length, 3);
+    assert.deepStrictEqual(
+      stats!.unmappedLeaves.map((l) => l.label),
+      ["Sample · Two", "Sample · Many · x=a", "Sample · Many · x=b"],
+    );
     assert.strictEqual(store.get(scenarioKey(feature, scenario)), "passed");
     assert.strictEqual(store.getSkipReason(scenarioKey(feature, feature.scenarios[1])), "not_in_trx");
     assert.strictEqual(
@@ -87,6 +94,33 @@ describe("trxTreeMapping", () => {
     assert.strictEqual(stats.inScope, 2);
     assert.strictEqual(stats.mapped, 1);
     assert.strictEqual(stats.unmapped, 1);
+  });
+
+  it("listUnmappedScopedLeaves returns only unmapped keys in scope", () => {
+    const store = new OutcomeStore();
+    const keys = new Set([
+      scenarioKey(feature, feature.scenarios[0]),
+      scenarioKey(feature, feature.scenarios[1]),
+    ]);
+    store.set(scenarioKey(feature, feature.scenarios[0]), "passed");
+    const leaves = listUnmappedScopedLeaves(keys, store, domains);
+    assert.strictEqual(leaves.length, 1);
+    assert.strictEqual(leaves[0].scenarioName, "Two");
+    assert.strictEqual(leaves[0].line, 5);
+  });
+
+  it("selectUnmappedForOutput caps list and reports remaining", () => {
+    const fake = Array.from({ length: 30 }, (_, i) => ({
+      outcomeKey: `k${i}`,
+      featureName: "F",
+      featurePath: "/f.feature",
+      scenarioName: `S${i}`,
+      line: i + 1,
+      label: `F · S${i}`,
+    }));
+    const { shown, remaining } = selectUnmappedForOutput(fake, 25);
+    assert.strictEqual(shown.length, 25);
+    assert.strictEqual(remaining, 5);
   });
 
   it("run-all does not mark not_in_trx", () => {

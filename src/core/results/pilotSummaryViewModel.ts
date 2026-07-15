@@ -10,6 +10,7 @@ import { RehydrateNotice } from "./rehydrateNotice";
 import { RunHistoryEntry } from "./runHistory";
 
 export const PILOT_SUMMARY_DASHBOARD_COMMAND = "bddPilot.showDashboard";
+export const PILOT_SUMMARY_UNMAPPED_COMMAND = "bddPilot.showUnmappedScenarios";
 
 const LABEL_MAX = 160;
 
@@ -27,6 +28,8 @@ export interface PilotSummaryViewModel {
   storeFailureSnippet?: string;
   /** Live stdout progress during an active run (normal run only). */
   liveProgress?: LiveProgressState;
+  /** Unmapped leaf count from last scoped mapping report (session). */
+  unmappedCount?: number;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -41,6 +44,7 @@ export interface BuildPilotSummaryOptions {
   topDiagnostic?: Diagnostic;
   storeFailureSnippet?: string;
   liveProgress?: LiveProgressState;
+  unmappedCount?: number;
 }
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
@@ -59,6 +63,7 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     topDiagnostic: options.running ? undefined : options.topDiagnostic,
     storeFailureSnippet: options.running ? undefined : options.storeFailureSnippet,
     liveProgress: options.running ? options.liveProgress : undefined,
+    unmappedCount: options.running ? undefined : options.unmappedCount,
   };
 }
 
@@ -176,6 +181,9 @@ export function formatPilotSummaryDescription(
   }
   if (model.storeFailureSnippet) {
     return formatStoreFailureChip(model.storeFailureSnippet, locale);
+  }
+  if (model.unmappedCount && model.unmappedCount > 0) {
+    return t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount });
   }
   return undefined;
 }

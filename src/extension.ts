@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { buildDashboardActionsViewModel } from "./core/results/dashboardActions";
 import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
+import { getLastMappingReport } from "./core/results/lastMappingReport";
 import { TREE_SEARCH_WORKSPACE_KEY } from "./core/gherkin/treeSearch";
 import { resolveFirstStoreFailureSnippet } from "./core/results/storeFailureFeedback";
 import { summarizeOutcomeStore } from "./core/results/outcomeStoreSummary";
@@ -110,6 +111,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       topDiagnostic,
       storeFailureSnippet,
       liveProgress: activeLiveProgress,
+      unmappedCount: getLastMappingReport()?.unmapped,
     });
   }
 

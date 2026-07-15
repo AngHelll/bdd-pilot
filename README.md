@@ -78,7 +78,9 @@ toast with **Copy for AI**:
   dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); **live progress** in the
   description during runs (`7/19 · 2 failed`); **post-run diagnostic chip**
   (top actionable hint from the last run) with severity icon (`warning` / `info`); **filter chip** when
-  tree search is active. Click for dashboard and history.
+  tree search is active; **unmapped chip** after a scoped run when scenarios did not match TRX
+  (`N unmapped — Show Unmapped`, command **BDD Pilot: Show Unmapped Scenarios**). Click opens
+  dashboard (or the unmapped QuickPick when that chip is shown).
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
 - **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); **Cancel** only while a run is active.
 - **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
@@ -106,6 +108,9 @@ toast with **Copy for AI**:
 
 ### Results & diagnostics
 - **TRX + Cucumber JSON**: scenarios decorated with pass / fail / skip and duration.
+- **Tree mapping report**: after a **scoped** run, Output shows `mapped/inScope` counts; when some
+  scenarios lack a TRX match (`not_in_trx`), lists them (capped) and the palette command
+  **Show Unmapped Scenarios** opens a QuickPick to jump to the `.feature` line.
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth

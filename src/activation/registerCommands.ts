@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { ExecutionProfile } from "../core/config/profiles";
 import { buildModeHubPickItems, buildStageHubPickItems } from "../core/config/hubPickItems";
@@ -5,6 +6,7 @@ import { ParallelismMode, Stage, isMode, isStage } from "../core/config/types";
 import { shouldConfirmSearchRunCap } from "../core/gherkin/treeSearch";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { MessageKey } from "../core/i18n";
+import { getLastMappingReport } from "../core/results/lastMappingReport";
 import { buildRerunFailedFilter } from "../providers/testController";
 import { BDD_PILOT_DEBUG_SESSION_NAME } from "../providers/runService";
 import { DashboardPanel } from "../providers/dashboardPanel";
@@ -69,6 +71,46 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
       deps.dashboard.show(history, deps.localeService.getLocale(), deps.buildDashboardContext());
       if (history.length === 0) {
         void vscode.window.showInformationMessage(deps.tr("toast.dashboardEmpty"));
+      }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.showUnmappedScenarios", async () => {
+      const report = getLastMappingReport();
+      if (!report || report.unmapped <= 0 || report.unmappedLeaves.length === 0) {
+        void vscode.window.showInformationMessage(deps.tr("toast.noUnmappedScenarios"));
+        return;
+      }
+      const picks = report.unmappedLeaves.map((leaf) => {
+        const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(leaf.featurePath));
+        const rel = folder
+          ? path.relative(folder.uri.fsPath, leaf.featurePath)
+          : leaf.featurePath;
+        const label = leaf.outlineLabel
+          ? `${leaf.scenarioName} · ${leaf.outlineLabel}`
+          : leaf.scenarioName;
+        return {
+          label,
+          description: rel,
+          leaf,
+        };
+      });
+      const selected = await vscode.window.showQuickPick(picks, {
+        placeHolder: deps.tr("quickPick.unmappedPlaceholder"),
+        matchOnDescription: true,
+      });
+      if (!selected) {
+        return;
+      }
+      try {
+        const uri = vscode.Uri.file(selected.leaf.featurePath);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const line = Math.max(0, selected.leaf.line - 1);
+        const position = new vscode.Position(line, 0);
+        const range = new vscode.Range(position, position);
+        const editor = await vscode.window.showTextDocument(doc, { selection: range });
+        editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+      } catch {
+        void vscode.window.showWarningMessage(deps.tr("toast.unmappedOpenFailed"));
       }
     }),
 

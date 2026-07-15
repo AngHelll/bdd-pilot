@@ -336,4 +336,37 @@ describe("pilotSummaryViewModel", () => {
     const description = formatPilotSummaryDescription(vm, "en");
     assert.strictEqual(description, formatStoreFailureChip("Expected true but was false", "en"));
   });
+
+  it("formatPilotSummaryDescription shows unmapped chip when idle without diagnostic", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      unmappedCount: 3,
+    });
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "3 unmapped — Show Unmapped");
+  });
+
+  it("formatPilotSummaryDescription prefers diagnostic over unmapped chip", () => {
+    const diag = {
+      code: "SDK_MISSING",
+      severity: "error" as const,
+      title: "SDK missing",
+      hint: "Install SDK",
+    };
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 0, failed: 1, skipped: 0, withResults: 1 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      topDiagnostic: diag,
+      unmappedCount: 2,
+    });
+    const description = formatPilotSummaryDescription(vm, "en");
+    assert.ok(description?.includes("SDK missing"));
+    assert.ok(!description?.includes("unmapped"));
+  });
 });

@@ -35,7 +35,7 @@ import {
 import {
   applyScopedTrxResults,
   applyTrxMatchesToStore,
-  TreeMappingStats,
+  TreeMappingReport,
 } from "../core/results/trxTreeMapping";
 import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
 import { effectiveScenarioTags } from "../core/gherkin/tags";
@@ -79,6 +79,7 @@ import {
   formatPilotSummaryLabel,
   formatSummaryDiagnosticTooltip,
   PILOT_SUMMARY_DASHBOARD_COMMAND,
+  PILOT_SUMMARY_UNMAPPED_COMMAND,
   PilotSummaryViewModel,
   resolvePilotSummaryIcon,
   resolveSummaryDiagnostic,
@@ -273,7 +274,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     summary: TrxSummary | UnifiedSummary,
     targets: RunTarget[],
     options?: { canceled?: boolean },
-  ): TreeMappingStats | undefined {
+  ): TreeMappingReport | undefined {
     const stats = applyScopedTrxResults(
       this.outcomeStore,
       this.allDomains,
@@ -425,9 +426,17 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const filterActive = !!model.searchQuery;
     const diagnostic = resolveSummaryDiagnostic(model);
     const storeFailure = model.storeFailureSnippet;
+    const unmappedActive =
+      !filterActive &&
+      !model.running &&
+      !diagnostic &&
+      !storeFailure &&
+      (model.unmappedCount ?? 0) > 0;
     const hint = filterActive
       ? t(locale, "tree.pilotSummaryEditFilter")
-      : t(locale, "tree.pilotSummaryHint");
+      : unmappedActive
+        ? t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount ?? 0 })
+        : t(locale, "tree.pilotSummaryHint");
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(
       resolvePilotSummaryIcon(
@@ -438,7 +447,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       ),
     );
     item.command = {
-      command: filterActive ? "bddPilot.searchTests" : PILOT_SUMMARY_DASHBOARD_COMMAND,
+      command: filterActive
+        ? "bddPilot.searchTests"
+        : unmappedActive
+          ? PILOT_SUMMARY_UNMAPPED_COMMAND
+          : PILOT_SUMMARY_DASHBOARD_COMMAND,
       title: hint,
     };
     const description = formatPilotSummaryDescription(model, locale);

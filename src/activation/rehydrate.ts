@@ -4,7 +4,9 @@ import { maybeWriteLastFailureArtifactFromRehydrate } from "../core/diagnostics/
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { UnifiedSummary } from "../core/results/resultLoader";
-import { TreeMappingStats } from "../core/results/trxTreeMapping";
+import { TreeMappingReport } from "../core/results/trxTreeMapping";
+import { selectUnmappedForOutput } from "../core/results/mappingReportFormat";
+import { clearLastMappingReport, setLastMappingReport } from "../core/results/lastMappingReport";
 import { MessageKey } from "../core/i18n";
 import { OutcomeStore } from "../providers/outcomeStore";
 import { RunService } from "../providers/runService";
@@ -32,17 +34,33 @@ export interface RehydrateDeps {
 }
 
 export function createRehydrateHandlers(deps: RehydrateDeps) {
-  function logTreeMapping(stats: TreeMappingStats | undefined): void {
-    if (!stats || stats.inScope === 0) {
+  function logTreeMapping(report: TreeMappingReport | undefined): void {
+    if (!report || report.inScope === 0) {
+      clearLastMappingReport();
       return;
     }
+    setLastMappingReport(report);
     deps.output.appendLine(
       `[bdd-pilot] ${deps.tr("log.treeMapping", {
-        mapped: stats.mapped,
-        inScope: stats.inScope,
-        unmapped: stats.unmapped,
+        mapped: report.mapped,
+        inScope: report.inScope,
+        unmapped: report.unmapped,
       })}`,
     );
+    if (report.unmapped <= 0) {
+      return;
+    }
+    const { shown, remaining } = selectUnmappedForOutput(report.unmappedLeaves);
+    for (const leaf of shown) {
+      deps.output.appendLine(
+        `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedItem", { label: leaf.label })}`,
+      );
+    }
+    if (remaining > 0) {
+      deps.output.appendLine(
+        `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedMore", { count: remaining })}`,
+      );
+    }
   }
 
   function applyRunSummaryToTree(
@@ -52,11 +70,13 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
   ): void {
     if (options?.rawFilter || targets.length === 0) {
       deps.treeProvider.applyResults(summary);
+      clearLastMappingReport();
     } else {
       const stats = deps.treeProvider.applyScopedResults(summary, targets, {
         canceled: options?.canceled,
       });
       logTreeMapping(stats);
+      deps.refreshPilotSurfaces();
     }
     deps.refreshManaged();
   }

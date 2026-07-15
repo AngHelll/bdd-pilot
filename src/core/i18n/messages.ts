@@ -221,6 +221,12 @@ const EN = {
     "Skipped outcome rehydrate: TRX on disk does not match last run history.",
   "log.treeMapping":
     "Tree mapping: {mapped}/{inScope} scenarios matched TRX ({unmapped} unmapped in run scope).",
+  "log.treeMappingUnmappedItem": "  unmapped: {label}",
+  "log.treeMappingUnmappedMore": "  … and {count} more unmapped",
+  "toast.noUnmappedScenarios": "No unmapped scenarios from the last scoped run.",
+  "toast.unmappedOpenFailed": "Could not open the feature file for that scenario.",
+  "quickPick.unmappedPlaceholder": "Unmapped scenarios (last scoped run)",
+  "tree.summaryUnmappedChip": "{count} unmapped — Show Unmapped",
   "log.envLoaded":
     "[bdd-pilot] Loaded environment from {files} ({count} variables, values hidden).",
   "log.envMissing":
@@ -551,6 +557,12 @@ const ES: Record<keyof typeof EN, string> = {
     "Rehidratación omitida: el TRX en disco no coincide con el último historial de ejecución.",
   "log.treeMapping":
     "Mapeo árbol: {mapped}/{inScope} escenarios coincidieron con TRX ({unmapped} sin mapear en el scope).",
+  "log.treeMappingUnmappedItem": "  sin mapear: {label}",
+  "log.treeMappingUnmappedMore": "  … y {count} sin mapear más",
+  "toast.noUnmappedScenarios": "No hay escenarios sin mapear del último run con scope.",
+  "toast.unmappedOpenFailed": "No se pudo abrir el .feature de ese escenario.",
+  "quickPick.unmappedPlaceholder": "Escenarios sin mapear (último run con scope)",
+  "tree.summaryUnmappedChip": "{count} sin mapear — Ver sin mapear",
   "log.envLoaded":
     "[bdd-pilot] Entorno cargado desde {files} ({count} variables, valores ocultos).",
   "log.envMissing":
