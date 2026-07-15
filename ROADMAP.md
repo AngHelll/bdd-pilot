@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.18.1** · **Marketplace: v1.18.0** · **Next: backlog Tier 2/3 · security audit** · **448 unit tests**
+> **Current release: v1.19.0** · **Marketplace: v1.18.0** · **Next: backlog Tier 2/3** · **455 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.18.0** Marketplace; **v1.18.1** local (i18n stage/mode) |
-| 🎯 Next | backlog Tier 2/3 · security audit + strict prod |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.18.0** Marketplace; **v1.19.0** GitHub (security) · pending Marketplace |
+| 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.19.0** | Security audit + strict prod — sanitizer patterns + `allowProductionRuns` · spec `security-audit-strict-prod-v1.19.0.md` |
 | **1.18.1** | Settings i18n — defaultStage/defaultMode enumDescriptions EN/ES · spec `i18n-default-stage-mode-v1.18.1.md` |
 | **1.18.0** | Tree↔TE parity tests + display settings core · spec `tree-te-parity-v1.18.0.md` |
 | **1.17.0** | Matching v2 — TRX↔Gherkin FQN / Theory-first · spec `matching-v2-v1.17.0.md` |
@@ -195,6 +196,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.19.0 — Security audit + strict prod ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Security** | Sanitizer: AWS `AKIA…`, PEM private-key blocks, `secret=` (+ existing patterns) |
+| **Settings** | `bddPilot.security.allowProductionRuns` default **false** — blocks `prod` until opt-in |
+| **envGuard** | Deny vs confirm decisions; stg unchanged (confirm only) |
+| **Docs** | README Security + CHANGELOG; Phase C checkbox ✅ |
 
 ### v1.18.1 — i18n defaultStage / defaultMode ✅ shipped locally
 
@@ -664,7 +674,7 @@ Tree, Test Explorer, CodeLens, dashboard, profiles, roll-up, duration format, ev
 - [x] CI sample BDD project
 - [x] Marketplace listing *(v0.3.5 publish manual; GitHub Release `v0.3.5` + VSIX)*
 - [x] i18n EN/ES *(0.3.0-6, Capa B in v0.3.7)*
-- [ ] Security audit sanitizer / strict prod mode *(post-0.3.0)*
+- [x] Security audit sanitizer / strict prod mode *(v1.19.0)*
 
 ---
 

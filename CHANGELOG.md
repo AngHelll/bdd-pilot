@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.19.0] — 2026-07-15
+
+### Added
+- **Strict production** — `bddPilot.security.allowProductionRuns` (default **false**) blocks STAGE=`prod` until opt-in; confirmation modal still applies when enabled
+- **Sanitizer audit** — redacts AWS Access Key Ids (`AKIA…`), PEM private key blocks, and generic `secret=` assignments (plus existing patterns)
+
+### Changed
+- **README Security** — documents production opt-in and expanded sanitizer coverage
+- **envGuard** — `evaluateRun` supports deny vs confirm decisions for prod policy
+
 ## [1.18.1] — 2026-07-15
 
 ### Changed

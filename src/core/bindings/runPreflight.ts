@@ -1,6 +1,6 @@
 import { PilotLocale, t } from "../i18n";
 
-export type RunPreflightDeclineReason = "stage-declined" | "gate-declined";
+export type RunPreflightDeclineReason = "stage-declined" | "gate-declined" | "prod-denied";
 
 export type RunPreflightResult =
   | { proceed: true }
@@ -11,6 +11,10 @@ export function formatRunNotStartedLines(
   reason: RunPreflightDeclineReason,
 ): string[] {
   const reasonKey =
-    reason === "stage-declined" ? "log.runNotStartedStage" : "log.runNotStartedGate";
+    reason === "gate-declined"
+      ? "log.runNotStartedGate"
+      : reason === "prod-denied"
+        ? "log.runNotStartedProd"
+        : "log.runNotStartedStage";
   return [t(locale, "log.runNotStarted"), t(locale, reasonKey)];
 }

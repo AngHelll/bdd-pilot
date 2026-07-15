@@ -27,7 +27,18 @@ describe("runPreflight", () => {
 
   it("requires stage confirmation only for protected stages", () => {
     assert.strictEqual(evaluateRun("dev", ["stg", "prod"]).requiresConfirmation, false);
-    assert.strictEqual(evaluateRun("prod", ["stg", "prod"]).requiresConfirmation, true);
+    assert.strictEqual(
+      evaluateRun("prod", ["stg", "prod"], { allowProductionRuns: true }).requiresConfirmation,
+      true,
+    );
+  });
+
+  it("formats run-not-started lines for prod denied", () => {
+    const lines = formatRunNotStartedLines("en", "prod-denied");
+    assert.deepStrictEqual(lines, [
+      "[bdd-pilot] Run not started.",
+      "[bdd-pilot] Production run blocked (enable bddPilot.security.allowProductionRuns).",
+    ]);
   });
 
   const ambiguous: BindingGateIssue = {

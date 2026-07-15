@@ -51,6 +51,10 @@ export function readSettings(): RunnerSettings {
     defaultStage: isStage(stage) ? stage : DEFAULT_SETTINGS.defaultStage,
     defaultMode: isMode(mode) ? mode : DEFAULT_SETTINGS.defaultMode,
     requireConfirmationForStages: confirmStages as Stage[],
+    allowProductionRuns: cfg.get<boolean>(
+      "security.allowProductionRuns",
+      DEFAULT_SETTINGS.allowProductionRuns,
+    ),
     dotnetPath: cfg.get<string>("dotnetPath", DEFAULT_SETTINGS.dotnetPath),
     filterMapping: readFilterMapping(cfg),
     runConfiguration: isRunConfiguration(runConfiguration)

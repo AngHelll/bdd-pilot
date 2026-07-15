@@ -177,8 +177,11 @@ export class RunService {
   }
 
   async runPreflight(req: RunRequest): Promise<RunPreflightResult> {
-    const stageProceed = await this.checkStageConfirmation(req);
-    if (!stageProceed) {
+    const stageGate = await this.checkStageConfirmation(req);
+    if (stageGate === "denied") {
+      return { proceed: false, reason: "prod-denied" };
+    }
+    if (stageGate === "declined") {
       return { proceed: false, reason: "stage-declined" };
     }
 
@@ -728,10 +731,19 @@ export class RunService {
     this._onCompleteRun.fire();
   }
 
-  private async checkStageConfirmation(req: RunRequest): Promise<boolean> {
-    const decision = evaluateRun(req.stage, req.settings.requireConfirmationForStages);
+  private async checkStageConfirmation(
+    req: RunRequest,
+  ): Promise<"proceed" | "declined" | "denied"> {
+    const decision = evaluateRun(req.stage, req.settings.requireConfirmationForStages, {
+      allowProductionRuns: req.settings.allowProductionRuns,
+    });
+    if (decision.denied) {
+      const message = t(req.locale, decision.messageKey ?? "envGuard.prodBlocked");
+      void vscode.window.showWarningMessage(message);
+      return "denied";
+    }
     if (!decision.requiresConfirmation || !decision.messageKey) {
-      return true;
+      return "proceed";
     }
 
     const message = t(req.locale, decision.messageKey, { stage: req.stage });
@@ -743,7 +755,7 @@ export class RunService {
       { modal: true },
       primaryAction,
     );
-    return choice === primaryAction;
+    return choice === primaryAction ? "proceed" : "declined";
   }
 
   private async checkBindingGate(req: RunRequest): Promise<boolean> {

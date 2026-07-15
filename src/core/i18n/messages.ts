@@ -179,6 +179,8 @@ const EN = {
     "You are about to run tests against PRODUCTION. This may affect live data and trigger external reporting. Continue?",
   "envGuard.stageConfirm":
     "You are about to run tests against the '{stage}' environment. This may use staging data or external services. Continue?",
+  "envGuard.prodBlocked":
+    "Production runs are blocked. Enable Setting «BDD Pilot › Security: Allow Production Runs» (bddPilot.security.allowProductionRuns), then confirm the production warning.",
 
   "action.run": "Run",
   "action.debug": "Debug",
@@ -226,6 +228,8 @@ const EN = {
   "log.runNotStarted": "[bdd-pilot] Run not started.",
   "log.runNotStartedStage": "[bdd-pilot] Stage confirmation declined.",
   "log.runNotStartedGate": "[bdd-pilot] Binding gate declined.",
+  "log.runNotStartedProd":
+    "[bdd-pilot] Production run blocked (enable bddPilot.security.allowProductionRuns).",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnostics:",
   "diagnostic.output.summaryLine":
@@ -505,6 +509,8 @@ const ES: Record<keyof typeof EN, string> = {
     "Vas a ejecutar tests contra PRODUCCIÓN. Puede afectar datos reales y reportes externos. ¿Continuar?",
   "envGuard.stageConfirm":
     "Vas a ejecutar tests contra el entorno '{stage}'. Puede usar datos de staging o servicios externos. ¿Continuar?",
+  "envGuard.prodBlocked":
+    "Los runs en producción están bloqueados. Activa el setting «BDD Pilot › Security: Allow Production Runs» (bddPilot.security.allowProductionRuns) y luego confirma el aviso de producción.",
 
   "action.run": "Ejecutar",
   "action.debug": "Depurar",
@@ -552,6 +558,8 @@ const ES: Record<keyof typeof EN, string> = {
   "log.runNotStarted": "[bdd-pilot] Ejecución no iniciada.",
   "log.runNotStartedStage": "[bdd-pilot] Confirmación de stage rechazada.",
   "log.runNotStartedGate": "[bdd-pilot] Compuerta de bindings rechazada.",
+  "log.runNotStartedProd":
+    "[bdd-pilot] Run en producción bloqueado (activa bddPilot.security.allowProductionRuns).",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnósticos:",
   "diagnostic.output.summaryLine":

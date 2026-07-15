@@ -47,6 +47,8 @@ export interface RunnerSettings {
   defaultStage: Stage;
   defaultMode: ParallelismMode;
   requireConfirmationForStages: Stage[];
+  /** When false (default), STAGE=prod runs are blocked until the user opts in. */
+  allowProductionRuns: boolean;
   dotnetPath: string;
   filterMapping: FilterMappingConfig;
   /** Empty = omit `--configuration`. */
@@ -61,6 +63,7 @@ export const DEFAULT_SETTINGS: RunnerSettings = {
   defaultStage: "test",
   defaultMode: "debug",
   requireConfirmationForStages: ["stg", "prod"],
+  allowProductionRuns: false,
   dotnetPath: "dotnet",
   filterMapping: DEFAULT_FILTER_MAPPING,
   runConfiguration: "",

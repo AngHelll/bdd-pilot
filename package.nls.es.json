@@ -68,6 +68,7 @@
   "bddPilot.configuration.defaultMode.enum.debug": "Colecciones en serie (xunit.parallelizeTestCollections=false) — más fácil depurar fallos.",
   "bddPilot.configuration.defaultMode.enum.parallel": "Permite colecciones en paralelo (suites más rápidas).",
   "bddPilot.configuration.defaultMode.enum.ci": "Perfil de paralelismo orientado a CI en hosts multi-núcleo.",
+  "bddPilot.configuration.security.allowProductionRuns.description": "Permitir runs con STAGE=prod. Si es false (por defecto), producción queda bloqueada; si es true, sigue aplicándose el modal de confirmación de producción.",
   "bddPilot.configuration.statusBar.display.description": "Layout de la barra de estado: compact (hub único con marca, por defecto) o detailed (cuatro ítems legacy).",
   "bddPilot.configuration.statusBar.display.enum.compact": "Hub único BDD Pilot con stage, mode y proyecto.",
   "bddPilot.configuration.statusBar.display.enum.detailed": "Layout legacy con ítems separados STAGE, mode, running y project.",

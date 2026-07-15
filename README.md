@@ -140,10 +140,14 @@ Step binding navigation uses [**BDD Guardian**](https://github.com/AngHelll/bdd-
   from the project's own `.env` mechanism.
 - An optional `config/.env.<stage>` file is loaded into the test process's
   environment **in memory only** (never logged or persisted).
-- All output is **sanitized** before being written to the channel (client
-  secrets, passwords, tokens, JWTs, connection strings are redacted).
+- All output is **sanitized** before being written to the channel (passwords,
+  tokens, JWTs, connection strings, AWS access key ids, PEM private keys, and
+  similar patterns are redacted).
 - Running against `stg`/`prod` requires an **explicit modal confirmation**
-  (configurable).
+  (configurable via `bddPilot.requireConfirmationForStages`).
+- **Production opt-in:** `bddPilot.security.allowProductionRuns` defaults to
+  **false** — STAGE=`prod` is blocked until you enable the setting; with it on,
+  the production confirmation modal still applies.
 
 ### Optional `config/.env.<stage>` files
 
