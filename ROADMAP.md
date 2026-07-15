@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.21.0** · **Marketplace: v1.20.0** · **Next: backlog Tier 2/3** · **464 unit tests**
+> **Current release: v1.21.0** · **Marketplace: v1.21.0** · **Next: backlog Tier 2/3** · **464 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.20.0** Marketplace; **v1.21.0** GitHub (AI snapshot) · pending Marketplace |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.21.0** |
 | 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -206,6 +206,7 @@ _Nothing yet._
 | **Settings** | `bddPilot.ai.rehydrateFromTrx` default **false** |
 | **Core** | `buildRehydratedFailureSnapshot` + provenance in Copy for AI markdown |
 | **Activation** | Hydrate `lastFailedRunSnapshot` on outcome rehydrate; lazy fallback on Copy for AI |
+| **Marketplace** | Published v1.21.0 |
 
 ### v1.20.0 — Mapping UX ✅ shipped
 
