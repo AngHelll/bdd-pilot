@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.19.0** · **Marketplace: v1.18.0** · **Next: backlog Tier 2/3** · **455 unit tests**
+> **Current release: v1.19.0** · **Marketplace: v1.19.0** · **Next: backlog Tier 2/3** · **455 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.18.0** Marketplace; **v1.19.0** GitHub (security) · pending Marketplace |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.19.0** |
 | 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -205,6 +205,7 @@ _Nothing yet._
 | **Settings** | `bddPilot.security.allowProductionRuns` default **false** — blocks `prod` until opt-in |
 | **envGuard** | Deny vs confirm decisions; stg unchanged (confirm only) |
 | **Docs** | README Security + CHANGELOG; Phase C checkbox ✅ |
+| **Marketplace** | Published v1.19.0 |
 
 ### v1.18.1 — i18n defaultStage / defaultMode ✅ shipped locally
 
