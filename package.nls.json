@@ -87,5 +87,8 @@
   "bddPilot.configuration.feedback.diagnosticsInOutput.description": "How much of the BDD Pilot diagnostics block to append to the Output channel after a run.",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.off": "Do not append Pilot diagnostics (dotnet log unchanged).",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.summary": "One-line summary of the top diagnostic (+N more when applicable).",
-  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.full": "Full diagnostics list (legacy v1.5 behavior)."
+  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.full": "Full diagnostics list (legacy v1.5 behavior).",
+  "bddPilot.configuration.ai.enabled.description": "Enable the Copy Failure Context for AI command (clipboard-only; no LLM calls).",
+  "bddPilot.configuration.ai.contextMaxOutputLines.description": "Maximum lines of sanitized test output included in the AI failure context package.",
+  "bddPilot.configuration.ai.rehydrateFromTrx.description": "After Reload, rebuild Copy for AI context from the latest Pilot TRX (same age/history gates as outcome rehydrate). May not match current code — review before sharing."
 }

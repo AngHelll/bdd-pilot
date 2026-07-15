@@ -319,6 +319,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     runService,
     localeService,
     tr,
+    getProjectContext: () => projectHub.getProjectContext(),
+    isRunActive: () => !!activeRun || runService.isDebugActive(),
   });
 
   const postRun = createPostRunHandlers({

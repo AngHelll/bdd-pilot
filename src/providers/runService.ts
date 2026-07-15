@@ -163,6 +163,14 @@ export class RunService {
     return this.lastFailedRunSnapshot;
   }
 
+  /**
+   * Sets failure snapshot from TRX rehydrate (activate / Copy for AI lazy).
+   * Caller must not invoke mid-run; does not clear live session data otherwise.
+   */
+  hydrateLastFailedRunSnapshot(snapshot: LastRunSnapshot): void {
+    this.lastFailedRunSnapshot = snapshot;
+  }
+
   getLastRunSnapshot(): SessionRunSnapshot | undefined {
     return this.lastRunSnapshot ? cloneSessionRunSnapshot(this.lastRunSnapshot) : undefined;
   }

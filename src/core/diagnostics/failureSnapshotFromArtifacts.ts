@@ -13,6 +13,8 @@ import {
   matchesScenarioInFeature,
 } from "../results/scenarioMatch";
 import { parseTrx, TrxSummary } from "../results/trxParser";
+import { sanitize } from "../../security/sanitizer";
+import { LAST_FAILURE_LOG_NAME } from "./lastFailureArtifact";
 
 export interface FailureSnapshotInput {
   projectDir: string;
@@ -20,6 +22,14 @@ export interface FailureSnapshotInput {
   logPath?: string;
   trxText?: string;
   logText?: string;
+}
+
+export interface RehydratedFailureSnapshotInput {
+  projectDir: string;
+  trxAbsolutePath: string;
+  trxMtimeMs: number;
+  logPath?: string;
+  history?: { stage?: string; mode?: string; filter?: string };
 }
 
 export class NoFailureContextError extends Error {
@@ -186,4 +196,48 @@ export function buildFailureSnapshotFromArtifacts(input: FailureSnapshotInput): 
         : input.trxPath.replace(/\\/g, "/")
       : undefined,
   };
+}
+
+/** Resolves optional Pilot failure log next to TestResults. */
+export function resolvePilotFailureLogPath(projectDir: string): string | undefined {
+  const logPath = path.join(path.resolve(projectDir), "TestResults", LAST_FAILURE_LOG_NAME);
+  return fs.existsSync(logPath) ? logPath : undefined;
+}
+
+/**
+ * Builds a LastRunSnapshot for Copy for AI after reload, using TRX(+log) artifacts
+ * and optional run-history metadata (never invents stage=prod).
+ */
+export function buildRehydratedFailureSnapshot(
+  input: RehydratedFailureSnapshotInput,
+): LastRunSnapshot {
+  const logPath = input.logPath ?? resolvePilotFailureLogPath(input.projectDir);
+  const snapshot = buildFailureSnapshotFromArtifacts({
+    projectDir: input.projectDir,
+    trxPath: input.trxAbsolutePath,
+    logPath,
+  });
+  return {
+    ...snapshot,
+    timestamp: input.trxMtimeMs,
+    stage: sanitize(input.history?.stage?.trim() || "unknown"),
+    mode: sanitize(input.history?.mode?.trim() || "unknown"),
+    filter: input.history?.filter ? sanitize(input.history.filter) : undefined,
+    scopeLabels: ["rehydrated from TRX"],
+    provenance: "rehydrated-trx",
+  };
+}
+
+/** Same as buildRehydratedFailureSnapshot but returns undefined when no failures. */
+export function tryBuildRehydratedFailureSnapshot(
+  input: RehydratedFailureSnapshotInput,
+): LastRunSnapshot | undefined {
+  try {
+    return buildRehydratedFailureSnapshot(input);
+  } catch (error) {
+    if (error instanceof NoFailureContextError) {
+      return undefined;
+    }
+    throw error;
+  }
 }

@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import {
   findPilotTrxCandidates,
   isPilotTrxFileName,
+  selectEligiblePilotTrx,
   selectLatestPilotTrx,
 } from "../core/results/pilotTrxDiscovery";
 
@@ -57,5 +58,26 @@ describe("pilotTrxDiscovery", () => {
       },
     ];
     assert.strictEqual(selectLatestPilotTrx(candidates)?.fileName, "bdd-pilot-1.trx");
+  });
+
+  it("selectEligiblePilotTrx gates on history trx path when provided", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-pilot-trx-elig-"));
+    const resultsDir = path.join(root, "TestResults");
+    fs.mkdirSync(resultsDir);
+    const a = path.join(resultsDir, "bdd-pilot-1000.trx");
+    const b = path.join(resultsDir, "bdd-pilot-2000.trx");
+    fs.writeFileSync(a, "<trx/>");
+    fs.writeFileSync(b, "<trx/>");
+    const tA = Date.now() - 60_000;
+    const tB = Date.now() - 1_000;
+    fs.utimesSync(a, tA / 1000, tA / 1000);
+    fs.utimesSync(b, tB / 1000, tB / 1000);
+
+    const match = selectEligiblePilotTrx(root, { historyTrxAbsolutePath: b });
+    assert.strictEqual(match?.fileName, "bdd-pilot-2000.trx");
+    assert.strictEqual(
+      selectEligiblePilotTrx(root, { historyTrxAbsolutePath: a }),
+      undefined,
+    );
   });
 });

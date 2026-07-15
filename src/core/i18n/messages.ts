@@ -146,6 +146,8 @@ const EN = {
   "toast.multiProjectPrompt": "BDD Pilot found multiple test projects. Select which one to use.",
   "toast.noFailureContext": "No failed run to copy. Run tests first and wait for failures.",
   "toast.failureContextCopied": "Failure context copied to clipboard.",
+  "ai.rehydratedFromTrxNote":
+    "Source: rehydrated from TRX `{file}` (may not match current code).",
   "toast.failureContextProdWarning":
     "This context may include staging or production environment details. Review before sharing with external AI.",
   "toast.runSummary": "{failed} failed, {passed} passed, {skipped} skipped ({total} total)",
@@ -482,6 +484,8 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.noFailureContext":
     "No hay ejecución fallida para copiar. Ejecuta tests y espera a que fallen.",
   "toast.failureContextCopied": "Contexto de fallo copiado al portapapeles.",
+  "ai.rehydratedFromTrxNote":
+    "Origen: rehidratado desde TRX `{file}` (puede no coincidir con el código actual).",
   "toast.failureContextProdWarning":
     "Este contexto puede incluir detalles de entorno staging o producción. Revísalo antes de compartirlo con IA externa.",
   "toast.runSummary": "{failed} fallidos, {passed} correctos, {skipped} omitidos ({total} total)",

@@ -98,11 +98,16 @@ export function readOutcomeRehydrateSettings(): { enabled: boolean; maxAgeMs: nu
   };
 }
 
-export function readAiSettings(): { enabled: boolean; contextMaxOutputLines: number } {
+export function readAiSettings(): {
+  enabled: boolean;
+  contextMaxOutputLines: number;
+  rehydrateFromTrx: boolean;
+} {
   const cfg = vscode.workspace.getConfiguration("bddPilot");
   return {
     enabled: cfg.get<boolean>("ai.enabled", true),
     contextMaxOutputLines: Math.max(1, cfg.get<number>("ai.contextMaxOutputLines", 80)),
+    rehydrateFromTrx: cfg.get<boolean>("ai.rehydrateFromTrx", false),
   };
 }
 

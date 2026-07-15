@@ -87,5 +87,8 @@
   "bddPilot.configuration.feedback.diagnosticsInOutput.description": "Cuánto del bloque de diagnósticos de BDD Pilot añadir al canal Output tras un run.",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.off": "No añadir diagnósticos Pilot (el log dotnet no cambia).",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.summary": "Resumen de una línea del diagnóstico principal (+N más si aplica).",
-  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.full": "Lista completa de diagnósticos (comportamiento legacy v1.5)."
+  "bddPilot.configuration.feedback.diagnosticsInOutput.enum.full": "Lista completa de diagnósticos (comportamiento legacy v1.5).",
+  "bddPilot.configuration.ai.enabled.description": "Activa el comando Copiar contexto de fallo para IA (solo portapapeles; sin llamadas a LLM).",
+  "bddPilot.configuration.ai.contextMaxOutputLines.description": "Máximo de líneas de salida sanitizada incluidas en el paquete de contexto de fallo para IA.",
+  "bddPilot.configuration.ai.rehydrateFromTrx.description": "Tras Reload, reconstruir el contexto Copy for AI desde el último TRX Pilot (mismas puertas de edad/historial que la rehidratación de outcomes). Puede no coincidir con el código actual — revísalo antes de compartir."
 }

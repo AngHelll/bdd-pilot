@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.21.0] — 2026-07-15
+
+### Added
+- **AI snapshot from TRX** — opt-in `bddPilot.ai.rehydrateFromTrx` (default **false**) rebuilds Copy for AI context after Reload from the latest Pilot TRX (same age/history gates as outcome rehydrate), with a clear provenance note in the markdown
+
 ## [1.20.0] — 2026-07-15
 
 ### Added

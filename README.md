@@ -118,6 +118,8 @@ toast with **Copy for AI**:
   Surfaced in **Output** (`summary` or `full`), **post-run toast**, **tree summary chip**, and **dashboard card**.
 - **AI-ready failure context**: copy structured markdown of the last failed run to the
   clipboard for Cursor/Copilot (no embedded LLM — review before sharing externally).
+  Optional **`bddPilot.ai.rehydrateFromTrx`** (default off) rebuilds that context after Reload
+  from the latest Pilot TRX; the markdown notes when the source was rehydrated (may be stale).
 - **Post-run feedback**: error snippets on failed scenarios (hover + description), localized
   outcomes, optional summary toast (`bddPilot.feedback.postRunToast`).
 

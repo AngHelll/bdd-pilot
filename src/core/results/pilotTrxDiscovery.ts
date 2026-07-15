@@ -64,3 +64,25 @@ export function selectLatestPilotTrx(
   }
   return latest;
 }
+
+/**
+ * Latest Pilot TRX for session rehydrate / AI snapshot, with optional history path gate
+ * (same rule as outcome rehydrate: if history has trxPath, it must match latest).
+ */
+export function selectEligiblePilotTrx(
+  projectDir: string,
+  options?: { maxAgeMs?: number; historyTrxAbsolutePath?: string },
+): PilotTrxCandidate | undefined {
+  const latest = selectLatestPilotTrx(findPilotTrxCandidates(projectDir), {
+    maxAgeMs: options?.maxAgeMs,
+  });
+  if (!latest) {
+    return undefined;
+  }
+  if (options?.historyTrxAbsolutePath) {
+    if (path.resolve(latest.absolutePath) !== path.resolve(options.historyTrxAbsolutePath)) {
+      return undefined;
+    }
+  }
+  return latest;
+}

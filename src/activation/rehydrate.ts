@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { maybeWriteLastFailureArtifactFromRehydrate } from "../core/diagnostics/lastFailureArtifact";
+import { tryBuildRehydratedFailureSnapshot } from "../core/diagnostics/failureSnapshotFromArtifacts";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { UnifiedSummary } from "../core/results/resultLoader";
@@ -12,10 +13,11 @@ import { OutcomeStore } from "../providers/outcomeStore";
 import { RunService } from "../providers/runService";
 import { TestTreeProvider } from "../providers/testTreeProvider";
 import { ProjectContext } from "../providers/testController";
-import { readOutcomeRehydrateSettings } from "./extensionSettings";
+import { readAiSettings, readOutcomeRehydrateSettings } from "./extensionSettings";
 import { loadRunResults } from "../core/results/resultLoader";
 import {
   findPilotTrxCandidates,
+  selectEligiblePilotTrx,
   selectLatestPilotTrx,
 } from "../core/results/pilotTrxDiscovery";
 
@@ -98,17 +100,21 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       return;
     }
 
-    const latest = selectLatestPilotTrx(findPilotTrxCandidates(ctx.projectDir), {
-      maxAgeMs: rehydrate.maxAgeMs,
-    });
-    if (!latest) {
-      return;
-    }
-
     const lastHistory = deps.runService.getHistory().at(-1);
     const historyTrx = lastHistory?.trxPath ? path.resolve(lastHistory.trxPath) : undefined;
-    if (historyTrx && path.resolve(latest.absolutePath) !== historyTrx) {
-      deps.output.appendLine(`[bdd-pilot] ${deps.tr("log.rehydrateSkippedHistoryMismatch")}`);
+    const latest = selectEligiblePilotTrx(ctx.projectDir, {
+      maxAgeMs: rehydrate.maxAgeMs,
+      historyTrxAbsolutePath: historyTrx,
+    });
+    if (!latest) {
+      if (historyTrx) {
+        const newest = selectLatestPilotTrx(findPilotTrxCandidates(ctx.projectDir), {
+          maxAgeMs: rehydrate.maxAgeMs,
+        });
+        if (newest && path.resolve(newest.absolutePath) !== historyTrx) {
+          deps.output.appendLine(`[bdd-pilot] ${deps.tr("log.rehydrateSkippedHistoryMismatch")}`);
+        }
+      }
       return;
     }
 
@@ -138,19 +144,33 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       })}`,
     );
 
+    const historyMeta = lastHistory
+      ? {
+          stage: lastHistory.stage,
+          mode: lastHistory.mode,
+          filter: lastHistory.filter,
+        }
+      : undefined;
+
+    if (readAiSettings().rehydrateFromTrx && summary.failed > 0 && !deps.isRunActive()) {
+      const aiSnapshot = tryBuildRehydratedFailureSnapshot({
+        projectDir: ctx.projectDir,
+        trxAbsolutePath: latest.absolutePath,
+        trxMtimeMs: latest.mtimeMs,
+        history: historyMeta,
+      });
+      if (aiSnapshot) {
+        deps.runService.hydrateLastFailedRunSnapshot(aiSnapshot);
+      }
+    }
+
     const artifactResult = maybeWriteLastFailureArtifactFromRehydrate({
       projectDir: ctx.projectDir,
       trxAbsolutePath: latest.absolutePath,
       summary,
       trxMtimeMs: latest.mtimeMs,
       workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
-      history: lastHistory
-        ? {
-            stage: lastHistory.stage,
-            mode: lastHistory.mode,
-            filter: lastHistory.filter,
-          }
-        : undefined,
+      history: historyMeta,
     });
     if (!artifactResult.written && artifactResult.error) {
       deps.output.appendLine(`[bdd-pilot] last failure artifact: ${artifactResult.error}`);

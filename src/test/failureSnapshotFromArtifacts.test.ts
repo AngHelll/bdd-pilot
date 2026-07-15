@@ -6,8 +6,10 @@ import { describe, it } from "node:test";
 import { buildAiFailureContext } from "../core/diagnostics/aiFailureContext";
 import {
   buildFailureSnapshotFromArtifacts,
+  buildRehydratedFailureSnapshot,
   hasFailureContext,
   NoFailureContextError,
+  tryBuildRehydratedFailureSnapshot,
 } from "../core/diagnostics/failureSnapshotFromArtifacts";
 import { parseTrx } from "../core/results/trxParser";
 
@@ -123,6 +125,59 @@ describe("failureSnapshotFromArtifacts", () => {
       assert.ok(!markdown.includes("password="));
     } finally {
       fs.unlinkSync(logPath);
+    }
+  });
+
+  it("buildRehydratedFailureSnapshot applies history metadata and provenance", () => {
+    const trxPath = writeTemp(FAILED_TRX, ".trx");
+    try {
+      const snapshot = buildRehydratedFailureSnapshot({
+        projectDir: sampleDir,
+        trxAbsolutePath: trxPath,
+        trxMtimeMs: 1_700_000_000_000,
+        history: { stage: "test", mode: "parallel", filter: "Category=smoke" },
+      });
+      assert.strictEqual(snapshot.provenance, "rehydrated-trx");
+      assert.strictEqual(snapshot.stage, "test");
+      assert.strictEqual(snapshot.mode, "parallel");
+      assert.strictEqual(snapshot.filter, "Category=smoke");
+      assert.strictEqual(snapshot.timestamp, 1_700_000_000_000);
+      assert.deepStrictEqual(snapshot.scopeLabels, ["rehydrated from TRX"]);
+      assert.ok(snapshot.failedScenarios.length >= 1);
+    } finally {
+      fs.unlinkSync(trxPath);
+    }
+  });
+
+  it("tryBuildRehydratedFailureSnapshot returns undefined for passing TRX", () => {
+    const trxPath = writeTemp(PASSED_TRX, ".trx");
+    try {
+      assert.strictEqual(
+        tryBuildRehydratedFailureSnapshot({
+          projectDir: sampleDir,
+          trxAbsolutePath: trxPath,
+          trxMtimeMs: Date.now(),
+        }),
+        undefined,
+      );
+    } finally {
+      fs.unlinkSync(trxPath);
+    }
+  });
+
+  it("buildRehydratedFailureSnapshot defaults stage/mode to unknown without history", () => {
+    const trxPath = writeTemp(FAILED_TRX, ".trx");
+    try {
+      const snapshot = buildRehydratedFailureSnapshot({
+        projectDir: sampleDir,
+        trxAbsolutePath: trxPath,
+        trxMtimeMs: 42,
+      });
+      assert.strictEqual(snapshot.stage, "unknown");
+      assert.strictEqual(snapshot.mode, "unknown");
+      assert.strictEqual(snapshot.filter, undefined);
+    } finally {
+      fs.unlinkSync(trxPath);
     }
   });
 });

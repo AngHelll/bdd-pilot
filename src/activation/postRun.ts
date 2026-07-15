@@ -1,7 +1,9 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { Stage } from "../core/config/types";
 import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
 import { buildAiFailureContext } from "../core/diagnostics/aiFailureContext";
+import { tryBuildRehydratedFailureSnapshot } from "../core/diagnostics/failureSnapshotFromArtifacts";
 import { formatDiagnosticsOutputLines } from "../core/diagnostics/diagnosticsOutput";
 import {
   buildPostRunFeedback,
@@ -9,13 +11,16 @@ import {
   PostRunFeedbackViewModel,
 } from "../core/feedback/postRunFeedback";
 import { MessageKey } from "../core/i18n";
+import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
 import { buildRerunFailedFilter } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
 import { RunService } from "../providers/runService";
+import { ProjectContext } from "../providers/testController";
 import {
   readAiSettings,
   readAnalyzeOptions,
   readDiagnosticsInOutput,
+  readOutcomeRehydrateSettings,
   readPostRunToast,
   readSettings,
 } from "./extensionSettings";
@@ -98,9 +103,42 @@ export function createCopyFailureContextForAi(deps: {
   runService: RunService;
   localeService: LocaleService;
   tr: (key: MessageKey, params?: Record<string, string | number>) => string;
+  getProjectContext: () => ProjectContext | undefined;
+  isRunActive: () => boolean;
 }): () => Promise<void> {
   return async (): Promise<void> => {
-    const snapshot = deps.runService.getLastFailedRunSnapshot();
+    let snapshot = deps.runService.getLastFailedRunSnapshot();
+    const ai = readAiSettings();
+    if (!snapshot && ai.rehydrateFromTrx && !deps.isRunActive()) {
+      const ctx = deps.getProjectContext();
+      if (ctx) {
+        const outcomeAge = readOutcomeRehydrateSettings();
+        const lastHistory = deps.runService.getHistory().at(-1);
+        const historyTrx = lastHistory?.trxPath ? path.resolve(lastHistory.trxPath) : undefined;
+        const latest = selectEligiblePilotTrx(ctx.projectDir, {
+          maxAgeMs: outcomeAge.maxAgeMs,
+          historyTrxAbsolutePath: historyTrx,
+        });
+        if (latest) {
+          snapshot = tryBuildRehydratedFailureSnapshot({
+            projectDir: ctx.projectDir,
+            trxAbsolutePath: latest.absolutePath,
+            trxMtimeMs: latest.mtimeMs,
+            history: lastHistory
+              ? {
+                  stage: lastHistory.stage,
+                  mode: lastHistory.mode,
+                  filter: lastHistory.filter,
+                }
+              : undefined,
+          });
+          if (snapshot) {
+            deps.runService.hydrateLastFailedRunSnapshot(snapshot);
+          }
+        }
+      }
+    }
+
     if (!snapshot) {
       void vscode.window.showInformationMessage(deps.tr("toast.noFailureContext"));
       return;
@@ -119,13 +157,17 @@ export function createCopyFailureContextForAi(deps: {
       }
     }
 
-    const ai = readAiSettings();
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const trxFile = snapshot.trxPath ? path.basename(snapshot.trxPath) : "TRX";
     const markdown = buildAiFailureContext(snapshot, {
       maxOutputLines: ai.contextMaxOutputLines,
       extensionVersion: deps.context.extension.packageJSON.version,
       workspaceRoot,
       analyzeOptions: readAnalyzeOptions(deps.localeService.getLocale()),
+      rehydratedFromTrxNote:
+        snapshot.provenance === "rehydrated-trx"
+          ? deps.tr("ai.rehydratedFromTrxNote", { file: trxFile })
+          : undefined,
     });
     await vscode.env.clipboard.writeText(markdown);
     void vscode.window.showInformationMessage(deps.tr("toast.failureContextCopied"));
