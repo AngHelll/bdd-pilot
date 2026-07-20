@@ -244,6 +244,8 @@ npm run test:unit    # core unit tests (node:test) + sample smoke
 npm run build        # bundle with esbuild -> dist/extension.js
 npm run package      # produce a .vsix
 npm run dogfood      # automated pre-release smoke (lint, tests, VSIX, sample dotnet test)
+npm run release:prep # maintainer gate: dogfood + version↔CHANGELOG + VSIX checklist (no publish)
+npm run docs:sync-check  # fail if src/ changed without CHANGELOG.md
 ```
 
 ### Agent / CLI / MCP

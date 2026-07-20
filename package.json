@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.24.0",
+  "version": "1.25.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -125,16 +125,16 @@
         "shortTitle": "%bddPilot.command.showDashboard.shortTitle%",
         "icon": "$(graph)"
       },
-        {
-          "command": "bddPilot.showUnmappedScenarios",
-          "title": "%bddPilot.command.showUnmappedScenarios.title%",
-          "icon": "$(list-filter)"
-        },
-        {
-          "command": "bddPilot.showScenarioHistory",
-          "title": "%bddPilot.command.showScenarioHistory.title%",
-          "icon": "$(history)"
-        },
+      {
+        "command": "bddPilot.showUnmappedScenarios",
+        "title": "%bddPilot.command.showUnmappedScenarios.title%",
+        "icon": "$(list-filter)"
+      },
+      {
+        "command": "bddPilot.showScenarioHistory",
+        "title": "%bddPilot.command.showScenarioHistory.title%",
+        "icon": "$(history)"
+      },
       {
         "command": "bddPilot.searchTests",
         "title": "%bddPilot.command.searchTests.title%",
@@ -634,7 +634,9 @@
     "publish:check": "bash scripts/publish-check.sh",
     "publish:marketplace": "bash scripts/publish-marketplace.sh",
     "guard:secrets": "bash scripts/guard-no-secrets.sh",
-    "package": "vsce package --no-dependencies -o bdd-pilot.vsix"
+    "package": "vsce package --no-dependencies -o bdd-pilot.vsix",
+    "release:prep": "bash scripts/release-prep.sh",
+    "docs:sync-check": "bash scripts/docs-sync-check.sh"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

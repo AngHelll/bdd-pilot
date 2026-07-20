@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.25.0] — 2026-07-20
+
+### Added
+- **Release & dogfood loop** — `npm run release:prep` (dogfood/verify, package.json↔CHANGELOG gate, VSIX checklist stdout); `npm run docs:sync-check` (src/ vs CHANGELOG guard)
+
 ## [1.24.0] — 2026-07-20
 
 ### Added
