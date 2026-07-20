@@ -125,10 +125,12 @@ toast with **Copy for AI**:
 
 ### Iconography
 
-BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand assets**:
+BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand assets** that share the **same silhouette** (radar + pilot):
 
-- **`media/icon.png`** — Marketplace listing (color, discovery).
-- **`media/pilot.svg`** — Activity bar sidebar icon (monochrome, theme-aware).
+| Asset | Role |
+|-------|------|
+| **`media/icon.png`** | Marketplace / Extensions discovery — color tile derived from `pilot.svg` (`media/icon-marketplace.svg` source) |
+| **`media/pilot.svg`** | Activity bar sidebar — monochrome, theme-aware (`currentColor`) |
 
 | Area | Icons | Meaning |
 |------|-------|---------|
@@ -139,7 +141,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | Tree outcomes | `pass`, `error`, `circle-slash`, `beaker`, `list-tree` | Passed / failed / skipped / pending scenario / pending outline |
 | Containers | `folder`, `file-code`, `tag` + tint `testing.icon*` | Domain / feature / tag group roll-up |
 
-Step binding navigation uses [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) — Pilot focuses on execution icons only.
+**ForgeOne family:** Pilot = execution · [BDD Guardian](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings — Pilot focuses on execution icons only.
 
 ## Security
 

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.22.0** · **Marketplace: v1.22.0** · **Next: backlog Tier 2/3** · **478 unit tests**
+> **Current release: v1.23.0** · **Marketplace: v1.22.0** · **Next: ship/publish v1.23.0** · **478 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.22.0** |
-| 🎯 Next | backlog Tier 2/3 |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.22.0** (local **v1.23.0**) |
+| 🎯 Next | ship / publish v1.23.0 (Iconography Tier 2) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -198,6 +198,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.23.0 — Iconography Tier 2 (brand unification) ✅ local
+
+| Area | Change |
+|------|--------|
+| **Assets** | `icon.png` PNG 128×128 from `pilot.svg` silhouette; source `icon-marketplace.svg` |
+| **Docs** | README Iconography Opción B + ForgeOne one-liner |
+| **Tests** | 478 unit (unchanged) |
 
 ### v1.22.0 — Post-run narrative (arco) ✅ shipped
 

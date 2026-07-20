@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.23.0] — 2026-07-20
+
+### Changed
+- **Brand unification (Iconography Tier 2)** — Marketplace `media/icon.png` is now a real 128×128 PNG derived from the same silhouette as `media/pilot.svg` (source: `media/icon-marketplace.svg`); README Iconography documents Opción B (shared silhouette; color vs monochrome)
+
 ## [1.22.0] — 2026-07-20
 
 ### Added
