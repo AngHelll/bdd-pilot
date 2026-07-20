@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.25.0** · **Marketplace: v1.24.0** · **Next: publish v1.25.0** · **486 unit tests**
+> **Current release: v1.25.0** · **Marketplace: v1.25.0** · **Next: backlog Tier 2/3** · **486 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub) | → **v1.25.0** · Marketplace still **v1.24.0** |
-| 🎯 Next | publish v1.25.0 (Marketplace) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.25.0** |
+| 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -199,7 +199,7 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing yet._
 
-### v1.25.0 — Release & dogfood loop ✅ shipped (GitHub)
+### v1.25.0 — Release & dogfood loop ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -207,7 +207,7 @@ _Nothing yet._
 | **P3** | `scripts/docs-sync-check.sh` + `npm run docs:sync-check` |
 | **P2** | Cursor Automation — **descartado** (script local basta) |
 | **Docs** | README Development scripts; CHANGELOG |
-| **Marketplace** | Pending publish (still v1.24.0) |
+| **Marketplace** | Published v1.25.0 |
 | **Tests** | 486 unit (unchanged) |
 
 ### v1.24.0 — Per-stage run profile ✅ shipped
