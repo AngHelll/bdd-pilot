@@ -3,13 +3,24 @@ import * as vscode from "vscode";
 import { Diagnostic } from "../core/diagnostics/analyzer";
 import { PilotLocale, t } from "../core/i18n";
 import { formatRollupDescriptionLocalized } from "../core/gherkin/outcomeRollup";
-import { DashboardActionsViewModel, DashboardWebviewCommand, parseDashboardWebviewMessage } from "../core/results/dashboardActions";
+import {
+  DashboardActionsViewModel,
+  DashboardWebviewCommand,
+  parseDashboardWebviewMessage,
+} from "../core/results/dashboardActions";
 import {
   buildFlakyDashboardRows,
   FlakyDashboardRow,
   FlakyOpenTarget,
   parseFlakyOpenMessage,
 } from "../core/results/flakyDashboard";
+import {
+  DEFAULT_DASHBOARD_HISTORY_FILTER,
+  DashboardHistoryFilter,
+  filterRunHistory,
+  listHistoryStages,
+  parseDashboardHistoryFilterMessage,
+} from "../core/results/dashboardHistoryFilter";
 import {
   dashboardDiagnosticSeverityClass,
   formatDashboardDiagnosticLines,
@@ -31,6 +42,8 @@ export class DashboardPanel {
   private panel: vscode.WebviewPanel | undefined;
   private lastHistory: RunHistoryEntry[] = [];
   private lastContext: DashboardContext = {};
+  private lastLocale: PilotLocale = "en";
+  private historyFilter: DashboardHistoryFilter = { ...DEFAULT_DASHBOARD_HISTORY_FILTER };
   private messageHandler?: (command: DashboardWebviewCommand) => void;
   private flakyOpenHandler?: (target: FlakyOpenTarget) => void;
 
@@ -45,6 +58,7 @@ export class DashboardPanel {
   show(history: RunHistoryEntry[], locale: PilotLocale, context: DashboardContext = {}): void {
     this.lastHistory = history;
     this.lastContext = context;
+    this.lastLocale = locale;
     if (this.panel) {
       this.panel.title = t(locale, "dashboard.panelTitle");
       this.panel.reveal();
@@ -59,6 +73,14 @@ export class DashboardPanel {
       { enableScripts: true, retainContextWhenHidden: true },
     );
     this.panel.webview.onDidReceiveMessage((message) => {
+      const filter = parseDashboardHistoryFilterMessage(message);
+      if (filter) {
+        this.historyFilter = filter;
+        if (this.panel) {
+          this.panel.webview.html = this.render(this.lastHistory, this.lastLocale, this.lastContext);
+        }
+        return;
+      }
       const flakyTarget = parseFlakyOpenMessage(message);
       if (flakyTarget) {
         this.flakyOpenHandler?.(flakyTarget);
@@ -71,6 +93,7 @@ export class DashboardPanel {
     });
     this.panel.onDidDispose(() => {
       this.panel = undefined;
+      this.historyFilter = { ...DEFAULT_DASHBOARD_HISTORY_FILTER };
     });
     this.panel.webview.html = this.render(history, locale, context);
   }
@@ -78,6 +101,7 @@ export class DashboardPanel {
   update(history: RunHistoryEntry[], locale: PilotLocale, context: DashboardContext = {}): void {
     this.lastHistory = history;
     this.lastContext = context;
+    this.lastLocale = locale;
     if (this.panel) {
       this.panel.title = t(locale, "dashboard.panelTitle");
       this.panel.webview.html = this.render(history, locale, context);
@@ -85,6 +109,7 @@ export class DashboardPanel {
   }
 
   refreshLocale(locale: PilotLocale, context?: DashboardContext): void {
+    this.lastLocale = locale;
     if (context) {
       this.lastContext = context;
     }
@@ -99,11 +124,13 @@ export class DashboardPanel {
     locale: PilotLocale,
     context: DashboardContext,
   ): string {
-    const recent = [...history].reverse().slice(0, 20);
+    const filtered = filterRunHistory(history, this.historyFilter);
+    const recent = [...filtered].reverse().slice(0, 20);
     const totals = computeDashboardTotals(history);
     const flaky = buildFlakyDashboardRows(history);
     const lang = locale === "es" ? "es" : "en";
     const nonce = crypto.randomBytes(16).toString("base64");
+    const stages = listHistoryStages(history);
 
     const canceledStat =
       totals.canceled > 0
@@ -127,11 +154,18 @@ export class DashboardPanel {
     const actionsSection = context.actions
       ? renderActionsSection(context.actions, locale)
       : "";
-    const flakyRows = flaky;
     const flakySection =
-      flakyRows.length === 0
+      flaky.length === 0
         ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>`
-        : flakyTable(flakyRows, locale);
+        : flakyTable(flaky, locale);
+
+    const filterBar = renderHistoryFilterBar(stages, this.historyFilter, locale);
+    const recentSection =
+      history.length === 0
+        ? `<p>${escapeHtml(t(locale, "dashboard.noRuns"))}</p><p class="hint">${t(locale, "dashboard.emptyHint")}</p>`
+        : recent.length === 0
+          ? `<p class="hint">${escapeHtml(t(locale, "dashboard.filterNoMatches"))}</p>`
+          : recentRunsTable(recent, locale);
 
     return `<!DOCTYPE html>
 <html lang="${lang}">
@@ -187,6 +221,17 @@ export class DashboardPanel {
     }
     .flaky-open-btn:hover { color: var(--vscode-textLink-activeForeground); }
     .flaky-error { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 8px 0 4px; max-width: 720px; }
+    .filters label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85em; opacity: 0.9; }
+    .filters select, .filters button {
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-dropdown-foreground);
+      background: var(--vscode-dropdown-background);
+      border: 1px solid var(--vscode-dropdown-border);
+      padding: 4px 8px;
+    }
+    .filters button { cursor: pointer; color: var(--vscode-button-foreground); background: var(--vscode-button-secondaryBackground); border: none; }
   </style>
 </head>
 <body>
@@ -203,13 +248,54 @@ export class DashboardPanel {
   ${lastKnownSection}
   ${actionsSection}
   <h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
-  ${recent.length === 0 ? `<p>${escapeHtml(t(locale, "dashboard.noRuns"))}</p><p class="hint">${t(locale, "dashboard.emptyHint")}</p>` : recentRunsTable(recent, locale)}
+  ${filterBar}
+  ${recentSection}
   <h2>${escapeHtml(t(locale, "dashboard.flakyTitle"))}</h2>
   ${flakySection}
   ${renderDashboardScript(nonce)}
 </body>
 </html>`;
   }
+}
+
+function renderHistoryFilterBar(
+  stages: string[],
+  filter: DashboardHistoryFilter,
+  locale: PilotLocale,
+): string {
+  const stageValue = filter.stage && filter.stage !== "all" ? filter.stage : "all";
+  const outcome = filter.outcome ?? "all";
+  const runKind = filter.runKind && filter.runKind !== "all" ? filter.runKind : "all";
+  const stageOptions = [
+    `<option value="all"${stageValue === "all" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterAll"))}</option>`,
+    ...stages.map(
+      (s) =>
+        `<option value="${escapeAttr(s)}"${s === stageValue ? " selected" : ""}>${escapeHtml(s)}</option>`,
+    ),
+  ].join("");
+
+  return `<div class="filters" id="history-filters">
+  <label>${escapeHtml(t(locale, "dashboard.filterStage"))}
+    <select data-filter="stage">${stageOptions}</select>
+  </label>
+  <label>${escapeHtml(t(locale, "dashboard.filterOutcome"))}
+    <select data-filter="outcome">
+      <option value="all"${outcome === "all" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterAll"))}</option>
+      <option value="any_failure"${outcome === "any_failure" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterAnyFailure"))}</option>
+      <option value="all_passed"${outcome === "all_passed" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterAllPassed"))}</option>
+      <option value="canceled"${outcome === "canceled" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterCanceled"))}</option>
+    </select>
+  </label>
+  <label>${escapeHtml(t(locale, "dashboard.filterRunKind"))}
+    <select data-filter="runKind">
+      <option value="all"${runKind === "all" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterAll"))}</option>
+      <option value="run"${runKind === "run" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.filterRun"))}</option>
+      <option value="debug"${runKind === "debug" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.runKind.debug"))}</option>
+      <option value="profile"${runKind === "profile" ? " selected" : ""}>${escapeHtml(t(locale, "dashboard.runKind.profile"))}</option>
+    </select>
+  </label>
+  <button type="button" id="reset-history-filters">${escapeHtml(t(locale, "dashboard.filterReset"))}</button>
+</div>`;
 }
 
 function renderPrimaryDiagnosticSection(diagnostic: Diagnostic, locale: PilotLocale): string {
@@ -271,6 +357,28 @@ function renderDashboardScript(nonce: string): string {
   return `<script nonce="${nonce}">
     (function() {
       const vscode = acquireVsCodeApi();
+      function postFilters() {
+        const root = document.getElementById("history-filters");
+        if (!root) return;
+        const stage = root.querySelector('[data-filter="stage"]');
+        const outcome = root.querySelector('[data-filter="outcome"]');
+        const runKind = root.querySelector('[data-filter="runKind"]');
+        vscode.postMessage({
+          type: "filterHistory",
+          stage: stage ? stage.value : "all",
+          outcome: outcome ? outcome.value : "all",
+          runKind: runKind ? runKind.value : "all",
+        });
+      }
+      document.querySelectorAll("#history-filters select").forEach(function(el) {
+        el.addEventListener("change", postFilters);
+      });
+      var reset = document.getElementById("reset-history-filters");
+      if (reset) {
+        reset.addEventListener("click", function() {
+          vscode.postMessage({ type: "filterHistory", stage: "all", outcome: "all", runKind: "all" });
+        });
+      }
       document.querySelectorAll("[data-command]").forEach(function(btn) {
         btn.addEventListener("click", function() {
           if (btn.hasAttribute("disabled")) return;

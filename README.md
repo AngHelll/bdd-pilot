@@ -267,7 +267,7 @@ Enable **BDD Pilot** in the Chat tools picker (agent mode). Paths below assume w
 1. **Map the repo** — `pilot_discover_bdd` with `projectDir: "."`. Add `enrich: true` only when you need outline rows from `dotnet test --list-tests` (slower).
 2. **Build a filter** — `pilot_build_filter` with `scope: "tag"` and `tag: "smoke"` (or `feature` / `scenario` scope).
 3. **After a failure** — run tests from the BDD Pilot panel, then `pilot_failure_context` with only `projectDir: "."` (uses `TestResults/bdd-pilot-last-failure.json`).
-4. **Reopen workspace** — on activate, Pilot rehydrates TRX outcomes; if the latest TRX has failures, the same artifact is written so step 3 works without a new run.
+4. **Reopen workspace** — on activate, Pilot rehydrates TRX outcomes; narrative skip reasons (`not_in_trx` / `canceled` from the last scoped run) restore when the TRX matches that run; if the latest TRX has failures, the last-failure artifact is written so step 3 works without a new run.
 
 Repo CLI equivalents:
 

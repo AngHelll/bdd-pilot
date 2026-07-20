@@ -16,6 +16,7 @@
   "bddPilot.command.showDashboard.title": "BDD Pilot: Mostrar panel",
   "bddPilot.command.showDashboard.shortTitle": "Panel",
   "bddPilot.command.showUnmappedScenarios.title": "BDD Pilot: Mostrar escenarios sin mapear",
+  "bddPilot.command.showScenarioHistory.title": "BDD Pilot: Historial del escenario",
   "bddPilot.command.searchTests.title": "BDD Pilot: Buscar tests",
   "bddPilot.command.searchTestsActive.title": "BDD Pilot: Buscar tests (activo)",
   "bddPilot.command.clearSearch.title": "BDD Pilot: Borrar filtro de búsqueda",

@@ -16,6 +16,7 @@
   "bddPilot.command.showDashboard.title": "BDD Pilot: Show Dashboard",
   "bddPilot.command.showDashboard.shortTitle": "Dashboard",
   "bddPilot.command.showUnmappedScenarios.title": "BDD Pilot: Show Unmapped Scenarios",
+  "bddPilot.command.showScenarioHistory.title": "BDD Pilot: Show Scenario History",
   "bddPilot.command.searchTests.title": "BDD Pilot: Search Tests",
   "bddPilot.command.searchTestsActive.title": "BDD Pilot: Search Tests (active)",
   "bddPilot.command.clearSearch.title": "BDD Pilot: Clear Search Filter",

@@ -8,6 +8,17 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.22.0] — 2026-07-20
+
+### Added
+- **Post-run narrative (arco)** — skip-reason continuity after Reload, scenario history QuickPick, dashboard history filters
+- **Skip reason snapshot** — scoped `not_in_trx` / `canceled` reasons persist in workspaceState and restore with TRX rehydrate (same path/age gates); Mapping UX unmapped list rehydrates from snapshot
+- **Scenario history** — command **Show Scenario History** (tree context / More menu) lists recent runs for a scenario via QuickPick; open feature from the pick
+- **Dashboard filters** — filter Recent runs by stage, outcome (any failure / all passed / canceled), and session kind (run / debug / profile); flaky table unchanged
+
+### Changed
+- **Test Explorer** — leaf descriptions append stored skip reasons when present (parity with tree tooltips after rehydrate)
+
 ## [1.21.0] — 2026-07-15
 
 ### Added

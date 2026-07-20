@@ -1,5 +1,6 @@
 import { PilotLocale, t } from "../i18n";
 import { formatDuration } from "../results/durationFormat";
+import { appendSkipReasonToDescription, SkipReason } from "../results/skipReason";
 import { TestOutcome } from "../results/trxParser";
 import { outlineRowKey, scenarioKey } from "../runner/runScope";
 import { TagGroup } from "./groupByTag";
@@ -28,6 +29,7 @@ export type { TestExplorerDisplaySettings, TreeDisplaySettings };
 export interface OutcomeReader {
   get(key: string): TestOutcome | undefined;
   getDuration(key: string): number | undefined;
+  getSkipReason?(key: string): SkipReason | undefined;
 }
 
 export function formatOutcomeLabel(outcome: TestOutcome, locale: PilotLocale): string {
@@ -60,11 +62,15 @@ export function buildTestExplorerLeafDescription(
   display: TestExplorerDisplaySettings,
   locale: PilotLocale,
   contextLabel?: string,
+  skipReason?: SkipReason,
 ): string | undefined {
   const outcomeLabel = outcome ? formatOutcomeLabel(outcome, locale) : undefined;
   const durationLabel =
     durationMs !== undefined ? formatDuration(durationMs, display.durationDisplay) : undefined;
-  const joined = joinDescriptionParts(outcomeLabel, durationLabel, contextLabel);
+  let joined = joinDescriptionParts(outcomeLabel, durationLabel, contextLabel);
+  if (skipReason && (outcome === "skipped" || outcome === "unknown" || !outcome)) {
+    joined = appendSkipReasonToDescription(joined || undefined, skipReason, locale);
+  }
   return joined.length > 0 ? joined : undefined;
 }
 
@@ -86,7 +92,14 @@ export function buildTestExplorerOutlineRowDescription(
     display.compactTagLimit,
     undefined,
   );
-  return buildTestExplorerLeafDescription(outcome, durationMs, display, locale, tagPart || undefined);
+  return buildTestExplorerLeafDescription(
+    outcome,
+    durationMs,
+    display,
+    locale,
+    tagPart || undefined,
+    store.getSkipReason?.(key),
+  );
 }
 
 export function buildTestExplorerScenarioDescription(
@@ -129,6 +142,7 @@ export function buildTestExplorerScenarioDescription(
     display,
     locale,
     featureHint,
+    store.getSkipReason?.(key),
   );
 }
 

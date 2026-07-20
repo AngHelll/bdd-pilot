@@ -280,6 +280,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   // eslint-disable-next-line prefer-const
   rehydrate = createRehydrateHandlers({
+    context,
     output,
     tr,
     runService,

@@ -7,6 +7,12 @@ import { shouldConfirmSearchRunCap } from "../core/gherkin/treeSearch";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { MessageKey } from "../core/i18n";
 import { getLastMappingReport } from "../core/results/lastMappingReport";
+import {
+  buildScenarioHistoryView,
+  formatScenarioHistoryPickLabel,
+} from "../core/results/scenarioHistoryView";
+import { scenarioHistoryKey } from "../core/results/runHistory";
+import { formatDuration } from "../core/results/durationFormat";
 import { buildRerunFailedFilter } from "../providers/testController";
 import { BDD_PILOT_DEBUG_SESSION_NAME } from "../providers/runService";
 import { DashboardPanel } from "../providers/dashboardPanel";
@@ -106,6 +112,66 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
         const doc = await vscode.workspace.openTextDocument(uri);
         const line = Math.max(0, selected.leaf.line - 1);
         const position = new vscode.Position(line, 0);
+        const range = new vscode.Range(position, position);
+        const editor = await vscode.window.showTextDocument(doc, { selection: range });
+        editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+      } catch {
+        void vscode.window.showWarningMessage(deps.tr("toast.unmappedOpenFailed"));
+      }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.showScenarioHistory", async (node?: TreeNode) => {
+      if (!node || (node.kind !== "scenario" && node.kind !== "outlineRow")) {
+        void vscode.window.showInformationMessage(deps.tr("toast.scenarioHistoryNeedLeaf"));
+        return;
+      }
+      const featurePath = node.feature.filePath;
+      const scenarioName = node.scenario.name;
+      const line = node.kind === "outlineRow" ? node.example.line : node.scenario.line;
+      const nameForKey =
+        node.kind === "outlineRow"
+          ? `${node.scenario.name} · ${node.example.label}`
+          : node.scenario.name;
+      const key = scenarioHistoryKey(featurePath, line, nameForKey);
+      const view = buildScenarioHistoryView(deps.runService.getHistory(), key, {
+        featurePath,
+        scenarioName,
+      });
+      if (view.rows.length === 0) {
+        void vscode.window.showInformationMessage(deps.tr("scenarioHistory.empty"));
+        return;
+      }
+      if (view.usedParentFallback) {
+        void vscode.window.showInformationMessage(deps.tr("scenarioHistory.parentNote"));
+      }
+      const picks = [
+        {
+          label: `$(file) ${deps.tr("scenarioHistory.openFeature")}`,
+          description: path.basename(view.featurePath),
+          action: "open" as const,
+        },
+        ...view.rows.map((row) => ({
+          label: formatScenarioHistoryPickLabel(row),
+          description: row.durationMs !== undefined ? formatDuration(row.durationMs, "auto") : undefined,
+          detail: row.errorSnippet,
+          action: "noop" as const,
+          row,
+        })),
+      ];
+      const selected = await vscode.window.showQuickPick(picks, {
+        title: deps.tr("scenarioHistory.title", { name: view.scenarioName }),
+        placeHolder: deps.tr("scenarioHistory.placeholder"),
+        matchOnDescription: true,
+        matchOnDetail: true,
+      });
+      if (!selected || selected.action !== "open") {
+        return;
+      }
+      try {
+        const uri = vscode.Uri.file(view.featurePath);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const openLine = Math.max(0, (view.scenarioLine || line) - 1);
+        const position = new vscode.Position(openLine, 0);
         const range = new vscode.Range(position, position);
         const editor = await vscode.window.showTextDocument(doc, { selection: range });
         editor.revealRange(range, vscode.TextEditorRevealType.InCenter);

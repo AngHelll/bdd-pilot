@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -125,11 +125,16 @@
         "shortTitle": "%bddPilot.command.showDashboard.shortTitle%",
         "icon": "$(graph)"
       },
-      {
-        "command": "bddPilot.showUnmappedScenarios",
-        "title": "%bddPilot.command.showUnmappedScenarios.title%",
-        "icon": "$(list-filter)"
-      },
+        {
+          "command": "bddPilot.showUnmappedScenarios",
+          "title": "%bddPilot.command.showUnmappedScenarios.title%",
+          "icon": "$(list-filter)"
+        },
+        {
+          "command": "bddPilot.showScenarioHistory",
+          "title": "%bddPilot.command.showScenarioHistory.title%",
+          "icon": "$(history)"
+        },
       {
         "command": "bddPilot.searchTests",
         "title": "%bddPilot.command.searchTests.title%",
@@ -261,8 +266,12 @@
           "group": "1_more@1"
         },
         {
-          "submenu": "bddPilot.profilesMenu",
+          "command": "bddPilot.showScenarioHistory",
           "group": "1_more@2"
+        },
+        {
+          "submenu": "bddPilot.profilesMenu",
+          "group": "1_more@3"
         }
       ],
       "bddPilot.profilesMenu": [
@@ -289,6 +298,11 @@
           "command": "bddPilot.debugNode",
           "when": "view == bddPilot.tests && viewItem =~ /^bddRunnable/",
           "group": "inline@2"
+        },
+        {
+          "command": "bddPilot.showScenarioHistory",
+          "when": "view == bddPilot.tests && viewItem =~ /^bddRunnable/",
+          "group": "1_history@1"
         }
       ]
     },

@@ -8,6 +8,13 @@ import { UnifiedSummary } from "../core/results/resultLoader";
 import { TreeMappingReport } from "../core/results/trxTreeMapping";
 import { selectUnmappedForOutput } from "../core/results/mappingReportFormat";
 import { clearLastMappingReport, setLastMappingReport } from "../core/results/lastMappingReport";
+import {
+  applySkipReasonSnapshot,
+  buildSkipReasonSnapshot,
+  mappingReportFromSkipSnapshot,
+  parseSkipReasonSnapshot,
+  shouldRestoreSkipSnapshot,
+} from "../core/results/skipReasonSnapshot";
 import { MessageKey } from "../core/i18n";
 import { OutcomeStore } from "../providers/outcomeStore";
 import { RunService } from "../providers/runService";
@@ -20,8 +27,10 @@ import {
   selectEligiblePilotTrx,
   selectLatestPilotTrx,
 } from "../core/results/pilotTrxDiscovery";
+import { SKIP_REASON_SNAPSHOT_KEY } from "./storageKeys";
 
 export interface RehydrateDeps {
+  context: vscode.ExtensionContext;
   output: vscode.OutputChannel;
   tr: (key: MessageKey, params?: Record<string, string | number>) => string;
   runService: RunService;
@@ -36,12 +45,27 @@ export interface RehydrateDeps {
 }
 
 export function createRehydrateHandlers(deps: RehydrateDeps) {
+  function persistSkipReasonSnapshot(report: TreeMappingReport | undefined): void {
+    if (!report || report.inScope === 0) {
+      return;
+    }
+    const lastHistory = deps.runService.getHistory().at(-1);
+    const trxPath = lastHistory?.trxPath ? path.resolve(lastHistory.trxPath) : undefined;
+    const snapshot = buildSkipReasonSnapshot({
+      report,
+      store: deps.outcomeStore,
+      trxPath,
+    });
+    void deps.context.workspaceState.update(SKIP_REASON_SNAPSHOT_KEY, snapshot);
+  }
+
   function logTreeMapping(report: TreeMappingReport | undefined): void {
     if (!report || report.inScope === 0) {
       clearLastMappingReport();
       return;
     }
     setLastMappingReport(report);
+    persistSkipReasonSnapshot(report);
     deps.output.appendLine(
       `[bdd-pilot] ${deps.tr("log.treeMapping", {
         mapped: report.mapped,
@@ -81,6 +105,22 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       deps.refreshPilotSurfaces();
     }
     deps.refreshManaged();
+  }
+
+  function tryRestoreSkipReasons(trxAbsolutePath: string, maxAgeMs: number | undefined): void {
+    const snapshot = parseSkipReasonSnapshot(
+      deps.context.workspaceState.get(SKIP_REASON_SNAPSHOT_KEY),
+    );
+    if (!shouldRestoreSkipSnapshot(snapshot, trxAbsolutePath, Date.now(), maxAgeMs)) {
+      return;
+    }
+    const domains = deps.treeProvider.getDomains();
+    applySkipReasonSnapshot(deps.outcomeStore, domains, snapshot!);
+    const liteReport = mappingReportFromSkipSnapshot(snapshot!, domains);
+    if (liteReport.unmapped > 0) {
+      setLastMappingReport(liteReport);
+    }
+    deps.treeProvider.refreshPilotSummary();
   }
 
   function tryRehydrateOutcomes(): void {
@@ -124,6 +164,7 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
     }
 
     deps.treeProvider.applyResults(summary);
+    tryRestoreSkipReasons(latest.absolutePath, rehydrate.maxAgeMs);
     deps.refreshManaged();
     deps.setRehydrateNotice({
       trxFileName: latest.fileName,
