@@ -208,6 +208,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.run.configuration` | `""` | Optional `dotnet test --configuration`: `Debug`, `Release`, or empty (omit). |
 | `bddPilot.run.noBuild` | `false` | When `true`, pass `--no-build` (skip build; requires prior successful build). |
 | `bddPilot.run.runSettings` | `""` | Path to a `.runsettings` file (workspace-relative or absolute) for `--settings`. |
+| `bddPilot.run.byStage` | `{}` | Per-`STAGE` overrides for `configuration` / `runSettings` (keys `dev`/`test`/`stg`/`prod`). Does **not** load `.env` — only `dotnet test` flags. Example: `{ "stg": { "configuration": "Release", "runSettings": "config/stg.runsettings" } }`. |
 | `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (less duplicate roll-ups). |
 | `bddPilot.tree.groupBy` | `domain` | Tree grouping: `domain` (folder layout) or `tag` (`@smoke` folders). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |

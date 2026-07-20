@@ -8,6 +8,12 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.24.0] — 2026-07-20
+
+### Added
+- **Per-stage run profile** — `bddPilot.run.byStage` overrides `run.configuration` / `run.runSettings` per STAGE (`dev`/`test`/`stg`/`prod`); run and debug share the merge; Output logs when stage flags differ from globals
+- **Hub tooltip** — shows effective run flags (e.g. `Release · stg.runsettings`) when non-empty
+
 ## [1.23.0] — 2026-07-20
 
 ### Changed

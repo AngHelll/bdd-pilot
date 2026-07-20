@@ -84,6 +84,7 @@
   "bddPilot.configuration.run.configuration.enum.release": "Pasa --configuration Release.",
   "bddPilot.configuration.run.noBuild.description": "Si es true, pasa --no-build a dotnet test (omite build; requiere build previo exitoso).",
   "bddPilot.configuration.run.runSettings.description": "Ruta a un archivo .runsettings (relativa al workspace o absoluta). Se pasa como dotnet test --settings si el archivo existe.",
+  "bddPilot.configuration.run.byStage.description": "Overrides opcionales por STAGE para run.configuration y run.runSettings (claves: dev, test, stg, prod). No carga archivos .env — solo flags de dotnet test. Ejemplo: { \"stg\": { \"configuration\": \"Release\", \"runSettings\": \"config/stg.runsettings\" } }.",
   "bddPilot.configuration.diagnostics.extendedRules.description": "Activa diagnósticos extendidos post-run (credenciales cloud, X-Ray, errores HTTP API). Desactivado por defecto para proyectos genéricos.",
   "bddPilot.configuration.feedback.diagnosticsInOutput.description": "Cuánto del bloque de diagnósticos de BDD Pilot añadir al canal Output tras un run.",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.off": "No añadir diagnósticos Pilot (el log dotnet no cambia).",

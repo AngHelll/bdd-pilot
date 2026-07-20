@@ -29,6 +29,11 @@ import {
   resolveRunSettingsPath,
 } from "../core/runner/runSettingsPath";
 import {
+  formatStageRunFlagsAppliedMessage,
+  resolveEffectiveRunFlags,
+  stageRunFlagsDifferFromGlobal,
+} from "../core/runner/stageRunFlags";
+import {
   resolveRunKind,
   RunHistoryEntry,
   RunKind,
@@ -358,12 +363,29 @@ export class RunService {
     extraEnv?: Record<string, string>,
   ): { dotnetReq: DotnetRunRequest; preCommandMessages: string[] } {
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    const resolution = resolveRunSettingsPath(workspaceRoot, req.settings.runSettingsPath);
+    const effective = resolveEffectiveRunFlags({
+      stage: req.stage,
+      runConfiguration: req.settings.runConfiguration,
+      runSettingsPath: req.settings.runSettingsPath,
+      byStage: req.settings.runByStage ?? {},
+    });
+    const resolution = resolveRunSettingsPath(workspaceRoot, effective.runSettingsPath);
     const preCommandMessages: string[] = [];
+    if (
+      stageRunFlagsDifferFromGlobal(
+        {
+          runConfiguration: req.settings.runConfiguration,
+          runSettingsPath: req.settings.runSettingsPath,
+        },
+        effective,
+      )
+    ) {
+      preCommandMessages.push(formatStageRunFlagsAppliedMessage(effective));
+    }
     if (resolution.missingPath) {
       preCommandMessages.push(formatRunSettingsMissingMessage(resolution.missingPath));
     }
-    const configuration = req.settings.runConfiguration.trim() || undefined;
+    const configuration = effective.runConfiguration.trim() || undefined;
     return {
       dotnetReq: {
         dotnetPath: req.settings.dotnetPath,

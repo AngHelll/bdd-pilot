@@ -16,6 +16,10 @@ import { PostRunFeedbackRequest } from "./core/feedback/postRunFeedback";
 import { UnifiedSummary } from "./core/results/resultLoader";
 import { ParallelismMode, Stage } from "./core/config/types";
 import { resolveStageEnvFileStatus } from "./core/config/envFile";
+import {
+  formatEffectiveRunFlagsParts,
+  resolveEffectiveRunFlags,
+} from "./core/runner/stageRunFlags";
 import { listDotnetTests } from "./core/runner/listTests";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
@@ -249,6 +253,14 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     const ctx = projectHub.getProjectContext();
     const running = !!activeRun || runService.isDebugActive();
     const debugging = runService.isDebugActive() && !activeRun;
+    const settings = readSettings();
+    const effective = resolveEffectiveRunFlags({
+      stage: currentStage,
+      runConfiguration: settings.runConfiguration,
+      runSettingsPath: settings.runSettingsPath,
+      byStage: settings.runByStage,
+    });
+    const runFlagsParts = formatEffectiveRunFlagsParts(effective);
     statusBar.update(
       currentStage,
       currentMode,
@@ -261,6 +273,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       },
       readStatusBarDisplay(),
       ctx?.projectDir ? resolveStageEnvFileStatus(ctx.projectDir, currentStage) : undefined,
+      runFlagsParts.length > 0 ? runFlagsParts.join(" · ") : undefined,
     );
     treeView.badge = running
       ? {

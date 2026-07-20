@@ -52,9 +52,10 @@ export class StatusBar implements vscode.Disposable {
     activity: StatusBarActivity | undefined,
     displayMode: StatusBarDisplayMode,
     envStatus?: StageEnvFileStatus,
+    runFlagsSummary?: string,
   ): void {
     if (displayMode === "compact") {
-      this.updateCompact(stage, mode, locale, projectLabel, activity, envStatus);
+      this.updateCompact(stage, mode, locale, projectLabel, activity, envStatus, runFlagsSummary);
       this.hideDetailed();
       return;
     }
@@ -70,6 +71,7 @@ export class StatusBar implements vscode.Disposable {
     projectLabel: string | undefined,
     activity?: StatusBarActivity,
     envStatus?: StageEnvFileStatus,
+    runFlagsSummary?: string,
   ): void {
     const input: CompactStatusBarInput = {
       stage,
@@ -80,6 +82,7 @@ export class StatusBar implements vscode.Disposable {
       solutionSelected: activity?.solutionSelected,
       debugging: activity?.debugging,
       envStatus,
+      runFlagsSummary,
     };
     this.hubItem.text = formatCompactStatusBarLabel(input);
     this.hubItem.tooltip = formatCompactStatusBarTooltip(input);

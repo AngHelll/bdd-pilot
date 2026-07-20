@@ -13,6 +13,7 @@ import {
 import { AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { DiagnosticsInOutputMode } from "../core/diagnostics/diagnosticsOutput";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "../core/runner/filterMapping";
+import { parseStageRunByStage } from "../core/runner/stageRunFlags";
 import { PilotLocale } from "../core/i18n";
 import { STAGE_KEY, MODE_KEY } from "./storageKeys";
 
@@ -62,6 +63,7 @@ export function readSettings(): RunnerSettings {
       : DEFAULT_SETTINGS.runConfiguration,
     runNoBuild: cfg.get<boolean>("run.noBuild", DEFAULT_SETTINGS.runNoBuild),
     runSettingsPath: cfg.get<string>("run.runSettings", DEFAULT_SETTINGS.runSettingsPath),
+    runByStage: parseStageRunByStage(cfg.get("run.byStage")),
   };
 }
 

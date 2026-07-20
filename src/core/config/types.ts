@@ -42,6 +42,14 @@ export const MODE_PROFILES: Record<ParallelismMode, ModeProfile> = {
 
 export type RunConfiguration = "" | "Debug" | "Release";
 
+/** Per-stage override for `dotnet test` configuration / runsettings path. */
+export interface StageRunOverride {
+  configuration?: RunConfiguration;
+  runSettings?: string;
+}
+
+export type StageRunByStage = Partial<Record<Stage, StageRunOverride>>;
+
 export interface RunnerSettings {
   projectPath: string;
   defaultStage: Stage;
@@ -56,6 +64,8 @@ export interface RunnerSettings {
   runNoBuild: boolean;
   /** Raw path from settings; resolved at run time. */
   runSettingsPath: string;
+  /** Per-stage overrides for configuration / runSettings. */
+  runByStage: StageRunByStage;
 }
 
 export const DEFAULT_SETTINGS: RunnerSettings = {
@@ -69,6 +79,7 @@ export const DEFAULT_SETTINGS: RunnerSettings = {
   runConfiguration: "",
   runNoBuild: false,
   runSettingsPath: "",
+  runByStage: {},
 };
 
 export function isStage(value: string): value is Stage {

@@ -78,6 +78,17 @@ describe("statusBarViewModel", () => {
     assert.ok(tooltip.includes("Env files: .env.test, .env.test.local"));
   });
 
+  it("formatCompactStatusBarTooltip includes run flags when present", () => {
+    const tooltip = formatCompactStatusBarTooltip({
+      stage: "stg",
+      mode: "parallel",
+      locale: "en",
+      projectLabel: "App.Tests",
+      runFlagsSummary: "Release · stg.runsettings",
+    });
+    assert.ok(tooltip.includes("Run flags: Release · stg.runsettings"));
+  });
+
   it("formatCompactStatusBarTooltip shows optional missing env line", () => {
     const tooltip = formatCompactStatusBarTooltip({
       stage: "stg",

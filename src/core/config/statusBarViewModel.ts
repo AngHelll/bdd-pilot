@@ -16,6 +16,8 @@ export interface CompactStatusBarInput {
   debugging?: boolean;
   /** When undefined, env line is omitted (no project resolved). */
   envStatus?: StageEnvFileStatus;
+  /** Preformatted "Release · stg.runsettings" parts joined; omit line when empty. */
+  runFlagsSummary?: string;
 }
 
 export function readStatusBarDisplayMode(value: string | undefined): StatusBarDisplayMode {
@@ -47,6 +49,16 @@ export function formatHubEnvTooltipLine(
     return t(locale, "statusBar.hubTooltipEnv", { files: envStatus.existingBasenames.join(", ") });
   }
   return t(locale, "statusBar.hubTooltipEnvMissing");
+}
+
+export function formatHubRunFlagsTooltipLine(
+  locale: PilotLocale,
+  runFlagsSummary: string | undefined,
+): string | undefined {
+  if (!runFlagsSummary || runFlagsSummary.trim().length === 0) {
+    return undefined;
+  }
+  return t(locale, "statusBar.hubTooltipRunFlags", { flags: runFlagsSummary.trim() });
 }
 
 export function formatDetailedStageTooltip(
@@ -81,6 +93,10 @@ export function formatCompactStatusBarTooltip(input: CompactStatusBarInput): str
   const envLine = formatHubEnvTooltipLine(input.locale, input.envStatus);
   if (envLine) {
     lines.push(envLine);
+  }
+  const runFlagsLine = formatHubRunFlagsTooltipLine(input.locale, input.runFlagsSummary);
+  if (runFlagsLine) {
+    lines.push(runFlagsLine);
   }
   if (input.solutionSelected && input.projectLabel) {
     lines.push("", t(input.locale, "statusBar.solutionSlowHint"));
