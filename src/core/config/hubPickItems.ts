@@ -38,3 +38,27 @@ export function buildModeHubPickItems(current: ParallelismMode, locale: PilotLoc
     description: t(locale, MODE_DESCRIPTION_KEYS[mode]),
   }));
 }
+
+export interface HubCancelPickSpec {
+  label: string;
+  description: string;
+}
+
+/** Label/description for hub Cancel row (i18n). */
+export function buildHubCancelPickItem(locale: PilotLocale): HubCancelPickSpec {
+  return {
+    label: `$(debug-stop) ${t(locale, "statusBar.hubCancel")}`,
+    description: t(locale, "statusBar.hubCancelDetail"),
+  };
+}
+
+/**
+ * When busy, put Cancel as the first QuickPick row (before STAGE/mode/project).
+ * Pure — no VS Code dependency.
+ */
+export function prependHubCancelIfBusy<T>(items: T[], running: boolean, cancelItem: T): T[] {
+  if (!running) {
+    return items;
+  }
+  return [cancelItem, ...items];
+}

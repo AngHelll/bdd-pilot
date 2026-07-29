@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.30.0] — 2026-07-29
+
+### Added
+- **Hub Cancel** — while a run is active, the status bar hub QuickPick puts **Cancel run** first (then STAGE / mode / project); reuses `bddPilot.cancel`
+
 ## [1.29.0] — 2026-07-29
 
 ### Changed

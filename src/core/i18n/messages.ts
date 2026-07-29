@@ -25,6 +25,8 @@ const EN = {
   "statusBar.hubTooltipAction": "Click to change STAGE, mode, or project",
   "statusBar.hubRunningHint":
     "Gherkin run in progress — cancel from the Pilot tree toolbar or summary row",
+  "statusBar.hubCancel": "Cancel run",
+  "statusBar.hubCancelDetail": "Stop the current Gherkin run",
   "statusBar.hubSectionStage": "Environment (STAGE)",
   "statusBar.hubSectionMode": "Parallelism",
   "statusBar.hubSectionProject": "Test target",
@@ -392,6 +394,8 @@ const ES: Record<keyof typeof EN, string> = {
   "statusBar.hubTooltipAction": "Clic para cambiar STAGE, modo o proyecto",
   "statusBar.hubRunningHint":
     "Ejecución Gherkin en curso — cancela desde la toolbar del árbol Pilot o la fila de resumen",
+  "statusBar.hubCancel": "Cancelar ejecución",
+  "statusBar.hubCancelDetail": "Detener la ejecución Gherkin actual",
   "statusBar.hubSectionStage": "Entorno (STAGE)",
   "statusBar.hubSectionMode": "Paralelismo",
   "statusBar.hubSectionProject": "Objetivo de tests",

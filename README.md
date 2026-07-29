@@ -112,7 +112,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
 
 ### Environment & execution
 - **UI language** (`bddPilot.locale`: `auto` | `en` | `es`) — status bar, dashboard, CodeLens, palette, and dialogs follow VS Code UI language when set to `auto`.
-- **Execution hub** (status bar) — compact branded chip `$(beaker) Pilot` with STAGE, mode, and project (`bddPilot.statusBar.display`: `compact` default, `detailed` for legacy four items). Click to open unified settings QuickPick with descriptions for environments and parallelism presets.
+- **Execution hub** (status bar) — compact branded chip `$(beaker) Pilot` with STAGE, mode, and project (`bddPilot.statusBar.display`: `compact` default, `detailed` for legacy four items). Click to open unified settings QuickPick; **while a run is active, Cancel is the first row**.
 - **Environment (STAGE)** (`dev`/`test`/`stg`/`prod`) — sets `STAGE` for the run; stg/prod require confirmation.
 - **Parallelism mode** (`debug`/`parallel`/`ci`) passed as xUnit RunSettings, so
   the project's `xunit.runner.json` is never mutated on disk.
@@ -163,7 +163,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | **`not_in_trx`** | Scenario in scope but missing from TRX | TE shows missing tests differently; Pilot maps Gherkin leaves |
 | **Unmapped chip** | Scoped run left scenarios without TRX match | Jump to `.feature` via Pilot mapping report |
 | **Fail-first outline** | Compact parent shows failures first | TE roll-ups are test-hierarchy, not Gherkin outline |
-| **Cancel busy** | Toolbar Cancel + summary click while running | TE cancel is native Testing UI, not Pilot tree chrome |
+| **Cancel busy** | Toolbar Cancel + summary click + **hub QuickPick first row** while running | TE cancel is native Testing UI, not Pilot tree chrome |
 | **Restored / rehydrate** | Outcomes from TestResults, not a new run | TE reload does not narrate Pilot rehydrate provenance |
 
 **ForgeOne family:** Pilot = execution · [BDD Guardian](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings — Pilot focuses on execution icons only.

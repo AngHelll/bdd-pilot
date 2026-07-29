@@ -329,6 +329,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     refreshUi,
     refreshPilotSurfaces,
     tryRehydrateOutcomes: () => rehydrate.tryRehydrateOutcomes(),
+    isRunActive: () => !!activeRun || runService.isDebugActive(),
   });
 
   const copyFailureContextForAi = createCopyFailureContextForAi({

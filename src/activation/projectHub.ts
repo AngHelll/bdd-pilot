@@ -10,7 +10,12 @@ import {
   toStoredSelection,
 } from "../core/config/projectResolution";
 import { discoverProjectCandidates } from "../core/config/projectLocator";
-import { buildModeHubPickItems, buildStageHubPickItems } from "../core/config/hubPickItems";
+import {
+  buildHubCancelPickItem,
+  buildModeHubPickItems,
+  buildStageHubPickItems,
+  prependHubCancelIfBusy,
+} from "../core/config/hubPickItems";
 import { ParallelismMode, Stage, isMode, isStage } from "../core/config/types";
 import { MessageKey } from "../core/i18n";
 import { OutcomeStore } from "../providers/outcomeStore";
@@ -32,6 +37,8 @@ export interface ProjectHubDeps {
   refreshUi: () => void;
   refreshPilotSurfaces: () => void;
   tryRehydrateOutcomes: () => void;
+  /** Same busy source as tree badge / bddPilot.running. */
+  isRunActive: () => boolean;
 }
 
 export function createProjectHub(deps: ProjectHubDeps) {
@@ -87,7 +94,7 @@ export function createProjectHub(deps: ProjectHubDeps) {
 
   async function openStatusBarHub(): Promise<void> {
     type HubPick = vscode.QuickPickItem & {
-      hubKind?: "stage" | "mode" | "project";
+      hubKind?: "cancel" | "stage" | "mode" | "project";
       hubValue?: string;
       project?: ResolvedProject;
     };
@@ -95,7 +102,7 @@ export function createProjectHub(deps: ProjectHubDeps) {
     const currentStage = deps.getStage();
     const currentMode = deps.getMode();
     const locale = deps.localeService.getLocale();
-    const items: HubPick[] = [
+    const baseItems: HubPick[] = [
       { label: deps.tr("statusBar.hubSectionStage"), kind: vscode.QuickPickItemKind.Separator },
       ...buildStageHubPickItems(currentStage, locale).map((item) => ({
         label: item.label,
@@ -117,10 +124,10 @@ export function createProjectHub(deps: ProjectHubDeps) {
     const ambiguous = expandDirectoryAmbiguity(roots, settings.projectPath);
     const projects = ambiguous ?? listSelectableProjects(roots);
     if (projects.length > 0) {
-      items.push({ label: deps.tr("statusBar.hubSectionProject"), kind: vscode.QuickPickItemKind.Separator });
+      baseItems.push({ label: deps.tr("statusBar.hubSectionProject"), kind: vscode.QuickPickItemKind.Separator });
       const currentLabel = getProjectContext()?.label;
       for (const project of projects) {
-        items.push({
+        baseItems.push({
           label: project.label === currentLabel ? `$(check) ${project.label}` : project.label,
           description: project.kind === "sln" ? deps.tr("quickPick.solution") : project.projectDir,
           hubKind: "project",
@@ -129,11 +136,24 @@ export function createProjectHub(deps: ProjectHubDeps) {
       }
     }
 
+    const cancelSpec = buildHubCancelPickItem(locale);
+    const cancelItem: HubPick = {
+      label: cancelSpec.label,
+      description: cancelSpec.description,
+      hubKind: "cancel",
+    };
+    const items = prependHubCancelIfBusy(baseItems, deps.isRunActive(), cancelItem);
+
     const picked = await vscode.window.showQuickPick(items, {
       placeHolder: deps.tr("statusBar.hubTooltipTitle"),
       matchOnDescription: true,
     });
     if (!picked?.hubKind) {
+      return;
+    }
+
+    if (picked.hubKind === "cancel") {
+      await vscode.commands.executeCommand("bddPilot.cancel");
       return;
     }
 

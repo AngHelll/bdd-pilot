@@ -1,6 +1,11 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
-import { buildModeHubPickItems, buildStageHubPickItems } from "../core/config/hubPickItems";
+import {
+  buildHubCancelPickItem,
+  buildModeHubPickItems,
+  buildStageHubPickItems,
+  prependHubCancelIfBusy,
+} from "../core/config/hubPickItems";
 
 describe("hubPickItems", () => {
   it("buildStageHubPickItems marks current stage with check", () => {
@@ -32,5 +37,25 @@ describe("hubPickItems", () => {
     assert.strictEqual(current?.description, "4 threads · parallel collections");
     const ci = items.find((item) => item.value === "ci");
     assert.ok(ci?.description.includes("8 threads"));
+  });
+
+  it("buildHubCancelPickItem uses stop icon and Gherkin copy", () => {
+    const en = buildHubCancelPickItem("en");
+    assert.ok(en.label.startsWith("$(debug-stop)"));
+    assert.ok(/cancel/i.test(en.label));
+    assert.ok(/Gherkin/i.test(en.description));
+    const es = buildHubCancelPickItem("es");
+    assert.ok(/cancelar/i.test(es.label));
+  });
+
+  it("prependHubCancelIfBusy puts cancel first when running", () => {
+    const base = [{ id: "stage" }, { id: "mode" }];
+    const cancel = { id: "cancel" };
+    const busy = prependHubCancelIfBusy(base, true, cancel);
+    assert.strictEqual(busy[0]?.id, "cancel");
+    assert.strictEqual(busy.length, 3);
+    const idle = prependHubCancelIfBusy(base, false, cancel);
+    assert.strictEqual(idle[0]?.id, "stage");
+    assert.strictEqual(idle.length, 2);
   });
 });

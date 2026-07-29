@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.29.0** · **Marketplace: v1.29.0** · **Next: backlog Tier 2/3** · **512 unit tests**
+> **Current release: v1.30.0** · **Marketplace: v1.30.0** · **Next: backlog Tier 2/3** · **514 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.29.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.30.0** |
 | 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.30.0** | Hub Cancel — Cancel first row in status bar hub QuickPick while busy · spec `hub-cancel-v1.30.md` |
 | **1.29.0** | Gherkin cockpit visual vs TE — README signals + summary chip priority · spec `gherkin-cockpit-visual-v1.29.md` |
 | **1.28.0** | Run control — busy lock UX (disable Run while running, Cancel first, summary cancel) · spec `run-control-v1.28.md` |
 | **1.27.0** | Output UX actions — jump-to-failure, collapse-to-failures, autoShowOutput · spec `output-ux-actions-v1.27.md` |
@@ -203,6 +204,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.30.0 — Hub Cancel ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **H1–H4** | Hub QuickPick Cancel first when busy; `bddPilot.cancel`; i18n; pure prepend helper |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Published v1.30.0 |
+| **Tests** | 514 unit tests |
 
 ### v1.29.0 — Gherkin cockpit visual ✅ shipped
 
