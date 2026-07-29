@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll & SpecFlow BDD tests in VS Code/Cursor: Gherkin tree, Test Explorer, @tag filters, STAGE envs, TRX results, smart diagnostics & AI-ready failure context. Use with BDD Guardian.",
-  "version": "1.26.0",
+  "version": "1.27.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -156,6 +156,16 @@
         "icon": "$(debug-rerun)"
       },
       {
+        "command": "bddPilot.jumpToFirstFailure",
+        "title": "%bddPilot.command.jumpToFirstFailure.title%",
+        "icon": "$(error)"
+      },
+      {
+        "command": "bddPilot.collapseToFailures",
+        "title": "%bddPilot.command.collapseToFailures.title%",
+        "icon": "$(collapse-all)"
+      },
+      {
         "command": "bddPilot.runFromCodeLens",
         "title": "%bddPilot.command.runFromCodeLens.title%"
       },
@@ -240,38 +250,51 @@
           "group": "navigation@4"
         },
         {
-          "command": "bddPilot.refresh",
+          "command": "bddPilot.collapseToFailures",
           "when": "view == bddPilot.tests",
           "group": "navigation@5"
         },
         {
+          "command": "bddPilot.refresh",
+          "when": "view == bddPilot.tests",
+          "group": "navigation@6"
+        },
+        {
           "command": "bddPilot.cycleTreeGroupByDomain",
           "when": "view == bddPilot.tests && bddPilot.treeGroupBy == domain",
-          "group": "navigation@6"
+          "group": "navigation@7"
         },
         {
           "command": "bddPilot.cycleTreeGroupByTag",
           "when": "view == bddPilot.tests && bddPilot.treeGroupBy == tag",
-          "group": "navigation@6"
+          "group": "navigation@7"
         },
         {
           "submenu": "bddPilot.moreMenu",
           "when": "view == bddPilot.tests",
-          "group": "navigation@7"
+          "group": "navigation@8"
         }
       ],
       "bddPilot.moreMenu": [
         {
-          "command": "bddPilot.rerunFailed",
+          "command": "bddPilot.jumpToFirstFailure",
+          "group": "1_more@0"
+        },
+        {
+          "command": "bddPilot.collapseToFailures",
           "group": "1_more@1"
         },
         {
-          "command": "bddPilot.showScenarioHistory",
+          "command": "bddPilot.rerunFailed",
           "group": "1_more@2"
         },
         {
-          "submenu": "bddPilot.profilesMenu",
+          "command": "bddPilot.showScenarioHistory",
           "group": "1_more@3"
+        },
+        {
+          "submenu": "bddPilot.profilesMenu",
+          "group": "1_more@4"
         }
       ],
       "bddPilot.profilesMenu": [
@@ -608,6 +631,21 @@
             "%bddPilot.configuration.feedback.dotnetVerbosity.enum.raw%"
           ],
           "description": "%bddPilot.configuration.feedback.dotnetVerbosity.description%"
+        },
+        "bddPilot.feedback.autoShowOutput": {
+          "type": "string",
+          "enum": [
+            "off",
+            "onFailure",
+            "always"
+          ],
+          "default": "off",
+          "enumDescriptions": [
+            "%bddPilot.configuration.feedback.autoShowOutput.enum.off%",
+            "%bddPilot.configuration.feedback.autoShowOutput.enum.onFailure%",
+            "%bddPilot.configuration.feedback.autoShowOutput.enum.always%"
+          ],
+          "description": "%bddPilot.configuration.feedback.autoShowOutput.description%"
         },
         "bddPilot.outcomes.rehydrateOnActivate": {
           "type": "string",

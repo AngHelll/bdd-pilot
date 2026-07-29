@@ -13,6 +13,10 @@ import {
 } from "../core/results/scenarioHistoryView";
 import { scenarioHistoryKey } from "../core/results/runHistory";
 import { formatDuration } from "../core/results/durationFormat";
+import {
+  containerKeysToExpandForFailures,
+  findFirstFailedLeaf,
+} from "../core/results/failureTreeNav";
 import { buildRerunFailedFilter } from "../providers/testController";
 import { BDD_PILOT_DEBUG_SESSION_NAME } from "../providers/runService";
 import { DashboardPanel } from "../providers/dashboardPanel";
@@ -30,6 +34,16 @@ import { MODE_KEY, STAGE_KEY } from "./storageKeys";
 import { ExecuteRunFn } from "./dashboardCommands";
 import { toRunTarget } from "./runTargets";
 
+async function openFeatureAtLine(featurePath: string, line: number): Promise<void> {
+  const uri = vscode.Uri.file(featurePath);
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const openLine = Math.max(0, line - 1);
+  const position = new vscode.Position(openLine, 0);
+  const range = new vscode.Range(position, position);
+  const editor = await vscode.window.showTextDocument(doc, { selection: range });
+  editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+}
+
 export interface RegisterCommandsDeps {
   context: vscode.ExtensionContext;
   output: vscode.OutputChannel;
@@ -38,6 +52,7 @@ export interface RegisterCommandsDeps {
   dashboard: DashboardPanel;
   runService: RunService;
   treeProvider: TestTreeProvider;
+  treeView: vscode.TreeView<TreeNode>;
   tr: (key: MessageKey, params?: Record<string, string | number>) => string;
   getStage: () => Stage;
   setStage: (stage: Stage) => void;
@@ -64,6 +79,76 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     vscode.commands.registerCommand("bddPilot.refresh", () => deps.refreshAll()),
 
     vscode.commands.registerCommand("bddPilot.showOutput", () => deps.output.show(true)),
+
+    vscode.commands.registerCommand("bddPilot.jumpToFirstFailure", async () => {
+      const leaf = findFirstFailedLeaf(
+        deps.treeProvider.getDomains(),
+        deps.treeProvider.getOutcomeStore(),
+      );
+      if (!leaf) {
+        void vscode.window.showInformationMessage(deps.tr("toast.noFailedScenarios"));
+        return;
+      }
+      const node = deps.treeProvider.findLeafNodeByOutcomeKey(leaf.outcomeKey);
+      if (node) {
+        try {
+          await deps.treeView.reveal(node, { select: true, focus: true, expand: true });
+        } catch {
+          // Tree may be filtered/empty — still open the feature.
+        }
+      }
+      try {
+        await openFeatureAtLine(leaf.featurePath, leaf.scenarioLine);
+      } catch {
+        void vscode.window.showWarningMessage(deps.tr("toast.unmappedOpenFailed"));
+      }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.collapseToFailures", async () => {
+      const domains = deps.treeProvider.getDomains();
+      const store = deps.treeProvider.getOutcomeStore();
+      const containers = containerKeysToExpandForFailures(domains, store);
+      if (containers.length === 0) {
+        void vscode.window.showInformationMessage(deps.tr("toast.noFailedScenariosFocus"));
+        return;
+      }
+      try {
+        await vscode.commands.executeCommand(
+          "workbench.actions.treeView.bddPilot.tests.collapseAll",
+        );
+      } catch {
+        // Command id can vary by host; continue with expands.
+      }
+      for (const container of containers) {
+        let node: TreeNode | undefined;
+        if (container.kind === "domain") {
+          node = deps.treeProvider.findDomainNode(container.id);
+        } else if (container.kind === "feature") {
+          node = deps.treeProvider.findFeatureNode(container.id);
+        } else {
+          const featurePath = container.id.split("::")[0];
+          node = deps.treeProvider.findScenarioOutlineNode(featurePath, container.id);
+        }
+        if (node) {
+          try {
+            await deps.treeView.reveal(node, { expand: true, select: false, focus: false });
+          } catch {
+            // ignore expand failures for filtered nodes
+          }
+        }
+      }
+      const first = findFirstFailedLeaf(domains, store);
+      if (first) {
+        const leafNode = deps.treeProvider.findLeafNodeByOutcomeKey(first.outcomeKey);
+        if (leafNode) {
+          try {
+            await deps.treeView.reveal(leafNode, { expand: true, select: true, focus: true });
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }),
 
     vscode.commands.registerCommand("bddPilot.copyFailureContextForAi", () => {
       if (!readAiSettings().enabled) {

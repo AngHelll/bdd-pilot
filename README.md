@@ -222,6 +222,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
 | `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. |
 | `bddPilot.feedback.dotnetVerbosity` | `filtered` | Live `dotnet test` stream in Output: `filtered` (hide discovery/build noise) or `raw`. |
+| `bddPilot.feedback.autoShowOutput` | `off` | Auto-show Output when a run finishes: `off`, `onFailure`, or `always`. |
 | `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
 | `bddPilot.preRun.bindingGate` | `warn` | Pre-run binding check via BDD Guardian: `off`, `warn`, or `block`. |
 

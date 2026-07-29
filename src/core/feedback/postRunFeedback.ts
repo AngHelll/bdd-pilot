@@ -11,7 +11,12 @@ export type PostRunFeedbackRequest = Omit<
 
 export type PostRunToastMode = "off" | "failures" | "always";
 
-export type PostRunFeedbackAction = "showOutput" | "rerunFailed" | "copyForAi";
+export type PostRunFeedbackAction =
+  | "showOutput"
+  | "rerunFailed"
+  | "copyForAi"
+  | "jumpToFailure";
+
 
 export interface PostRunFeedbackInput {
   summary?: UnifiedSummary;
@@ -111,6 +116,9 @@ function buildActions(
   infraError: boolean,
 ): PostRunFeedbackAction[] {
   const actions: PostRunFeedbackAction[] = ["showOutput"];
+  if (hasFailed) {
+    actions.push("jumpToFailure");
+  }
   if (input.canRerunFailed && hasFailed) {
     actions.push("rerunFailed");
   }

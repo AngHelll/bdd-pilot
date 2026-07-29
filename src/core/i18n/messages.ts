@@ -209,6 +209,9 @@ const EN = {
   "action.copyForAi": "Copy for AI",
   "action.copyAnyway": "Copy anyway",
   "action.rerunFailed": "Re-run Failed",
+  "action.jumpToFailure": "Jump to failure",
+  "toast.noFailedScenarios": "No failed scenarios in the current tree results.",
+  "toast.noFailedScenariosFocus": "No failed scenarios to focus in the tree.",
 
   "bindingGate.skipped": "Binding gate skipped: {reason}",
   "bindingGate.skipReason.notInstalled":
@@ -570,6 +573,9 @@ const ES: Record<keyof typeof EN, string> = {
   "action.copyForAi": "Copiar para IA",
   "action.copyAnyway": "Copiar de todos modos",
   "action.rerunFailed": "Reejecutar fallidos",
+  "action.jumpToFailure": "Ir al fallo",
+  "toast.noFailedScenarios": "No hay escenarios fallidos en los resultados actuales del árbol.",
+  "toast.noFailedScenariosFocus": "No hay escenarios fallidos en los que centrar el árbol.",
 
   "bindingGate.skipped": "Compuerta de bindings omitida: {reason}",
   "bindingGate.skipReason.notInstalled":

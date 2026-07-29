@@ -64,6 +64,7 @@ describe("postRunFeedback", () => {
     assert.ok(!vm!.message.includes("step definition"));
     assert.ok(!vm!.message.includes("Review failure categories"));
     assert.ok(vm!.actions.includes("showOutput"));
+    assert.ok(vm!.actions.includes("jumpToFailure"));
     assert.ok(vm!.actions.includes("rerunFailed"));
     assert.strictEqual(vm!.severity, "warning");
   });
@@ -79,6 +80,7 @@ describe("postRunFeedback", () => {
     assert.match(vm!.message, /6 failed/);
     assert.match(vm!.message, /pending or missing step/i);
     assert.ok(vm!.actions.includes("rerunFailed"));
+    assert.ok(vm!.actions.includes("jumpToFailure"));
   });
 
   it("all pass with failures mode shows no toast", () => {

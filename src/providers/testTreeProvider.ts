@@ -181,6 +181,106 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     return this.allDomains;
   }
 
+  getOutcomeStore(): OutcomeStore {
+    return this.outcomeStore;
+  }
+
+  /**
+   * Required for TreeView.reveal with expand. Matches getChildren hierarchy
+   * (domain mode; tag-group scenarios use TagNode as parent).
+   */
+  getParent(element: TreeNode): TreeNode | undefined {
+    if (
+      element.kind === "pilotSummary" ||
+      element.kind === "emptyGuide" ||
+      element.kind === "domain" ||
+      element.kind === "tag"
+    ) {
+      return undefined;
+    }
+    if (element.kind === "feature") {
+      const group = this.domains.find((d) =>
+        d.features.some((f) => f.filePath === element.feature.filePath),
+      );
+      return group ? { kind: "domain", group } : undefined;
+    }
+    if (element.kind === "scenario") {
+      if (element.underTagGroup) {
+        const tag = this.tagGroups.find((g) =>
+          g.scenarios.some(
+            (ref) =>
+              ref.feature.filePath === element.feature.filePath &&
+              ref.scenario.line === element.scenario.line &&
+              ref.scenario.name === element.scenario.name,
+          ),
+        );
+        return tag ? { kind: "tag", group: tag } : undefined;
+      }
+      return { kind: "feature", feature: element.feature };
+    }
+    if (element.kind === "outlineRow") {
+      return {
+        kind: "scenario",
+        feature: element.feature,
+        scenario: element.scenario,
+      };
+    }
+    return undefined;
+  }
+
+  /** Resolve a leaf TreeNode for an outcome key (domain-grouped tree). */
+  findLeafNodeByOutcomeKey(outcomeKey: string): TreeNode | undefined {
+    for (const domain of this.allDomains) {
+      for (const feature of domain.features) {
+        for (const scenario of feature.scenarios) {
+          if (scenario.examples && scenario.examples.length > 0) {
+            for (const example of scenario.examples) {
+              if (outlineRowKey(feature, scenario, example.rowIndex) === outcomeKey) {
+                return { kind: "outlineRow", feature, scenario, example };
+              }
+            }
+            continue;
+          }
+          if (scenarioKey(feature, scenario) === outcomeKey) {
+            return { kind: "scenario", feature, scenario };
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
+  findDomainNode(name: string): DomainNode | undefined {
+    const group = this.allDomains.find((d) => d.name === name);
+    return group ? { kind: "domain", group } : undefined;
+  }
+
+  findFeatureNode(filePath: string): FeatureNode | undefined {
+    for (const domain of this.allDomains) {
+      const feature = domain.features.find((f) => f.filePath === filePath);
+      if (feature) {
+        return { kind: "feature", feature };
+      }
+    }
+    return undefined;
+  }
+
+  findScenarioOutlineNode(featurePath: string, scenarioOutcomeKey: string): ScenarioNode | undefined {
+    for (const domain of this.allDomains) {
+      for (const feature of domain.features) {
+        if (feature.filePath !== featurePath) {
+          continue;
+        }
+        for (const scenario of feature.scenarios) {
+          if (scenarioKey(feature, scenario) === scenarioOutcomeKey) {
+            return { kind: "scenario", feature, scenario };
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
   getEmptyKind(): TreeEmptyKind {
     const hasProject = this.projectDir() !== undefined;
     const totalFeatureCount = countFeaturesInDomains(this.allDomains);

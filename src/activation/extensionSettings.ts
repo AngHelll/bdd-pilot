@@ -16,6 +16,10 @@ import {
   DotnetVerbosity,
   isDotnetVerbosity,
 } from "../core/feedback/dotnetOutputFilter";
+import {
+  AutoShowOutputMode,
+  isAutoShowOutputMode,
+} from "../core/results/failureTreeNav";
 import { DEFAULT_FILTER_MAPPING, FilterMappingConfig } from "../core/runner/filterMapping";
 import { parseStageRunByStage } from "../core/runner/stageRunFlags";
 import { PilotLocale } from "../core/i18n";
@@ -148,4 +152,11 @@ export function readDotnetVerbosity(): DotnetVerbosity {
     .getConfiguration("bddPilot")
     .get<string>("feedback.dotnetVerbosity", "filtered");
   return isDotnetVerbosity(value) ? value : "filtered";
+}
+
+export function readAutoShowOutput(): AutoShowOutputMode {
+  const value = vscode.workspace
+    .getConfiguration("bddPilot")
+    .get<string>("feedback.autoShowOutput", "off");
+  return isAutoShowOutputMode(value) ? value : "off";
 }

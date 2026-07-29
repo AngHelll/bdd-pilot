@@ -486,6 +486,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       dashboard,
       runService,
       treeProvider,
+      treeView,
       tr,
       getStage: () => currentStage,
       setStage: (stage) => {

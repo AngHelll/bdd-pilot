@@ -20,11 +20,13 @@ import { ProjectContext } from "../providers/testController";
 import {
   readAiSettings,
   readAnalyzeOptions,
+  readAutoShowOutput,
   readDiagnosticsInOutput,
   readOutcomeRehydrateSettings,
   readPostRunToast,
   readSettings,
 } from "./extensionSettings";
+import { shouldAutoShowOutput } from "../core/results/failureTreeNav";
 
 export interface PostRunDeps {
   context: vscode.ExtensionContext;
@@ -63,6 +65,8 @@ export function createPostRunHandlers(deps: PostRunDeps) {
       switch (action) {
         case "showOutput":
           return deps.tr("action.showOutput");
+        case "jumpToFailure":
+          return deps.tr("action.jumpToFailure");
         case "rerunFailed":
           return deps.tr("action.rerunFailed");
         case "copyForAi":
@@ -78,6 +82,8 @@ export function createPostRunHandlers(deps: PostRunDeps) {
     void show(vm.message, ...labels).then((choice) => {
       if (choice === deps.tr("action.showOutput")) {
         deps.output.show(true);
+      } else if (choice === deps.tr("action.jumpToFailure")) {
+        void vscode.commands.executeCommand("bddPilot.jumpToFirstFailure");
       } else if (choice === deps.tr("action.rerunFailed")) {
         void vscode.commands.executeCommand("bddPilot.rerunFailed");
       } else if (choice === deps.tr("action.copyForAi")) {
@@ -86,12 +92,28 @@ export function createPostRunHandlers(deps: PostRunDeps) {
     });
   }
 
+  function maybeAutoShowOutput(request: PostRunFeedbackRequest): void {
+    if (request.debug) {
+      return;
+    }
+    if (
+      shouldAutoShowOutput(readAutoShowOutput(), {
+        exitCode: request.exitCode,
+        failed: request.summary?.failed ?? 0,
+        canceled: request.canceled,
+      })
+    ) {
+      deps.output.show(true);
+    }
+  }
+
   function notifyPostRunFeedback(request: PostRunFeedbackRequest): void {
     if (!request.canceled && !request.debug) {
       if (request.exitCode !== 0 || (request.summary?.failed ?? 0) > 0) {
         appendRunDiagnosticsToOutput(request.outputBuffer);
       }
     }
+    maybeAutoShowOutput(request);
     const vm = buildPostRunFeedback({
       ...request,
       locale: deps.localeService.getLocale(),

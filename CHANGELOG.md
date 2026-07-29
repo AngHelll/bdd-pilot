@@ -8,6 +8,13 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.27.0] — 2026-07-29
+
+### Added
+- **Jump to first failure** — command + post-run toast action reveals the first failed tree leaf and opens the `.feature` line
+- **Collapse to failures** — toolbar / overflow command collapses the BDD tree then expands only paths that contain failures
+- **`bddPilot.feedback.autoShowOutput`** — `off` (default) | `onFailure` | `always` shows the Output channel when a run finishes (tree and Test Explorer paths)
+
 ## [1.26.0] — 2026-07-29
 
 ### Added
