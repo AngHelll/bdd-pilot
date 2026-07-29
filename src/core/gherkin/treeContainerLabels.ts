@@ -50,15 +50,28 @@ export function buildOutlineParentDescription(
   locale: PilotLocale,
   tagBase = "",
 ): string {
-  if (mode === "compact") {
-    return rowCount === 1
+  const rowPart =
+    rowCount === 1
       ? t(locale, "tree.outlineRowCountOne")
       : t(locale, "tree.outlineRowCount", { count: rowCount });
+
+  if (mode === "compact") {
+    // Fail-first: show roll-up when any child failed; otherwise row count only.
+    if (rollup && rollup.failed > 0) {
+      const base = tagBase.length > 0 ? joinParts(rowPart, tagBase, locale) : rowPart;
+      return prependRollupLocalized(base, rollup, locale);
+    }
+    return rowPart;
   }
   if (rollup && rollup.withResults > 0) {
     return prependRollupLocalized(tagBase, rollup, locale);
   }
   return tagBase;
+}
+
+function joinParts(a: string, b: string, locale: PilotLocale): string {
+  const sep = t(locale, "rollup.separator");
+  return `${a}${sep}${b}`;
 }
 
 /** Tag display for leaf descriptions — hidden in compact. */

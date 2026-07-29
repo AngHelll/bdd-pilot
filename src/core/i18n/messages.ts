@@ -130,6 +130,7 @@ const EN = {
   "tree.summaryDiagnosticTooltip": "**{code}** — {title}\n\n{hint}",
   "tree.outlineRowCountOne": "1 row",
   "tree.outlineRowCount": "{count} rows",
+  "tree.leafPending": "not run",
 
   "codeLens.run": "$(play) Run",
   "codeLens.debug": "$(debug) Debug",
@@ -255,6 +256,11 @@ const EN = {
   "log.runNotStartedGate": "[bdd-pilot] Binding gate declined.",
   "log.runNotStartedProd":
     "[bdd-pilot] Production run blocked (enable bddPilot.security.allowProductionRuns).",
+  "log.sectionRun": "[bdd-pilot] ── Run ──",
+  "log.sectionResults": "[bdd-pilot] ── Results ──",
+  "log.sectionDiagnostics": "[bdd-pilot] ── Diagnostics ──",
+  "log.runContext": "[bdd-pilot] {stage} · {mode} · {scope} · {time}",
+  "log.runContextAll": "all",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnostics:",
   "diagnostic.output.summaryLine":
@@ -484,6 +490,7 @@ const ES: Record<keyof typeof EN, string> = {
   "tree.summaryDiagnosticTooltip": "**{code}** — {title}\n\n{hint}",
   "tree.outlineRowCountOne": "1 fila",
   "tree.outlineRowCount": "{count} filas",
+  "tree.leafPending": "sin ejecutar",
 
   "codeLens.run": "$(play) Ejecutar",
   "codeLens.debug": "$(debug) Depurar",
@@ -610,6 +617,11 @@ const ES: Record<keyof typeof EN, string> = {
   "log.runNotStartedGate": "[bdd-pilot] Compuerta de bindings rechazada.",
   "log.runNotStartedProd":
     "[bdd-pilot] Run en producción bloqueado (activa bddPilot.security.allowProductionRuns).",
+  "log.sectionRun": "[bdd-pilot] ── Ejecución ──",
+  "log.sectionResults": "[bdd-pilot] ── Resultados ──",
+  "log.sectionDiagnostics": "[bdd-pilot] ── Diagnósticos ──",
+  "log.runContext": "[bdd-pilot] {stage} · {mode} · {scope} · {time}",
+  "log.runContextAll": "todo",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnósticos:",
   "diagnostic.output.summaryLine":

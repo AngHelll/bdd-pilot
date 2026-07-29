@@ -1,6 +1,7 @@
 import { PilotLocale, t } from "../i18n";
 import { formatDuration } from "../results/durationFormat";
-import { appendSkipReasonToDescription, SkipReason } from "../results/skipReason";
+import { SkipReason } from "../results/skipReason";
+import { buildLeafStatusDescription } from "../results/treeLeafVisual";
 import { TestOutcome } from "../results/trxParser";
 import { outlineRowKey, scenarioKey } from "../runner/runScope";
 import { TagGroup } from "./groupByTag";
@@ -63,15 +64,19 @@ export function buildTestExplorerLeafDescription(
   locale: PilotLocale,
   contextLabel?: string,
   skipReason?: SkipReason,
+  showPendingHint = false,
 ): string | undefined {
   const outcomeLabel = outcome ? formatOutcomeLabel(outcome, locale) : undefined;
   const durationLabel =
     durationMs !== undefined ? formatDuration(durationMs, display.durationDisplay) : undefined;
-  let joined = joinDescriptionParts(outcomeLabel, durationLabel, contextLabel);
-  if (skipReason && (outcome === "skipped" || outcome === "unknown" || !outcome)) {
-    joined = appendSkipReasonToDescription(joined || undefined, skipReason, locale);
-  }
-  return joined.length > 0 ? joined : undefined;
+  const joined = joinDescriptionParts(outcomeLabel, durationLabel, contextLabel);
+  return buildLeafStatusDescription(
+    joined || undefined,
+    outcome,
+    skipReason,
+    locale,
+    showPendingHint,
+  );
 }
 
 export function buildTestExplorerOutlineRowDescription(
@@ -92,13 +97,16 @@ export function buildTestExplorerOutlineRowDescription(
     display.compactTagLimit,
     undefined,
   );
+  const skipReason = store.getSkipReason?.(key);
+  const showPendingHint = !outcome && !skipReason && featureHasMappedResults(store, feature);
   return buildTestExplorerLeafDescription(
     outcome,
     durationMs,
     display,
     locale,
     tagPart || undefined,
-    store.getSkipReason?.(key),
+    skipReason,
+    showPendingHint,
   );
 }
 
@@ -136,14 +144,27 @@ export function buildTestExplorerScenarioDescription(
   }
 
   const key = scenarioKey(feature, scenario);
+  const outcome = store.get(key);
+  const skipReason = store.getSkipReason?.(key);
+  const showPendingHint = !outcome && !skipReason && featureHasMappedResults(store, feature);
   return buildTestExplorerLeafDescription(
-    store.get(key),
+    outcome,
     store.getDuration(key),
     display,
     locale,
     featureHint,
-    store.getSkipReason?.(key),
+    skipReason,
+    showPendingHint,
   );
+}
+
+function featureHasMappedResults(store: OutcomeReader, feature: FeatureInfo): boolean {
+  for (const scenario of feature.scenarios) {
+    if (collectScenarioOutcomeValues(feature, scenario, store).some((o) => o !== undefined)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function buildTestExplorerFeatureDescription(

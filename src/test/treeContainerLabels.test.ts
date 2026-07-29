@@ -56,6 +56,12 @@ describe("treeContainerLabels", () => {
     );
   });
 
+  it("buildOutlineParentDescription compact fail-first when failed", () => {
+    const msg = buildOutlineParentDescription("compact", failedRollup, 2, "en");
+    assert.ok(msg.startsWith("2 failed"));
+    assert.ok(msg.includes("2 rows"));
+  });
+
   it("buildOutlineParentDescription detailed uses rollup", () => {
     const msg = buildOutlineParentDescription("detailed", failedRollup, 2, "en", "6 tags");
     assert.ok(msg.includes("2 failed"));

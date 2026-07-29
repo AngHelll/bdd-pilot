@@ -10,6 +10,7 @@ import {
   PostRunFeedbackRequest,
   PostRunFeedbackViewModel,
 } from "../core/feedback/postRunFeedback";
+import { formatOutputSectionHeader } from "../core/feedback/dotnetOutputFilter";
 import { MessageKey } from "../core/i18n";
 import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
 import { buildRerunFailedFilter } from "../providers/testController";
@@ -38,11 +39,18 @@ export function createPostRunHandlers(deps: PostRunDeps) {
   function appendRunDiagnosticsToOutput(text: string): void {
     const analyzeOptions = readAnalyzeOptions(deps.localeService.getLocale());
     const diagnostics = analyzeDotnetOutput(text, analyzeOptions);
-    for (const line of formatDiagnosticsOutputLines(
+    const lines = formatDiagnosticsOutputLines(
       diagnostics,
       readDiagnosticsInOutput(),
       analyzeOptions.locale ?? "en",
-    )) {
+    );
+    if (lines.length === 0) {
+      return;
+    }
+    deps.output.appendLine(
+      formatOutputSectionHeader(deps.localeService.getLocale(), "diagnostics"),
+    );
+    for (const line of lines) {
       deps.output.appendLine(line);
     }
   }

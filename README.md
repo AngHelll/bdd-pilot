@@ -221,6 +221,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.locale` | `auto` | UI language: `auto` (follow VS Code), `en`, or `es`. |
 | `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
 | `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. |
+| `bddPilot.feedback.dotnetVerbosity` | `filtered` | Live `dotnet test` stream in Output: `filtered` (hide discovery/build noise) or `raw`. |
 | `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
 | `bddPilot.preRun.bindingGate` | `warn` | Pre-run binding check via BDD Guardian: `off`, `warn`, or `block`. |
 

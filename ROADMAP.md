@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.25.0** · **Marketplace: v1.25.0** · **Next: backlog Tier 2/3** · **486 unit tests**
+> **Current release: v1.26.0** · **Marketplace: v1.26.0** · **Next: backlog Tier 2/3** · **498 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.25.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.26.0** |
 | 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.26.0** | Output clarity + Tree scan — Output sections/verbosity + fail-first/pending · spec `output-tree-ux-v1.26.md` |
+| **1.25.0** | Release & dogfood loop — `release:prep` + `docs:sync-check` · spec `release-dogfood-loop-v1.25.md` |
 | **1.21.0** | AI snapshot from TRX — opt-in Copy for AI post-reload · spec `ai-snapshot-from-trx-v1.21.0.md` |
 | **1.20.0** | Mapping UX — unmapped list + comando + summary chip · spec `mapping-ux-v1.20.0.md` |
 | **1.19.0** | Security audit + strict prod — sanitizer patterns + `allowProductionRuns` · spec `security-audit-strict-prod-v1.19.0.md` |
@@ -198,6 +200,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.26.0 — Output clarity + Tree scan ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Output** | Section headers Run/Results/Diagnostics; run context line; `feedback.dotnetVerbosity` filtered/raw |
+| **Tree** | Compact outline fail-first; pending `not run` + distinct `not_in_trx` icon |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Published v1.26.0 |
+| **Tests** | 498 unit tests |
 
 ### v1.25.0 — Release & dogfood loop ✅ shipped
 

@@ -8,6 +8,16 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.26.0] — 2026-07-29
+
+### Added
+- **Output clarity** — section headers (`Run` / `Results` / `Diagnostics`), run context line (stage · mode · scope · time), and `bddPilot.feedback.dotnetVerbosity` (`filtered` default | `raw`) to hide common `dotnet test` discovery/build noise without dropping failures or stacks
+- **Tree scan** — compact outline parents show fail-first roll-up when children failed; pending leaves show `not run` after a session has results; `not_in_trx` uses a distinct question icon vs runner skip
+
+### Changed
+- Output channel append path filters the live stream for display only — analyzer / Copy for AI / Run API still see the full sanitized buffer (no Jarvis API changes)
+- **`filtered` verbosity** — tighter drop catalog from dogfood: `Determining projects…`, restore up-to-date, Reqnroll `Processing`/`Identity=` inventories, successful `Project -> …dll` redirects; `Passed!` / `Failed!` / `Results File:` still kept
+
 ## [1.25.0] — 2026-07-20
 
 ### Added

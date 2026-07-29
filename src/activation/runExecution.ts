@@ -3,6 +3,14 @@ import * as vscode from "vscode";
 import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
 import { loadStageEnv } from "../core/config/envFile";
 import { ParallelismMode, Stage } from "../core/config/types";
+import { formatRunTargetScopeLabels } from "../core/diagnostics/aiFailureContext";
+import {
+  createDotnetOutputFilterState,
+  flushDotnetOutputFilter,
+  formatOutputSectionHeader,
+  formatRunContextLine,
+  processDotnetOutputChunk,
+} from "../core/feedback/dotnetOutputFilter";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { resolveRunKind, RunKind } from "../core/results/runHistory";
 import { RunTarget } from "../core/runner/filterBuilder";
@@ -20,6 +28,7 @@ import { TestTreeProvider } from "../providers/testTreeProvider";
 import {
   readAnalyzeOptions,
   readBindingGate,
+  readDotnetVerbosity,
   readSettings,
 } from "./extensionSettings";
 import { resolveRunTargets } from "./runTargets";
@@ -225,6 +234,39 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             }
           }
 
+          const runLocale = deps.localeService.getLocale();
+          const filterState = createDotnetOutputFilterState();
+          const verbosity = readDotnetVerbosity();
+          const scopeLabel = opts?.rawFilter
+            ? opts.rawFilter
+            : formatRunTargetScopeLabels(runTargets.length > 0 ? runTargets : [{ kind: "all" }]).join(
+                " | ",
+              );
+          deps.output.appendLine(formatOutputSectionHeader(runLocale, "run"));
+          deps.output.appendLine(
+            formatRunContextLine(runLocale, {
+              stage: currentStage,
+              mode: currentMode,
+              scopeLabel,
+            }),
+          );
+
+          const appendFiltered = (chunk: string): void => {
+            const filtered = processDotnetOutputChunk(chunk, filterState, verbosity);
+            if (filtered.length > 0) {
+              deps.output.append(filtered);
+            }
+          };
+
+          const beginResultsSection = (): void => {
+            const flushed = flushDotnetOutputFilter(filterState);
+            if (flushed.length > 0) {
+              deps.output.append(flushed);
+            }
+            deps.output.appendLine("");
+            deps.output.appendLine(formatOutputSectionHeader(runLocale, "results"));
+          };
+
           const result = await deps.runService.runExecution({
             targets: runTargets,
             rawFilter: opts?.rawFilter,
@@ -235,19 +277,19 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             testTarget: project.testTarget,
             debug: opts?.debug,
             runKind: sessionRunKind,
-            locale: deps.localeService.getLocale(),
+            locale: runLocale,
             signal: controller.signal,
             totalExpected,
             bindingGate: readBindingGate(),
             domains: deps.treeProvider.getDomains(),
-            analyzeOptions: readAnalyzeOptions(deps.localeService.getLocale()),
+            analyzeOptions: readAnalyzeOptions(runLocale),
             onProgress,
-            onOutput: (chunk) => deps.output.append(chunk),
-            onStart: (cmd) => deps.output.appendLine(`[bdd-pilot] ${cmd}\n`),
+            onOutput: appendFiltered,
           });
 
           if (result.canceled) {
-            deps.output.appendLine("\n[bdd-pilot] Run canceled.");
+            beginResultsSection();
+            deps.output.appendLine("[bdd-pilot] Run canceled.");
             if (result.summary) {
               deps.applyRunSummaryToTree(result.summary, runTargets, { canceled: true });
               deps.output.appendLine(
@@ -272,7 +314,8 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             return;
           }
 
-          deps.output.appendLine(`\n[bdd-pilot] Process exited with code ${result.exitCode}.`);
+          beginResultsSection();
+          deps.output.appendLine(`[bdd-pilot] Process exited with code ${result.exitCode}.`);
           if (result.summary) {
             deps.applyRunSummaryToTree(result.summary, runTargets, { rawFilter: !!opts?.rawFilter });
             deps.output.appendLine(

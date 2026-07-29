@@ -13,6 +13,12 @@ import {
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import {
+  createDotnetOutputFilterState,
+  flushDotnetOutputFilter,
+  formatOutputSectionHeader,
+  processDotnetOutputChunk,
+} from "../core/feedback/dotnetOutputFilter";
+import {
   findOutlineExampleMatchInFeature,
   matchesScenarioInFeature,
 } from "../core/results/scenarioMatch";
@@ -37,6 +43,7 @@ import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
 import { readTreeDisplaySettings } from "./treeSettings";
+import { readDotnetVerbosity } from "../activation/extensionSettings";
 import type { TreeGroupBy } from "../core/gherkin/treeDisplaySettings";
 import {
   TestExplorerItemData,
@@ -340,6 +347,19 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     });
 
     try {
+      const filterState = createDotnetOutputFilterState();
+      const verbosity = readDotnetVerbosity();
+      const locale = deps.getLocale();
+      deps.output.appendLine(formatOutputSectionHeader(locale, "run"));
+
+      const appendFiltered = (chunk: string): void => {
+        const filtered = processDotnetOutputChunk(chunk, filterState, verbosity);
+        if (filtered.length > 0) {
+          deps.output.append(filtered);
+        }
+        run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
+      };
+
       const result = await deps.runService.runExecution({
         targets,
         stage: deps.getStage(),
@@ -372,11 +392,17 @@ export function createManagedController(deps: ControllerDeps): ManagedController
             readTreeDisplaySettings(),
           );
         },
-        onOutput: (chunk) => {
-          deps.output.append(chunk);
-          run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
-        },
+        onOutput: appendFiltered,
       });
+
+      const flushed = flushDotnetOutputFilter(filterState);
+      if (flushed.length > 0) {
+        deps.output.append(flushed);
+      }
+      if (!debug) {
+        deps.output.appendLine("");
+        deps.output.appendLine(formatOutputSectionHeader(locale, "results"));
+      }
 
       if (result.canceled) {
         applyRunResults({

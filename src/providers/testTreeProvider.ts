@@ -27,11 +27,15 @@ import {
   truncateErrorSnippet,
 } from "../core/results/outcomeFeedback";
 import {
-  appendSkipReasonToDescription,
   skipReasonLabelForTreeOutcome,
   skipReasonMessage,
   SkipReason,
 } from "../core/results/skipReason";
+import {
+  buildLeafStatusDescription,
+  resolveTreeLeafIconKind,
+  TreeLeafIconKind,
+} from "../core/results/treeLeafVisual";
 import {
   applyScopedTrxResults,
   applyTrxMatchesToStore,
@@ -630,10 +634,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         featureHint,
       );
       base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
-      if (skipReason) {
-        base = appendSkipReasonToDescription(base, skipReason, locale);
-      }
-      item.description = base;
+      const showPendingHint =
+        !this.outcomeStore.isEmpty() && !outcome && !skipReason;
+      item.description =
+        buildLeafStatusDescription(base, outcome, skipReason, locale, showPendingHint) ?? "";
     }
 
     const rollupText = rollup
@@ -667,7 +671,12 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
 
-    item.iconPath = treeOutcomeIcon(outcome, skipReason, node.scenario.isOutline && !hasExamples);
+    item.iconPath = treeOutcomeIcon(
+      outcome,
+      skipReason,
+      node.scenario.isOutline && !hasExamples,
+      !this.outcomeStore.isEmpty(),
+    );
     item.contextValue = "bddRunnableScenario";
     item.command = {
       command: "vscode.open",
@@ -698,10 +707,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       formatDurationLabel(durationMs, display.durationDisplay),
     );
     base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
-    if (skipReason) {
-      base = appendSkipReasonToDescription(base, skipReason, locale);
-    }
-    item.description = base;
+    const showPendingHint = !this.outcomeStore.isEmpty() && !outcome && !skipReason;
+    item.description =
+      buildLeafStatusDescription(base, outcome, skipReason, locale, showPendingHint) ?? "";
 
     const tooltip = new vscode.MarkdownString(
       buildScenarioTooltipMarkdown(
@@ -729,7 +737,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
-    item.iconPath = treeOutcomeIcon(outcome, skipReason, false);
+    item.iconPath = treeOutcomeIcon(outcome, skipReason, false, !this.outcomeStore.isEmpty());
     item.contextValue = "bddRunnableScenario";
     item.command = {
       command: "vscode.open",
@@ -814,23 +822,35 @@ function treeOutcomeIcon(
   outcome: TestOutcome | undefined,
   skipReason: SkipReason | undefined,
   isOutline: boolean,
+  sessionHasResults: boolean,
 ): vscode.ThemeIcon {
-  if (skipReason === "not_in_trx" || skipReason === "canceled") {
-    return new vscode.ThemeIcon("circle-slash", new vscode.ThemeColor("testing.iconSkipped"));
+  const kind = resolveTreeLeafIconKind(outcome, skipReason, isOutline);
+  // Keep classic beaker/list-tree until a run has produced outcomes in this session.
+  if (kind === "pending" && !sessionHasResults) {
+    return new vscode.ThemeIcon(isOutline ? "list-tree" : "beaker");
   }
-  return outcomeIcon(outcome, isOutline);
+  if (kind === "outline" && !sessionHasResults) {
+    return new vscode.ThemeIcon("list-tree");
+  }
+  return themeIconForLeafKind(kind);
 }
 
-function outcomeIcon(outcome: TestOutcome | undefined, isOutline: boolean): vscode.ThemeIcon {
-  switch (outcome) {
+function themeIconForLeafKind(kind: TreeLeafIconKind): vscode.ThemeIcon {
+  switch (kind) {
     case "passed":
       return new vscode.ThemeIcon("pass", new vscode.ThemeColor("testing.iconPassed"));
     case "failed":
       return new vscode.ThemeIcon("error", new vscode.ThemeColor("testing.iconFailed"));
     case "skipped":
+    case "canceled":
       return new vscode.ThemeIcon("circle-slash", new vscode.ThemeColor("testing.iconSkipped"));
+    case "not_in_trx":
+      return new vscode.ThemeIcon("question", new vscode.ThemeColor("testing.iconSkipped"));
+    case "outline":
+      return new vscode.ThemeIcon("list-tree");
+    case "pending":
     default:
-      return new vscode.ThemeIcon(isOutline ? "list-tree" : "beaker");
+      return new vscode.ThemeIcon("circle-outline");
   }
 }
 
