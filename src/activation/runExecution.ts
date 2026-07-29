@@ -79,16 +79,37 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       return;
     }
 
+    // Claim busy lock before preflight / project select so multi-click Run cannot re-enter.
+    const controller = new AbortController();
+    let runLockHeld = false;
+    const releaseRunLock = () => {
+      if (!runLockHeld) {
+        return;
+      }
+      runLockHeld = false;
+      deps.setActiveRun(undefined);
+      deps.clearActiveLiveProgress();
+      deps.refreshUi();
+    };
+    if (!opts?.debug) {
+      runLockHeld = true;
+      deps.setActiveRun(controller);
+      deps.clearActiveLiveProgress();
+      deps.refreshUi();
+    }
+
     const settings = readSettings();
     const currentStage = deps.getStage();
     const currentMode = deps.getMode();
     if (!deps.getProjectContext()) {
       if (!(await deps.selectProject())) {
+        releaseRunLock();
         return;
       }
     }
     const project = deps.getProjectContext();
     if (!project) {
+      releaseRunLock();
       void vscode.window.showErrorMessage(deps.tr("toast.projectNotFound"));
       return;
     }
@@ -126,18 +147,12 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       },
     });
     if (!preflight.proceed) {
+      releaseRunLock();
       deps.output.show(true);
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
         deps.output.appendLine(line);
       }
       return;
-    }
-
-    const controller = new AbortController();
-    if (!opts?.debug) {
-      deps.setActiveRun(controller);
-      deps.clearActiveLiveProgress();
-      deps.refreshUi();
     }
 
     const resolveRunCancelProgress = (
@@ -341,11 +356,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             fallbackMessage: `BDD Pilot: ${String(err)}`,
           });
         } finally {
-          if (!opts?.debug) {
-            deps.setActiveRun(undefined);
-            deps.clearActiveLiveProgress();
-            deps.refreshUi();
-          }
+          releaseRunLock();
         }
       },
     );

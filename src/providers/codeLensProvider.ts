@@ -3,6 +3,7 @@ import { PilotLocale, t } from "../core/i18n";
 import { FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
 import { parseFeature } from "../core/gherkin/parser";
 import { RunTarget } from "../core/runner/filterBuilder";
+import { codeLensRunsEnabled } from "./codeLensTargets";
 
 export type CodeLensRunHandler = (target: RunTarget, debug: boolean) => void | Promise<void>;
 
@@ -13,10 +14,16 @@ export interface CodeLensRegistration {
   refresh: () => void;
 }
 
+export interface FeatureCodeLensOptions {
+  getLocale: () => PilotLocale;
+  /** When true, Run/Debug lenses are omitted (busy lock). */
+  isRunActive?: () => boolean;
+}
+
 /**
  * Shows Run / Debug CodeLens on Feature, Scenario, and Scenario Outline example rows.
  */
-export function registerFeatureCodeLens(getLocale: () => PilotLocale): CodeLensRegistration {
+export function registerFeatureCodeLens(options: FeatureCodeLensOptions): CodeLensRegistration {
   const changeEmitter = new vscode.EventEmitter<void>();
 
   const provider: vscode.CodeLensProvider = {
@@ -25,8 +32,11 @@ export function registerFeatureCodeLens(getLocale: () => PilotLocale): CodeLensR
       if (!document.fileName.toLowerCase().endsWith(".feature")) {
         return [];
       }
+      if (!codeLensRunsEnabled(options.isRunActive?.() ?? false)) {
+        return [];
+      }
 
-      const locale = getLocale();
+      const locale = options.getLocale();
       const text = document.getText();
       const feature = parseFeature(document.uri.fsPath, text);
       const lenses: vscode.CodeLens[] = [];

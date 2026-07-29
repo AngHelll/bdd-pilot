@@ -122,6 +122,7 @@ const EN = {
   "tree.summaryRehydrate": "Restored (not a new run)",
   "tree.pilotSummaryHint": "Click for run summary and history",
   "tree.pilotSummaryEditFilter": "Click to edit search filter",
+  "tree.pilotSummaryCancelHint": "Click to cancel the current run",
   "tree.summaryFilterChip": "Filter: {query}",
   "tree.summaryFilterTooltip":
     "Active filter: **{query}**\n\nPilot Search filters which scenarios you can run. **Ctrl+F** only highlights in the list.\n\nUse **Clear Search Filter** or empty the search box to show all tests.",
@@ -150,8 +151,10 @@ const EN = {
   "toast.noProfilesManage": "No saved profiles.",
   "toast.treeGroupByTag": "BDD Pilot tree: group by @tag.",
   "toast.treeGroupByDomain": "BDD Pilot tree: group by domain.",
-  "toast.runInProgress": "A test run is already in progress.",
-  "toast.debugWhileRunning": "Stop the current run before starting a debug session.",
+  "toast.runInProgress":
+    "A test run is already in progress. Cancel from the tree toolbar or summary row.",
+  "toast.debugWhileRunning":
+    "Stop the current run before starting a debug session. Cancel from the tree toolbar or summary row.",
   "toast.debugAlreadyActive": "A BDD Pilot debug session is already active.",
   "toast.debugNoTrx":
     "Debug session ended. No test results file was produced — check the terminal.",
@@ -485,6 +488,7 @@ const ES: Record<keyof typeof EN, string> = {
   "tree.summaryRehydrate": "Restaurado (no es una nueva ejecución)",
   "tree.pilotSummaryHint": "Clic para ver resumen e historial",
   "tree.pilotSummaryEditFilter": "Clic para editar el filtro de búsqueda",
+  "tree.pilotSummaryCancelHint": "Clic para cancelar la ejecución actual",
   "tree.summaryFilterChip": "Filtro: {query}",
   "tree.summaryFilterTooltip":
     "Filtro activo: **{query}**\n\nPilot Search filtra qué escenarios puedes ejecutar. **Ctrl+F** solo resalta en la lista.\n\nUsa **Borrar filtro de búsqueda** o deja vacío el cuadro para ver todos los tests.",
@@ -513,8 +517,10 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.noProfilesManage": "No hay perfiles guardados.",
   "toast.treeGroupByTag": "Árbol BDD Pilot: agrupado por @tag.",
   "toast.treeGroupByDomain": "Árbol BDD Pilot: agrupado por dominio.",
-  "toast.runInProgress": "Ya hay una ejecución de tests en curso.",
-  "toast.debugWhileRunning": "Detén la ejecución actual antes de depurar.",
+  "toast.runInProgress":
+    "Ya hay una ejecución de tests en curso. Cancela desde la barra del árbol o la fila de resumen.",
+  "toast.debugWhileRunning":
+    "Detén la ejecución actual antes de depurar. Cancela desde la barra del árbol o la fila de resumen.",
   "toast.debugAlreadyActive": "Ya hay una sesión de depuración BDD Pilot activa.",
   "toast.debugNoTrx":
     "Sesión de depuración finalizada. No se generó archivo de resultados — revisa la terminal.",

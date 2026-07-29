@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.27.0** · **Marketplace: v1.27.0** · **Next: backlog Tier 2/3** · **506 unit tests**
+> **Current release: v1.28.0** · **Marketplace: v1.28.0** · **Next: backlog Tier 2/3** · **509 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.27.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.28.0** |
 | 🎯 Next | backlog Tier 2/3 |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.28.0** | Run control — busy lock UX (disable Run while running, Cancel first, summary cancel) · spec `run-control-v1.28.md` |
 | **1.27.0** | Output UX actions — jump-to-failure, collapse-to-failures, autoShowOutput · spec `output-ux-actions-v1.27.md` |
 | **1.26.0** | Output clarity + Tree scan — Output sections/verbosity + fail-first/pending · spec `output-tree-ux-v1.26.md` |
 | **1.25.0** | Release & dogfood loop — `release:prep` + `docs:sync-check` · spec `release-dogfood-loop-v1.25.md` |
@@ -201,6 +202,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.28.0 — Run control (busy lock UX) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **P1-A** | `when: !bddPilot.running` for Run/Debug inline + Run All/Filtered; CodeLens omit; enablement on launch commands; lock claimed before preflight |
+| **P1-B** | Cancel at `navigation@0`; summary row → `bddPilot.cancel` while running |
+| **P1-C** | Toasts with cancel hint (toolbar / summary) |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Published v1.28.0 |
+| **Tests** | 509 unit tests |
 
 ### v1.27.0 — Output UX actions ✅ shipped
 

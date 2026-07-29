@@ -99,6 +99,40 @@ export function resolvePilotSummaryIcon(
   return "history";
 }
 
+export const PILOT_SUMMARY_CANCEL_COMMAND = "bddPilot.cancel";
+
+/** Command + tooltip title for the summary row (running → cancel). */
+export function resolvePilotSummaryCommand(
+  model: PilotSummaryViewModel,
+  locale: PilotLocale,
+): { command: string; title: string } {
+  if (model.running) {
+    return {
+      command: PILOT_SUMMARY_CANCEL_COMMAND,
+      title: t(locale, "tree.pilotSummaryCancelHint"),
+    };
+  }
+  if (model.searchQuery) {
+    return {
+      command: "bddPilot.searchTests",
+      title: t(locale, "tree.pilotSummaryEditFilter"),
+    };
+  }
+  const diagnostic = resolveSummaryDiagnostic(model);
+  const unmappedActive =
+    !diagnostic && !model.storeFailureSnippet && (model.unmappedCount ?? 0) > 0;
+  if (unmappedActive) {
+    return {
+      command: PILOT_SUMMARY_UNMAPPED_COMMAND,
+      title: t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount ?? 0 }),
+    };
+  }
+  return {
+    command: PILOT_SUMMARY_DASHBOARD_COMMAND,
+    title: t(locale, "tree.pilotSummaryHint"),
+  };
+}
+
 function emptyStateSummaryLabel(kind: TreeEmptyKind, locale: PilotLocale): string {
   switch (kind) {
     case "no_project":

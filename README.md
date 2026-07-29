@@ -82,7 +82,7 @@ toast with **Copy for AI**:
   (`N unmapped — Show Unmapped`, command **BDD Pilot: Show Unmapped Scenarios**). Click opens
   dashboard (or the unmapped QuickPick when that chip is shown).
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
-- **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); **Cancel** only while a run is active.
+- **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); while running, **Cancel** replaces Run at the front of the toolbar and the summary row click cancels.
 - **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
   or `compact` (less duplicate roll-ups; outcomes emphasized on leaves).
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
@@ -136,7 +136,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 |------|-------|---------|
 | Activity bar | `pilot.svg` | BDD Pilot entry; badge `1` during run/debug |
 | Status bar | `$(beaker) Pilot` | Execution hub (STAGE, mode, project) |
-| Toolbar | `run-all`, `search` / `search-fuzzy`, `stop`, `graph`, `refresh`, `folder` / `tag`, `ellipsis` | Run · Search · Cancel (running) · Dashboard · Refresh · GroupBy · More |
+| Toolbar | `stop` (running), `run-all`, `search` / `search-fuzzy`, `graph`, `refresh`, `folder` / `tag`, `ellipsis` | Cancel (running, first) · Run · Search · Dashboard · Refresh · GroupBy · More |
 | Summary row | `history`, `loading~spin`, `debug-alt`, `warning`, `info` | Idle · running · debugging · error · warning |
 | Tree outcomes | `pass`, `error`, `circle-slash`, `beaker`, `list-tree` | Passed / failed / skipped / pending scenario / pending outline |
 | Containers | `folder`, `file-code`, `tag` + tint `testing.icon*` | Domain / feature / tag group roll-up |

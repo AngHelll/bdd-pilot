@@ -1,8 +1,13 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
-import { buildCodeLensTargets } from "../providers/codeLensTargets";
+import { buildCodeLensTargets, codeLensRunsEnabled } from "../providers/codeLensTargets";
 
 describe("codeLensTargets", () => {
+  it("codeLensRunsEnabled is false while busy", () => {
+    assert.ok(codeLensRunsEnabled(false));
+    assert.ok(!codeLensRunsEnabled(true));
+  });
+
   it("creates outline row targets for Examples data lines", () => {
     const content = [
       "Feature: Trading Buying Power",

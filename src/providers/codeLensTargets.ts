@@ -7,6 +7,11 @@ export interface CodeLensTargetEntry {
   target: RunTarget;
 }
 
+/** Pure: hide CodeLens Run/Debug while a Pilot run/debug is active. */
+export function codeLensRunsEnabled(isRunActive: boolean): boolean {
+  return !isRunActive;
+}
+
 /** Pure helper for unit tests and CodeLens provider. */
 export function buildCodeLensTargets(filePath: string, content: string): CodeLensTargetEntry[] {
   const feature = parseFeature(filePath, content);

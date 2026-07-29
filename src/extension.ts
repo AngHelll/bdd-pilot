@@ -192,6 +192,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   const FEATURE_ENRICH_DEBOUNCE_MS = 2000;
   let enrichTheoryTimer: ReturnType<typeof setTimeout> | undefined;
+  let onExecutionFeedbackChanged = (): void => {};
 
   const cancelScheduledEnrich = () => {
     if (enrichTheoryTimer !== undefined) {
@@ -288,6 +289,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     if (lastExecutionFeedbackKey !== feedbackKey) {
       lastExecutionFeedbackKey = feedbackKey;
       refreshPilotSurfaces();
+      onExecutionFeedbackChanged();
     }
   };
 
@@ -456,7 +458,11 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     void dashboardCommands.openFlakyScenario(target);
   });
 
-  const codeLens = registerFeatureCodeLens(() => localeService.getLocale());
+  const codeLens = registerFeatureCodeLens({
+    getLocale: () => localeService.getLocale(),
+    isRunActive: () => !!activeRun || runService.isDebugActive(),
+  });
+  onExecutionFeedbackChanged = () => codeLens.refresh();
 
   localeService.onDidChangeLocale(() => {
     refreshUi();

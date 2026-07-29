@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.28.0] — 2026-07-29
+
+### Changed
+- **Run control (busy lock UX)** — while a run/debug is active: inline Run/Debug and Run All/Filtered hide; Cancel moves to the front of the tree toolbar; summary row click cancels; CodeLens Run/Debug omit; busy lock claimed before preflight so multi-click cannot start a second process; toasts mention how to cancel
+
 ## [1.27.0] — 2026-07-29
 
 ### Added

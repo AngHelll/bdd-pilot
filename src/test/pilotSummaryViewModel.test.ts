@@ -8,11 +8,15 @@ import {
   formatStoreFailureChip,
   formatSummaryDiagnosticChip,
   formatSummaryDiagnosticTooltip,
+  resolvePilotSummaryCommand,
   resolvePilotSummaryIcon,
   resolveSummaryDiagnostic,
+  PILOT_SUMMARY_CANCEL_COMMAND,
+  PILOT_SUMMARY_DASHBOARD_COMMAND,
 } from "../core/results/pilotSummaryViewModel";
 import { LiveProgressParser } from "../core/runner/liveProgress";
 import { Diagnostic } from "../core/diagnostics/analyzer";
+import { t } from "../core/i18n";
 
 describe("pilotSummaryViewModel", () => {
   it("buildPilotSummaryViewModel returns empty snapshot when no data", () => {
@@ -189,6 +193,37 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(resolvePilotSummaryIcon(false, false, warnDiag), "info");
     assert.strictEqual(resolvePilotSummaryIcon(false, false, undefined, true), "warning");
     assert.strictEqual(resolvePilotSummaryIcon(true, false, errorDiag), "loading~spin");
+  });
+
+  it("resolvePilotSummaryCommand uses cancel while running", () => {
+    const running = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      searchQuery: "ignored-while-running",
+    });
+    const cancelCmd = resolvePilotSummaryCommand(running, "en");
+    assert.strictEqual(cancelCmd.command, PILOT_SUMMARY_CANCEL_COMMAND);
+    assert.ok(cancelCmd.title.toLowerCase().includes("cancel"));
+
+    const idle = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+    });
+    assert.strictEqual(resolvePilotSummaryCommand(idle, "en").command, PILOT_SUMMARY_DASHBOARD_COMMAND);
+  });
+
+  it("run-in-progress toast mentions cancel affordance (en/es)", () => {
+    const en = t("en", "toast.runInProgress");
+    const es = t("es", "toast.runInProgress");
+    assert.ok(/cancel/i.test(en));
+    assert.ok(/toolbar|summary/i.test(en));
+    assert.ok(/cancela/i.test(es));
   });
 
   it("resolveSummaryDiagnostic hides diagnostic while running", () => {

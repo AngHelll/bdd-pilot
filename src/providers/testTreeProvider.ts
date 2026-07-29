@@ -82,9 +82,8 @@ import {
   formatPilotSummaryFilterTooltip,
   formatPilotSummaryLabel,
   formatSummaryDiagnosticTooltip,
-  PILOT_SUMMARY_DASHBOARD_COMMAND,
-  PILOT_SUMMARY_UNMAPPED_COMMAND,
   PilotSummaryViewModel,
+  resolvePilotSummaryCommand,
   resolvePilotSummaryIcon,
   resolveSummaryDiagnostic,
 } from "../core/results/pilotSummaryViewModel";
@@ -530,17 +529,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const filterActive = !!model.searchQuery;
     const diagnostic = resolveSummaryDiagnostic(model);
     const storeFailure = model.storeFailureSnippet;
-    const unmappedActive =
-      !filterActive &&
-      !model.running &&
-      !diagnostic &&
-      !storeFailure &&
-      (model.unmappedCount ?? 0) > 0;
-    const hint = filterActive
-      ? t(locale, "tree.pilotSummaryEditFilter")
-      : unmappedActive
-        ? t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount ?? 0 })
-        : t(locale, "tree.pilotSummaryHint");
+    const summaryCommand = resolvePilotSummaryCommand(model, locale);
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
     item.iconPath = new vscode.ThemeIcon(
       resolvePilotSummaryIcon(
@@ -551,19 +540,17 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       ),
     );
     item.command = {
-      command: filterActive
-        ? "bddPilot.searchTests"
-        : unmappedActive
-          ? PILOT_SUMMARY_UNMAPPED_COMMAND
-          : PILOT_SUMMARY_DASHBOARD_COMMAND,
-      title: hint,
+      command: summaryCommand.command,
+      title: summaryCommand.title,
     };
     const description = formatPilotSummaryDescription(model, locale);
     if (description) {
       item.description = description;
     }
     const tooltipParts: string[] = [];
-    if (filterActive && model.searchQuery) {
+    if (model.running) {
+      tooltipParts.push(summaryCommand.title);
+    } else if (filterActive && model.searchQuery) {
       tooltipParts.push(formatPilotSummaryFilterTooltip(model.searchQuery, locale));
     }
     if (diagnostic) {
@@ -576,11 +563,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       tooltip.isTrusted = false;
       item.tooltip = tooltip;
     } else {
-      const tooltip = new vscode.MarkdownString(`*${hint}*`);
+      const tooltip = new vscode.MarkdownString(`*${summaryCommand.title}*`);
       tooltip.isTrusted = false;
       item.tooltip = tooltip;
     }
-    item.contextValue = "bddPilotSummary";
+    item.contextValue = model.running ? "bddPilotSummaryRunning" : "bddPilotSummary";
     return item;
   }
 
