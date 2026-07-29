@@ -70,6 +70,20 @@ toast with **Copy for AI**:
 
 ## Features
 
+Pilot is a **Gherkin cockpit alongside Test Explorer**, not a TE replacement — domain/@tag tree, STAGE hub, TRX↔scenario mapping, and run history that TE does not prioritize.
+
+### Pilot vs Test Explorer
+
+| Pilot | Test Explorer / C# Dev Kit |
+|-------|----------------------------|
+| Gherkin tree by **domain** or **@tag** | Assembly / class / method discovery |
+| **STAGE** hub + stage env files | Generic run settings |
+| TRX ↔ **scenario** mapping (`not_in_trx`, unmapped chip) | Test-node results |
+| Dashboard **run story** (history, flaky, diagnostics) | Results list / Test Results panel |
+| Busy **Cancel** on Pilot toolbar + summary | Native Testing cancel |
+
+Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from Pilot.
+
 ### Discovery & run
 - **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`); descriptions mirror BDD tree settings (`tree.durationDisplay`, `tree.tagDisplay`) and locale for outcomes/roll-ups.
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
@@ -125,7 +139,7 @@ toast with **Copy for AI**:
 
 ### Iconography
 
-BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand assets** that share the **same silhouette** (radar + pilot):
+BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand assets** that share the **same silhouette** (radar + pilot). Pilot is a **Gherkin cockpit alongside Test Explorer**, not a TE replacement.
 
 | Asset | Role |
 |-------|------|
@@ -138,8 +152,19 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | Status bar | `$(beaker) Pilot` | Execution hub (STAGE, mode, project) |
 | Toolbar | `stop` (running), `run-all`, `search` / `search-fuzzy`, `graph`, `refresh`, `folder` / `tag`, `ellipsis` | Cancel (running, first) · Run · Search · Dashboard · Refresh · GroupBy · More |
 | Summary row | `history`, `loading~spin`, `debug-alt`, `warning`, `info` | Idle · running · debugging · error · warning |
-| Tree outcomes | `pass`, `error`, `circle-slash`, `beaker`, `list-tree` | Passed / failed / skipped / pending scenario / pending outline |
+| Tree outcomes | `pass`, `error`, `circle-slash`, `beaker`, `list-tree`, `question` | Passed / failed / skipped / pending / outline / `not_in_trx` |
 | Containers | `folder`, `file-code`, `tag` + tint `testing.icon*` | Domain / feature / tag group roll-up |
+
+#### Cockpit signals (why this is not TE)
+
+| Signal | Meaning | Why TE does not surface it the same way |
+|--------|---------|----------------------------------------|
+| **STAGE** (hub + summary chip) | Which env stage the next Gherkin run uses | TE has no Pilot STAGE model / `.env.<stage>` merge |
+| **`not_in_trx`** | Scenario in scope but missing from TRX | TE shows missing tests differently; Pilot maps Gherkin leaves |
+| **Unmapped chip** | Scoped run left scenarios without TRX match | Jump to `.feature` via Pilot mapping report |
+| **Fail-first outline** | Compact parent shows failures first | TE roll-ups are test-hierarchy, not Gherkin outline |
+| **Cancel busy** | Toolbar Cancel + summary click while running | TE cancel is native Testing UI, not Pilot tree chrome |
+| **Restored / rehydrate** | Outcomes from TestResults, not a new run | TE reload does not narrate Pilot rehydrate provenance |
 
 **ForgeOne family:** Pilot = execution · [BDD Guardian](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings — Pilot focuses on execution icons only.
 

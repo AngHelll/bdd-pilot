@@ -30,6 +30,8 @@ export interface PilotSummaryViewModel {
   liveProgress?: LiveProgressState;
   /** Unmapped leaf count from last scoped mapping report (session). */
   unmappedCount?: number;
+  /** Current STAGE for cockpit chrome (idle stage chip). */
+  stage?: string;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -45,6 +47,7 @@ export interface BuildPilotSummaryOptions {
   storeFailureSnippet?: string;
   liveProgress?: LiveProgressState;
   unmappedCount?: number;
+  stage?: string;
 }
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
@@ -64,6 +67,7 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     storeFailureSnippet: options.running ? undefined : options.storeFailureSnippet,
     liveProgress: options.running ? options.liveProgress : undefined,
     unmappedCount: options.running ? undefined : options.unmappedCount,
+    stage: options.stage,
   };
 }
 
@@ -101,6 +105,62 @@ export function resolvePilotSummaryIcon(
 
 export const PILOT_SUMMARY_CANCEL_COMMAND = "bddPilot.cancel";
 
+export type PilotSummaryChipKind =
+  | "liveProgress"
+  | "unmapped"
+  | "diagnostic"
+  | "storeFailure"
+  | "filter"
+  | "stage";
+
+export interface PilotSummaryChip {
+  kind: PilotSummaryChipKind;
+  text: string;
+}
+
+/**
+ * Idle chip priority (Gherkin cockpit vs TE): unmapped → diagnostic/store → filter → STAGE.
+ * While running, live progress wins when meaningful.
+ */
+export function resolvePilotSummaryChip(
+  model: PilotSummaryViewModel,
+  locale: PilotLocale,
+): PilotSummaryChip | undefined {
+  if (model.running) {
+    const liveText = resolveLiveProgressSummaryText(model, locale);
+    if (liveText) {
+      return { kind: "liveProgress", text: liveText };
+    }
+    return undefined;
+  }
+  if (model.unmappedCount && model.unmappedCount > 0) {
+    return {
+      kind: "unmapped",
+      text: t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount }),
+    };
+  }
+  const diagnostic = resolveSummaryDiagnostic(model);
+  if (diagnostic) {
+    return { kind: "diagnostic", text: formatSummaryDiagnosticChip(diagnostic, locale) };
+  }
+  if (model.storeFailureSnippet) {
+    return {
+      kind: "storeFailure",
+      text: formatStoreFailureChip(model.storeFailureSnippet, locale),
+    };
+  }
+  if (model.searchQuery) {
+    return { kind: "filter", text: formatFilterChipDescription(model.searchQuery, locale) };
+  }
+  if (model.stage) {
+    return {
+      kind: "stage",
+      text: t(locale, "tree.summaryStageChip", { stage: model.stage }),
+    };
+  }
+  return undefined;
+}
+
 /** Command + tooltip title for the summary row (running → cancel). */
 export function resolvePilotSummaryCommand(
   model: PilotSummaryViewModel,
@@ -112,19 +172,17 @@ export function resolvePilotSummaryCommand(
       title: t(locale, "tree.pilotSummaryCancelHint"),
     };
   }
-  if (model.searchQuery) {
+  const chip = resolvePilotSummaryChip(model, locale);
+  if (chip?.kind === "unmapped") {
+    return {
+      command: PILOT_SUMMARY_UNMAPPED_COMMAND,
+      title: chip.text,
+    };
+  }
+  if (chip?.kind === "filter") {
     return {
       command: "bddPilot.searchTests",
       title: t(locale, "tree.pilotSummaryEditFilter"),
-    };
-  }
-  const diagnostic = resolveSummaryDiagnostic(model);
-  const unmappedActive =
-    !diagnostic && !model.storeFailureSnippet && (model.unmappedCount ?? 0) > 0;
-  if (unmappedActive) {
-    return {
-      command: PILOT_SUMMARY_UNMAPPED_COMMAND,
-      title: t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount ?? 0 }),
     };
   }
   return {
@@ -197,29 +255,12 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
   return label;
 }
 
-/** Tree row description: filter chip, live progress, or post-run diagnostic chip. */
+/** Tree row description: one cockpit chip (priority in resolvePilotSummaryChip). */
 export function formatPilotSummaryDescription(
   model: PilotSummaryViewModel,
   locale: PilotLocale,
 ): string | undefined {
-  if (model.searchQuery) {
-    return formatFilterChipDescription(model.searchQuery, locale);
-  }
-  const liveText = resolveLiveProgressSummaryText(model, locale);
-  if (liveText) {
-    return liveText;
-  }
-  const diagnostic = resolveSummaryDiagnostic(model);
-  if (diagnostic) {
-    return formatSummaryDiagnosticChip(diagnostic, locale);
-  }
-  if (model.storeFailureSnippet) {
-    return formatStoreFailureChip(model.storeFailureSnippet, locale);
-  }
-  if (model.unmappedCount && model.unmappedCount > 0) {
-    return t(locale, "tree.summaryUnmappedChip", { count: model.unmappedCount });
-  }
-  return undefined;
+  return resolvePilotSummaryChip(model, locale)?.text;
 }
 
 /** Summary row description when a tree search filter is active. */

@@ -61,10 +61,11 @@ describe("statusBarViewModel", () => {
       projectLabel: "App.sln",
       solutionSelected: true,
     });
-    assert.ok(tooltip.includes("BDD Pilot — execution settings"));
+    assert.ok(tooltip.includes("BDD Pilot — Gherkin cockpit"));
+    assert.ok(tooltip.includes("test · ci"));
     assert.ok(tooltip.includes("Environment (STAGE): test"));
     assert.ok(tooltip.includes("slower"));
-    assert.ok(tooltip.includes("Click to change settings"));
+    assert.ok(tooltip.includes("Click to change STAGE"));
   });
 
   it("formatCompactStatusBarTooltip includes env files when present", () => {

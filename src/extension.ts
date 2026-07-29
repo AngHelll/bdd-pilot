@@ -116,6 +116,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       storeFailureSnippet,
       liveProgress: activeLiveProgress,
       unmappedCount: getLastMappingReport()?.unmapped,
+      stage: currentStage,
     });
   }
 

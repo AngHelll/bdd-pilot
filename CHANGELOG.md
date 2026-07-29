@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.29.0] — 2026-07-29
+
+### Changed
+- **Gherkin cockpit visual** — README “Pilot vs Test Explorer” + Iconography cockpit signals; summary chip priority (unmapped → diagnostic → filter → STAGE); hub/tooltip/dashboard copy speaks Gherkin/STAGE; Marketplace description positions Pilot alongside TE (no API changes)
+
 ## [1.28.0] — 2026-07-29
 
 ### Changed

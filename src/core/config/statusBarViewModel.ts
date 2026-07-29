@@ -86,6 +86,7 @@ export function formatCompactStatusBarTooltip(input: CompactStatusBarInput): str
   const lines = [
     t(input.locale, "statusBar.hubTooltipTitle"),
     "",
+    `${input.stage} · ${input.mode}`,
     `${t(input.locale, "statusBar.hubTooltipStage")}: ${input.stage}`,
     `${t(input.locale, "statusBar.hubTooltipMode")}: ${input.mode}`,
     `${t(input.locale, "statusBar.hubTooltipProject")}: ${project}`,

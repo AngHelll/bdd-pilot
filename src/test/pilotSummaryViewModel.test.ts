@@ -73,7 +73,7 @@ describe("pilotSummaryViewModel", () => {
       running: false,
     });
     const label = formatPilotSummaryLabel(vm, "en");
-    assert.ok(label.includes("Run tests from the tree"));
+    assert.ok(label.includes("Run Gherkin scenarios"));
     assert.ok(!label.includes("command:"));
   });
 
@@ -88,7 +88,7 @@ describe("pilotSummaryViewModel", () => {
     });
     const label = formatPilotSummaryLabel(vm, "en");
     assert.ok(label.includes("No .feature files found"));
-    assert.ok(!label.includes("Run tests from the tree"));
+    assert.ok(!label.includes("Run Gherkin scenarios"));
   });
 
   it("formatPilotSummaryLabel prefers rollup over emptyKind when lastKnown exists", () => {
@@ -114,7 +114,7 @@ describe("pilotSummaryViewModel", () => {
       running: true,
     });
     const label = formatPilotSummaryLabel(vm, "en");
-    assert.ok(label.startsWith("Running…"));
+    assert.ok(label.startsWith("Running Gherkin…"));
     assert.ok(!label.includes("2 failed"));
     assert.ok(!label.includes("5 passed"));
   });
@@ -132,7 +132,7 @@ describe("pilotSummaryViewModel", () => {
       liveProgress: parser.getState(),
     });
     const label = formatPilotSummaryLabel(vm, "en");
-    assert.ok(label.startsWith("Running…"));
+    assert.ok(label.startsWith("Running Gherkin…"));
     assert.ok(label.includes("2/8"));
     assert.ok(!label.includes("17 passed"));
   });
@@ -173,7 +173,7 @@ describe("pilotSummaryViewModel", () => {
       running: true,
     });
     const label = formatPilotSummaryLabel(vm, "en");
-    assert.ok(label.includes("Running…"));
+    assert.ok(label.includes("Running Gherkin…"));
     assert.ok(label.includes("Restored (not a new run)"));
     assert.ok(label.length <= 160);
   });
@@ -299,7 +299,7 @@ describe("pilotSummaryViewModel", () => {
     assert.ok(description?.includes("failed"));
   });
 
-  it("formatPilotSummaryDescription prefers filter chip over live progress", () => {
+  it("formatPilotSummaryDescription prefers live progress over filter while running", () => {
     const parser = new LiveProgressParser(1);
     parser.feed("[xUnit.net]     Passed A.Test1 [1 ms]\n");
     const vm = buildPilotSummaryViewModel({
@@ -312,8 +312,22 @@ describe("pilotSummaryViewModel", () => {
       liveProgress: parser.getState(),
     });
     const description = formatPilotSummaryDescription(vm, "en");
-    assert.ok(description?.includes("Filter:"));
-    assert.ok(description?.includes("smoke"));
+    assert.ok(description && !description.includes("Filter:"));
+    assert.ok(description?.includes("1") || description?.includes("passed"));
+  });
+
+  it("formatPilotSummaryDescription idle prefers unmapped over filter", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      searchQuery: "@smoke",
+      unmappedCount: 2,
+      stage: "test",
+    });
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "2 unmapped — Show Unmapped");
   });
 
   it("formatPilotSummaryDescription shows 0/N before first test completes", () => {
@@ -384,7 +398,7 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "3 unmapped — Show Unmapped");
   });
 
-  it("formatPilotSummaryDescription prefers diagnostic over unmapped chip", () => {
+  it("formatPilotSummaryDescription prefers unmapped over diagnostic chip", () => {
     const diag = {
       code: "SDK_MISSING",
       severity: "error" as const,
@@ -401,7 +415,24 @@ describe("pilotSummaryViewModel", () => {
       unmappedCount: 2,
     });
     const description = formatPilotSummaryDescription(vm, "en");
-    assert.ok(description?.includes("SDK missing"));
-    assert.ok(!description?.includes("unmapped"));
+    assert.strictEqual(description, "2 unmapped — Show Unmapped");
+  });
+
+  it("formatPilotSummaryDescription falls back to STAGE chip", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      stage: "stg",
+    });
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "STAGE: stg");
+  });
+
+  it("cockpit copy keys mention Gherkin (en)", () => {
+    assert.ok(/Gherkin/i.test(t("en", "tree.summaryRunning")));
+    assert.ok(/Gherkin/i.test(t("en", "dashboard.recentRuns")));
+    assert.ok(/cockpit|Gherkin/i.test(t("en", "statusBar.hubTooltipTitle")));
   });
 });
