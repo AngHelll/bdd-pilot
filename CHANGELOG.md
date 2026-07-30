@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.32.0] — 2026-07-30
+
+### Added
+- **Marketplace gallery** — cockpit frames in `media/gallery/` (tree + summary, STAGE hub, dashboard run story) with signal captions in README; ForgeOne family line names Pilot · Guardian · Jarvis
+
 ## [1.31.0] — 2026-07-30
 
 ### Added

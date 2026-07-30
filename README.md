@@ -36,21 +36,25 @@ Pilot exposes a read-only [**Extension API**](docs/EXTENSION_API.md) (`PilotRunA
 Guardian answers *“where is this step implemented?”* — Pilot answers *“run this
 scenario and show me what failed.”*
 
-## Screenshots
+## Gallery
 
-**Run & diagnose from the editor** — domain tree, CodeLens, step outcomes, failure
-hover, diagnostics, and AI-ready context:
+Cockpit frames (signals TE does not prioritize). Captures from Pilot on `samples/minimal-bdd`.
+
+**Tree cockpit** — Gherkin tree + summary row (`Last run` pass/fail) and outline outcomes:
+
+![BDD Pilot tree cockpit: summary row and Gherkin outcomes](./media/gallery/01-tree-cockpit.png)
+
+**STAGE hub** — status bar chip `Pilot · STAGE · mode · project` (here: `test` · `parallel` · MinimalBdd.Tests):
+
+![BDD Pilot STAGE hub on the status bar](./media/gallery/02-hub-stage.png)
+
+**Run story** — dashboard history, flaky scenarios, and diagnostics (mapping signals like `not_in_trx` / unmapped appear in the tree after scoped runs — see [Cockpit signals](#cockpit-signals-why-this-is-not-te)):
+
+![BDD Pilot dashboard: run history and flaky scenarios](./media/gallery/03-mapping-or-dashboard.png)
+
+More detail (editor CodeLens + Output diagnostics):
 
 ![BDD Pilot: tree, CodeLens, failure hover, diagnostics, Copy for AI](./media/readme-editor-workflow.png)
-
-**Dashboard & @tag grouping** — run history, flaky scenarios, tag tree, and pending-step
-toast with **Copy for AI**:
-
-![BDD Pilot: dashboard, @tag tree, flaky scenarios, Copy for AI](./media/readme-dashboard.png)
-
-**Tree & toolbar** — pilot summary row, codicon toolbar, and domain tree:
-
-![BDD Pilot: tree preview with summary row and toolbar](./media/readme-tree-preview.png)
 
 ## Install
 
@@ -83,6 +87,8 @@ Pilot is a **Gherkin cockpit alongside Test Explorer**, not a TE replacement —
 | Busy **Cancel** on Pilot toolbar + summary | Native Testing cancel |
 
 Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from Pilot.
+
+**In pictures:** [Gallery](#gallery) — tree + summary · STAGE hub · dashboard run story.
 
 ### Discovery & run
 - **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`); descriptions mirror BDD tree settings (`tree.durationDisplay`, `tree.tagDisplay`) and locale for outcomes/roll-ups.
@@ -166,7 +172,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | **Cancel busy** | Toolbar Cancel + summary click + **hub QuickPick first row** while running | TE cancel is native Testing UI, not Pilot tree chrome |
 | **Restored / rehydrate** | Outcomes from TestResults, not a new run | TE reload does not narrate Pilot rehydrate provenance |
 
-**ForgeOne family:** Pilot = execution · [BDD Guardian](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings — Pilot focuses on execution icons only.
+**ForgeOne family:** [**BDD Pilot**](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot) = execution · [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings · [**BDD Jarvis**](https://github.com/AngHelll/bdd-jarvis) = workspace insights (consumes Pilot’s read-only Run API). Complementary extensions — not a monorepo and not an “AI test fixer.”
 
 ## Security
 
