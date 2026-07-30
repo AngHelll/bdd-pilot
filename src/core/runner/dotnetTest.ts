@@ -21,6 +21,14 @@ export interface RunRequest {
   noBuild?: boolean;
   /** Absolute path to `.runsettings` for `--settings`. */
   settingsPath?: string;
+  /** `dotnet test --verbosity` level; omit when unset. */
+  cliVerbosity?: string;
+  /** When true, passes `--blame`. */
+  blame?: boolean;
+  /** When true, passes `--blame-hang` and hang timeout. */
+  blameHang?: boolean;
+  /** Value for `--blame-hang-timeout` when blameHang is true. */
+  blameHangTimeout?: string;
   /**
    * Extra environment variables (e.g. parsed from config/.env.<stage>) merged
    * into the child process environment. Never logged or persisted.
@@ -64,6 +72,19 @@ export function buildArgs(req: RunRequest, options: BuildArgsOptions = {}): stri
   }
   if (req.settingsPath?.trim()) {
     args.push("--settings", req.settingsPath.trim());
+  }
+
+  const cliVerbosity = req.cliVerbosity?.trim();
+  if (cliVerbosity) {
+    args.push("--verbosity", cliVerbosity);
+  }
+  if (req.blame) {
+    args.push("--blame");
+  }
+  if (req.blameHang) {
+    args.push("--blame-hang");
+    const timeout = req.blameHangTimeout?.trim() || "10m";
+    args.push("--blame-hang-timeout", timeout);
   }
 
   args.push("--nologo", "--logger", `trx;LogFileName=${req.trxFileName}`, "--results-directory", req.resultsDir);

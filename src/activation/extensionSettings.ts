@@ -2,13 +2,16 @@ import * as vscode from "vscode";
 import { isBindingGateMode, BindingGateMode } from "../core/bindings/resolveBindingGateUx";
 import { readStatusBarDisplayMode, StatusBarDisplayMode } from "../core/config/statusBarViewModel";
 import {
+  DEFAULT_BLAME_HANG_TIMEOUT,
   DEFAULT_SETTINGS,
   ParallelismMode,
   RunConfiguration,
   RunnerSettings,
   Stage,
+  isBlameHangMode,
   isMode,
   isStage,
+  normalizeCliVerbosity,
 } from "../core/config/types";
 import { AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { DiagnosticsInOutputMode } from "../core/diagnostics/diagnosticsOutput";
@@ -55,6 +58,11 @@ export function readSettings(): RunnerSettings {
     .get<string[]>("requireConfirmationForStages", DEFAULT_SETTINGS.requireConfirmationForStages)
     .filter(isStage);
   const runConfiguration = cfg.get<string>("run.configuration", DEFAULT_SETTINGS.runConfiguration);
+  const blameHang = cfg.get<string>("run.blameHang", DEFAULT_SETTINGS.runBlameHang);
+  const hangTimeout = cfg.get<string>(
+    "run.blameHangTimeout",
+    DEFAULT_SETTINGS.runBlameHangTimeout,
+  );
   return {
     projectPath: cfg.get<string>("projectPath", DEFAULT_SETTINGS.projectPath),
     defaultStage: isStage(stage) ? stage : DEFAULT_SETTINGS.defaultStage,
@@ -72,6 +80,12 @@ export function readSettings(): RunnerSettings {
     runNoBuild: cfg.get<boolean>("run.noBuild", DEFAULT_SETTINGS.runNoBuild),
     runSettingsPath: cfg.get<string>("run.runSettings", DEFAULT_SETTINGS.runSettingsPath),
     runByStage: parseStageRunByStage(cfg.get("run.byStage")),
+    runCliVerbosity: normalizeCliVerbosity(
+      cfg.get<string>("run.cliVerbosity", DEFAULT_SETTINGS.runCliVerbosity),
+    ),
+    runBlame: cfg.get<boolean>("run.blame", DEFAULT_SETTINGS.runBlame),
+    runBlameHang: isBlameHangMode(blameHang) ? blameHang : DEFAULT_SETTINGS.runBlameHang,
+    runBlameHangTimeout: hangTimeout.trim() || DEFAULT_BLAME_HANG_TIMEOUT,
   };
 }
 

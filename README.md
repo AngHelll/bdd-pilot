@@ -233,7 +233,12 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.run.configuration` | `""` | Optional `dotnet test --configuration`: `Debug`, `Release`, or empty (omit). |
 | `bddPilot.run.noBuild` | `false` | When `true`, pass `--no-build` (skip build; requires prior successful build). |
 | `bddPilot.run.runSettings` | `""` | Path to a `.runsettings` file (workspace-relative or absolute) for `--settings`. |
-| `bddPilot.run.byStage` | `{}` | Per-`STAGE` overrides for `configuration` / `runSettings` (keys `dev`/`test`/`stg`/`prod`). Does **not** load `.env` — only `dotnet test` flags. Example: `{ "stg": { "configuration": "Release", "runSettings": "config/stg.runsettings" } }`. |
+| `bddPilot.run.cliVerbosity` | `""` | Optional `dotnet test --verbosity` (`quiet`…`diagnostic`). Empty omits the flag. **Not** the Output stream filter — that is `feedback.dotnetVerbosity`. |
+| `bddPilot.run.blame` | `false` | When `true`, pass `--blame` (Sequence.xml for crash isolation). |
+| `bddPilot.run.blameHang` | `off` | When `on`, pass `--blame-hang` with `blameHangTimeout` (aborts tests that exceed the timeout). |
+| `bddPilot.run.blameHangTimeout` | `10m` | Timeout for `--blame-hang-timeout` when `blameHang` is `on`. |
+| `bddPilot.run.byStage` | `{}` | Per-`STAGE` overrides for `configuration` / `runSettings` only (not cliVerbosity/blame). Example: `{ "stg": { "configuration": "Release", "runSettings": "config/stg.runsettings" } }`. |
+| `bddPilot.feedback.dotnetVerbosity` | `filtered` | Live `dotnet test` stream in Output: `filtered` (hide discovery/build noise) or `raw`. Distinct from `run.cliVerbosity`. |
 | `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (less duplicate roll-ups). |
 | `bddPilot.tree.groupBy` | `domain` | Tree grouping: `domain` (folder layout) or `tag` (`@smoke` folders). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
@@ -246,7 +251,6 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.locale` | `auto` | UI language: `auto` (follow VS Code), `en`, or `es`. |
 | `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
 | `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. |
-| `bddPilot.feedback.dotnetVerbosity` | `filtered` | Live `dotnet test` stream in Output: `filtered` (hide discovery/build noise) or `raw`. |
 | `bddPilot.feedback.autoShowOutput` | `off` | Auto-show Output when a run finishes: `off`, `onFailure`, or `always`. |
 | `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
 | `bddPilot.preRun.bindingGate` | `warn` | Pre-run binding check via BDD Guardian: `off`, `warn`, or `block`. |

@@ -399,6 +399,13 @@ export class RunService {
         configuration,
         noBuild: req.settings.runNoBuild,
         settingsPath: resolution.settingsPath,
+        cliVerbosity: req.settings.runCliVerbosity.trim() || undefined,
+        blame: req.settings.runBlame || undefined,
+        blameHang: req.settings.runBlameHang === "on" || undefined,
+        blameHangTimeout:
+          req.settings.runBlameHang === "on"
+            ? req.settings.runBlameHangTimeout.trim() || "10m"
+            : undefined,
         extraEnv,
       },
       preCommandMessages,

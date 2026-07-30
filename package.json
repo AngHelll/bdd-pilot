@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Gherkin cockpit for Reqnroll & SpecFlow in VS Code/Cursor: domain/@tag tree, STAGE hub, TRX↔scenario mapping — alongside Test Explorer, not a replacement. Use with BDD Guardian.",
-  "version": "1.30.0",
+  "version": "1.31.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -476,6 +476,50 @@
           "type": "string",
           "default": "",
           "description": "%bddPilot.configuration.run.runSettings.description%"
+        },
+        "bddPilot.run.cliVerbosity": {
+          "type": "string",
+          "enum": [
+            "",
+            "quiet",
+            "minimal",
+            "normal",
+            "detailed",
+            "diagnostic"
+          ],
+          "default": "",
+          "enumDescriptions": [
+            "%bddPilot.configuration.run.cliVerbosity.enum.default%",
+            "%bddPilot.configuration.run.cliVerbosity.enum.quiet%",
+            "%bddPilot.configuration.run.cliVerbosity.enum.minimal%",
+            "%bddPilot.configuration.run.cliVerbosity.enum.normal%",
+            "%bddPilot.configuration.run.cliVerbosity.enum.detailed%",
+            "%bddPilot.configuration.run.cliVerbosity.enum.diagnostic%"
+          ],
+          "description": "%bddPilot.configuration.run.cliVerbosity.description%"
+        },
+        "bddPilot.run.blame": {
+          "type": "boolean",
+          "default": false,
+          "description": "%bddPilot.configuration.run.blame.description%"
+        },
+        "bddPilot.run.blameHang": {
+          "type": "string",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "default": "off",
+          "enumDescriptions": [
+            "%bddPilot.configuration.run.blameHang.enum.off%",
+            "%bddPilot.configuration.run.blameHang.enum.on%"
+          ],
+          "description": "%bddPilot.configuration.run.blameHang.description%"
+        },
+        "bddPilot.run.blameHangTimeout": {
+          "type": "string",
+          "default": "10m",
+          "description": "%bddPilot.configuration.run.blameHangTimeout.description%"
         },
         "bddPilot.run.byStage": {
           "type": "object",

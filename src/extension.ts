@@ -20,6 +20,7 @@ import {
   formatEffectiveRunFlagsParts,
   resolveEffectiveRunFlags,
 } from "./core/runner/stageRunFlags";
+import { formatDiagnosticRunFlagsParts } from "./core/runner/runDiagnosticFlags";
 import { listDotnetTests } from "./core/runner/listTests";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
@@ -262,7 +263,15 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       runSettingsPath: settings.runSettingsPath,
       byStage: settings.runByStage,
     });
-    const runFlagsParts = formatEffectiveRunFlagsParts(effective);
+    const runFlagsParts = [
+      ...formatEffectiveRunFlagsParts(effective),
+      ...formatDiagnosticRunFlagsParts({
+        runCliVerbosity: settings.runCliVerbosity,
+        runBlame: settings.runBlame,
+        runBlameHang: settings.runBlameHang,
+        runBlameHangTimeout: settings.runBlameHangTimeout,
+      }),
+    ];
     statusBar.update(
       currentStage,
       currentMode,

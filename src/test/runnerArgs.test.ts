@@ -96,6 +96,44 @@ describe("dotnet test args", () => {
     assert.ok(!args.includes("--configuration"));
     assert.ok(!args.includes("--no-build"));
     assert.ok(!args.includes("--settings"));
+    assert.ok(!args.includes("--verbosity"));
+    assert.ok(!args.includes("--blame"));
+    assert.ok(!args.includes("--blame-hang"));
+  });
+
+  it("includes cli verbosity, blame, and blame-hang before trx logger", () => {
+    const args = buildArgs({
+      ...base,
+      configuration: "Debug",
+      settingsPath: "/proj/t.runsettings",
+      cliVerbosity: "detailed",
+      blame: true,
+      blameHang: true,
+      blameHangTimeout: "5m",
+    });
+    const settingsIdx = args.indexOf("--settings");
+    const verbosityIdx = args.indexOf("--verbosity");
+    const blameIdx = args.indexOf("--blame");
+    const hangIdx = args.indexOf("--blame-hang");
+    const hangTimeoutIdx = args.indexOf("--blame-hang-timeout");
+    const loggerIdx = args.indexOf("--logger");
+    assert.strictEqual(args[verbosityIdx + 1], "detailed");
+    assert.ok(blameIdx >= 0);
+    assert.ok(hangIdx >= 0);
+    assert.strictEqual(args[hangTimeoutIdx + 1], "5m");
+    assert.ok(
+      settingsIdx < verbosityIdx &&
+        verbosityIdx < blameIdx &&
+        blameIdx < hangIdx &&
+        hangIdx < hangTimeoutIdx &&
+        hangTimeoutIdx < loggerIdx,
+    );
+  });
+
+  it("defaults blame-hang-timeout to 10m when hang on without timeout", () => {
+    const args = buildArgs({ ...base, blameHang: true });
+    assert.ok(args.includes("--blame-hang"));
+    assert.strictEqual(args[args.indexOf("--blame-hang-timeout") + 1], "10m");
   });
 
   it("can omit xUnit RunSettings for debug launches", () => {

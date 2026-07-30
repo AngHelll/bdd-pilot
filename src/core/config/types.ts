@@ -42,6 +42,22 @@ export const MODE_PROFILES: Record<ParallelismMode, ModeProfile> = {
 
 export type RunConfiguration = "" | "Debug" | "Release";
 
+/** MSBuild / `dotnet test --verbosity` (not Output filter). Empty = omit flag. */
+export type CliVerbosity = "" | "quiet" | "minimal" | "normal" | "detailed" | "diagnostic";
+
+export type BlameHangMode = "off" | "on";
+
+export const DEFAULT_BLAME_HANG_TIMEOUT = "10m";
+
+export const ALL_CLI_VERBOSITIES: CliVerbosity[] = [
+  "",
+  "quiet",
+  "minimal",
+  "normal",
+  "detailed",
+  "diagnostic",
+];
+
 /** Per-stage override for `dotnet test` configuration / runsettings path. */
 export interface StageRunOverride {
   configuration?: RunConfiguration;
@@ -66,6 +82,12 @@ export interface RunnerSettings {
   runSettingsPath: string;
   /** Per-stage overrides for configuration / runSettings. */
   runByStage: StageRunByStage;
+  /** Empty = omit `--verbosity`. */
+  runCliVerbosity: CliVerbosity;
+  runBlame: boolean;
+  runBlameHang: BlameHangMode;
+  /** Used only when `runBlameHang` is `on`. */
+  runBlameHangTimeout: string;
 }
 
 export const DEFAULT_SETTINGS: RunnerSettings = {
@@ -80,6 +102,10 @@ export const DEFAULT_SETTINGS: RunnerSettings = {
   runNoBuild: false,
   runSettingsPath: "",
   runByStage: {},
+  runCliVerbosity: "",
+  runBlame: false,
+  runBlameHang: "off",
+  runBlameHangTimeout: DEFAULT_BLAME_HANG_TIMEOUT,
 };
 
 export function isStage(value: string): value is Stage {
@@ -88,4 +114,31 @@ export function isStage(value: string): value is Stage {
 
 export function isMode(value: string): value is ParallelismMode {
   return (ALL_MODES as string[]).includes(value);
+}
+
+export function isCliVerbosity(value: string): value is CliVerbosity {
+  return (ALL_CLI_VERBOSITIES as string[]).includes(value);
+}
+
+export function isBlameHangMode(value: string): value is BlameHangMode {
+  return value === "off" || value === "on";
+}
+
+/** Normalize setting / short forms (`q` → `quiet`). Unknown → omit. */
+export function normalizeCliVerbosity(value: string | undefined): CliVerbosity {
+  const raw = (value ?? "").trim().toLowerCase();
+  if (!raw) {
+    return "";
+  }
+  if (isCliVerbosity(raw)) {
+    return raw;
+  }
+  const short: Record<string, CliVerbosity> = {
+    q: "quiet",
+    m: "minimal",
+    n: "normal",
+    d: "detailed",
+    diag: "diagnostic",
+  };
+  return short[raw] ?? "";
 }

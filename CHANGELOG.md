@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.31.0] — 2026-07-30
+
+### Added
+- **Dotnet flags P2** — `bddPilot.run.cliVerbosity` (`--verbosity`), `run.blame` (`--blame`), `run.blameHang` + `run.blameHangTimeout` (`--blame-hang` / `--blame-hang-timeout`); run/debug parity; hub tooltip shows non-default diagnostic flags; README distinguishes CLI verbosity from Output `feedback.dotnetVerbosity`
+
 ## [1.30.0] — 2026-07-29
 
 ### Added
