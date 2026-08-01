@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Gherkin cockpit for Reqnroll & SpecFlow in VS Code/Cursor: domain/@tag tree, STAGE hub, TRX↔scenario mapping — alongside Test Explorer, not a replacement. Use with BDD Guardian.",
-  "version": "1.32.0",
+  "version": "1.32.1",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -743,14 +743,14 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.90.0",
-    "@typescript-eslint/eslint-plugin": "^7.13.0",
-    "@typescript-eslint/parser": "^7.13.0",
-    "@vscode/vsce": "^2.29.0",
-    "esbuild": "^0.21.5",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.25.12",
     "eslint": "^8.57.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "fast-xml-parser": "^4.4.0"
+    "fast-xml-parser": "^5.10.1"
   }
 }

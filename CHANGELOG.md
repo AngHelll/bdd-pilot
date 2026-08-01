@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.32.1] — 2026-08-01
+
+### Security
+- Bump `fast-xml-parser` 4 → 5, `esbuild` → 0.25.x, `@vscode/vsce` 2 → 3, and `@typescript-eslint/*` 7 → 8 (npm audit clean; no product behavior change)
+
 ## [1.32.0] — 2026-07-30
 
 ### Added
