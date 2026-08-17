@@ -204,4 +204,20 @@ export function createCopyFailureContextForAi(deps: {
   };
 }
 
+/** Copies the last session `dotnet test …` line (CF1 Cockpit fidelity). */
+export function createCopyEffectiveDotnetCommand(deps: {
+  runService: RunService;
+  tr: (key: MessageKey, params?: Record<string, string | number>) => string;
+}): () => Promise<void> {
+  return async (): Promise<void> => {
+    const snapshot = deps.runService.getLastEffectiveDotnetCommand();
+    if (!snapshot) {
+      void vscode.window.showInformationMessage(deps.tr("toast.noEffectiveCommand"));
+      return;
+    }
+    await vscode.env.clipboard.writeText(snapshot.commandLine);
+    void vscode.window.showInformationMessage(deps.tr("toast.effectiveCommandCopied"));
+  };
+}
+
 export type PostRunHandlers = ReturnType<typeof createPostRunHandlers>;

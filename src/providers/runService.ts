@@ -25,6 +25,10 @@ import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filt
 import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { buildArgs, runDotnetTest, RunRequest as DotnetRunRequest } from "../core/runner/dotnetTest";
 import {
+  EffectiveDotnetCommandSnapshot,
+  formatEffectiveDotnetCommand,
+} from "../core/runner/effectiveDotnetCommand";
+import {
   formatRunSettingsMissingMessage,
   resolveRunSettingsPath,
 } from "../core/runner/runSettingsPath";
@@ -142,6 +146,7 @@ export class RunService {
   private lastFailedFilter: string | undefined;
   private lastFailedRunSnapshot: LastRunSnapshot | undefined;
   private lastRunSnapshot: SessionRunSnapshot | undefined;
+  private lastEffectiveCommand: EffectiveDotnetCommandSnapshot | undefined;
   private runStartedAt = 0;
   private pendingDebug: PendingDebugSession | undefined;
   private debugActive = false;
@@ -178,6 +183,23 @@ export class RunService {
 
   getLastRunSnapshot(): SessionRunSnapshot | undefined {
     return this.lastRunSnapshot ? cloneSessionRunSnapshot(this.lastRunSnapshot) : undefined;
+  }
+
+  /** Last `dotnet test …` line from a session run/debug start (clipboard CF1). */
+  getLastEffectiveDotnetCommand(): EffectiveDotnetCommandSnapshot | undefined {
+    return this.lastEffectiveCommand ? { ...this.lastEffectiveCommand } : undefined;
+  }
+
+  private rememberEffectiveCommand(
+    dotnetPath: string,
+    args: string[],
+    runKind: "run" | "debug",
+  ): void {
+    this.lastEffectiveCommand = {
+      commandLine: formatEffectiveDotnetCommand({ dotnetPath, args }),
+      updatedAt: Date.now(),
+      runKind,
+    };
   }
 
   setHistory(entries: RunHistoryEntry[]): void {
@@ -252,6 +274,7 @@ export class RunService {
       dotnetReq,
       {
         onStart: (cmd) => {
+          this.rememberEffectiveCommand(dotnetReq.dotnetPath, buildArgs(dotnetReq), "run");
           for (const msg of preCommandMessages) {
             capture(`${msg}\n`);
           }
@@ -429,6 +452,7 @@ export class RunService {
 
     const { dotnetReq, preCommandMessages } = this.buildDotnetRunRequest(req, filter, trxFileName);
     const args = buildArgs(dotnetReq, { includeXUnitRunSettings: false });
+    this.rememberEffectiveCommand(req.settings.dotnetPath, args, "debug");
 
     const config: vscode.DebugConfiguration = {
       type: "coreclr",

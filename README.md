@@ -124,6 +124,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   the project's `xunit.runner.json` is never mutated on disk.
 - **Reliable execution**: progress UI, cancellation, and live streaming to the
   *BDD Pilot* output channel.
+- **Copy effective command** — palette copies the exact `dotnet test …` from the last Pilot run or debug (filter + run flags) for CI or a terminal.
 - **Debug** launches `dotnet test` under the .NET debugger (`coreclr`).
 
 ### Results & diagnostics

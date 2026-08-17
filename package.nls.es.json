@@ -32,6 +32,7 @@
   "bddPilot.command.cycleTreeGroupByTag.title": "BDD Pilot: Agrupado por @tag · Cambiar a dominio",
   "bddPilot.command.manageProfiles.title": "BDD Pilot: Gestionar perfiles",
   "bddPilot.command.copyFailureContextForAi.title": "BDD Pilot: Copiar contexto de fallo para IA",
+  "bddPilot.command.copyEffectiveDotnetCommand.title": "BDD Pilot: Copiar comando dotnet efectivo",
   "bddPilot.configuration.tree.displayMode.description": "Densidad del árbol BDD: detailed (por defecto, roll-ups en carpetas) o compact (menos roll-ups duplicados).",
   "bddPilot.configuration.tree.displayMode.enum.compact": "Menos roll-ups duplicados: fila resumen global, etiquetas estructurales en carpetas, resultados solo en hojas.",
   "bddPilot.configuration.tree.displayMode.enum.detailed": "Layout por defecto: roll-up en cada carpeta e iconos de contenedor tintados (comportamiento v1.3).",

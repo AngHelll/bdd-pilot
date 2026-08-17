@@ -171,6 +171,8 @@ const EN = {
   "toast.multiProjectPrompt": "BDD Pilot found multiple test projects. Select which one to use.",
   "toast.noFailureContext": "No failed run to copy. Run tests first and wait for failures.",
   "toast.failureContextCopied": "Failure context copied to clipboard.",
+  "toast.noEffectiveCommand": "No recent run to copy. Run or debug tests with BDD Pilot first.",
+  "toast.effectiveCommandCopied": "Effective dotnet command copied to clipboard.",
   "ai.rehydratedFromTrxNote":
     "Source: rehydrated from TRX `{file}` (may not match current code).",
   "toast.failureContextProdWarning":
@@ -541,6 +543,9 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.noFailureContext":
     "No hay ejecución fallida para copiar. Ejecuta tests y espera a que fallen.",
   "toast.failureContextCopied": "Contexto de fallo copiado al portapapeles.",
+  "toast.noEffectiveCommand":
+    "No hay una ejecución reciente para copiar. Ejecuta o depura tests con BDD Pilot primero.",
+  "toast.effectiveCommandCopied": "Comando dotnet efectivo copiado al portapapeles.",
   "ai.rehydratedFromTrxNote":
     "Origen: rehidratado desde TRX `{file}` (puede no coincidir con el código actual).",
   "toast.failureContextProdWarning":

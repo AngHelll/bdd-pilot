@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.33.0] — 2026-08-16
+
+### Added
+- **Copy effective `dotnet` command** (Cockpit fidelity CF1) — palette **BDD Pilot: Copy Effective Dotnet Command** copies the exact `dotnet test …` from the last Pilot run/debug (target, filter, P1/P2 flags, TRX logger); toast if no session run yet
+
 ## [1.32.1] — 2026-08-01
 
 ### Security
