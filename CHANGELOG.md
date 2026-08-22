@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.35.0] — 2026-08-21
+
+### Added
+- **Mapping honesty 2-way** — after a **scoped** run, Output lists TRX rows that did not map to a Gherkin leaf (capped) and notes ambiguous matches (first row still applied) plus a one-line shared-row count; match semantics unchanged (not a unit-test runner)
+
 ## [1.33.0] — 2026-08-16
 
 ### Added

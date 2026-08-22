@@ -107,6 +107,9 @@ describe("skipReasonSnapshot", () => {
     assert.strictEqual(report.unmapped, 1);
     assert.strictEqual(report.unmappedLeaves[0].scenarioName, "Two");
     assert.strictEqual(report.unmappedLeaves[0].featurePath, "/x/Sample.feature");
+    assert.strictEqual(report.unusedTrx, undefined);
+    assert.strictEqual(report.ambiguousLeaves, undefined);
+    assert.strictEqual(report.sharedChosenCount, undefined);
   });
 
   it("parseSkipReasonSnapshot rejects garbage", () => {

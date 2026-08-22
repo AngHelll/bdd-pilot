@@ -132,6 +132,8 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
 - **Tree mapping report**: after a **scoped** run, Output shows `mapped/inScope` counts; when some
   scenarios lack a TRX match (`not_in_trx`), lists them (capped) and the palette command
   **Show Unmapped Scenarios** opens a QuickPick to jump to the `.feature` line.
+  The same Output also lists **TRX rows unused** by any Gherkin leaf (capped) and **ambiguous**
+  matches (first TRX row applied) — mapping honesty, not a generic unit-test runner.
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth

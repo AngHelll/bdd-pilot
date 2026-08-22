@@ -7,7 +7,11 @@ import {
   computeTreeMappingStats,
   listUnmappedScopedLeaves,
 } from "../core/results/trxTreeMapping";
-import { selectUnmappedForOutput } from "../core/results/mappingReportFormat";
+import {
+  planHonestyOutput,
+  selectUnmappedForOutput,
+  truncateMappingLabel,
+} from "../core/results/mappingReportFormat";
 import { outlineRowKey, scenarioKey } from "../core/runner/runScope";
 import { UnifiedSummary } from "../core/results/resultLoader";
 
@@ -81,6 +85,10 @@ describe("trxTreeMapping", () => {
       store.getSkipReason(outlineRowKey(feature, feature.scenarios[2], 1)),
       "not_in_trx",
     );
+    assert.deepStrictEqual(stats!.unusedTrx, []);
+    assert.deepStrictEqual(stats!.ambiguousLeaves, []);
+    assert.strictEqual(stats!.sharedChosenCount, 0);
+    assert.strictEqual(stats!.trxTotal, 1);
   });
 
   it("computeTreeMappingStats counts mapped outcomes in scope", () => {
@@ -172,5 +180,128 @@ describe("trxTreeMapping", () => {
     const beta = twinDomains[0].features[1];
     assert.strictEqual(store.get(scenarioKey(alpha, alpha.scenarios[0])), undefined);
     assert.strictEqual(store.get(scenarioKey(beta, beta.scenarios[0])), "passed");
+  });
+
+  it("lists unused TRX rows that never win a Gherkin match", () => {
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 2,
+      failed: 0,
+      skipped: 0,
+      total: 2,
+      results: [
+        { testName: "SampleFeature.One", outcome: "passed", durationMs: 10 },
+        { testName: "UnitTests.HelperDoesMath", outcome: "passed", durationMs: 2 },
+      ],
+    };
+    const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "feature", feature }]);
+    assert.ok(stats);
+    assert.strictEqual(stats!.mapped, 1);
+    assert.strictEqual(stats!.trxTotal, 2);
+    assert.deepStrictEqual(stats!.unusedTrx, [
+      { testName: "UnitTests.HelperDoesMath", outcome: "passed" },
+    ]);
+    assert.strictEqual(store.get(scenarioKey(feature, feature.scenarios[0])), "passed");
+  });
+
+  it("flags ambiguous leaves when two TRX rows match and still applies the first", () => {
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 1,
+      skipped: 0,
+      total: 2,
+      results: [
+        { testName: "SampleFeature.One", outcome: "passed", durationMs: 10 },
+        { testName: "SampleFeature.One", outcome: "failed", durationMs: 8 },
+      ],
+    };
+    const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "feature", feature }]);
+    assert.ok(stats);
+    assert.strictEqual(store.get(scenarioKey(feature, feature.scenarios[0])), "passed");
+    assert.strictEqual(stats!.ambiguousLeaves?.length, 1);
+    assert.strictEqual(stats!.ambiguousLeaves![0].label, "Sample · One");
+    assert.strictEqual(stats!.ambiguousLeaves![0].candidateCount, 2);
+    assert.strictEqual(stats!.ambiguousLeaves![0].chosenTestName, "SampleFeature.One");
+    assert.deepStrictEqual(stats!.unusedTrx, [{ testName: "SampleFeature.One", outcome: "failed" }]);
+  });
+
+  it("counts shared TRX when one row is chosen by two Gherkin leaves", () => {
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      results: [{ testName: "Something.OneAndTwo", outcome: "passed", durationMs: 4 }],
+    };
+    const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "feature", feature }]);
+    assert.ok(stats);
+    assert.strictEqual(store.get(scenarioKey(feature, feature.scenarios[0])), "passed");
+    assert.strictEqual(store.get(scenarioKey(feature, feature.scenarios[1])), "passed");
+    assert.strictEqual(stats!.sharedChosenCount, 1);
+    assert.deepStrictEqual(stats!.unusedTrx, []);
+  });
+
+  it("run-all does not return unused honesty report", () => {
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      results: [{ testName: "UnitTests.HelperDoesMath", outcome: "passed" }],
+    };
+    const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "all" }]);
+    assert.strictEqual(stats, undefined);
+  });
+});
+
+describe("mappingReportFormat honesty", () => {
+  it("truncateMappingLabel caps at 120 with ellipsis", () => {
+    const long = "x".repeat(130);
+    const truncated = truncateMappingLabel(long);
+    assert.strictEqual(truncated.length, 120);
+    assert.ok(truncated.endsWith("…"));
+  });
+
+  it("planHonestyOutput is silent when unused and ambiguous are empty", () => {
+    const plan = planHonestyOutput({
+      inScope: 1,
+      mapped: 1,
+      unmapped: 0,
+      unmappedLeaves: [],
+      unusedTrx: [],
+      ambiguousLeaves: [],
+      sharedChosenCount: 0,
+      trxTotal: 1,
+    });
+    assert.strictEqual(plan.unused, undefined);
+    assert.strictEqual(plan.ambiguous, undefined);
+    assert.strictEqual(plan.sharedCount, 0);
+  });
+
+  it("planHonestyOutput caps unused and reports remaining", () => {
+    const unusedTrx = Array.from({ length: 30 }, (_, i) => ({
+      testName: `Unit.Test${i}`,
+      outcome: "passed" as const,
+    }));
+    const plan = planHonestyOutput({
+      inScope: 1,
+      mapped: 1,
+      unmapped: 0,
+      unmappedLeaves: [],
+      unusedTrx,
+      trxTotal: 31,
+    });
+    assert.ok(plan.unused);
+    assert.strictEqual(plan.unused!.unused, 30);
+    assert.strictEqual(plan.unused!.trxTotal, 31);
+    assert.strictEqual(plan.unused!.shown.length, 25);
+    assert.strictEqual(plan.unused!.remaining, 5);
   });
 });

@@ -6,7 +6,11 @@ import { RehydrateNotice } from "../core/results/rehydrateNotice";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { TreeMappingReport } from "../core/results/trxTreeMapping";
-import { selectUnmappedForOutput } from "../core/results/mappingReportFormat";
+import {
+  planHonestyOutput,
+  selectUnmappedForOutput,
+  truncateMappingLabel,
+} from "../core/results/mappingReportFormat";
 import { clearLastMappingReport, setLastMappingReport } from "../core/results/lastMappingReport";
 import {
   applySkipReasonSnapshot,
@@ -73,18 +77,67 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
         unmapped: report.unmapped,
       })}`,
     );
-    if (report.unmapped <= 0) {
-      return;
+    if (report.unmapped > 0) {
+      const { shown, remaining } = selectUnmappedForOutput(report.unmappedLeaves);
+      for (const leaf of shown) {
+        deps.output.appendLine(
+          `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedItem", { label: leaf.label })}`,
+        );
+      }
+      if (remaining > 0) {
+        deps.output.appendLine(
+          `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedMore", { count: remaining })}`,
+        );
+      }
     }
-    const { shown, remaining } = selectUnmappedForOutput(report.unmappedLeaves);
-    for (const leaf of shown) {
+    const honesty = planHonestyOutput(report);
+    if (honesty.unused) {
       deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedItem", { label: leaf.label })}`,
+        `[bdd-pilot] ${deps.tr("log.treeMappingUnused", {
+          unused: honesty.unused.unused,
+          trxTotal: honesty.unused.trxTotal,
+        })}`,
       );
+      for (const row of honesty.unused.shown) {
+        deps.output.appendLine(
+          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedItem", {
+            testName: truncateMappingLabel(row.testName),
+          })}`,
+        );
+      }
+      if (honesty.unused.remaining > 0) {
+        deps.output.appendLine(
+          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedMore", {
+            count: honesty.unused.remaining,
+          })}`,
+        );
+      }
     }
-    if (remaining > 0) {
+    if (honesty.ambiguous) {
       deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedMore", { count: remaining })}`,
+        `[bdd-pilot] ${deps.tr("log.treeMappingAmbiguous", {
+          count: honesty.ambiguous.count,
+        })}`,
+      );
+      for (const leaf of honesty.ambiguous.shown) {
+        deps.output.appendLine(
+          `[bdd-pilot] ${deps.tr("log.treeMappingAmbiguousItem", {
+            label: truncateMappingLabel(leaf.label),
+            count: leaf.candidateCount,
+          })}`,
+        );
+      }
+      if (honesty.ambiguous.remaining > 0) {
+        deps.output.appendLine(
+          `[bdd-pilot] ${deps.tr("log.treeMappingAmbiguousMore", {
+            count: honesty.ambiguous.remaining,
+          })}`,
+        );
+      }
+    }
+    if (honesty.sharedCount > 0) {
+      deps.output.appendLine(
+        `[bdd-pilot] ${deps.tr("log.treeMappingShared", { count: honesty.sharedCount })}`,
       );
     }
   }

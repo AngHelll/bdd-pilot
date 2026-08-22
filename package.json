@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Gherkin cockpit for Reqnroll & SpecFlow in VS Code/Cursor: domain/@tag tree, STAGE hub, TRX↔scenario mapping — alongside Test Explorer, not a replacement. Use with BDD Guardian.",
-  "version": "1.33.0",
+  "version": "1.35.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",

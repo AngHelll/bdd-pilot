@@ -255,6 +255,16 @@ const EN = {
     "Tree mapping: {mapped}/{inScope} scenarios matched TRX ({unmapped} unmapped in run scope).",
   "log.treeMappingUnmappedItem": "  unmapped: {label}",
   "log.treeMappingUnmappedMore": "  … and {count} more unmapped",
+  "log.treeMappingUnused":
+    "TRX unused: {unused}/{trxTotal} rows did not map to a Gherkin leaf.",
+  "log.treeMappingUnusedItem": "  unused: {testName}",
+  "log.treeMappingUnusedMore": "  … and {count} more unused",
+  "log.treeMappingAmbiguous":
+    "TRX ambiguous: {count} Gherkin leaves matched more than one TRX row (first applied).",
+  "log.treeMappingAmbiguousItem": "  ambiguous: {label} ({count} rows)",
+  "log.treeMappingAmbiguousMore": "  … and {count} more ambiguous",
+  "log.treeMappingShared":
+    "TRX shared: {count} TRX rows applied to more than one Gherkin leaf.",
   "toast.noUnmappedScenarios": "No unmapped scenarios from the last scoped run.",
   "toast.unmappedOpenFailed": "Could not open the feature file for that scenario.",
   "quickPick.unmappedPlaceholder": "Unmapped scenarios (last scoped run)",
@@ -628,6 +638,16 @@ const ES: Record<keyof typeof EN, string> = {
     "Mapeo árbol: {mapped}/{inScope} escenarios coincidieron con TRX ({unmapped} sin mapear en el scope).",
   "log.treeMappingUnmappedItem": "  sin mapear: {label}",
   "log.treeMappingUnmappedMore": "  … y {count} sin mapear más",
+  "log.treeMappingUnused":
+    "TRX sin usar: {unused}/{trxTotal} filas no mapearon a una hoja Gherkin.",
+  "log.treeMappingUnusedItem": "  sin usar: {testName}",
+  "log.treeMappingUnusedMore": "  … y {count} sin usar más",
+  "log.treeMappingAmbiguous":
+    "TRX ambiguo: {count} hojas Gherkin coincidieron con más de una fila TRX (se aplicó la primera).",
+  "log.treeMappingAmbiguousItem": "  ambiguo: {label} ({count} filas)",
+  "log.treeMappingAmbiguousMore": "  … y {count} ambiguos más",
+  "log.treeMappingShared":
+    "TRX compartido: {count} filas TRX se aplicaron a más de una hoja Gherkin.",
   "toast.noUnmappedScenarios": "No hay escenarios sin mapear del último run con scope.",
   "toast.unmappedOpenFailed": "No se pudo abrir el .feature de ese escenario.",
   "quickPick.unmappedPlaceholder": "Escenarios sin mapear (último run con scope)",

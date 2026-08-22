@@ -1,4 +1,4 @@
-import { DomainGroup } from "../gherkin/model";
+import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../gherkin/model";
 import { collectOutcomeKeysForTargets, outlineRowKey, scenarioKey } from "../runner/runScope";
 import { RunTarget } from "../runner/filterBuilder";
 import { findOutlineExampleMatchInFeature, matchesScenarioInFeature } from "./scenarioMatch";
@@ -28,8 +28,28 @@ export interface UnmappedLeaf {
   label: string;
 }
 
+/** TRX row that was never the chosen match for any Gherkin leaf. */
+export interface UnusedTrxRow {
+  testName: string;
+  outcome: TestOutcome;
+}
+
+/** Gherkin leaf with 2+ TRX rows matching the same predicate (first still applied). */
+export interface AmbiguousMappedLeaf {
+  label: string;
+  candidateCount: number;
+  chosenTestName: string;
+}
+
 export interface TreeMappingReport extends TreeMappingStats {
   unmappedLeaves: UnmappedLeaf[];
+  /** Absent on skip-snapshot lite reports (≡ empty). */
+  unusedTrx?: UnusedTrxRow[];
+  ambiguousLeaves?: AmbiguousMappedLeaf[];
+  /** How many TRX indices were chosen by ≥2 Gherkin leaves. */
+  sharedChosenCount?: number;
+  /** `summary.results.length` of the applied run. */
+  trxTotal?: number;
 }
 
 export interface OutcomeStoreTrxWriter {
@@ -43,47 +63,130 @@ function isMappedOutcome(outcome: TestOutcome | undefined): boolean {
   return outcome === "passed" || outcome === "failed" || outcome === "skipped";
 }
 
-/** Applies TRX rows to the store; returns keys that received a TRX match. */
-export function applyTrxMatchesToStore(
+function leafLabel(featureName: string, scenarioName: string, outlineLabel?: string): string {
+  const base = `${featureName} · ${scenarioName}`;
+  return outlineLabel ? `${base} · ${outlineLabel}` : base;
+}
+
+function trxRowMatchesLeaf(
+  result: TestResult,
+  feature: FeatureInfo,
+  scenario: ScenarioInfo,
+  example?: OutlineExample,
+): boolean {
+  if (example) {
+    return Boolean(
+      findOutlineExampleMatchInFeature(result.testName, feature, scenario, [example]),
+    );
+  }
+  return matchesScenarioInFeature(result.testName, feature, scenario);
+}
+
+interface TrxApplyHonesty {
+  matchedKeys: Set<string>;
+  unusedTrx: UnusedTrxRow[];
+  ambiguousLeaves: AmbiguousMappedLeaf[];
+  sharedChosenCount: number;
+}
+
+/**
+ * Same first-match apply as today, plus unused / ambiguous / shared classification
+ * by **result index** (not testName).
+ */
+function applyTrxMatchesWithHonesty(
   store: OutcomeStoreTrxWriter,
   domains: DomainGroup[],
   summary: TrxMatchSummary,
-): Set<string> {
+): TrxApplyHonesty {
   const matchedKeys = new Set<string>();
+  const chosenCounts = new Array<number>(summary.results.length).fill(0);
+  const ambiguousLeaves: AmbiguousMappedLeaf[] = [];
+
+  const applyChosen = (
+    chosenIndex: number,
+    key: string,
+    label: string,
+    candidateCount: number,
+  ): void => {
+    const match = summary.results[chosenIndex];
+    store.set(key, match.outcome, match.durationMs, match.errorMessage);
+    store.clearSkipReason(key);
+    matchedKeys.add(key);
+    chosenCounts[chosenIndex] += 1;
+    if (candidateCount > 1) {
+      ambiguousLeaves.push({
+        label,
+        candidateCount,
+        chosenTestName: match.testName,
+      });
+    }
+  };
 
   for (const domain of domains) {
     for (const feature of domain.features) {
       for (const scenario of feature.scenarios) {
         if (scenario.examples && scenario.examples.length > 0) {
           for (const example of scenario.examples) {
-            const match = summary.results.find((r) =>
-              findOutlineExampleMatchInFeature(r.testName, feature, scenario, [example]),
-            );
-            if (!match) {
+            const candidates: number[] = [];
+            for (let i = 0; i < summary.results.length; i++) {
+              if (trxRowMatchesLeaf(summary.results[i], feature, scenario, example)) {
+                candidates.push(i);
+              }
+            }
+            if (candidates.length === 0) {
               continue;
             }
-            const key = outlineRowKey(feature, scenario, example.rowIndex);
-            store.set(key, match.outcome, match.durationMs, match.errorMessage);
-            store.clearSkipReason(key);
-            matchedKeys.add(key);
+            applyChosen(
+              candidates[0],
+              outlineRowKey(feature, scenario, example.rowIndex),
+              leafLabel(feature.name, scenario.name, example.label),
+              candidates.length,
+            );
           }
         } else {
-          const match = summary.results.find((r) =>
-            matchesScenarioInFeature(r.testName, feature, scenario),
-          );
-          if (!match) {
+          const candidates: number[] = [];
+          for (let i = 0; i < summary.results.length; i++) {
+            if (trxRowMatchesLeaf(summary.results[i], feature, scenario)) {
+              candidates.push(i);
+            }
+          }
+          if (candidates.length === 0) {
             continue;
           }
-          const key = scenarioKey(feature, scenario);
-          store.set(key, match.outcome, match.durationMs, match.errorMessage);
-          store.clearSkipReason(key);
-          matchedKeys.add(key);
+          applyChosen(
+            candidates[0],
+            scenarioKey(feature, scenario),
+            leafLabel(feature.name, scenario.name),
+            candidates.length,
+          );
         }
       }
     }
   }
 
-  return matchedKeys;
+  const unusedTrx: UnusedTrxRow[] = [];
+  for (let i = 0; i < summary.results.length; i++) {
+    if (chosenCounts[i] === 0) {
+      const row = summary.results[i];
+      unusedTrx.push({ testName: row.testName, outcome: row.outcome });
+    }
+  }
+
+  return {
+    matchedKeys,
+    unusedTrx,
+    ambiguousLeaves,
+    sharedChosenCount: chosenCounts.filter((count) => count >= 2).length,
+  };
+}
+
+/** Applies TRX rows to the store; returns keys that received a TRX match. */
+export function applyTrxMatchesToStore(
+  store: OutcomeStoreTrxWriter,
+  domains: DomainGroup[],
+  summary: TrxMatchSummary,
+): Set<string> {
+  return applyTrxMatchesWithHonesty(store, domains, summary).matchedKeys;
 }
 
 export function computeTreeMappingStats(
@@ -98,11 +201,6 @@ export function computeTreeMappingStats(
   }
   const inScope = scopeKeys.size;
   return { inScope, mapped, unmapped: inScope - mapped };
-}
-
-function leafLabel(featureName: string, scenarioName: string, outlineLabel?: string): string {
-  const base = `${featureName} · ${scenarioName}`;
-  return outlineLabel ? `${base} · ${outlineLabel}` : base;
 }
 
 /** Unmapped scoped leaves in domain/feature/scenario order (stable). */
@@ -195,7 +293,13 @@ export function applyScopedTrxResults(
     return undefined;
   }
 
-  const matchedKeys = applyTrxMatchesToStore(store, domains, summary);
-  finalizeScopedRunOutcomes(store, scope, matchedKeys, !!options?.canceled);
-  return computeTreeMappingReport(scope, store, domains);
+  const honesty = applyTrxMatchesWithHonesty(store, domains, summary);
+  finalizeScopedRunOutcomes(store, scope, honesty.matchedKeys, !!options?.canceled);
+  return {
+    ...computeTreeMappingReport(scope, store, domains),
+    unusedTrx: honesty.unusedTrx,
+    ambiguousLeaves: honesty.ambiguousLeaves,
+    sharedChosenCount: honesty.sharedChosenCount,
+    trxTotal: summary.results.length,
+  };
 }
