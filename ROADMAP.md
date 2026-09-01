@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.36.0** · **Marketplace: v1.36.0** · **Next: watch (CF-docs optional)** · **536 unit tests**
+> **Current release: v1.36.1** · **Marketplace: v1.36.1** · **Next: watch (CF-docs optional)** · **541 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.36.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.36.1** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3 closed · CF-docs optional) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.36.1** | Scope target resolution — shared `resolveFeatureInDomains` + `path.normalize` · spec `scope-target-resolution-v1.36.1.md` |
 | **1.36.0** | Cockpit fidelity CF3 — pre-run dry filter on stg/prod confirm · spec `cockpit-fidelity-v1.33.md` |
 | **1.35.0** | Mapping honesty 2-way — TRX unused + ambiguous in scoped Output · spec `mapping-honesty-2way-v1.35.md` |
 | **1.33.0** | Cockpit fidelity CF1 — Copy effective `dotnet` command · spec `cockpit-fidelity-v1.33.md` |
@@ -210,6 +211,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing yet._
+
+### v1.36.1 — Scope target resolution ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Core** | `resolveFeatureInDomains` / `resolveScenarioInDomains` — canonical `path.normalize`; run scope clear + binding gate share resolver |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Published v1.36.1 |
+| **Tests** | 541 unit tests |
 
 ### v1.36.0 — Cockpit fidelity CF3 (pre-run dry filter) ✅ shipped
 
@@ -882,4 +892,4 @@ src/
 
 ---
 
-*Last updated: v1.36.0 shipped — Cockpit fidelity CF3 (pre-run dry filter).*
+*Last updated: v1.36.1 shipped — Scope target resolution (shared path normalize).*

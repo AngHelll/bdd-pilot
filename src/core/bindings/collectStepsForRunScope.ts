@@ -1,6 +1,9 @@
 import * as fs from "fs";
-import * as path from "path";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "../gherkin/model";
+import {
+  resolveFeatureInDomains,
+  resolveScenarioInDomains,
+} from "../gherkin/resolveRunTarget";
 import { parseFeatureStepLocations, StepLocation } from "../gherkin/stepLocations";
 import { tagsMatch } from "../gherkin/groupByTag";
 import { effectiveScenarioTags } from "../gherkin/tags";
@@ -69,43 +72,6 @@ function locationsForFeature(
   return out;
 }
 
-function resolveFeature(stub: FeatureInfo, domains: DomainGroup[]): FeatureInfo | undefined {
-  for (const domain of domains) {
-    for (const feature of domain.features) {
-      if (path.normalize(feature.filePath) === path.normalize(stub.filePath)) {
-        return feature;
-      }
-    }
-  }
-  for (const domain of domains) {
-    for (const feature of domain.features) {
-      if (feature.name === stub.name) {
-        return feature;
-      }
-    }
-  }
-  return undefined;
-}
-
-function resolveScenario(
-  stubFeature: FeatureInfo,
-  stubScenario: ScenarioInfo,
-  domains: DomainGroup[],
-): { feature: FeatureInfo; scenario: ScenarioInfo } | undefined {
-  const feature = resolveFeature(stubFeature, domains);
-  if (!feature) {
-    return undefined;
-  }
-  const scenario =
-    feature.scenarios.find(
-      (s) => s.line === stubScenario.line && s.name === stubScenario.name,
-    ) ?? feature.scenarios.find((s) => s.name === stubScenario.name);
-  if (!scenario) {
-    return undefined;
-  }
-  return { feature, scenario };
-}
-
 function appendLocationsForTarget(
   target: RunTarget,
   domains: DomainGroup[],
@@ -120,14 +86,14 @@ function appendLocationsForTarget(
       }
       return;
     case "feature": {
-      const feature = resolveFeature(target.feature, domains);
+      const feature = resolveFeatureInDomains(target.feature, domains);
       if (feature) {
         bucket.push(...locationsForFeature(feature, () => true));
       }
       return;
     }
     case "scenario": {
-      const resolved = resolveScenario(target.feature, target.scenario, domains);
+      const resolved = resolveScenarioInDomains(target.feature, target.scenario, domains);
       if (resolved) {
         bucket.push(
           ...locationsForFeature(
@@ -139,7 +105,7 @@ function appendLocationsForTarget(
       return;
     }
     case "outlineRow": {
-      const resolved = resolveScenario(target.feature, target.scenario, domains);
+      const resolved = resolveScenarioInDomains(target.feature, target.scenario, domains);
       if (resolved) {
         bucket.push(
           ...locationsForFeature(

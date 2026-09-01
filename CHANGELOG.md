@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.36.1] — 2026-09-01
+
+### Fixed
+- **Scope target resolution** — shared `resolveFeatureInDomains` / `resolveScenarioInDomains` with canonical `path.normalize` so run scope clear and binding gate resolve the same feature/scenario (fixes latent Windows / mixed-path mismatch)
+
 ## [1.36.0] — 2026-09-01
 
 ### Added

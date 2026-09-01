@@ -1,6 +1,10 @@
 import { discoverDomains } from "../gherkin/discovery";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "../gherkin/model";
 import { tagsMatch } from "../gherkin/groupByTag";
+import {
+  resolveFeatureInDomains,
+  resolveScenarioInDomains,
+} from "../gherkin/resolveRunTarget";
 import { effectiveScenarioTags } from "../gherkin/tags";
 import { RunTarget } from "./filterBuilder";
 
@@ -53,21 +57,21 @@ function appendKeysForTarget(target: RunTarget, domains: DomainGroup[], keys: Se
       }
       return;
     case "feature": {
-      const feature = resolveFeature(target.feature, domains);
+      const feature = resolveFeatureInDomains(target.feature, domains);
       if (feature) {
         appendFeatureKeys(feature, keys);
       }
       return;
     }
     case "scenario": {
-      const resolved = resolveScenario(target.feature, target.scenario, domains);
+      const resolved = resolveScenarioInDomains(target.feature, target.scenario, domains);
       if (resolved) {
         appendScenarioKeys(resolved.feature, resolved.scenario, keys);
       }
       return;
     }
     case "outlineRow": {
-      const resolved = resolveScenario(target.feature, target.scenario, domains);
+      const resolved = resolveScenarioInDomains(target.feature, target.scenario, domains);
       if (resolved) {
         keys.add(outlineRowKey(resolved.feature, resolved.scenario, target.example.rowIndex));
       }
@@ -103,39 +107,3 @@ function appendScenarioKeys(feature: FeatureInfo, scenario: ScenarioInfo, keys: 
   }
 }
 
-function resolveFeature(stub: FeatureInfo, domains: DomainGroup[]): FeatureInfo | undefined {
-  for (const domain of domains) {
-    for (const feature of domain.features) {
-      if (feature.filePath === stub.filePath) {
-        return feature;
-      }
-    }
-  }
-  for (const domain of domains) {
-    for (const feature of domain.features) {
-      if (feature.name === stub.name) {
-        return feature;
-      }
-    }
-  }
-  return undefined;
-}
-
-function resolveScenario(
-  stubFeature: FeatureInfo,
-  stubScenario: ScenarioInfo,
-  domains: DomainGroup[],
-): { feature: FeatureInfo; scenario: ScenarioInfo } | undefined {
-  const feature = resolveFeature(stubFeature, domains);
-  if (!feature) {
-    return undefined;
-  }
-  const scenario =
-    feature.scenarios.find(
-      (s) => s.line === stubScenario.line && s.name === stubScenario.name,
-    ) ?? feature.scenarios.find((s) => s.name === stubScenario.name);
-  if (!scenario) {
-    return undefined;
-  }
-  return { feature, scenario };
-}

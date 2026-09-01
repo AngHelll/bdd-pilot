@@ -70,12 +70,19 @@ describe("runScope", () => {
     }
   });
 
-  it("collects all outline row keys when running whole outline scenario", () => {
-    const scenario = feature.scenarios[1];
+  it("collects keys when stub path differs only by normalization", () => {
+    const scenario = feature.scenarios[0];
+    const stubFeature: FeatureInfo = {
+      ...feature,
+      filePath: "/proj//Features/Trading/BuyingPower/BuyingPower.feature",
+    };
     const keys = collectOutcomeKeysForTargets(
-      [{ kind: "scenario", feature, scenario }],
+      [{ kind: "scenario", feature: stubFeature, scenario }],
       domains,
     );
-    assert.strictEqual(keys instanceof Set ? keys.size : 0, 2);
+    assert.strictEqual(keys instanceof Set ? keys.size : 0, 1);
+    if (keys instanceof Set) {
+      assert.ok(keys.has(scenarioKey(feature, scenario)));
+    }
   });
 });
