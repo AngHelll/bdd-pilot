@@ -187,7 +187,8 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
   tokens, JWTs, connection strings, AWS access key ids, PEM private keys, and
   similar patterns are redacted).
 - Running against `stg`/`prod` requires an **explicit modal confirmation**
-  (configurable via `bddPilot.requireConfirmationForStages`).
+  (configurable via `bddPilot.requireConfirmationForStages`). The dialog
+  shows estimated test count and the `dotnet test --filter` that will run.
 - **Production opt-in:** `bddPilot.security.allowProductionRuns` defaults to
   **false** — STAGE=`prod` is blocked until you enable the setting; with it on,
   the production confirmation modal still applies.

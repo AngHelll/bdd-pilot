@@ -138,6 +138,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       debug: opts?.debug,
       runKind: sessionRunKind,
       locale,
+      totalExpected,
       bindingGate: readBindingGate(),
       domains: deps.treeProvider.getDomains(),
       analyzeOptions: readAnalyzeOptions(locale),

@@ -210,6 +210,7 @@ const EN = {
     "You are about to run tests against the '{stage}' environment. This may use staging data or external services. Continue?",
   "envGuard.prodBlocked":
     "Production runs are blocked. Enable Setting «BDD Pilot › Security: Allow Production Runs» (bddPilot.security.allowProductionRuns), then confirm the production warning.",
+  "envGuard.dryCount": "{count} tests (estimated)",
 
   "action.run": "Run",
   "action.debug": "Debug",
@@ -283,6 +284,7 @@ const EN = {
   "log.sectionDiagnostics": "[bdd-pilot] ── Diagnostics ──",
   "log.runContext": "[bdd-pilot] {stage} · {mode} · {scope} · {time}",
   "log.runContextAll": "all",
+  "log.preRunDry": "[bdd-pilot] {summary}",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnostics:",
   "diagnostic.output.summaryLine":
@@ -593,6 +595,7 @@ const ES: Record<keyof typeof EN, string> = {
     "Vas a ejecutar tests contra el entorno '{stage}'. Puede usar datos de staging o servicios externos. ¿Continuar?",
   "envGuard.prodBlocked":
     "Los runs en producción están bloqueados. Activa el setting «BDD Pilot › Security: Allow Production Runs» (bddPilot.security.allowProductionRuns) y luego confirma el aviso de producción.",
+  "envGuard.dryCount": "{count} tests (estimados)",
 
   "action.run": "Ejecutar",
   "action.debug": "Depurar",
@@ -666,6 +669,7 @@ const ES: Record<keyof typeof EN, string> = {
   "log.sectionDiagnostics": "[bdd-pilot] ── Diagnósticos ──",
   "log.runContext": "[bdd-pilot] {stage} · {mode} · {scope} · {time}",
   "log.runContextAll": "todo",
+  "log.preRunDry": "[bdd-pilot] {summary}",
 
   "diagnostic.output.header": "\n[bdd-pilot] Diagnósticos:",
   "diagnostic.output.summaryLine":

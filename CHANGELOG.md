@@ -8,6 +8,11 @@ Versioning: [Semver](https://semver.org/).
 
 _Nothing yet._
 
+## [1.36.0] — 2026-09-01
+
+### Added
+- **Pre-run dry filter** (Cockpit fidelity CF3) — stg/prod confirmation shows estimated test count and the `dotnet test --filter` (truncated); the same summary is logged when the run starts. `dev`/`test` still skip the confirm dialog.
+
 ## [1.35.0] — 2026-08-21
 
 ### Added

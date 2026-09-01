@@ -27,6 +27,7 @@ describe("runPreflight", () => {
 
   it("requires stage confirmation only for protected stages", () => {
     assert.strictEqual(evaluateRun("dev", ["stg", "prod"]).requiresConfirmation, false);
+    assert.strictEqual(evaluateRun("test", ["stg", "prod"]).requiresConfirmation, false);
     assert.strictEqual(
       evaluateRun("prod", ["stg", "prod"], { allowProductionRuns: true }).requiresConfirmation,
       true,

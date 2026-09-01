@@ -22,6 +22,7 @@ import {
   resolveTrxPath,
 } from "../core/runner/trxArgs";
 import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filterBuilder";
+import { formatPreRunDrySummary } from "../core/runner/preRunDrySummary";
 import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
 import { buildArgs, runDotnetTest, RunRequest as DotnetRunRequest } from "../core/runner/dotnetTest";
 import {
@@ -237,11 +238,7 @@ export class RunService {
   }
 
   async runExecution(req: RunRequest): Promise<RunServiceResult> {
-    const filter =
-      req.rawFilter?.trim() ||
-      (req.targets.length === 0 || req.targets.some((t) => t.kind === "all")
-        ? undefined
-        : buildCombinedFilter(req.targets, req.settings.filterMapping));
+    const filter = this.resolveDotnetFilter(req);
 
     if (req.debug) {
       return this.runDebug(req, filter);
@@ -394,6 +391,10 @@ export class RunService {
     });
     const resolution = resolveRunSettingsPath(workspaceRoot, effective.runSettingsPath);
     const preCommandMessages: string[] = [];
+    const drySummary = this.formatReqDrySummary(req, filter);
+    if (drySummary) {
+      preCommandMessages.push(t(req.locale, "log.preRunDry", { summary: drySummary }));
+    }
     if (
       stageRunFlagsDifferFromGlobal(
         {
@@ -811,12 +812,34 @@ export class RunService {
     const primaryAction = req.debug
       ? t(req.locale, "action.debug")
       : t(req.locale, "action.run");
+    const detail = this.formatReqDrySummary(req, this.resolveDotnetFilter(req));
     const choice = await vscode.window.showWarningMessage(
       message,
-      { modal: true },
+      detail ? { modal: true, detail } : { modal: true },
       primaryAction,
     );
     return choice === primaryAction ? "proceed" : "declined";
+  }
+
+  private resolveDotnetFilter(req: RunRequest): string | undefined {
+    return (
+      req.rawFilter?.trim() ||
+      (req.targets.length === 0 || req.targets.some((t) => t.kind === "all")
+        ? undefined
+        : buildCombinedFilter(req.targets, req.settings.filterMapping))
+    );
+  }
+
+  private formatReqDrySummary(req: RunRequest, filter: string | undefined): string | undefined {
+    return formatPreRunDrySummary(req.locale, {
+      estimatedCount: req.totalExpected,
+      filter,
+      scopeLabel: req.rawFilter?.trim()
+        ? undefined
+        : formatRunTargetScopeLabels(
+            req.targets.length > 0 ? req.targets : [{ kind: "all" }],
+          ).join(" | "),
+    });
   }
 
   private async checkBindingGate(req: RunRequest): Promise<boolean> {
