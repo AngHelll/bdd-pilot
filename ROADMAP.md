@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.41.0** · **Marketplace: v1.39.0** · **Next: watch (CF2 solo backlog)** · **581 unit tests**
+> **Current release: v1.41.0** · **Marketplace: v1.41.0** · **Next: watch (CF2 solo backlog)** · **581 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.39.0** (local **v1.41.0** Matching observability D3) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.41.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -219,15 +219,16 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.41.0 — Matching observability D3 (layout/grouping) ✅ ready to verify
+### v1.41.0 — Matching observability D3 (layout/grouping) ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Debug Pack** | `## Layout / grouping` — domain rule, groupBy, path/subpath, gaps-by-domain, layout hints |
 | **API** | Sin cambio |
+| **Marketplace** | Published v1.41.0 |
 | **Tests** | 581 unit tests |
 
-### v1.40.0 — Matching observability ✅ ready to verify
+### v1.40.0 — Matching observability ✅ shipped (included in Marketplace via 1.41.0)
 
 | Area | Change |
 |------|--------|
@@ -963,4 +964,4 @@ src/
 
 ---
 
-*Last updated: v1.41.0 Matching observability D3 ready to verify (Marketplace still v1.39.0; watch CF2 still backlog).*
+*Last updated: v1.41.0 Matching observability shipped Marketplace (watch CF2 still backlog).*
