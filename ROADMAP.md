@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.42.0** · **Marketplace: v1.41.0** · **Next: watch (CF2 solo backlog)** · **584 unit tests**
+> **Current release: v1.42.0** · **Marketplace: v1.42.0** · **Next: watch (CF2 solo backlog)** · **584 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.41.0** (local **v1.42.0** Outline match fidelity) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.42.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -226,6 +226,7 @@ _Nothing queued._
 |------|--------|
 | **Core** | `matchesOutlineExampleRow` + apply path: Theory/celda por fila Outline sin short-circuit `length===1` |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.42.0 |
 | **Tests** | 584 unit tests |
 
 ### v1.41.0 — Matching observability D3 (layout/grouping) ✅ shipped
@@ -973,4 +974,4 @@ src/
 
 ---
 
-*Last updated: v1.42.0 Outline match fidelity tagged (Marketplace still v1.41.0; watch CF2 still backlog).*
+*Last updated: v1.42.0 Outline match fidelity shipped Marketplace (watch CF2 still backlog).*
