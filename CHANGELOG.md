@@ -6,6 +6,17 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.41.0] — 2026-09-11
+
+### Added
+- **Matching Debug Pack — layout/grouping** — pack includes `## Layout / grouping` with Pilot domain rule, `groupBy`, relative feature paths, subpath segments, gaps-by-domain aggregate, and local layout hints (`layout_clustered` / `layout_general_bucket` / `layout_deep_subpath`)
+
+## [1.40.0] — 2026-09-11
+
+### Added
+- **Matching Debug Pack** — palette **Copy Matching Debug Pack** copies sanitized markdown of last-session mapping gaps (unmapped / unused TRX / ambiguous / shared) plus candidate TRX names when available; clipboard-only, no telemetry
+- **Matching health** — after a run with mapping gaps, Output adds one `Matching health: …` line with local cause hints (`likely_not_ours_or_mixed_sln`, `review_matcher_or_outline`, `missing_trx_or_filter`)
+
 ## [1.39.0] — 2026-09-11
 
 ### Added

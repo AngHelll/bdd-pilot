@@ -6,6 +6,9 @@ export const UNMAPPED_OUTPUT_CAP = 25;
 /** Max chars for TRX testName / labels in Output honesty lines. */
 export const MAPPING_LABEL_MAX_CHARS = 120;
 
+/** Max TRX candidate testNames listed per leaf in the Matching Debug Pack. */
+export const MATCHING_DEBUG_CANDIDATE_CAP = 5;
+
 export function selectCappedForOutput<T>(
   items: readonly T[],
   cap: number = UNMAPPED_OUTPUT_CAP,

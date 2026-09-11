@@ -135,6 +135,9 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   The same Output also lists **TRX rows unused** by any Gherkin leaf (capped) and **ambiguous**
   matches (first TRX row applied) — including after **Run All** — mapping honesty, not a generic unit-test runner.
   When tree (mapped) totals differ from TRX, the summary shows both.
+  Use **BDD Pilot: Copy Matching Debug Pack** to copy a sanitized cross-layer snapshot for support
+  (clipboard only; no remote telemetry), including **layout/grouping** (Pilot domain, feature path,
+  subpath, `groupBy`). When gaps exist, Output also prints a one-line **Matching health** hint.
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
@@ -186,7 +189,8 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
   environment **in memory only** (never logged or persisted).
 - All output is **sanitized** before being written to the channel (passwords,
   tokens, JWTs, connection strings, AWS access key ids, PEM private keys, and
-  similar patterns are redacted).
+  similar patterns are redacted). **Copy Matching Debug Pack** is clipboard-only
+  (same sanitize pass; no remote telemetry) — still review before sharing.
 - Running against `stg`/`prod` requires an **explicit modal confirmation**
   (configurable via `bddPilot.requireConfirmationForStages`). The dialog
   shows estimated test count and the `dotnet test --filter` that will run.

@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.39.0** · **Marketplace: v1.39.0** · **Next: watch (CF2 solo backlog)** · **571 unit tests**
+> **Current release: v1.41.0** · **Marketplace: v1.39.0** · **Next: watch (CF2 solo backlog)** · **581 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.39.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.39.0** (local **v1.41.0** Matching observability D3) |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.41.0** | Matching observability D3 — layout/grouping in Debug Pack · spec `matching-observability-v1.40.md` |
+| **1.40.0** | Matching observability — Debug Pack + health Output · spec `matching-observability-v1.40.md` |
 | **1.39.0** | Tree container health tint — watch band on domain/feature/tag icons · spec `tree-container-health-v1.39.md` |
 | **1.38.1** | CF-docs — CI parity recipe (Stage-faithful) · spec `cockpit-fidelity-cf-docs-v1.38.1.md` |
 | **1.38.0** | Mapped vs TRX dual counts + Run All unused Output · spec `trx-reporting-honesty-v1.36.md` slice C |
@@ -216,6 +218,23 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.41.0 — Matching observability D3 (layout/grouping) ✅ ready to verify
+
+| Area | Change |
+|------|--------|
+| **Debug Pack** | `## Layout / grouping` — domain rule, groupBy, path/subpath, gaps-by-domain, layout hints |
+| **API** | Sin cambio |
+| **Tests** | 581 unit tests |
+
+### v1.40.0 — Matching observability ✅ ready to verify
+
+| Area | Change |
+|------|--------|
+| **Debug Pack** | Palette `bddPilot.copyMatchingDebugPack` — sanitized markdown of mapping gaps + TRX candidates |
+| **Health** | One Output line `Matching health: …` with local hints when gaps exist |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Tests** | 578 unit tests |
 
 ### v1.39.0 — Tree container health tint ✅ shipped
 
@@ -944,4 +963,4 @@ src/
 
 ---
 
-*Last updated: v1.39.0 shipped — tree container health tint (Marketplace v1.39.0; watch CF2 still backlog).*
+*Last updated: v1.41.0 Matching observability D3 ready to verify (Marketplace still v1.39.0; watch CF2 still backlog).*

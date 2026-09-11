@@ -11,6 +11,7 @@ import {
   selectUnmappedForOutput,
   truncateMappingLabel,
 } from "../core/results/mappingReportFormat";
+import { formatMatchingHealthBuckets } from "../core/results/matchingDebugPack";
 import { clearLastMappingReport, setLastMappingReport } from "../core/results/lastMappingReport";
 import {
   applySkipReasonSnapshot,
@@ -145,6 +146,12 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
     if (honesty.sharedCount > 0) {
       deps.output.appendLine(
         `[bdd-pilot] ${deps.tr("log.treeMappingShared", { count: honesty.sharedCount })}`,
+      );
+    }
+    const healthBuckets = formatMatchingHealthBuckets(report);
+    if (healthBuckets) {
+      deps.output.appendLine(
+        `[bdd-pilot] ${deps.tr("log.matchingHealth", { buckets: healthBuckets })}`,
       );
     }
   }

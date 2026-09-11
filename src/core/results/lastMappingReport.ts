@@ -1,4 +1,5 @@
 import { TreeMappingReport } from "./trxTreeMapping";
+import { clearMatchingDebugSource } from "./matchingDebugSession";
 
 /** In-memory last scoped mapping report for the session (not persisted). */
 let lastReport: TreeMappingReport | undefined;
@@ -14,4 +15,5 @@ export function getLastMappingReport(): TreeMappingReport | undefined {
 /** Clears session report (tests / run-all). */
 export function clearLastMappingReport(): void {
   lastReport = undefined;
+  clearMatchingDebugSource();
 }

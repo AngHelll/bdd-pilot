@@ -71,6 +71,7 @@ export interface RegisterCommandsDeps {
   openStatusBarHub: () => Promise<void>;
   copyFailureContextForAi: () => Promise<void>;
   copyEffectiveDotnetCommand: () => Promise<void>;
+  copyMatchingDebugPack: () => Promise<void>;
   handleDebugSessionEnded: () => void;
   cancelScheduledEnrich: () => void;
 }
@@ -160,6 +161,10 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
 
     vscode.commands.registerCommand("bddPilot.copyEffectiveDotnetCommand", () => {
       void deps.copyEffectiveDotnetCommand();
+    }),
+
+    vscode.commands.registerCommand("bddPilot.copyMatchingDebugPack", () => {
+      void deps.copyMatchingDebugPack();
     }),
 
     vscode.commands.registerCommand("bddPilot.showDashboard", () => {

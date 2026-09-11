@@ -1,6 +1,8 @@
 import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../gherkin/model";
 import { collectOutcomeKeysForTargets, outlineRowKey, scenarioKey } from "../runner/runScope";
 import { RunTarget } from "../runner/filterBuilder";
+import { MATCHING_DEBUG_CANDIDATE_CAP } from "./mappingReportFormat";
+import { setMatchingDebugSource } from "./matchingDebugSession";
 import { findOutlineExampleMatchInFeature, matchesScenarioInFeature } from "./scenarioMatch";
 import { SkipReason } from "./skipReason";
 import { TestOutcome, TestResult } from "./trxParser";
@@ -87,6 +89,8 @@ interface TrxApplyHonesty {
   unusedTrx: UnusedTrxRow[];
   ambiguousLeaves: AmbiguousMappedLeaf[];
   sharedChosenCount: number;
+  /** Cap-N candidate testNames per leaf that matched ≥1 TRX row (debug pack). */
+  candidatesByLabel: { label: string; candidateTestNames: string[]; chosenTestName?: string }[];
 }
 
 /**
@@ -101,18 +105,27 @@ function applyTrxMatchesWithHonesty(
   const matchedKeys = new Set<string>();
   const chosenCounts = new Array<number>(summary.results.length).fill(0);
   const ambiguousLeaves: AmbiguousMappedLeaf[] = [];
+  const candidatesByLabel: TrxApplyHonesty["candidatesByLabel"] = [];
 
   const applyChosen = (
     chosenIndex: number,
     key: string,
     label: string,
-    candidateCount: number,
+    candidateIndices: number[],
   ): void => {
     const match = summary.results[chosenIndex];
     store.set(key, match.outcome, match.durationMs, match.errorMessage);
     store.clearSkipReason(key);
     matchedKeys.add(key);
     chosenCounts[chosenIndex] += 1;
+    const candidateCount = candidateIndices.length;
+    candidatesByLabel.push({
+      label,
+      candidateTestNames: candidateIndices
+        .slice(0, MATCHING_DEBUG_CANDIDATE_CAP)
+        .map((i) => summary.results[i].testName),
+      chosenTestName: match.testName,
+    });
     if (candidateCount > 1) {
       ambiguousLeaves.push({
         label,
@@ -140,7 +153,7 @@ function applyTrxMatchesWithHonesty(
               candidates[0],
               outlineRowKey(feature, scenario, example.rowIndex),
               leafLabel(feature.name, scenario.name, example.label),
-              candidates.length,
+              candidates,
             );
           }
         } else {
@@ -157,7 +170,7 @@ function applyTrxMatchesWithHonesty(
             candidates[0],
             scenarioKey(feature, scenario),
             leafLabel(feature.name, scenario.name),
-            candidates.length,
+            candidates,
           );
         }
       }
@@ -177,6 +190,7 @@ function applyTrxMatchesWithHonesty(
     unusedTrx,
     ambiguousLeaves,
     sharedChosenCount: chosenCounts.filter((count) => count >= 2).length,
+    candidatesByLabel,
   };
 }
 
@@ -294,6 +308,7 @@ export function applyScopedTrxResults(
   }
 
   const honesty = applyTrxMatchesWithHonesty(store, domains, summary);
+  setMatchingDebugSource({ candidatesByLabel: honesty.candidatesByLabel });
   if (scope === "all") {
     return {
       inScope: 0,

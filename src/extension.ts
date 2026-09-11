@@ -41,7 +41,7 @@ import {
   readStoredMode,
   readStoredStage,
 } from "./activation/extensionSettings";
-import { createCopyFailureContextForAi, createCopyEffectiveDotnetCommand, createPostRunHandlers } from "./activation/postRun";
+import { createCopyFailureContextForAi, createCopyEffectiveDotnetCommand, createCopyMatchingDebugPack, createPostRunHandlers } from "./activation/postRun";
 import { createProjectHub } from "./activation/projectHub";
 import { registerExtensionCommands } from "./activation/registerCommands";
 import { createRehydrateHandlers } from "./activation/rehydrate";
@@ -355,6 +355,14 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     tr,
   });
 
+  const copyMatchingDebugPack = createCopyMatchingDebugPack({
+    context,
+    runService,
+    tr,
+    getDomains: () => treeProvider.getDomains(),
+    getProjectContext: () => projectHub.getProjectContext(),
+  });
+
   const postRun = createPostRunHandlers({
     context,
     output,
@@ -531,6 +539,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       openStatusBarHub: () => projectHub.openStatusBarHub(),
       copyFailureContextForAi,
       copyEffectiveDotnetCommand,
+      copyMatchingDebugPack,
       handleDebugSessionEnded,
       cancelScheduledEnrich,
     }),

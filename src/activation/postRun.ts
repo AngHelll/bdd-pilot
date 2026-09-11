@@ -6,6 +6,14 @@ import { buildAiFailureContext } from "../core/diagnostics/aiFailureContext";
 import { tryBuildRehydratedFailureSnapshot } from "../core/diagnostics/failureSnapshotFromArtifacts";
 import { formatDiagnosticsOutputLines } from "../core/diagnostics/diagnosticsOutput";
 import {
+  buildMatchingDebugPack,
+  collectMatchingDebugLayoutLeaves,
+} from "../core/results/matchingDebugPack";
+import { getLastMappingReport } from "../core/results/lastMappingReport";
+import { getMatchingDebugSource } from "../core/results/matchingDebugSession";
+import { DomainGroup } from "../core/gherkin/model";
+import { readTreeGroupBy } from "../providers/treeSettings";
+import {
   buildPostRunFeedback,
   PostRunFeedbackRequest,
   PostRunFeedbackViewModel,
@@ -14,10 +22,9 @@ import { formatOutputSectionHeader } from "../core/feedback/dotnetOutputFilter";
 import { MessageKey } from "../core/i18n";
 import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
 import { TrxSummary } from "../core/results/trxParser";
-import { buildRerunFailedFilter } from "../providers/testController";
+import { buildRerunFailedFilter, ProjectContext } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
 import { RunService } from "../providers/runService";
-import { ProjectContext } from "../providers/testController";
 import {
   readAiSettings,
   readAnalyzeOptions,
@@ -246,6 +253,54 @@ export function createCopyEffectiveDotnetCommand(deps: {
     }
     await vscode.env.clipboard.writeText(snapshot.commandLine);
     void vscode.window.showInformationMessage(deps.tr("toast.effectiveCommandCopied"));
+  };
+}
+
+/** Copies Matching Debug Pack from last session mapping report (D1 + D3 layout). */
+export function createCopyMatchingDebugPack(deps: {
+  context: vscode.ExtensionContext;
+  runService: RunService;
+  tr: (key: MessageKey, params?: Record<string, string | number>) => string;
+  getDomains: () => DomainGroup[];
+  getProjectContext: () => ProjectContext | undefined;
+}): () => Promise<void> {
+  return async (): Promise<void> => {
+    const report = getLastMappingReport();
+    if (!report) {
+      void vscode.window.showInformationMessage(deps.tr("toast.noMatchingReport"));
+      return;
+    }
+
+    const session = deps.runService.getLastRunSnapshot();
+    const lastHistory = deps.runService.getHistory().at(-1);
+    const debugSource = getMatchingDebugSource();
+    const projectCtx = deps.getProjectContext();
+    const projectDir = session?.projectDir ?? projectCtx?.projectDir ?? "";
+    const layoutLeaves = collectMatchingDebugLayoutLeaves(report, deps.getDomains());
+    const markdown = buildMatchingDebugPack({
+      report,
+      meta: {
+        stage: session?.stage ?? lastHistory?.stage ?? "unknown",
+        mode: session?.mode ?? lastHistory?.mode ?? "unknown",
+        filter: session?.filter ?? lastHistory?.filter,
+        testTarget: session?.testTarget,
+        extensionVersion: deps.context.extension.packageJSON.version as string,
+      },
+      candidatesByLabel: debugSource?.candidatesByLabel,
+      layout: {
+        projectDir: projectDir || ".",
+        groupBy: readTreeGroupBy(),
+        leaves: layoutLeaves,
+      },
+    });
+
+    if (!markdown) {
+      void vscode.window.showInformationMessage(deps.tr("toast.matchingDebugNoGaps"));
+      return;
+    }
+
+    await vscode.env.clipboard.writeText(markdown);
+    void vscode.window.showInformationMessage(deps.tr("toast.matchingDebugCopied"));
   };
 }
 

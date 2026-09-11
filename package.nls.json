@@ -33,6 +33,7 @@
   "bddPilot.command.manageProfiles.title": "BDD Pilot: Manage Execution Profiles",
   "bddPilot.command.copyFailureContextForAi.title": "BDD Pilot: Copy Failure Context for AI",
   "bddPilot.command.copyEffectiveDotnetCommand.title": "BDD Pilot: Copy Effective Dotnet Command",
+  "bddPilot.command.copyMatchingDebugPack.title": "BDD Pilot: Copy Matching Debug Pack",
   "bddPilot.configuration.tree.displayMode.description": "BDD tree density: detailed (default, roll-ups on folders) or compact (less duplicate roll-ups).",
   "bddPilot.configuration.tree.displayMode.enum.compact": "Less duplicate roll-ups: global summary row, structural folder labels, outcomes on leaves only.",
   "bddPilot.configuration.tree.displayMode.enum.detailed": "Default layout: roll-up on every folder and tinted container icons (v1.3 behavior).",

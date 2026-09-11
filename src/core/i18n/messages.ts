@@ -172,6 +172,10 @@ const EN = {
   "toast.noFailureContext": "No failed run to copy. Run tests first and wait for failures.",
   "toast.failureContextCopied": "Failure context copied to clipboard.",
   "toast.noEffectiveCommand": "No recent run to copy. Run or debug tests with BDD Pilot first.",
+  "toast.noMatchingReport": "No mapping report in this session. Run tests with BDD Pilot first.",
+  "toast.matchingDebugNoGaps": "Last mapping report has no gaps (unmapped / unused / ambiguous / shared).",
+  "toast.matchingDebugCopied": "Matching debug pack copied to clipboard.",
+  "log.matchingHealth": "Matching health: {buckets}",
   "toast.effectiveCommandCopied": "Effective dotnet command copied to clipboard.",
   "ai.rehydratedFromTrxNote":
     "Source: rehydrated from TRX `{file}` (may not match current code).",
@@ -563,6 +567,12 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.failureContextCopied": "Contexto de fallo copiado al portapapeles.",
   "toast.noEffectiveCommand":
     "No hay una ejecución reciente para copiar. Ejecuta o depura tests con BDD Pilot primero.",
+  "toast.noMatchingReport":
+    "No hay informe de mapeo en esta sesión. Ejecuta tests con BDD Pilot primero.",
+  "toast.matchingDebugNoGaps":
+    "El último informe de mapeo no tiene huecos (sin mapear / sin usar / ambiguo / compartido).",
+  "toast.matchingDebugCopied": "Paquete de debug de matching copiado al portapapeles.",
+  "log.matchingHealth": "Salud de matching: {buckets}",
   "toast.effectiveCommandCopied": "Comando dotnet efectivo copiado al portapapeles.",
   "ai.rehydratedFromTrxNote":
     "Origen: rehidratado desde TRX `{file}` (puede no coincidir con el código actual).",
