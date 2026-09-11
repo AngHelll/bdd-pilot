@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.44.0** · **Marketplace: v1.43.0** · **Next: watch (CF2 solo backlog)** · **600 unit tests**
+> **Current release: v1.44.0** · **Marketplace: v1.44.0** · **Next: watch (CF2 solo backlog)** · **600 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.43.0** (local **v1.44.0** Unused TRX split) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.44.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -228,6 +228,7 @@ _Nothing queued._
 |------|--------|
 | **Matching honesty** | Unused TRX → `unused_gherkin` / `unused_other` (heurística estructural de `testName`) en health, Output y Debug Pack |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.44.0 |
 | **Tests** | 600 unit tests |
 
 ### v1.43.0 — Run-domain-first ✅ shipped
@@ -993,4 +994,4 @@ src/
 
 ---
 
-*Last updated: v1.44.0 Unused TRX split tagged (Marketplace still v1.43.0; watch CF2 still backlog).*
+*Last updated: v1.44.0 Unused TRX split shipped Marketplace (watch CF2 still backlog).*
