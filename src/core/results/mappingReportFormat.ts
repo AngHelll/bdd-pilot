@@ -1,4 +1,5 @@
 import { AmbiguousMappedLeaf, TreeMappingReport, UnmappedLeaf, UnusedTrxRow } from "./trxTreeMapping";
+import { allocateUnusedSplitCaps, partitionUnusedTrx } from "./unusedTrxClassify";
 
 /** Max unmapped / unused / ambiguous detail lines written to Output after the summary. */
 export const UNMAPPED_OUTPUT_CAP = 25;
@@ -13,6 +14,9 @@ export function selectCappedForOutput<T>(
   items: readonly T[],
   cap: number = UNMAPPED_OUTPUT_CAP,
 ): { shown: T[]; remaining: number } {
+  if (cap <= 0) {
+    return { shown: [], remaining: items.length };
+  }
   if (items.length <= cap) {
     return { shown: [...items], remaining: 0 };
   }
@@ -36,12 +40,18 @@ export function truncateMappingLabel(
   return `${value.slice(0, maxChars - 1)}…`;
 }
 
+export interface UnusedHonestyBucket {
+  count: number;
+  shown: UnusedTrxRow[];
+  remaining: number;
+}
+
 export interface HonestyOutputPlan {
   unused?: {
     unused: number;
     trxTotal: number;
-    shown: UnusedTrxRow[];
-    remaining: number;
+    gherkinLike?: UnusedHonestyBucket;
+    other?: UnusedHonestyBucket;
   };
   ambiguous?: {
     count: number;
@@ -58,16 +68,38 @@ export function planHonestyOutput(
 ): HonestyOutputPlan {
   const unusedRows = report.unusedTrx ?? [];
   const ambiguousRows = report.ambiguousLeaves ?? [];
-  const unusedCap = selectCappedForOutput(unusedRows, cap);
   const ambiguousCap = selectCappedForOutput(ambiguousRows, cap);
+  const partitioned = partitionUnusedTrx(unusedRows);
+  const splitCaps = allocateUnusedSplitCaps(
+    partitioned.gherkinLike.length,
+    partitioned.other.length,
+    cap,
+  );
+  const gherkinCap = selectCappedForOutput(partitioned.gherkinLike, splitCaps.gherkinCap);
+  const otherCap = selectCappedForOutput(partitioned.other, splitCaps.otherCap);
+
   return {
     unused:
       unusedRows.length > 0
         ? {
             unused: unusedRows.length,
             trxTotal: report.trxTotal ?? unusedRows.length,
-            shown: unusedCap.shown,
-            remaining: unusedCap.remaining,
+            gherkinLike:
+              partitioned.gherkinLike.length > 0
+                ? {
+                    count: partitioned.gherkinLike.length,
+                    shown: gherkinCap.shown,
+                    remaining: gherkinCap.remaining,
+                  }
+                : undefined,
+            other:
+              partitioned.other.length > 0
+                ? {
+                    count: partitioned.other.length,
+                    shown: otherCap.shown,
+                    remaining: otherCap.remaining,
+                  }
+                : undefined,
           }
         : undefined,
     ambiguous:

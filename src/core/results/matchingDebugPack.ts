@@ -12,6 +12,10 @@ import {
 } from "./mappingReportFormat";
 import { MatchingDebugCandidateLeaf } from "./matchingDebugSession";
 import { TreeMappingReport } from "./trxTreeMapping";
+import {
+  allocateUnusedSplitCaps,
+  partitionUnusedTrx,
+} from "./unusedTrxClassify";
 
 export { MATCHING_DEBUG_CANDIDATE_CAP };
 export type { MatchingDebugCandidateLeaf };
@@ -60,6 +64,8 @@ export type MatchingLayoutHint =
 export interface MatchingHealthBuckets {
   unmapped: number;
   unused: number;
+  unusedGherkin: number;
+  unusedOther: number;
   ambiguous: number;
   shared: number;
   hint?: MatchingHealthHint;
@@ -83,23 +89,31 @@ export function hasMappingGaps(report: TreeMappingReport): boolean {
 
 export function computeMatchingHealthBuckets(report: TreeMappingReport): MatchingHealthBuckets {
   const unmapped = report.unmapped;
-  const unused = report.unusedTrx?.length ?? 0;
+  const unusedRows = report.unusedTrx ?? [];
+  const unused = unusedRows.length;
+  const partitioned = partitionUnusedTrx(unusedRows);
+  const unusedGherkin = partitioned.gherkinLike.length;
+  const unusedOther = partitioned.other.length;
   const ambiguous = report.ambiguousLeaves?.length ?? 0;
   const shared = report.sharedChosenCount ?? 0;
   let hint: MatchingHealthHint | undefined;
-  if (unused > 0 && unmapped === 0) {
-    hint = "likely_not_ours_or_mixed_sln";
-  } else if (ambiguous > 0 || shared > 0) {
+  if (ambiguous > 0 || shared > 0) {
     hint = "review_matcher_or_outline";
+  } else if (unusedOther > 0 && unmapped === 0) {
+    hint = "likely_not_ours_or_mixed_sln";
+  } else if (unusedGherkin > 0 && unusedOther === 0 && unmapped === 0) {
+    hint = "review_matcher_or_outline";
+  } else if (unused > 0 && unmapped === 0) {
+    hint = "likely_not_ours_or_mixed_sln";
   } else if (unmapped > 0) {
     hint = "missing_trx_or_filter";
   }
-  return { unmapped, unused, ambiguous, shared, hint };
+  return { unmapped, unused, unusedGherkin, unusedOther, ambiguous, shared, hint };
 }
 
 /**
  * Bucket line body for Output (English keys for support). Returns undefined when silent.
- * Example: `unmapped=3 unused=10 · hint=likely_not_ours_or_mixed_sln`
+ * Example: `unused=10 unused_gherkin=2 unused_other=8 · hint=likely_not_ours_or_mixed_sln`
  */
 export function formatMatchingHealthBuckets(report: TreeMappingReport): string | undefined {
   if (!hasMappingGaps(report)) {
@@ -112,6 +126,8 @@ export function formatMatchingHealthBuckets(report: TreeMappingReport): string |
   }
   if (b.unused > 0) {
     parts.push(`unused=${b.unused}`);
+    parts.push(`unused_gherkin=${b.unusedGherkin}`);
+    parts.push(`unused_other=${b.unusedOther}`);
   }
   if (b.ambiguous > 0) {
     parts.push(`ambiguous=${b.ambiguous}`);
@@ -323,12 +339,28 @@ export function buildMatchingDebugPack(input: BuildMatchingDebugPackInput): stri
     ? `- **Test target:** \`${sanitize(meta.testTarget)}\``
     : "- **Test target:** _(none)_";
 
+  const unusedRows = report.unusedTrx ?? [];
+  const unusedPartition = partitionUnusedTrx(unusedRows);
+  const unusedCaps = allocateUnusedSplitCaps(
+    unusedPartition.gherkinLike.length,
+    unusedPartition.other.length,
+    UNMAPPED_OUTPUT_CAP,
+  );
+  const gherkinCap = selectCappedForOutput(unusedPartition.gherkinLike, unusedCaps.gherkinCap);
+  const otherCap = selectCappedForOutput(unusedPartition.other, unusedCaps.otherCap);
+
   const summaryLines = [
     `- **In scope:** ${report.inScope}`,
     `- **Mapped:** ${report.mapped}`,
     `- **Unmapped:** ${report.unmapped}`,
     `- **TRX total:** ${report.trxTotal ?? "_(unknown)_"}`,
-    `- **Unused TRX:** ${report.unusedTrx?.length ?? 0}`,
+    `- **Unused TRX:** ${unusedRows.length}`,
+    ...(unusedRows.length > 0
+      ? [
+          `- **Unused gherkin-like:** ${unusedPartition.gherkinLike.length}`,
+          `- **Unused other:** ${unusedPartition.other.length}`,
+        ]
+      : []),
     `- **Ambiguous leaves:** ${report.ambiguousLeaves?.length ?? 0}`,
     `- **Shared TRX rows:** ${report.sharedChosenCount ?? 0}`,
   ];
@@ -346,21 +378,31 @@ export function buildMatchingDebugPack(input: BuildMatchingDebugPackInput): stri
         ].join("\n")
       : "## Unmapped\n_(none)_\n";
 
-  const unusedRows = report.unusedTrx ?? [];
-  const unusedCap = selectCappedForOutput(unusedRows, UNMAPPED_OUTPUT_CAP);
-  const unusedSection =
-    unusedRows.length > 0
-      ? [
-          "## Unused TRX",
-          ...unusedCap.shown.map(
-            (row) => `- \`${cleanLabel(row.testName)}\` (${row.outcome})`,
-          ),
-          ...(unusedCap.remaining > 0
-            ? [`- _… and ${unusedCap.remaining} more unused_`]
-            : []),
-          "",
-        ].join("\n")
-      : "## Unused TRX\n_(none)_\n";
+  const unusedSectionLines: string[] = ["## Unused TRX"];
+  if (unusedRows.length === 0) {
+    unusedSectionLines.push("_(none)_", "");
+  } else {
+    if (unusedPartition.gherkinLike.length > 0) {
+      unusedSectionLines.push("### Gherkin-like");
+      for (const row of gherkinCap.shown) {
+        unusedSectionLines.push(`- \`${cleanLabel(row.testName)}\` (${row.outcome})`);
+      }
+      if (gherkinCap.remaining > 0) {
+        unusedSectionLines.push(`- _… and ${gherkinCap.remaining} more gherkin-like_`);
+      }
+    }
+    if (unusedPartition.other.length > 0) {
+      unusedSectionLines.push("### Other");
+      for (const row of otherCap.shown) {
+        unusedSectionLines.push(`- \`${cleanLabel(row.testName)}\` (${row.outcome})`);
+      }
+      if (otherCap.remaining > 0) {
+        unusedSectionLines.push(`- _… and ${otherCap.remaining} more other_`);
+      }
+    }
+    unusedSectionLines.push("");
+  }
+  const unusedSection = unusedSectionLines.join("\n");
 
   const ambiguousRows = report.ambiguousLeaves ?? [];
   const ambiguousCap = selectCappedForOutput(ambiguousRows, UNMAPPED_OUTPUT_CAP);

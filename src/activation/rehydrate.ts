@@ -112,19 +112,47 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
           trxTotal: honesty.unused.trxTotal,
         })}`,
       );
-      for (const row of honesty.unused.shown) {
+      if (honesty.unused.gherkinLike) {
         deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedItem", {
-            testName: truncateMappingLabel(row.testName),
+          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedGherkin", {
+            count: honesty.unused.gherkinLike.count,
           })}`,
         );
+        for (const row of honesty.unused.gherkinLike.shown) {
+          deps.output.appendLine(
+            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedItem", {
+              testName: truncateMappingLabel(row.testName),
+            })}`,
+          );
+        }
+        if (honesty.unused.gherkinLike.remaining > 0) {
+          deps.output.appendLine(
+            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedGherkinMore", {
+              count: honesty.unused.gherkinLike.remaining,
+            })}`,
+          );
+        }
       }
-      if (honesty.unused.remaining > 0) {
+      if (honesty.unused.other) {
         deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedMore", {
-            count: honesty.unused.remaining,
+          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedOther", {
+            count: honesty.unused.other.count,
           })}`,
         );
+        for (const row of honesty.unused.other.shown) {
+          deps.output.appendLine(
+            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedItem", {
+              testName: truncateMappingLabel(row.testName),
+            })}`,
+          );
+        }
+        if (honesty.unused.other.remaining > 0) {
+          deps.output.appendLine(
+            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedOtherMore", {
+              count: honesty.unused.other.remaining,
+            })}`,
+          );
+        }
       }
     }
     if (honesty.ambiguous) {

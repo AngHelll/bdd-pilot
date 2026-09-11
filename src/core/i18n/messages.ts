@@ -274,6 +274,10 @@ const EN = {
   "log.treeMappingUnmappedMore": "  … and {count} more unmapped",
   "log.treeMappingUnused":
     "TRX unused: {unused}/{trxTotal} rows did not map to a Gherkin leaf.",
+  "log.treeMappingUnusedGherkin": "  Unused TRX (gherkin-like): {count}",
+  "log.treeMappingUnusedGherkinMore": "  … and {count} more gherkin-like unused",
+  "log.treeMappingUnusedOther": "  Unused TRX (other): {count}",
+  "log.treeMappingUnusedOtherMore": "  … and {count} more other unused",
   "log.treeMappingUnusedItem": "  unused: {testName}",
   "log.treeMappingUnusedMore": "  … and {count} more unused",
   "log.treeMappingAmbiguous":
@@ -683,6 +687,10 @@ const ES: Record<keyof typeof EN, string> = {
   "log.treeMappingUnmappedMore": "  … y {count} sin mapear más",
   "log.treeMappingUnused":
     "TRX sin usar: {unused}/{trxTotal} filas no mapearon a una hoja Gherkin.",
+  "log.treeMappingUnusedGherkin": "  TRX sin usar (gherkin-like): {count}",
+  "log.treeMappingUnusedGherkinMore": "  … y {count} gherkin-like sin usar más",
+  "log.treeMappingUnusedOther": "  TRX sin usar (other): {count}",
+  "log.treeMappingUnusedOtherMore": "  … y {count} other sin usar más",
   "log.treeMappingUnusedItem": "  sin usar: {testName}",
   "log.treeMappingUnusedMore": "  … y {count} sin usar más",
   "log.treeMappingAmbiguous":

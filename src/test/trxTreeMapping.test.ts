@@ -422,7 +422,27 @@ describe("mappingReportFormat honesty", () => {
     assert.ok(plan.unused);
     assert.strictEqual(plan.unused!.unused, 30);
     assert.strictEqual(plan.unused!.trxTotal, 31);
-    assert.strictEqual(plan.unused!.shown.length, 25);
-    assert.strictEqual(plan.unused!.remaining, 5);
+    assert.ok(plan.unused!.other);
+    assert.strictEqual(plan.unused!.other!.shown.length, 25);
+    assert.strictEqual(plan.unused!.other!.remaining, 5);
+    assert.strictEqual(plan.unused!.gherkinLike, undefined);
+  });
+
+  it("planHonestyOutput splits gherkin-like and other unused", () => {
+    const plan = planHonestyOutput({
+      inScope: 1,
+      mapped: 1,
+      unmapped: 0,
+      unmappedLeaves: [],
+      unusedTrx: [
+        { testName: "Acme.AlphaFeature.Login", outcome: "passed" },
+        { testName: "HasProfilingPayload", outcome: "passed" },
+        { testName: "BuildQuestionnairePlan", outcome: "failed" },
+      ],
+      trxTotal: 4,
+    });
+    assert.strictEqual(plan.unused?.unused, 3);
+    assert.strictEqual(plan.unused?.gherkinLike?.count, 1);
+    assert.strictEqual(plan.unused?.other?.count, 2);
   });
 });

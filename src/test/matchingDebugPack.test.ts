@@ -115,11 +115,27 @@ describe("matchingDebugPack", () => {
   it("formatMatchingHealthBuckets emits unused hint", () => {
     const line = formatMatchingHealthBuckets(
       baseReport({
-        unusedTrx: [{ testName: "X", outcome: "passed" }],
+        unusedTrx: [{ testName: "HasProfilingPayload", outcome: "passed" }],
         unmapped: 0,
       }),
     );
-    assert.strictEqual(line, "unused=1 · hint=likely_not_ours_or_mixed_sln");
+    assert.strictEqual(
+      line,
+      "unused=1 unused_gherkin=0 unused_other=1 · hint=likely_not_ours_or_mixed_sln",
+    );
+  });
+
+  it("formatMatchingHealthBuckets unused gherkin-only hints matcher", () => {
+    const line = formatMatchingHealthBuckets(
+      baseReport({
+        unusedTrx: [{ testName: "Acme.AlphaFeature.Orphan", outcome: "passed" }],
+        unmapped: 0,
+      }),
+    );
+    assert.strictEqual(
+      line,
+      "unused=1 unused_gherkin=1 unused_other=0 · hint=review_matcher_or_outline",
+    );
   });
 
   it("formatMatchingHealthBuckets prefers matcher hint when ambiguous", () => {
@@ -143,6 +159,25 @@ describe("matchingDebugPack", () => {
       }),
     );
     assert.strictEqual(line, "unmapped=1 · hint=missing_trx_or_filter");
+  });
+
+  it("buildMatchingDebugPack splits unused into Gherkin-like and Other", () => {
+    const md = buildMatchingDebugPack({
+      report: baseReport({
+        unusedTrx: [
+          { testName: "Acme.AlphaFeature.Login", outcome: "passed" },
+          { testName: "HasProfilingPayload", outcome: "passed" },
+        ],
+        trxTotal: 3,
+      }),
+      meta: { stage: "test", mode: "headless" },
+    });
+    assert.ok(md);
+    assert.match(md!, /Unused gherkin-like:\*\* 1/);
+    assert.match(md!, /Unused other:\*\* 1/);
+    assert.match(md!, /### Gherkin-like/);
+    assert.match(md!, /### Other/);
+    assert.match(md!, /HasProfilingPayload/);
   });
 
   it("layoutSubpathSegments extracts folders after domain", () => {

@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.44.0] — 2026-09-11
+
+### Added
+- **Unused TRX split** — Matching health and Output/Debug Pack separate unused rows into gherkin-like vs other (helpers/unit) using structural `testName` heuristics (`unused_gherkin` / `unused_other`)
+
 ## [1.43.0] — 2026-09-11
 
 ### Added
