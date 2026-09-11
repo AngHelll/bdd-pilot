@@ -10,9 +10,9 @@ import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../core/
 import { PilotLocale } from "../core/i18n";
 import {
   computeRollup,
+  containerHealth,
   formatRollupDescription,
   formatRollupDescriptionLocalized,
-  rollupSeverity,
 } from "../core/gherkin/outcomeRollup";
 import {
   buildContainerDescription,
@@ -880,8 +880,10 @@ function containerIcon(
   if (!shouldTintContainerIcon(mode, rollup)) {
     return new vscode.ThemeIcon(baseIcon);
   }
-  const severity = rollupSeverity(rollup);
-  switch (severity) {
+  const health = containerHealth(rollup);
+  switch (health) {
+    case "watch":
+      return new vscode.ThemeIcon(baseIcon, new vscode.ThemeColor("list.warningForeground"));
     case "failed":
       return new vscode.ThemeIcon(baseIcon, new vscode.ThemeColor("testing.iconFailed"));
     case "passed":

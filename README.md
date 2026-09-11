@@ -163,7 +163,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | Toolbar | `stop` (running), `run-all`, `search` / `search-fuzzy`, `graph`, `refresh`, `folder` / `tag`, `ellipsis` | Cancel (running, first) · Run · Search · Dashboard · Refresh · GroupBy · More |
 | Summary row | `history`, `loading~spin`, `debug-alt`, `warning`, `info` | Idle · running · debugging · error · warning |
 | Tree outcomes | `pass`, `error`, `circle-slash`, `beaker`, `list-tree`, `question` | Passed / failed / skipped / pending / outline / `not_in_trx` |
-| Containers | `folder`, `file-code`, `tag` + tint `testing.icon*` | Domain / feature / tag group roll-up |
+| Containers | `folder`, `file-code`, `tag` + tint `testing.icon*` / `list.warningForeground` | Domain / feature / tag roll-up; warning tint when few failures (watch) |
 
 #### Cockpit signals (why this is not TE)
 

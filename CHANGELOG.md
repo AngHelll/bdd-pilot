@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.39.0] — 2026-09-11
+
+### Added
+- **Tree container health tint** — domain / feature / tag icons use a warning color when a large container has 1–2 failures (≤10%); failed leaves and roll-up text stay fail-first
+
 ## [1.38.1] — 2026-09-11
 
 ### Added

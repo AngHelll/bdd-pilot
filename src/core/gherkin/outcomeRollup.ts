@@ -50,13 +50,57 @@ export function formatRollupDescription(rollup: OutcomeRollup): string | undefin
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
-/** Picks a container icon severity from aggregated child outcomes. */
+/** Fail-first severity for API, descriptions, and roll-up text. */
 export function rollupSeverity(
   rollup: OutcomeRollup,
 ): "failed" | "passed" | "skipped" | undefined {
-  const classified = rollup.passed + rollup.failed + rollup.skipped;
+  const classified = classifiedCount(rollup);
   if (classified === 0) {
     return undefined;
+  }
+  if (rollup.failed > 0) {
+    return "failed";
+  }
+  if (rollup.passed === classified) {
+    return "passed";
+  }
+  if (rollup.skipped > 0) {
+    return "skipped";
+  }
+  return undefined;
+}
+
+/** Watch band: a couple of leftovers in a large container, not a material fail rate. */
+export const WATCH_MIN_CLASSIFIED = 10;
+export const WATCH_MAX_FAILED = 2;
+export const WATCH_MAX_FAIL_RATE = 0.1;
+
+export type ContainerHealth = "watch" | "failed" | "passed" | "skipped";
+
+function classifiedCount(rollup: OutcomeRollup): number {
+  return rollup.passed + rollup.failed + rollup.skipped;
+}
+
+function isWatchRollup(rollup: OutcomeRollup, classified: number): boolean {
+  if (rollup.failed <= 0 || classified < WATCH_MIN_CLASSIFIED) {
+    return false;
+  }
+  if (rollup.failed > WATCH_MAX_FAILED) {
+    return false;
+  }
+  return rollup.failed / classified <= WATCH_MAX_FAIL_RATE;
+}
+
+/**
+ * Container icon health. Watch is a subset of failed > 0; {@link rollupSeverity} stays fail-first.
+ */
+export function containerHealth(rollup: OutcomeRollup): ContainerHealth | undefined {
+  const classified = classifiedCount(rollup);
+  if (classified === 0) {
+    return undefined;
+  }
+  if (isWatchRollup(rollup, classified)) {
+    return "watch";
   }
   if (rollup.failed > 0) {
     return "failed";
