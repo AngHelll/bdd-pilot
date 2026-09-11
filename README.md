@@ -332,9 +332,28 @@ Press `F5` in VS Code to launch the Extension Development Host.
 (`dotnet test`) and to validate feature discovery / filter mapping in unit tests. Open that folder as the
 workspace to dogfood BDD Pilot on a clean layout.
 
+### CI parity with Pilot
+
+Keep GitHub Actions on the same story as the cockpit: set **`STAGE`** (matches `bddPilot.defaultStage`, default `test`) and the same **`--filter`** you would run from the tree (`Category=<tag>` for `@tags`). After a local Pilot run, use **BDD Pilot: Copy Effective Dotnet Command** to paste the exact `dotnet test …` argv (filter + `bddPilot.run.*` flags) into CI or a terminal.
+
+Minimal recipe for the sample:
+
+```yaml
+# Stage-faithful: same STAGE as bddPilot.defaultStage
+env:
+  STAGE: test
+steps:
+  - uses: actions/setup-dotnet@v4
+    with:
+      dotnet-version: "8.0.x"
+  - run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --filter "Category=smoke"
+```
+
+Optional: pin `Release` via `bddPilot.run.configuration` / `bddPilot.run.byStage` locally, then copy the effective command so CI gets the same `--configuration` (and `--settings` if you use `.runsettings`).
+
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.16.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.38.1**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 

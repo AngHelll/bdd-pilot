@@ -28,7 +28,10 @@ jobs:
           path: bdd-pilot.vsix
 
   sample-smoke:
+    # Pilot Stage-faithful: STAGE matches bddPilot.defaultStage — see README "CI parity with Pilot"
     runs-on: ubuntu-latest
+    env:
+      STAGE: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

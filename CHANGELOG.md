@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.38.1] — 2026-09-11
+
+### Added
+- **CI parity docs** — README recipe for Stage-faithful GitHub Actions (`STAGE` + `--filter`) and bridge to Copy Effective Dotnet Command; `sample-smoke` sets `STAGE=test`
+
 ## [1.38.0] — 2026-09-11
 
 ### Changed
