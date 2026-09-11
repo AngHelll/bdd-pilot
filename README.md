@@ -28,6 +28,7 @@ other and can be installed side by side:
 | Extension | Role |
 |-----------|------|
 | [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) | Go to Definition, CodeLens on steps, binding diagnostics, Coach mode |
+| [**BDD Gherkin Format**](https://github.com/AngHelll/bdd-gherkin-format) | `.feature` presentation — Format Document + syntax highlighting (no binding index) |
 | **BDD Pilot** (this repo) | Test tree, `dotnet test` execution, TRX/Cucumber results, run history |
 | [**BDD Jarvis**](https://github.com/AngHelll/bdd-jarvis) | Workspace QA analysis, context packs — consumes Pilot Run API when available |
 
@@ -108,6 +109,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
 - **One-click run**: domain, feature, scenario, tag, or **Scenario Outline row** —
   the correct `dotnet test --filter` is built automatically.
+  On **large multi-domain (or multi-tag) suites**, Run All may offer a scoped-run nudge (`bddPilot.run.suggestScopedWhenLarge`); small trees stay silent.
   - Feature → `FullyQualifiedName~<Feature>Feature`
   - Scenario → `FullyQualifiedName~<Feature>Feature.<Scenario>`
   - Outline row → `DisplayName~parameter: %22…%22, value: %22…%22` (single Theory row)
@@ -179,7 +181,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | **Cancel busy** | Toolbar Cancel + summary click + **hub QuickPick first row** while running | TE cancel is native Testing UI, not Pilot tree chrome |
 | **Restored / rehydrate** | Outcomes from TestResults, not a new run | TE reload does not narrate Pilot rehydrate provenance |
 
-**ForgeOne family:** [**BDD Pilot**](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot) = execution · [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings · [**BDD Jarvis**](https://github.com/AngHelll/bdd-jarvis) = workspace insights (consumes Pilot’s read-only Run API). Complementary extensions — not a monorepo and not an “AI test fixer.”
+**ForgeOne family:** [**BDD Pilot**](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot) = execution · [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings · [**BDD Gherkin Format**](https://github.com/AngHelll/bdd-gherkin-format) = mute `.feature` layout · [**BDD Jarvis**](https://github.com/AngHelll/bdd-jarvis) = workspace insights (consumes Pilot’s read-only Run API). Complementary extensions — not a monorepo and not an “AI test fixer.”
 
 ## Security
 
@@ -247,6 +249,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.dotnetPath` | `dotnet` | Path to the `dotnet` executable. |
 | `bddPilot.run.configuration` | `""` | Optional `dotnet test --configuration`: `Debug`, `Release`, or empty (omit). |
 | `bddPilot.run.noBuild` | `false` | When `true`, pass `--no-build` (skip build; requires prior successful build). |
+| `bddPilot.run.suggestScopedWhenLarge` | `true` | Before Run All on large multi-domain/tag suites, suggest a scoped run. Small trees stay silent. |
 | `bddPilot.run.runSettings` | `""` | Path to a `.runsettings` file (workspace-relative or absolute) for `--settings`. |
 | `bddPilot.run.cliVerbosity` | `""` | Optional `dotnet test --verbosity` (`quiet`…`diagnostic`). Empty omits the flag. **Not** the Output stream filter — that is `feedback.dotnetVerbosity`. |
 | `bddPilot.run.blame` | `false` | When `true`, pass `--blame` (Sequence.xml for crash isolation). |

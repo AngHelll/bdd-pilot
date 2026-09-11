@@ -24,14 +24,16 @@ import { MessageKey } from "../core/i18n";
 import { ProjectContext } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
 import { RunService } from "../providers/runService";
-import { TestTreeProvider } from "../providers/testTreeProvider";
+import { TestTreeProvider, readTreeGroupBy } from "../providers/testTreeProvider";
 import {
   readAnalyzeOptions,
   readBindingGate,
   readDotnetVerbosity,
   readSettings,
+  readSuggestScopedWhenLarge,
 } from "./extensionSettings";
 import { resolveRunTargets } from "./runTargets";
+import { promptScopedRunNudgeIfNeeded } from "./scopedRunNudgeUi";
 
 export interface RunExecutionDeps {
   context: vscode.ExtensionContext;
@@ -114,11 +116,36 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       return;
     }
 
-    const runTargets = opts?.rawFilter ? [] : resolveRunTargets(target);
-    const totalExpected =
+    let runTargets = opts?.rawFilter ? [] : resolveRunTargets(target);
+    let totalExpected =
       opts?.rawFilter || opts?.debug
         ? undefined
         : estimateTestCount(runTargets, project.discoveryRoot);
+
+    const isPlainRunAll =
+      !opts?.rawFilter &&
+      !opts?.debug &&
+      runTargets.length === 1 &&
+      runTargets[0]?.kind === "all";
+
+    if (isPlainRunAll) {
+      const nudge = await promptScopedRunNudgeIfNeeded({
+        tr: deps.tr,
+        suggestEnabled: readSuggestScopedWhenLarge(),
+        groupBy: readTreeGroupBy(),
+        domains: deps.treeProvider.getDomains(),
+        tagGroups: deps.treeProvider.getTagGroups(),
+        estimatedLeafCount: totalExpected ?? 0,
+      });
+      if (nudge.action === "cancel") {
+        releaseRunLock();
+        return;
+      }
+      if (nudge.action === "scoped") {
+        runTargets = resolveRunTargets(nudge.target);
+        totalExpected = estimateTestCount(runTargets, project.discoveryRoot);
+      }
+    }
 
     if (opts?.debug && deps.treeProvider.needsTheoryDiscovery()) {
       await deps.enrichTheoryRows();

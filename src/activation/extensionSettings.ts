@@ -46,6 +46,11 @@ export function readBindingGate(): BindingGateMode {
   return isBindingGateMode(value) ? value : "warn";
 }
 
+export function readSuggestScopedWhenLarge(): boolean {
+  const cfg = vscode.workspace.getConfiguration("bddPilot");
+  return cfg.get<boolean>("run.suggestScopedWhenLarge", true);
+}
+
 function isRunConfiguration(value: string): value is RunConfiguration {
   return value === "" || value === "Debug" || value === "Release";
 }

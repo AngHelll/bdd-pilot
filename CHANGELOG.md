@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.43.0] — 2026-09-11
+
+### Added
+- **Run-domain-first nudge** — before Run All on large multi-domain (or multi-tag) suites, suggest picking a scope; after Run All, Output tips when failures concentrate in one container (`bddPilot.run.suggestScopedWhenLarge`)
+
 ## [1.42.0] — 2026-09-11
 
 ### Fixed

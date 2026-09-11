@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.42.0** · **Marketplace: v1.42.0** · **Next: watch (CF2 solo backlog)** · **584 unit tests**
+> **Current release: v1.43.0** · **Marketplace: v1.42.0** · **Next: watch (CF2 solo backlog)** · **591 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.42.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.42.0** (local **v1.43.0** Run-domain-first) |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.43.0** | Run-domain-first — scoped Run All nudge + fail-concentration tip · spec `run-domain-first-v1.43.md` |
 | **1.42.0** | Outline match fidelity — Theory → Examples row 1:1 (no length===1 short-circuit) · spec `outline-match-fidelity-v1.42.md` |
 | **1.41.0** | Matching observability D3 — layout/grouping in Debug Pack · spec `matching-observability-v1.40.md` |
 | **1.40.0** | Matching observability — Debug Pack + health Output · spec `matching-observability-v1.40.md` |
@@ -219,6 +220,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.43.0 — Run-domain-first ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Run** | Pre-Run All scoped nudge (umbrales genéricos) + tip Output si fallos concentrados · `bddPilot.run.suggestScopedWhenLarge` |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Tests** | 591 unit tests |
 
 ### v1.42.0 — Outline match fidelity ✅ shipped
 
@@ -974,4 +983,4 @@ src/
 
 ---
 
-*Last updated: v1.42.0 Outline match fidelity shipped Marketplace (watch CF2 still backlog).*
+*Last updated: v1.43.0 Run-domain-first tagged (Marketplace still v1.42.0; watch CF2 still backlog).*

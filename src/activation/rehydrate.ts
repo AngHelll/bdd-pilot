@@ -14,6 +14,12 @@ import {
 import { formatMatchingHealthBuckets } from "../core/results/matchingDebugPack";
 import { clearLastMappingReport, setLastMappingReport } from "../core/results/lastMappingReport";
 import {
+  countFailedLeavesByDomain,
+  countFailedLeavesByTag,
+  detectFailConcentration,
+} from "../core/runner/scopedRunNudge";
+import { readTreeGroupBy } from "../providers/treeSettings";
+import {
   applySkipReasonSnapshot,
   buildSkipReasonSnapshot,
   mappingReportFromSkipSnapshot,
@@ -156,6 +162,31 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
     }
   }
 
+  function logFailConcentrationTip(targets: RunTarget[]): void {
+    const isAll = targets.some((t) => t.kind === "all");
+    if (!isAll) {
+      return;
+    }
+    const groupBy = readTreeGroupBy();
+    const getOutcome = (key: string) => deps.outcomeStore.get(key);
+    const failCounts =
+      groupBy === "tag"
+        ? countFailedLeavesByTag(deps.treeProvider.getTagGroups(), getOutcome)
+        : countFailedLeavesByDomain(deps.treeProvider.getDomains(), getOutcome);
+    const hit = detectFailConcentration(failCounts);
+    if (!hit) {
+      return;
+    }
+    const containerLabel = groupBy === "tag" ? `@${hit.container}` : hit.container;
+    deps.output.appendLine(
+      `[bdd-pilot] ${deps.tr("log.failConcentrationTip", {
+        container: containerLabel,
+        fails: hit.failCount,
+        total: hit.totalFails,
+      })}`,
+    );
+  }
+
   function applyRunSummaryToTree(
     summary: UnifiedSummary,
     targets: RunTarget[],
@@ -169,6 +200,9 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
         canceled: options?.canceled,
       });
       logTreeMapping(stats);
+      if (!options?.canceled) {
+        logFailConcentrationTip(targets);
+      }
       deps.refreshPilotSurfaces();
     }
     deps.refreshManaged();

@@ -176,6 +176,18 @@ const EN = {
   "toast.matchingDebugNoGaps": "Last mapping report has no gaps (unmapped / unused / ambiguous / shared).",
   "toast.matchingDebugCopied": "Matching debug pack copied to clipboard.",
   "log.matchingHealth": "Matching health: {buckets}",
+  "log.failConcentrationTip":
+    "Tip: {fails}/{total} failures are in {container}. Re-run that domain or tag instead of Run All to limit fixture cascades.",
+  "scopedRunNudge.message":
+    "This suite looks large (multiple domains or tags). A scoped run usually isolates fixture or environment cascades better than Run All.",
+  "scopedRunNudge.detail": "{containers} groups · ~{leaves} tests (estimated)",
+  "scopedRunNudge.pickDomainPlaceholder": "Select a domain to run",
+  "scopedRunNudge.pickTagPlaceholder": "Select a tag to run",
+  "scopedRunNudge.pickCount": "~{count} tests",
+  "action.pickDomainScope": "Pick a domain…",
+  "action.pickTagScope": "Pick a tag…",
+  "action.continueRunAll": "Continue Run All",
+  "action.dontAskThisSession": "Don’t ask this session",
   "toast.effectiveCommandCopied": "Effective dotnet command copied to clipboard.",
   "ai.rehydratedFromTrxNote":
     "Source: rehydrated from TRX `{file}` (may not match current code).",
@@ -573,6 +585,18 @@ const ES: Record<keyof typeof EN, string> = {
     "El último informe de mapeo no tiene huecos (sin mapear / sin usar / ambiguo / compartido).",
   "toast.matchingDebugCopied": "Paquete de debug de matching copiado al portapapeles.",
   "log.matchingHealth": "Salud de matching: {buckets}",
+  "log.failConcentrationTip":
+    "Consejo: {fails}/{total} fallos están en {container}. Vuelve a ejecutar ese dominio o tag en lugar de Run All para limitar cascadas de fixture.",
+  "scopedRunNudge.message":
+    "Esta suite parece grande (varios dominios o tags). Un run con scope suele aislar cascadas de fixture o entorno mejor que Run All.",
+  "scopedRunNudge.detail": "{containers} grupos · ~{leaves} tests (estimados)",
+  "scopedRunNudge.pickDomainPlaceholder": "Selecciona un dominio para ejecutar",
+  "scopedRunNudge.pickTagPlaceholder": "Selecciona un tag para ejecutar",
+  "scopedRunNudge.pickCount": "~{count} tests",
+  "action.pickDomainScope": "Elegir dominio…",
+  "action.pickTagScope": "Elegir tag…",
+  "action.continueRunAll": "Continuar Run All",
+  "action.dontAskThisSession": "No preguntar en esta sesión",
   "toast.effectiveCommandCopied": "Comando dotnet efectivo copiado al portapapeles.",
   "ai.rehydratedFromTrxNote":
     "Origen: rehidratado desde TRX `{file}` (puede no coincidir con el código actual).",

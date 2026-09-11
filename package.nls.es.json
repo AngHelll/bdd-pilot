@@ -87,6 +87,7 @@
   "bddPilot.configuration.run.configuration.enum.debug": "Pasa --configuration Debug.",
   "bddPilot.configuration.run.configuration.enum.release": "Pasa --configuration Release.",
   "bddPilot.configuration.run.noBuild.description": "Si es true, pasa --no-build a dotnet test (omite build; requiere build previo exitoso).",
+  "bddPilot.configuration.run.suggestScopedWhenLarge.description": "Antes de Run All en suites grandes multi-dominio o multi-tag, sugiere un run con scope. Los árboles pequeños no muestran el aviso.",
   "bddPilot.configuration.run.runSettings.description": "Ruta a un archivo .runsettings (relativa al workspace o absoluta). Se pasa como dotnet test --settings si el archivo existe.",
   "bddPilot.configuration.run.cliVerbosity.description": "Opcional MSBuild / dotnet test --verbosity (quiet…diagnostic). Vacío omite el flag. No es el filtro del Output — usa feedback.dotnetVerbosity para eso.",
   "bddPilot.configuration.run.cliVerbosity.enum.default": "Omitir --verbosity (default de dotnet).",
