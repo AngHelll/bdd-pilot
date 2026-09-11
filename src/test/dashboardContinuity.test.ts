@@ -57,7 +57,18 @@ describe("dashboard continuity", () => {
       failed: 1,
       skipped: 0,
       provenance: "fromLiveSession",
+      trx: { passed: 9, failed: 0, skipped: 0 },
     });
+  });
+
+  it("resolveLastKnownSnapshot omits trx when mapped matches history", () => {
+    const snap = resolveLastKnownSnapshot(
+      { passed: 2, failed: 1, skipped: 0, withResults: 3 },
+      true,
+      makeEntry("h", { passed: 2, failed: 1 }),
+      undefined,
+    );
+    assert.strictEqual(snap?.trx, undefined);
   });
 
   it("resolveLastKnownSnapshot uses history when store empty", () => {

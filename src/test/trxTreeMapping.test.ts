@@ -142,7 +142,9 @@ describe("trxTreeMapping", () => {
       results: [],
     };
     const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "all" }]);
-    assert.strictEqual(stats, undefined);
+    assert.ok(stats);
+    assert.strictEqual(stats!.unmapped, 0);
+    assert.deepStrictEqual(stats!.unmappedLeaves, []);
     assert.strictEqual(store.getSkipReason(scenarioKey(feature, feature.scenarios[0])), undefined);
   });
 
@@ -246,7 +248,7 @@ describe("trxTreeMapping", () => {
     assert.deepStrictEqual(stats!.unusedTrx, []);
   });
 
-  it("run-all does not return unused honesty report", () => {
+  it("run-all returns unused honesty without not_in_trx", () => {
     const store = new OutcomeStore();
     const summary: UnifiedSummary = {
       source: "trx",
@@ -257,7 +259,39 @@ describe("trxTreeMapping", () => {
       results: [{ testName: "UnitTests.HelperDoesMath", outcome: "passed" }],
     };
     const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "all" }]);
-    assert.strictEqual(stats, undefined);
+    assert.ok(stats);
+    assert.deepStrictEqual(stats!.unusedTrx, [
+      { testName: "UnitTests.HelperDoesMath", outcome: "passed" },
+    ]);
+    assert.strictEqual(stats!.unmapped, 0);
+    assert.deepStrictEqual(stats!.unmappedLeaves, []);
+    assert.strictEqual(store.getSkipReason(scenarioKey(feature, feature.scenarios[0])), undefined);
+  });
+
+  it("run-all mixed: mapped rollup stays Gherkin-only and unused lists TRX extras", () => {
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 3,
+      failed: 1,
+      skipped: 0,
+      total: 4,
+      results: [
+        { testName: "SampleFeature.One", outcome: "passed" },
+        { testName: "UnitTests.HelperA", outcome: "passed" },
+        { testName: "UnitTests.HelperB", outcome: "passed" },
+        { testName: "UnitTests.HelperC", outcome: "failed" },
+      ],
+    };
+    const stats = applyScopedTrxResults(store, domains, summary, [{ kind: "all" }]);
+    assert.ok(stats);
+    assert.strictEqual(store.get(scenarioKey(feature, feature.scenarios[0])), "passed");
+    assert.strictEqual(store.getSkipReason(scenarioKey(feature, feature.scenarios[1])), undefined);
+    assert.strictEqual(stats!.unusedTrx?.length, 3);
+    assert.strictEqual(stats!.unmapped, 0);
+    const plan = planHonestyOutput(stats!);
+    assert.strictEqual(plan.unused?.unused, 3);
+    assert.strictEqual(plan.unused?.trxTotal, 4);
   });
 });
 

@@ -57,7 +57,9 @@ export function buildSessionRunSnapshot(params: {
   analyzeOptions?: AnalyzeDotnetOutputOptions;
 }): SessionRunSnapshot {
   const sanitizedOutput = sanitize(params.outputBuffer);
-  const diagnostics = analyzeDotnetOutput(sanitizedOutput, params.analyzeOptions).map((d) => ({
+  const diagnostics = analyzeDotnetOutput(sanitizedOutput, {
+    ...params.analyzeOptions,
+  }).map((d) => ({
     ...d,
     detail: d.detail ? sanitize(d.detail) : undefined,
   }));

@@ -1,6 +1,8 @@
 import { PilotLocale, t } from "../i18n";
+import { TrxSummary } from "../results/trxParser";
 import { diagnosticHint } from "./diagnosticCatalog";
-import { failureBreakdown } from "./failureBreakdown";
+import { ClassifiedFailures } from "./classifyFailedTests";
+import { failureBreakdown, resolveClassifiedFailures } from "./failureBreakdown";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -15,6 +17,7 @@ export interface Diagnostic {
 export interface AnalyzeDotnetOutputOptions {
   extendedRules?: boolean;
   locale?: PilotLocale;
+  trxSummary?: TrxSummary;
 }
 
 type Analyzer = {
@@ -31,10 +34,15 @@ const SEVERITY_RANK: Record<DiagnosticSeverity, number> = {
   info: 2,
 };
 
-const DEFAULT_OPTIONS: Required<AnalyzeDotnetOutputOptions> = {
+const DEFAULT_OPTIONS: Required<Omit<AnalyzeDotnetOutputOptions, "trxSummary">> = {
   extendedRules: false,
   locale: "en",
 };
+
+interface AnalyzeContext {
+  classified: ClassifiedFailures;
+  trxSummary?: TrxSummary;
+}
 
 function countMatches(output: string, pattern: RegExp): number {
   return (output.match(pattern) ?? []).length;
@@ -73,8 +81,7 @@ function isPlaywrightDriverIncomplete(output: string): boolean {
 }
 
 const TEST_DATA_MATCH =
-  /No available users|No suitable user|No hay usuarios|test user|test data|fixture|The array cannot be null or empty/i;
-const TEST_DATA_COUNT = /No available users|No suitable user|No hay usuarios|test user|test data|fixture|The array cannot be null or empty/gi;
+  /No available users|No suitable user|No hay usuarios|The array cannot be null or empty/i;
 
 function testDataSetupDetail(output: string): string | undefined {
   const samples = [
@@ -177,24 +184,7 @@ const ANALYZERS: Analyzer[] = [
     code: "PENDING_STEPS",
     severity: "error",
     match: (o) => testsExecuted(o) && /XUnitPendingStepException|No matching step definition found/i.test(o),
-    build: (o, locale) => {
-      const n = countMatches(o, /XUnitPendingStepException|No matching step definition found/gi);
-      const features = [...new Set([...o.matchAll(/in ([^\n]+\.feature):line \d+/g)].map((m) => m[1]))];
-      let detail: string | undefined;
-      if (features.length > 0) {
-        const shown = features.slice(0, 5);
-        const suffix = features.length > 5 ? ` (+${features.length - 5} more)` : "";
-        detail = `Affected features: ${shown.join(", ")}${suffix}`;
-      }
-      return {
-        title:
-          n > 1
-            ? t(locale, "diagnostic.PENDING_STEPS.titleMany", { n })
-            : t(locale, "diagnostic.PENDING_STEPS.title"),
-        detail,
-        hint: diagnosticHint(locale, "PENDING_STEPS"),
-      };
-    },
+    build: (o, locale) => buildPendingSteps(o, locale, undefined),
   },
   {
     code: "AMBIGUOUS_STEPS",
@@ -210,17 +200,7 @@ const ANALYZERS: Analyzer[] = [
     code: "TEST_DATA_SETUP",
     severity: "error",
     match: (o) => testsExecuted(o) && TEST_DATA_MATCH.test(o),
-    build: (o, locale) => {
-      const n = countMatches(o, TEST_DATA_COUNT);
-      return {
-        title:
-          n > 1
-            ? t(locale, "diagnostic.TEST_DATA_SETUP.titleMany", { n })
-            : t(locale, "diagnostic.TEST_DATA_SETUP.title"),
-        detail: testDataSetupDetail(o),
-        hint: diagnosticHint(locale, "TEST_DATA_SETUP"),
-      };
-    },
+    build: (o, locale) => buildTestDataSetup(o, locale, undefined),
   },
   {
     code: "AWS_CREDENTIALS",
@@ -380,8 +360,153 @@ const ANALYZERS: Analyzer[] = [
   },
 ];
 
+function buildPendingSteps(
+  output: string,
+  locale: PilotLocale,
+  classified: ClassifiedFailures | undefined,
+): Omit<Diagnostic, "code" | "severity"> {
+  const n = classified
+    ? classified.pending.length
+    : /XUnitPendingStepException|No matching step definition found/i.test(output)
+      ? 1
+      : 0;
+  const features = [...new Set([...output.matchAll(/in ([^\n]+\.feature):line \d+/g)].map((m) => m[1]))];
+  let detail: string | undefined;
+  if (features.length > 0) {
+    const shown = features.slice(0, 5);
+    const suffix = features.length > 5 ? ` (+${features.length - 5} more)` : "";
+    detail = `Affected features: ${shown.join(", ")}${suffix}`;
+  }
+  return {
+    title:
+      n > 1
+        ? t(locale, "diagnostic.PENDING_STEPS.titleMany", { n })
+        : t(locale, "diagnostic.PENDING_STEPS.title"),
+    detail,
+    hint: diagnosticHint(locale, "PENDING_STEPS"),
+  };
+}
+
+function buildTestDataSetup(
+  output: string,
+  locale: PilotLocale,
+  classified: ClassifiedFailures | undefined,
+): Omit<Diagnostic, "code" | "severity"> {
+  const n = classified ? classified.testData.length : TEST_DATA_MATCH.test(output) ? 1 : 0;
+  return {
+    title:
+      n > 1
+        ? t(locale, "diagnostic.TEST_DATA_SETUP.titleMany", { n })
+        : t(locale, "diagnostic.TEST_DATA_SETUP.title"),
+    detail: testDataSetupDetail(output),
+    hint: diagnosticHint(locale, "TEST_DATA_SETUP"),
+  };
+}
+
+function httpStatuses(output: string, classified: ClassifiedFailures | undefined): string[] {
+  const source = classified
+    ? classified.http.map((row) => row.errorMessage ?? "").join("\n")
+    : output;
+  return [...new Set([...source.matchAll(/Response status code does not indicate success: (\d+)/g)].map((m) => m[1]))];
+}
+
+function buildApiHttpErrors(
+  output: string,
+  locale: PilotLocale,
+  classified: ClassifiedFailures | undefined,
+): Omit<Diagnostic, "code" | "severity"> {
+  const n = classified ? classified.http.length : countMatches(output, /Refit\.ApiException/gi);
+  const statuses = httpStatuses(output, classified);
+  const statusPart = statuses.length ? statuses.join(", ") : "";
+  const title =
+    n > 1
+      ? t(locale, "diagnostic.API_HTTP_ERRORS.titleMany", {
+          n,
+          statuses: statusPart ? ` (HTTP ${statusPart})` : "",
+        })
+      : t(locale, "diagnostic.API_HTTP_ERRORS.title", {
+          statuses: statusPart ? ` (HTTP ${statusPart})` : "",
+        });
+  const noContracts = /No contracts were returned/i.test(output);
+  return {
+    title,
+    detail: noContracts ? t(locale, "diagnostic.API_HTTP_ERRORS.detailNoContracts") : undefined,
+    hint: diagnosticHint(locale, "API_HTTP_ERRORS"),
+  };
+}
+
+function runFailedSummary(
+  output: string,
+  trxSummary: TrxSummary | undefined,
+): { failed: number; passed: number; skipped: number; total: number } | undefined {
+  if (trxSummary && trxSummary.failed > 0) {
+    return {
+      failed: trxSummary.failed,
+      passed: trxSummary.passed,
+      skipped: trxSummary.skipped,
+      total: trxSummary.total,
+    };
+  }
+  return parseTestRunSummary(output);
+}
+
+function matchesAnalyzer(a: Analyzer, output: string, ctx: AnalyzeContext): boolean {
+  switch (a.code) {
+    case "PENDING_STEPS":
+      return ctx.classified.pending.length > 0 && (Boolean(ctx.trxSummary) || testsExecuted(output));
+    case "TEST_DATA_SETUP":
+      return ctx.classified.testData.length > 0 && (Boolean(ctx.trxSummary) || testsExecuted(output));
+    case "AWS_CREDENTIALS":
+      return ctx.classified.aws.length > 0 && (Boolean(ctx.trxSummary) || testsExecuted(output));
+    case "API_HTTP_ERRORS":
+      return ctx.classified.http.length > 0 && (Boolean(ctx.trxSummary) || testsExecuted(output));
+    case "TEST_RUN_FAILED": {
+      const summary = runFailedSummary(output, ctx.trxSummary);
+      return summary !== undefined && summary.failed > 0;
+    }
+    default:
+      return a.match(output);
+  }
+}
+
+function buildAnalyzer(
+  a: Analyzer,
+  output: string,
+  locale: PilotLocale,
+  extendedRules: boolean,
+  ctx: AnalyzeContext,
+): Omit<Diagnostic, "code" | "severity"> {
+  switch (a.code) {
+    case "PENDING_STEPS":
+      return buildPendingSteps(output, locale, ctx.classified);
+    case "TEST_DATA_SETUP":
+      return buildTestDataSetup(output, locale, ctx.classified);
+    case "API_HTTP_ERRORS":
+      return buildApiHttpErrors(output, locale, ctx.classified);
+    case "TEST_RUN_FAILED": {
+      const s = runFailedSummary(output, ctx.trxSummary)!;
+      return {
+        title: t(locale, "diagnostic.TEST_RUN_FAILED.title", {
+          failed: s.failed,
+          passed: s.passed,
+          skipped: s.skipped,
+        }),
+        detail: failureBreakdown(output, locale, extendedRules, ctx.trxSummary),
+        hint: diagnosticHint(locale, "TEST_RUN_FAILED"),
+      };
+    }
+    default:
+      return a.build(output, locale, extendedRules);
+  }
+}
+
 export function analyzeDotnetOutput(output: string, options?: AnalyzeDotnetOutputOptions): Diagnostic[] {
   const { extendedRules, locale } = { ...DEFAULT_OPTIONS, ...options };
+  const trxSummary = options?.trxSummary;
+  const ctx: AnalyzeContext = {
+    classified: resolveClassifiedFailures(output, trxSummary),
+    trxSummary,
+  };
   const seen = new Set<string>();
   const diagnostics: Array<{ diag: Diagnostic; order: number }> = [];
 
@@ -389,11 +514,11 @@ export function analyzeDotnetOutput(output: string, options?: AnalyzeDotnetOutpu
     if (a.extended && !extendedRules) {
       return;
     }
-    if (!a.match(output) || seen.has(a.code)) {
+    if (!matchesAnalyzer(a, output, ctx) || seen.has(a.code)) {
       return;
     }
     seen.add(a.code);
-    const built = a.build(output, locale, extendedRules);
+    const built = buildAnalyzer(a, output, locale, extendedRules, ctx);
     diagnostics.push({
       order,
       diag: {

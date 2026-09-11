@@ -33,6 +33,10 @@ fi
 echo "VSIX OK: bdd-pilot.vsix ($(wc -c < bdd-pilot.vsix | tr -d ' ') bytes)"
 
 echo ""
+echo "-- VSIX TRX parse (clean extract) --"
+node scripts/vsix-trx-smoke.js
+
+echo ""
 echo "=============================================="
 echo "  CAPA B — CHECKLIST MANUAL (tu intervención)"
 echo "=============================================="

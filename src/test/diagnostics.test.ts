@@ -224,10 +224,22 @@ describe("diagnostics analyzer", () => {
     ].join("\n");
     const core = failureBreakdown(out, "en", false);
     assert.ok(core?.includes("test data / fixture setup"));
+    assert.ok(core?.includes("pending"));
+    assert.ok(core?.includes("API/HTTP"));
     assert.ok(!core?.includes("UserProfileTracking"));
     assert.ok(!core?.includes("Refit"));
-    const extended = failureBreakdown(out, "en", true);
-    assert.ok(extended?.includes("API/HTTP error"));
+  });
+
+  it("does not treat the word fixture as TEST_DATA_SETUP", () => {
+    const out = [
+      "Test run for /repo/bin/Debug/net8.0/App.dll",
+      "System.NullReferenceException : Object reference not set",
+      "   at Tests.FixtureSetup.Load()",
+      "Failed!  - Failed:   1, Passed:     0, Skipped:     0, Total:     1",
+    ].join("\n");
+    const found = codes(out);
+    assert.ok(!found.includes("TEST_DATA_SETUP"));
+    assert.ok(found.includes("TEST_RUN_FAILED"));
   });
 
   it("localizes diagnostic titles in Spanish", () => {

@@ -170,7 +170,7 @@ describe("pilot-cli failure-context", () => {
 <TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
   <Results>
     <UnitTestResult testName="SmokeFeature.SystemIsReady" outcome="Failed">
-      <Output><ErrorInfo><Message>Expected true but was false</Message></ErrorInfo></Output>
+      <Output><ErrorInfo><Message>XUnitPendingStepException : Test pending: No matching step definition found</Message></ErrorInfo></Output>
     </UnitTestResult>
   </Results>
 </TestRun>`);

@@ -6,7 +6,20 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
-_Nothing yet._
+## [1.38.0] — 2026-09-11
+
+### Changed
+- **Mapped vs TRX counts** — summary and dashboard last-known show both when they diverge; Run All Output lists unused TRX rows (capped)
+
+## [1.37.0] — 2026-09-11
+
+### Changed
+- **Diagnostics per failed test** — pending/setup/HTTP/AWS counts come from unique TRX `UnitTestResult`s (mutually exclusive); generic `fixture`/`test data` matches no longer inflate `TEST_DATA_SETUP`
+
+## [1.36.2] — 2026-09-11
+
+### Fixed
+- **VSIX TRX parser** — bundle `fast-xml-parser` into the headless `trxParser` so Copy for AI / MCP `failure-context` can parse TRX on a clean install (no `node_modules` in the VSIX)
 
 ## [1.36.1] — 2026-09-01
 

@@ -1,6 +1,7 @@
 import * as path from "path";
 import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "./analyzer";
 import { RunTarget } from "../runner/filterBuilder";
+import { TrxSummary } from "../results/trxParser";
 import { sanitize } from "../../security/sanitizer";
 
 export interface FailedScenarioSnapshot {
@@ -37,6 +38,8 @@ export interface LastRunSnapshot {
   failedScenarios: FailedScenarioSnapshot[];
   evidence: EvidenceSnapshot[];
   trxPath?: string;
+  /** Full TRX parse when available — analyzer classifies unique UnitTestResults (B2.6). */
+  trxSummary?: TrxSummary;
   /** Present when rebuilt from disk TRX after reload (Copy for AI provenance). */
   provenance?: "live" | "rehydrated-trx";
 }
@@ -143,7 +146,10 @@ export function buildAiFailureContext(
     failedSection = `\n## Failed scenarios\n${items.join("\n")}\n`;
   }
 
-  const diagnostics = analyzeDotnetOutput(snapshot.outputForAnalysis, options?.analyzeOptions);
+  const diagnostics = analyzeDotnetOutput(snapshot.outputForAnalysis, {
+    ...options?.analyzeOptions,
+    trxSummary: options?.analyzeOptions?.trxSummary ?? snapshot.trxSummary,
+  });
   let diagSection = "";
   if (diagnostics.length > 0) {
     const items = diagnostics.map((d, i) => {

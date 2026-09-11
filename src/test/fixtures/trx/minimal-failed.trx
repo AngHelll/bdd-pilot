@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="1" failed="1" notExecuted="0" />
+  </ResultSummary>
+  <Results>
+    <UnitTestResult executionId="exec-1" testId="test-1" testName="SmokeFeature.SystemIsReady" outcome="Failed" duration="00:00:00.5000000">
+      <Output><ErrorInfo><Message>Expected true but was false</Message></ErrorInfo></Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="exec-2" testId="test-2" testName="SmokeFeature.AddTwoNumbers" outcome="Passed" duration="00:00:01.0000000" />
+  </Results>
+</TestRun>

@@ -316,7 +316,9 @@ function runFailureContext(args) {
   }
 
   const markdown = buildAiFailureContext(snapshot, { maxOutputLines: parsed.maxOutputLines });
-  const diagnostics = analyzeDotnetOutput(snapshot.outputForAnalysis);
+  const diagnostics = analyzeDotnetOutput(snapshot.outputForAnalysis, {
+    trxSummary: snapshot.trxSummary,
+  });
   emitJson({
     markdown,
     summary: {

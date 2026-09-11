@@ -82,6 +82,7 @@ import {
   formatPilotSummaryFilterTooltip,
   formatPilotSummaryLabel,
   formatSummaryDiagnosticTooltip,
+  formatTrxDivergenceTooltip,
   PilotSummaryViewModel,
   resolvePilotSummaryCommand,
   resolvePilotSummaryIcon,
@@ -371,7 +372,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   /**
-   * Applies TRX for a scoped run, marks unmapped leaves, and returns mapping stats.
+   * Applies TRX for a scoped run (marks unmapped) or Run All (honesty unused only).
    */
   applyScopedResults(
     summary: TrxSummary | UnifiedSummary,
@@ -552,6 +553,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       tooltipParts.push(summaryCommand.title);
     } else if (filterActive && model.searchQuery) {
       tooltipParts.push(formatPilotSummaryFilterTooltip(model.searchQuery, locale));
+    }
+    if (model.lastKnown?.trx) {
+      tooltipParts.push(formatTrxDivergenceTooltip(locale));
     }
     if (diagnostic) {
       tooltipParts.push(formatSummaryDiagnosticTooltip(diagnostic, locale));

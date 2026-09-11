@@ -64,33 +64,40 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
   }
 
   function logTreeMapping(report: TreeMappingReport | undefined): void {
-    if (!report || report.inScope === 0) {
+    if (!report) {
+      clearLastMappingReport();
+      return;
+    }
+    const honesty = planHonestyOutput(report);
+    const honestyOnly = report.inScope === 0;
+    if (honestyOnly && !honesty.unused && !honesty.ambiguous && honesty.sharedCount === 0) {
       clearLastMappingReport();
       return;
     }
     setLastMappingReport(report);
-    persistSkipReasonSnapshot(report);
-    deps.output.appendLine(
-      `[bdd-pilot] ${deps.tr("log.treeMapping", {
-        mapped: report.mapped,
-        inScope: report.inScope,
-        unmapped: report.unmapped,
-      })}`,
-    );
-    if (report.unmapped > 0) {
-      const { shown, remaining } = selectUnmappedForOutput(report.unmappedLeaves);
-      for (const leaf of shown) {
-        deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedItem", { label: leaf.label })}`,
-        );
-      }
-      if (remaining > 0) {
-        deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedMore", { count: remaining })}`,
-        );
+    if (!honestyOnly) {
+      persistSkipReasonSnapshot(report);
+      deps.output.appendLine(
+        `[bdd-pilot] ${deps.tr("log.treeMapping", {
+          mapped: report.mapped,
+          inScope: report.inScope,
+          unmapped: report.unmapped,
+        })}`,
+      );
+      if (report.unmapped > 0) {
+        const { shown, remaining } = selectUnmappedForOutput(report.unmappedLeaves);
+        for (const leaf of shown) {
+          deps.output.appendLine(
+            `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedItem", { label: leaf.label })}`,
+          );
+        }
+        if (remaining > 0) {
+          deps.output.appendLine(
+            `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedMore", { count: remaining })}`,
+          );
+        }
       }
     }
-    const honesty = planHonestyOutput(report);
     if (honesty.unused) {
       deps.output.appendLine(
         `[bdd-pilot] ${deps.tr("log.treeMappingUnused", {

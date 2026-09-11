@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.36.1** · **Marketplace: v1.36.1** · **Next: watch (CF-docs optional)** · **541 unit tests**
+> **Current release: v1.38.0** · **Marketplace: v1.38.0** · **Next: watch (CF-docs optional)** · **559 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.36.1** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.38.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3 closed · CF-docs optional) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,9 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.38.0** | Mapped vs TRX dual counts + Run All unused Output · spec `trx-reporting-honesty-v1.36.md` slice C |
+| **1.37.0** | Diagnostics per failed TRX test — exclusive buckets, unique `UnitTestResult` · spec `trx-reporting-honesty-v1.36.md` slice B |
+| **1.36.2** | VSIX TRX parser — bundle `fast-xml-parser` into headless `trxParser` · spec `trx-reporting-honesty-v1.36.md` slice A |
 | **1.36.1** | Scope target resolution — shared `resolveFeatureInDomains` + `path.normalize` · spec `scope-target-resolution-v1.36.1.md` |
 | **1.36.0** | Cockpit fidelity CF3 — pre-run dry filter on stg/prod confirm · spec `cockpit-fidelity-v1.33.md` |
 | **1.35.0** | Mapping honesty 2-way — TRX unused + ambiguous in scoped Output · spec `mapping-honesty-2way-v1.35.md` |
@@ -210,7 +213,35 @@ Use before clicking **Publish** on Marketplace:
 
 ### Unreleased *(main branch)*
 
-_Nothing yet._
+_Nothing queued._
+
+### v1.38.0 — Mapped vs TRX honesty ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Summary / dashboard** | Dual mapped · TRX counts when they diverge; silence when equal |
+| **Run All** | Output lists unused TRX rows (cap 25); no mass `not_in_trx` on tree |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Published v1.38.0 |
+| **Tests** | 559 unit tests + `test:vsix-trx` smoke |
+
+### v1.37.0 — Diagnostics per failed TRX test ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Diagnostics** | One failed `UnitTestResult` → one category; `PENDING_STEPS` / `TEST_DATA_SETUP` n = unique tests; loose `fixture` match removed |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Published v1.37.0 (includes 1.36.2 packaging) |
+| **Tests** | 554 unit tests + `test:vsix-trx` smoke |
+
+### v1.36.2 — VSIX TRX parser ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Packaging** | Headless `trxParser` esbuild-inlines `fast-xml-parser`; clean VSIX extract parses TRX / Failure Context |
+| **API** | Sin cambio `PilotRunApiV1` |
+| **Marketplace** | Included in v1.37.0 |
+| **Tests** | 544 unit tests + `test:vsix-trx` smoke |
 
 ### v1.36.1 — Scope target resolution ✅ shipped
 
@@ -892,4 +923,4 @@ src/
 
 ---
 
-*Last updated: v1.36.1 shipped — Scope target resolution (shared path normalize).*
+*Last updated: v1.38.0 shipped — mapped vs TRX dual counts + Run All unused (Marketplace v1.38.0; honesty arc A–C).*

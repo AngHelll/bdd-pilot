@@ -64,6 +64,88 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(vm.rehydrateNotice?.trxFileName, "bdd-pilot-1.trx");
   });
 
+  it("formatPilotSummaryLabel appends TRX suffix when mapped diverges from history", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      storeNonEmpty: true,
+      lastHistory: {
+        id: "h",
+        timestamp: 1,
+        stage: "test",
+        mode: "debug",
+        passed: 3,
+        failed: 1,
+        skipped: 0,
+        total: 4,
+        scenarios: [],
+      },
+      rehydrateNotice: undefined,
+      running: false,
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.startsWith("1 passed"));
+    assert.ok(label.includes("TRX 3 passed, 1 failed, 0 skipped"));
+    assert.ok(!label.startsWith("TRX"));
+    assert.strictEqual(vm.lastKnown?.trx?.passed, 3);
+    const es = formatPilotSummaryLabel(vm, "es");
+    assert.ok(es.includes("TRX 3 correctos, 1 fallidos, 0 omitidos"));
+  });
+
+  it("formatPilotSummaryLabel stays silent when mapped matches TRX", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 2, failed: 1, skipped: 0, withResults: 3 },
+      storeNonEmpty: true,
+      lastHistory: {
+        id: "h",
+        timestamp: 1,
+        stage: "test",
+        mode: "debug",
+        passed: 2,
+        failed: 1,
+        skipped: 0,
+        total: 3,
+        scenarios: [],
+      },
+      rehydrateNotice: undefined,
+      running: false,
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.includes("1 failed"));
+    assert.ok(label.includes("2 passed"));
+    assert.ok(!label.includes("TRX"));
+    assert.strictEqual(vm.lastKnown?.trx, undefined);
+  });
+
+  it("formatPilotSummaryLabel truncates TRX suffix not the mapped rollup", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      storeNonEmpty: true,
+      lastHistory: {
+        id: "h",
+        timestamp: 1,
+        stage: "test",
+        mode: "debug",
+        passed: 999,
+        failed: 888,
+        skipped: 777,
+        total: 2664,
+        scenarios: [],
+      },
+      rehydrateNotice: {
+        trxFileName: "x.trx",
+        mtimeMs: 1,
+        passed: 1,
+        failed: 0,
+        skipped: 0,
+        total: 1,
+      },
+      running: false,
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.startsWith("1 passed"));
+    assert.ok(label.length <= 160);
+  });
+
   it("formatPilotSummaryLabel shows empty hint when no results", () => {
     const vm = buildPilotSummaryViewModel({
       storeRollup: undefined,

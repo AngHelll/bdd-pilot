@@ -2,7 +2,6 @@ import * as crypto from "crypto";
 import * as vscode from "vscode";
 import { Diagnostic } from "../core/diagnostics/analyzer";
 import { PilotLocale, t } from "../core/i18n";
-import { formatRollupDescriptionLocalized } from "../core/gherkin/outcomeRollup";
 import {
   DashboardActionsViewModel,
   DashboardWebviewCommand,
@@ -26,7 +25,12 @@ import {
   formatDashboardDiagnosticLines,
 } from "../core/results/dashboardDiagnostic";
 import { computeDashboardTotals, formatHistoryScopeDisplay } from "../core/results/dashboardFormat";
-import { isCanceledRun, LastKnownSnapshot } from "../core/results/dashboardLastKnown";
+import {
+  formatLastKnownCounts,
+  formatTrxDivergenceTooltip,
+  isCanceledRun,
+  LastKnownSnapshot,
+} from "../core/results/dashboardLastKnown";
 import { formatDuration } from "../core/results/durationFormat";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
 import { RunHistoryEntry, runKindBadgeKind } from "../core/results/runHistory";
@@ -399,15 +403,11 @@ function renderDashboardScript(nonce: string): string {
 }
 
 function renderLastKnownSection(snapshot: LastKnownSnapshot, locale: PilotLocale): string {
-  const rollup = {
-    passed: snapshot.passed,
-    failed: snapshot.failed,
-    skipped: snapshot.skipped,
-    withResults: snapshot.passed + snapshot.failed + snapshot.skipped,
-  };
   const body =
-    formatRollupDescriptionLocalized(rollup, locale) ??
-    t(locale, "dashboard.lastKnownEmpty");
+    formatLastKnownCounts(snapshot, locale) ?? t(locale, "dashboard.lastKnownEmpty");
+  const trxTitle = snapshot.trx
+    ? ` title="${escapeHtml(formatTrxDivergenceTooltip(locale))}"`
+    : "";
 
   let provenance: string;
   switch (snapshot.provenance) {
@@ -436,7 +436,7 @@ function renderLastKnownSection(snapshot: LastKnownSnapshot, locale: PilotLocale
 
   return `<h2>${escapeHtml(t(locale, "dashboard.lastKnownTitle"))}</h2>
   <div class="last-known">
-    <p>${escapeHtml(body)}</p>
+    <p${trxTitle}>${escapeHtml(body)}</p>
     <p class="hint muted">${escapeHtml(provenance)}</p>
     ${durationLine}
   </div>`;

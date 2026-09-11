@@ -133,7 +133,8 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   scenarios lack a TRX match (`not_in_trx`), lists them (capped) and the palette command
   **Show Unmapped Scenarios** opens a QuickPick to jump to the `.feature` line.
   The same Output also lists **TRX rows unused** by any Gherkin leaf (capped) and **ambiguous**
-  matches (first TRX row applied) — mapping honesty, not a generic unit-test runner.
+  matches (first TRX row applied) — including after **Run All** — mapping honesty, not a generic unit-test runner.
+  When tree (mapped) totals differ from TRX, the summary shows both.
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth

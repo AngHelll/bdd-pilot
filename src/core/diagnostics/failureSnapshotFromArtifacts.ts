@@ -142,7 +142,7 @@ export function hasFailureContext(trxSummary: TrxSummary | undefined, logText: s
   if (!trimmed) {
     return false;
   }
-  const diagnostics = analyzeDotnetOutput(trimmed);
+  const diagnostics = analyzeDotnetOutput(trimmed, { trxSummary });
   if (diagnostics.some((entry) => entry.severity === "error")) {
     return true;
   }
@@ -190,6 +190,7 @@ export function buildFailureSnapshotFromArtifacts(input: FailureSnapshotInput): 
     outputForAnalysis,
     failedScenarios,
     evidence: [],
+    trxSummary,
     trxPath: input.trxPath
       ? path.isAbsolute(input.trxPath)
         ? path.relative(projectDir, input.trxPath).split(path.sep).join("/")

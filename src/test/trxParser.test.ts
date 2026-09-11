@@ -46,4 +46,27 @@ describe("trxParser", () => {
     );
     assert.ok(!matchesScenario("LoginFeature.Other", "Completely different name"));
   });
+
+  it("reads executionId, testId, and ResultSummary counters over results.length", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TestRun>
+  <ResultSummary outcome="Failed">
+    <Counters total="10" executed="9" passed="7" failed="2" notExecuted="1" />
+  </ResultSummary>
+  <Results>
+    <UnitTestResult executionId="e1" testId="t1" testName="A.One" outcome="Failed">
+      <Output><ErrorInfo><Message>boom</Message></ErrorInfo></Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e2" testId="t2" testName="A.Two" outcome="Passed" />
+  </Results>
+</TestRun>`;
+    const summary = parseTrx(xml);
+    assert.strictEqual(summary.total, 10);
+    assert.strictEqual(summary.passed, 7);
+    assert.strictEqual(summary.failed, 2);
+    assert.strictEqual(summary.skipped, 1);
+    assert.strictEqual(summary.results.length, 2);
+    assert.strictEqual(summary.results[0].executionId, "e1");
+    assert.strictEqual(summary.results[0].testId, "t1");
+  });
 });

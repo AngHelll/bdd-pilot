@@ -13,6 +13,7 @@ import {
 import { formatOutputSectionHeader } from "../core/feedback/dotnetOutputFilter";
 import { MessageKey } from "../core/i18n";
 import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
+import { TrxSummary } from "../core/results/trxParser";
 import { buildRerunFailedFilter } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
 import { RunService } from "../providers/runService";
@@ -38,8 +39,11 @@ export interface PostRunDeps {
 }
 
 export function createPostRunHandlers(deps: PostRunDeps) {
-  function appendRunDiagnosticsToOutput(text: string): void {
-    const analyzeOptions = readAnalyzeOptions(deps.localeService.getLocale());
+  function appendRunDiagnosticsToOutput(text: string, trxSummary?: TrxSummary): void {
+    const analyzeOptions = {
+      ...readAnalyzeOptions(deps.localeService.getLocale()),
+      trxSummary,
+    };
     const diagnostics = analyzeDotnetOutput(text, analyzeOptions);
     const lines = formatDiagnosticsOutputLines(
       diagnostics,
@@ -110,14 +114,36 @@ export function createPostRunHandlers(deps: PostRunDeps) {
   function notifyPostRunFeedback(request: PostRunFeedbackRequest): void {
     if (!request.canceled && !request.debug) {
       if (request.exitCode !== 0 || (request.summary?.failed ?? 0) > 0) {
-        appendRunDiagnosticsToOutput(request.outputBuffer);
+        appendRunDiagnosticsToOutput(
+          request.outputBuffer,
+          request.summary
+            ? {
+                total: request.summary.total,
+                passed: request.summary.passed,
+                failed: request.summary.failed,
+                skipped: request.summary.skipped,
+                results: request.summary.results,
+              }
+            : undefined,
+        );
       }
     }
     maybeAutoShowOutput(request);
     const vm = buildPostRunFeedback({
       ...request,
       locale: deps.localeService.getLocale(),
-      analyzeOptions: readAnalyzeOptions(deps.localeService.getLocale()),
+      analyzeOptions: {
+        ...readAnalyzeOptions(deps.localeService.getLocale()),
+        trxSummary: request.summary
+          ? {
+              total: request.summary.total,
+              passed: request.summary.passed,
+              failed: request.summary.failed,
+              skipped: request.summary.skipped,
+              results: request.summary.results,
+            }
+          : undefined,
+      },
       toastMode: readPostRunToast(),
       canRerunFailed: !!buildRerunFailedFilter(deps.runService, readSettings().filterMapping),
       canCopyForAi: readAiSettings().enabled && !!deps.runService.getLastFailedRunSnapshot(),
@@ -193,7 +219,10 @@ export function createCopyFailureContextForAi(deps: {
       maxOutputLines: ai.contextMaxOutputLines,
       extensionVersion: deps.context.extension.packageJSON.version,
       workspaceRoot,
-      analyzeOptions: readAnalyzeOptions(deps.localeService.getLocale()),
+      analyzeOptions: {
+        ...readAnalyzeOptions(deps.localeService.getLocale()),
+        trxSummary: snapshot.trxSummary,
+      },
       rehydratedFromTrxNote:
         snapshot.provenance === "rehydrated-trx"
           ? deps.tr("ai.rehydratedFromTrxNote", { file: trxFile })

@@ -1,11 +1,16 @@
 import { FILTER_CHIP_MAX_LEN } from "../gherkin/treeSearch";
-import { formatRollupDescriptionLocalized, OutcomeRollup } from "../gherkin/outcomeRollup";
+import { OutcomeRollup } from "../gherkin/outcomeRollup";
 import { TreeEmptyKind } from "../gherkin/treeEmptyState";
 import { Diagnostic } from "../diagnostics/analyzer";
 import { diagnosticHint } from "../diagnostics/diagnosticCatalog";
 import { PilotLocale, t } from "../i18n";
 import { LiveProgressState, formatProgressMessage } from "../runner/liveProgress";
-import { resolveLastKnownSnapshot, LastKnownSnapshot } from "./dashboardLastKnown";
+import {
+  resolveLastKnownSnapshot,
+  formatLastKnownCounts,
+  formatTrxDivergenceTooltip,
+  LastKnownSnapshot,
+} from "./dashboardLastKnown";
 import { RehydrateNotice } from "./rehydrateNotice";
 import { RunHistoryEntry } from "./runHistory";
 
@@ -49,6 +54,8 @@ export interface BuildPilotSummaryOptions {
   unmappedCount?: number;
   stage?: string;
 }
+
+export { formatTrxDivergenceTooltip, LastKnownSnapshot };
 
 export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): PilotSummaryViewModel {
   return {
@@ -230,16 +237,16 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
       parts.push(liveText);
     }
   } else if (model.lastKnown) {
-    const rollup = {
-      passed: model.lastKnown.passed,
-      failed: model.lastKnown.failed,
-      skipped: model.lastKnown.skipped,
-      withResults: model.lastKnown.passed + model.lastKnown.failed + model.lastKnown.skipped,
-    };
-    const body = formatRollupDescriptionLocalized(rollup, locale);
+    const rehydrate = model.rehydrateNotice ? t(locale, "tree.summaryRehydrate") : undefined;
+    const reserved = rehydrate ? ` · ${rehydrate}`.length : 0;
+    const body = formatLastKnownCounts(model.lastKnown, locale, LABEL_MAX - reserved);
     if (body) {
       parts.push(body);
     }
+    if (rehydrate) {
+      parts.push(rehydrate);
+    }
+    return parts.join(" · ");
   } else {
     parts.push(emptyStateSummaryLabel(model.emptyKind ?? "none", locale));
   }

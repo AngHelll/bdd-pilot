@@ -27,6 +27,10 @@ async function main() {
   if (!fs.existsSync(headlessMarker)) {
     throw new Error(`missing ${headlessMarker} — run build:headless first`);
   }
+  const trxParser = path.join(DIST, "headless/core/results/trxParser.js");
+  if (!fs.existsSync(trxParser)) {
+    throw new Error(`missing ${trxParser} — run build:headless first`);
+  }
   if (!fs.existsSync(path.join(DIST, "pilot-mcp.cjs"))) {
     throw new Error("missing dist/pilot-mcp.cjs");
   }

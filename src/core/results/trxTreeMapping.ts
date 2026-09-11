@@ -279,7 +279,7 @@ export function finalizeScopedRunOutcomes(
   }
 }
 
-/** Applies TRX to store and marks unmapped scoped leaves (not for run-all). */
+/** Applies TRX to store. Scoped runs mark unmapped leaves; Run All only reports honesty. */
 export function applyScopedTrxResults(
   store: OutcomeStoreTrxWriter,
   domains: DomainGroup[],
@@ -288,12 +288,25 @@ export function applyScopedTrxResults(
   options?: { canceled?: boolean },
 ): TreeMappingReport | undefined {
   const scope = collectOutcomeKeysForTargets(targets, domains);
-  if (scope === "all" || scope.size === 0) {
+  if (scope !== "all" && scope.size === 0) {
     applyTrxMatchesToStore(store, domains, summary);
     return undefined;
   }
 
   const honesty = applyTrxMatchesWithHonesty(store, domains, summary);
+  if (scope === "all") {
+    return {
+      inScope: 0,
+      mapped: honesty.matchedKeys.size,
+      unmapped: 0,
+      unmappedLeaves: [],
+      unusedTrx: honesty.unusedTrx,
+      ambiguousLeaves: honesty.ambiguousLeaves,
+      sharedChosenCount: honesty.sharedChosenCount,
+      trxTotal: summary.results.length,
+    };
+  }
+
   finalizeScopedRunOutcomes(store, scope, honesty.matchedKeys, !!options?.canceled);
   return {
     ...computeTreeMappingReport(scope, store, domains),

@@ -270,6 +270,9 @@ const EN = {
   "toast.unmappedOpenFailed": "Could not open the feature file for that scenario.",
   "quickPick.unmappedPlaceholder": "Unmapped scenarios (last scoped run)",
   "tree.summaryUnmappedChip": "{count} unmapped — Show Unmapped",
+  "tree.summaryTrxCounts": "TRX {passed} passed, {failed} failed, {skipped} skipped",
+  "tree.summaryTrxTooltip":
+    "TRX counts include tests not mapped to Gherkin (mixed solution or outlines).",
   "log.envLoaded":
     "[bdd-pilot] Loaded environment from {files} ({count} variables, values hidden).",
   "log.envMissing":
@@ -299,6 +302,9 @@ const EN = {
   "diagnostic.breakdown.apiHttp": "{n} API/HTTP error(s)",
   "diagnostic.breakdown.cloudCreds": "{n} cloud credential failure(s)",
   "diagnostic.breakdown.ambiguous": "{n} ambiguous step definition(s)",
+  "diagnostic.breakdown.assert": "{n} assertion failure(s)",
+  "diagnostic.breakdown.code": "{n} code exception(s)",
+  "diagnostic.breakdown.other": "{n} other failure(s)",
 
   "diagnostic.DOTNET_NOT_FOUND.title": ".NET SDK is not installed or not on PATH.",
   "diagnostic.DOTNET_NOT_FOUND.hint":
@@ -655,6 +661,9 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.unmappedOpenFailed": "No se pudo abrir el .feature de ese escenario.",
   "quickPick.unmappedPlaceholder": "Escenarios sin mapear (último run con scope)",
   "tree.summaryUnmappedChip": "{count} sin mapear — Ver sin mapear",
+  "tree.summaryTrxCounts": "TRX {passed} correctos, {failed} fallidos, {skipped} omitidos",
+  "tree.summaryTrxTooltip":
+    "Los conteos TRX incluyen tests no mapeados a Gherkin (solución mixta u outlines).",
   "log.envLoaded":
     "[bdd-pilot] Entorno cargado desde {files} ({count} variables, valores ocultos).",
   "log.envMissing":
@@ -684,6 +693,9 @@ const ES: Record<keyof typeof EN, string> = {
   "diagnostic.breakdown.apiHttp": "{n} error(es) API/HTTP",
   "diagnostic.breakdown.cloudCreds": "{n} fallo(s) de credenciales cloud",
   "diagnostic.breakdown.ambiguous": "{n} definición(es) de step ambigua(s)",
+  "diagnostic.breakdown.assert": "{n} fallo(s) de aserción",
+  "diagnostic.breakdown.code": "{n} excepción(es) de código",
+  "diagnostic.breakdown.other": "{n} otro(s) fallo(s)",
 
   "diagnostic.DOTNET_NOT_FOUND.title": "El SDK de .NET no está instalado o no está en PATH.",
   "diagnostic.DOTNET_NOT_FOUND.hint":

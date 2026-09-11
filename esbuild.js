@@ -13,6 +13,7 @@ async function main() {
     sourcesContent: false,
     platform: "node",
     outfile: "dist/extension.js",
+    // Keep fast-xml-parser bundled (A3). Do not add it to external.
     external: ["vscode"],
     logLevel: "info",
   });

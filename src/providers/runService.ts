@@ -710,6 +710,13 @@ export class RunService {
       trxPath: result.trxPath
         ? path.relative(req.projectDir, result.trxPath).split(path.sep).join("/")
         : undefined,
+      trxSummary: {
+        total: summary.total,
+        passed: summary.passed,
+        failed: summary.failed,
+        skipped: summary.skipped,
+        results: summary.results,
+      },
     };
 
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -785,7 +792,18 @@ export class RunService {
       evidence,
       trxPath: toAbsoluteTrxPath(result.trxPath),
       outputBuffer,
-      analyzeOptions: req.analyzeOptions,
+      analyzeOptions: {
+        ...req.analyzeOptions,
+        trxSummary: summary
+          ? {
+              total: summary.total,
+              passed: summary.passed,
+              failed: summary.failed,
+              skipped: summary.skipped,
+              results: summary.results,
+            }
+          : req.analyzeOptions?.trxSummary,
+      },
     });
   }
 
