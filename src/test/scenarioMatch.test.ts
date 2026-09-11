@@ -6,6 +6,7 @@ import {
   findOutlineExampleMatch,
   findOutlineExampleMatchInFeature,
   matchesOutlineExample,
+  matchesOutlineExampleRow,
   matchesOutlineExampleTheory,
   matchesScenario,
   matchesScenarioInFeature,
@@ -144,5 +145,67 @@ describe("scenarioMatch Theory outline", () => {
     const testName = "CalculatorFeature.AddTwoNumbers(1, 2, 3)";
     assert.strictEqual(matchesOutlineExampleTheory(testName, row0), undefined);
     assert.ok(matchesOutlineExample(testName, row0));
+  });
+
+  it("rejects wrong Theory params even when the Examples array has length 1", () => {
+    const wrongRowOnly = [row1];
+    const testName =
+      'Ns.CalculatorFeature.AddTwoNumbers(first: "1", second: "2", result: "3", exampleTags: [])';
+    assert.strictEqual(matchesOutlineExampleRow(testName, row1), false);
+    assert.strictEqual(
+      findOutlineExampleMatchInFeature(testName, feature, scenario, wrongRowOnly),
+      undefined,
+    );
+  });
+
+  it("does not let a Theory row match every Outline leaf via length-1 short-circuit", () => {
+    const incomeRows = [
+      {
+        rowIndex: 0,
+        line: 20,
+        headers: ["income"],
+        values: ["25000"],
+        label: "income=25000",
+      },
+      {
+        rowIndex: 1,
+        line: 21,
+        headers: ["income"],
+        values: ["50000"],
+        label: "income=50000",
+      },
+      {
+        rowIndex: 2,
+        line: 22,
+        headers: ["income"],
+        values: ["100000"],
+        label: "income=100000",
+      },
+    ];
+    const taxFeature: FeatureInfo = {
+      name: "Ppr Questionnaire",
+      filePath: "/x/Ppr.feature",
+      tags: [],
+      scenarios: [],
+    };
+    const taxScenario: ScenarioInfo = {
+      name: "Validate tax benefits calculation across different income levels",
+      tags: [],
+      line: 99,
+      isOutline: true,
+    };
+    const mid =
+      'Ns.PprQuestionnaireFeature.ValidateTaxBenefitsCalculationAcrossDifferentIncomeLevels(income: "50000", __pickleIndex: "7", exampleTags: [])';
+    assert.ok(matchesOutlineExampleRow(mid, incomeRows[1]));
+    assert.ok(!matchesOutlineExampleRow(mid, incomeRows[0]));
+    assert.ok(!matchesOutlineExampleRow(mid, incomeRows[2]));
+    // Apply path historically passed [singleExample] — must still discriminate:
+    assert.ok(
+      findOutlineExampleMatchInFeature(mid, taxFeature, taxScenario, [incomeRows[1]]),
+    );
+    assert.strictEqual(
+      findOutlineExampleMatchInFeature(mid, taxFeature, taxScenario, [incomeRows[0]]),
+      undefined,
+    );
   });
 });

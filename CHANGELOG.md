@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.42.0] — 2026-09-11
+
+### Fixed
+- **Outline match fidelity** — Theory/Examples rows no longer all match every Outline leaf when apply checks a single example (`length===1` short-circuit); each Theory maps 1:1 to its Examples row (reduces spurious `ambiguous` / unused Theory siblings)
+
 ## [1.41.0] — 2026-09-11
 
 ### Added

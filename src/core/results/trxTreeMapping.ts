@@ -3,7 +3,10 @@ import { collectOutcomeKeysForTargets, outlineRowKey, scenarioKey } from "../run
 import { RunTarget } from "../runner/filterBuilder";
 import { MATCHING_DEBUG_CANDIDATE_CAP } from "./mappingReportFormat";
 import { setMatchingDebugSource } from "./matchingDebugSession";
-import { findOutlineExampleMatchInFeature, matchesScenarioInFeature } from "./scenarioMatch";
+import {
+  matchesOutlineExampleRow,
+  matchesScenarioInFeature,
+} from "./scenarioMatch";
 import { SkipReason } from "./skipReason";
 import { TestOutcome, TestResult } from "./trxParser";
 import { UnifiedSummary } from "./resultLoader";
@@ -76,12 +79,13 @@ function trxRowMatchesLeaf(
   scenario: ScenarioInfo,
   example?: OutlineExample,
 ): boolean {
-  if (example) {
-    return Boolean(
-      findOutlineExampleMatchInFeature(result.testName, feature, scenario, [example]),
-    );
+  if (!matchesScenarioInFeature(result.testName, feature, scenario)) {
+    return false;
   }
-  return matchesScenarioInFeature(result.testName, feature, scenario);
+  if (example) {
+    return matchesOutlineExampleRow(result.testName, example);
+  }
+  return true;
 }
 
 interface TrxApplyHonesty {

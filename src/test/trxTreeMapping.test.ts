@@ -230,6 +230,93 @@ describe("trxTreeMapping", () => {
     assert.deepStrictEqual(stats!.unusedTrx, [{ testName: "SampleFeature.One", outcome: "failed" }]);
   });
 
+  it("maps Outline Theory rows 1:1 without ambiguous or unused siblings", () => {
+    const incomeDomains: DomainGroup[] = [
+      {
+        name: "DigitalAdvisory",
+        features: [
+          {
+            name: "Ppr Questionnaire",
+            filePath: "/x/PprQuestionnaire.feature",
+            tags: [],
+            scenarios: [
+              {
+                name: "Validate tax benefits calculation across different income levels",
+                tags: [],
+                line: 99,
+                isOutline: true,
+                examples: [
+                  {
+                    rowIndex: 0,
+                    line: 105,
+                    headers: ["income"],
+                    values: ["25000"],
+                    label: "income=25000",
+                  },
+                  {
+                    rowIndex: 1,
+                    line: 106,
+                    headers: ["income"],
+                    values: ["50000"],
+                    label: "income=50000",
+                  },
+                  {
+                    rowIndex: 2,
+                    line: 107,
+                    headers: ["income"],
+                    values: ["100000"],
+                    label: "income=100000",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const taxFeature = incomeDomains[0].features[0];
+    const taxScenario = taxFeature.scenarios[0];
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 2,
+      failed: 1,
+      skipped: 0,
+      total: 3,
+      results: [
+        {
+          testName:
+            'Ns.PprQuestionnaireFeature.ValidateTaxBenefitsCalculationAcrossDifferentIncomeLevels(income: "25000", __pickleIndex: "6", exampleTags: [])',
+          outcome: "passed",
+          durationMs: 4,
+        },
+        {
+          testName:
+            'Ns.PprQuestionnaireFeature.ValidateTaxBenefitsCalculationAcrossDifferentIncomeLevels(income: "50000", __pickleIndex: "7", exampleTags: [])',
+          outcome: "failed",
+          durationMs: 5,
+        },
+        {
+          testName:
+            'Ns.PprQuestionnaireFeature.ValidateTaxBenefitsCalculationAcrossDifferentIncomeLevels(income: "100000", __pickleIndex: "8", exampleTags: [])',
+          outcome: "passed",
+          durationMs: 6,
+        },
+      ],
+    };
+    const stats = applyScopedTrxResults(store, incomeDomains, summary, [
+      { kind: "feature", feature: taxFeature },
+    ]);
+    assert.ok(stats);
+    assert.strictEqual(stats!.mapped, 3);
+    assert.strictEqual(stats!.unmapped, 0);
+    assert.deepStrictEqual(stats!.ambiguousLeaves, []);
+    assert.deepStrictEqual(stats!.unusedTrx, []);
+    assert.strictEqual(store.get(outlineRowKey(taxFeature, taxScenario, 0)), "passed");
+    assert.strictEqual(store.get(outlineRowKey(taxFeature, taxScenario, 1)), "failed");
+    assert.strictEqual(store.get(outlineRowKey(taxFeature, taxScenario, 2)), "passed");
+  });
+
   it("counts shared TRX when one row is chosen by two Gherkin leaves", () => {
     const store = new OutcomeStore();
     const summary: UnifiedSummary = {

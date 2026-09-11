@@ -157,15 +157,27 @@ export function matchesOutlineExampleTheory(
   return true;
 }
 
+/**
+ * Whether a TRX/Theory display name corresponds to **this** Examples row.
+ * Never short-circuits on “only one example in the caller’s array” — apply
+ * passes `[example]` per leaf, so length===1 must still validate params/cells.
+ *
+ * Order: Theory named params → if parseable false, reject; if undefined,
+ * fall back to cell-substring includes.
+ */
+export function matchesOutlineExampleRow(testName: string, example: OutlineExample): boolean {
+  const theory = matchesOutlineExampleTheory(testName, example);
+  if (theory === true) {
+    return true;
+  }
+  if (theory === false) {
+    return false;
+  }
+  return matchesOutlineExample(testName, example);
+}
+
 function pickOutlineExample(testName: string, examples: OutlineExample[]): OutlineExample | undefined {
-  if (examples.length === 1) {
-    return examples[0];
-  }
-  const byTheory = examples.find((ex) => matchesOutlineExampleTheory(testName, ex) === true);
-  if (byTheory) {
-    return byTheory;
-  }
-  return examples.find((ex) => matchesOutlineExample(testName, ex));
+  return examples.find((ex) => matchesOutlineExampleRow(testName, ex));
 }
 
 /**
