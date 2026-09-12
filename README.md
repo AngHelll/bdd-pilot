@@ -141,6 +141,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   Use **BDD Pilot: Copy Matching Debug Pack** to copy a sanitized cross-layer snapshot for support
   (clipboard only; no remote telemetry), including **layout/grouping** (Pilot domain, feature path,
   subpath, `groupBy`). When gaps exist, Output also prints a one-line **Matching health** hint.
+  After multi-domain failed runs, Output can add a **Diagnostics by domain** roll-up (failure buckets per Pilot domain).
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
@@ -269,7 +270,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.filter.outlineRowFilter` | `displayName` | `displayName` = one outline row; `scenarioOnly` = whole Theory. |
 | `bddPilot.locale` | `auto` | UI language: `auto` (follow VS Code), `en`, or `es`. |
 | `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
-| `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. |
+| `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. Multi-domain failure roll-ups still appear when thresholds are met. |
 | `bddPilot.feedback.autoShowOutput` | `off` | Auto-show Output when a run finishes: `off`, `onFailure`, or `always`. |
 | `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
 | `bddPilot.preRun.bindingGate` | `warn` | Pre-run binding check via BDD Guardian: `off`, `warn`, or `block`. |

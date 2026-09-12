@@ -6,12 +6,16 @@ import { buildAiFailureContext } from "../core/diagnostics/aiFailureContext";
 import { tryBuildRehydratedFailureSnapshot } from "../core/diagnostics/failureSnapshotFromArtifacts";
 import { formatDiagnosticsOutputLines } from "../core/diagnostics/diagnosticsOutput";
 import {
+  buildDiagnosticsByDomainRollUp,
+  formatDiagnosticsByDomainLines,
+} from "../core/diagnostics/diagnosticsByDomain";
+import { DomainGroup } from "../core/gherkin/model";
+import {
   buildMatchingDebugPack,
   collectMatchingDebugLayoutLeaves,
 } from "../core/results/matchingDebugPack";
 import { getLastMappingReport } from "../core/results/lastMappingReport";
 import { getMatchingDebugSource } from "../core/results/matchingDebugSession";
-import { DomainGroup } from "../core/gherkin/model";
 import { readTreeGroupBy } from "../providers/treeSettings";
 import {
   buildPostRunFeedback,
@@ -43,6 +47,7 @@ export interface PostRunDeps {
   runService: RunService;
   tr: (key: MessageKey, params?: Record<string, string | number>) => string;
   copyFailureContextForAi: () => Promise<void>;
+  getDomains: () => DomainGroup[];
 }
 
 export function createPostRunHandlers(deps: PostRunDeps) {
@@ -51,20 +56,41 @@ export function createPostRunHandlers(deps: PostRunDeps) {
       ...readAnalyzeOptions(deps.localeService.getLocale()),
       trxSummary,
     };
+    const locale = analyzeOptions.locale ?? deps.localeService.getLocale();
     const diagnostics = analyzeDotnetOutput(text, analyzeOptions);
     const lines = formatDiagnosticsOutputLines(
       diagnostics,
       readDiagnosticsInOutput(),
-      analyzeOptions.locale ?? "en",
+      locale,
     );
-    if (lines.length === 0) {
+    const byDomainLines =
+      trxSummary && trxSummary.failed > 0
+        ? formatDiagnosticsByDomainLines(
+            buildDiagnosticsByDomainRollUp(trxSummary.results, deps.getDomains()),
+            locale,
+          )
+        : [];
+
+    if (lines.length === 0 && byDomainLines.length === 0) {
       return;
     }
-    deps.output.appendLine(
-      formatOutputSectionHeader(deps.localeService.getLocale(), "diagnostics"),
-    );
-    for (const line of lines) {
-      deps.output.appendLine(line);
+    if (lines.length > 0) {
+      deps.output.appendLine(
+        formatOutputSectionHeader(deps.localeService.getLocale(), "diagnostics"),
+      );
+      for (const line of lines) {
+        deps.output.appendLine(line);
+      }
+    }
+    if (byDomainLines.length > 0) {
+      if (lines.length === 0) {
+        deps.output.appendLine(
+          formatOutputSectionHeader(deps.localeService.getLocale(), "diagnostics"),
+        );
+      }
+      for (const line of byDomainLines) {
+        deps.output.appendLine(line);
+      }
     }
   }
 

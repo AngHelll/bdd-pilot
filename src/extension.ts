@@ -370,6 +370,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     runService,
     tr,
     copyFailureContextForAi,
+    getDomains: () => treeProvider.getDomains(),
   });
 
   const notifyPostRunFeedback = (request: PostRunFeedbackRequest) =>

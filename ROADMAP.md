@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.44.0** · **Marketplace: v1.44.0** · **Next: watch (CF2 solo backlog)** · **600 unit tests**
+> **Current release: v1.45.0** · **Marketplace: v1.44.0** · **Next: watch (CF2 solo backlog)** · **603 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.44.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.44.0** (local **v1.45.0** Diagnostics by domain) |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.45.0** | Diagnostics by domain — Output roll-up of failure buckets per discovery domain · spec `diagnostics-by-domain-v1.45.md` |
 | **1.44.0** | Unused TRX split — gherkin-like vs other in health/Output/Debug Pack · spec `unused-trx-split-v1.44.md` |
 | **1.43.0** | Run-domain-first — scoped Run All nudge + fail-concentration tip · spec `run-domain-first-v1.43.md` |
 | **1.42.0** | Outline match fidelity — Theory → Examples row 1:1 (no length===1 short-circuit) · spec `outline-match-fidelity-v1.42.md` |
@@ -221,6 +222,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.45.0 — Diagnostics by domain ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Diagnostics** | Output roll-up de fallos TRX por `deriveDomain` + buckets (`pending`, `testData`, `http`, …); silencio si <2 dominios o <3 fails |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Tests** | 603 unit tests |
 
 ### v1.44.0 — Unused TRX split ✅ shipped
 
@@ -994,4 +1003,4 @@ src/
 
 ---
 
-*Last updated: v1.44.0 Unused TRX split shipped Marketplace (watch CF2 still backlog).*
+*Last updated: v1.45.0 Diagnostics by domain tagged/pushed (Marketplace still v1.44.0; watch CF2 still backlog).*

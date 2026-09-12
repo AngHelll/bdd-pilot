@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.45.0] — 2026-09-11
+
+### Added
+- **Diagnostics by domain** — after a multi-domain failed run, Output adds a roll-up of TRX failure buckets (`pending`, `testData`, `http`, …) grouped by Pilot discovery domain
+
 ## [1.44.0] — 2026-09-11
 
 ### Added

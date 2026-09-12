@@ -316,6 +316,11 @@ const EN = {
     "[bdd-pilot] Diagnostics: {code} — {title}. Open Output for full log.",
   "diagnostic.output.hintPrefix": "→",
 
+  "diagnostic.byDomain.header": "[bdd-pilot] Diagnostics by domain:",
+  "diagnostic.byDomain.line": "  {domain}: {buckets} ({total})",
+  "diagnostic.byDomain.more": "  … and {count} more domains",
+  "diagnostic.byDomain.unmapped": "_(unmapped)_",
+
   "diagnostic.breakdown.pending": "{n} pending/missing step definition(s)",
   "diagnostic.breakdown.testData": "{n} test data / fixture setup failure(s)",
   "diagnostic.breakdown.nullRef": "{n} NullReferenceException (often failed setup/Given steps)",
@@ -728,6 +733,11 @@ const ES: Record<keyof typeof EN, string> = {
   "diagnostic.output.summaryLineSingle":
     "[bdd-pilot] Diagnósticos: {code} — {title}. Abre Output para el log completo.",
   "diagnostic.output.hintPrefix": "→",
+
+  "diagnostic.byDomain.header": "[bdd-pilot] Diagnósticos por dominio:",
+  "diagnostic.byDomain.line": "  {domain}: {buckets} ({total})",
+  "diagnostic.byDomain.more": "  … y {count} dominios más",
+  "diagnostic.byDomain.unmapped": "_(sin mapear)_",
 
   "diagnostic.breakdown.pending": "{n} step(s) pendiente(s) o sin definición",
   "diagnostic.breakdown.testData": "{n} fallo(s) de datos de prueba / fixture",
