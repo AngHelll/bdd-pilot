@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.47.0** · **Marketplace: v1.45.0** · **Next: watch (CF2 solo backlog)** · **615 unit tests**
+> **Current release: v1.47.0** · **Marketplace: v1.47.0** · **Next: watch (CF2 solo backlog)** · **615 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.45.0** (local **v1.47.0** residual matching) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.47.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -232,6 +232,7 @@ _Nothing queued._
 | **Matching** | Theory metadata `__*` / `exampleTags` ignorados; escalares sin comillas; no first-apply si K>1; `__pickleIndex` solo desempate; Debug Pack `theoryKeys=` vs `exampleHeaders=` (1.46) |
 | **TRX totals** | `skipped` sube al conteo de filas `NotExecuted`/`Skipped` cuando ResultSummary queda en 0 (1.47) |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.47.0 |
 | **Tests** | 615 unit tests |
 
 ### v1.45.0 — Diagnostics by domain ✅ shipped
@@ -1015,4 +1016,4 @@ src/
 
 ---
 
-*Last updated: v1.47.0 residual matching tagged/pushed (Marketplace still v1.45.0; watch CF2 still backlog).*
+*Last updated: v1.47.0 residual matching shipped Marketplace (watch CF2 still backlog).*
