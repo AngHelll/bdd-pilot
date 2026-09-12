@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.48.0** · **Marketplace: v1.47.0** · **Next: watch** · **621 unit tests**
+> **Current release: v1.48.0** · **Marketplace: v1.48.0** · **Next: watch** · **621 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.47.0** (local **v1.48.0** CF2 leaf story) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.48.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1–CF3+CF-docs closed) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -232,6 +232,7 @@ _Nothing queued._
 |------|--------|
 | **Tree / TE** | `formatLeafStoryStrip`: fail snippet + skip narrativo en description; compact omite tags (y duration en fail) |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.48.0 |
 | **Tests** | 621 unit tests |
 
 ### v1.47.0 — Residual matching (Outline keys + skipped honesty) ✅ shipped
@@ -1025,4 +1026,4 @@ src/
 
 ---
 
-*Last updated: v1.48.0 CF2 leaf story tagged/pushed (Marketplace still v1.47.0).*
+*Last updated: v1.48.0 CF2 leaf story shipped Marketplace.*
