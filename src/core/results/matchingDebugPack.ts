@@ -410,10 +410,12 @@ export function buildMatchingDebugPack(input: BuildMatchingDebugPackInput): stri
     ambiguousRows.length > 0
       ? [
           "## Ambiguous",
-          ...ambiguousCap.shown.map(
-            (leaf) =>
-              `- ${cleanLabel(leaf.label)} — ${leaf.candidateCount} rows; chosen \`${cleanLabel(leaf.chosenTestName)}\``,
-          ),
+          ...ambiguousCap.shown.map((leaf) => {
+            const chosen = leaf.chosenTestName
+              ? `; chosen \`${cleanLabel(leaf.chosenTestName)}\``
+              : "; no chosen (tie)";
+            return `- ${cleanLabel(leaf.label)} — ${leaf.candidateCount} rows${chosen}`;
+          }),
           ...(ambiguousCap.remaining > 0
             ? [`- _… and ${ambiguousCap.remaining} more ambiguous_`]
             : []),
@@ -469,6 +471,20 @@ export function buildMatchingDebugPack(input: BuildMatchingDebugPackInput): stri
     candidatesSection = `${lines.join("\n")}\n`;
   }
 
+  const residualRows = report.residualOutlineLines ?? [];
+  const residualCap = selectCappedForOutput(residualRows, MATCHING_DEBUG_CANDIDATE_CAP);
+  const residualSection =
+    residualRows.length > 0
+      ? [
+          "## Residual outline keys",
+          ...residualCap.shown.map((line) => `- ${cleanLabel(line)}`),
+          ...(residualCap.remaining > 0
+            ? [`- _… and ${residualCap.remaining} more residual keys_`]
+            : []),
+          "",
+        ].join("\n")
+      : "";
+
   const layoutSection = formatLayoutSection(input.layout);
 
   const health = computeMatchingHealthBuckets(report);
@@ -498,10 +514,11 @@ ${unusedSection}
 ${ambiguousSection}
 ${sharedSection}
 ${candidatesSection}
-## Notes
+${residualSection}## Notes
 ${hintNote}
 ${layoutHintNote}
-- Matching apply semantics unchanged (first candidate wins).
+- Outline Theory: no first-apply when one row matches K>1 leaves; \`__pickleIndex\` is a row-index tie-break only.
+- Non-outline apply: first candidate still wins.
 - Review before share — filter and test names are sanitized, but may still identify your suite.
 - No remote telemetry; clipboard only.
 `;

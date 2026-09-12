@@ -1,6 +1,6 @@
 import { buildExampleLabel } from "./parser";
 import { FeatureInfo, OutlineExample, ScenarioInfo } from "./model";
-import { parseTheoryDisplayName } from "../runner/theoryDisplayName";
+import { businessTheoryParams, parseTheoryDisplayName } from "../runner/theoryDisplayName";
 import { normalizeName } from "../results/scenarioMatch";
 
 /**
@@ -24,8 +24,12 @@ export function inferExamplesFromTestNames(
       continue;
     }
 
-    const headers = parsed.params.map((p) => p.name);
-    const values = parsed.params.map((p) => p.value);
+    const business = businessTheoryParams(parsed.params);
+    if (business.length === 0) {
+      continue;
+    }
+    const headers = business.map((p) => p.name);
+    const values = business.map((p) => p.value);
     const label = buildExampleLabel(headers, values);
     if (seen.has(label)) {
       continue;

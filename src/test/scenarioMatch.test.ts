@@ -158,6 +158,43 @@ describe("scenarioMatch Theory outline", () => {
     );
   });
 
+  it("matches color rows 1:1 ignoring runner metadata params", () => {
+    const colorRows = ["red", "blue", "green"].map((color, rowIndex) => ({
+      rowIndex,
+      line: 10 + rowIndex,
+      headers: ["color"],
+      values: [color],
+      label: `color=${color}`,
+    }));
+    const mid =
+      'Ns.AlphaFeature.PaintTheTile(color: "blue", __pickleIndex: 1, exampleTags: [])';
+    assert.ok(matchesOutlineExampleRow(mid, colorRows[1]));
+    assert.ok(!matchesOutlineExampleRow(mid, colorRows[0]));
+    assert.ok(!matchesOutlineExampleRow(mid, colorRows[2]));
+  });
+
+  it("matches a Gherkin pickleIndex column as business, not runner metadata", () => {
+    const rows = [
+      {
+        rowIndex: 0,
+        line: 10,
+        headers: ["pickleIndex"],
+        values: ["8"],
+        label: "pickleIndex=8",
+      },
+      {
+        rowIndex: 1,
+        line: 11,
+        headers: ["pickleIndex"],
+        values: ["9"],
+        label: "pickleIndex=9",
+      },
+    ];
+    const testName = 'Ns.AlphaFeature.LookupRow(pickleIndex: "9", exampleTags: [])';
+    assert.ok(matchesOutlineExampleRow(testName, rows[1]));
+    assert.ok(!matchesOutlineExampleRow(testName, rows[0]));
+  });
+
   it("does not let a Theory row match every Outline leaf via length-1 short-circuit", () => {
     const incomeRows = [
       {

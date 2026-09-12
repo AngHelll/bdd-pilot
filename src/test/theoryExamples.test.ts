@@ -4,8 +4,10 @@ import { enrichFeaturesWithTheoryTests, inferExamplesFromTestNames } from "../co
 import { parseFeature } from "../core/gherkin/parser";
 import { FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 import {
+  businessTheoryParams,
   extractListedTestNames,
   parseTheoryDisplayName,
+  pickleIndexFromTestName,
 } from "../core/runner/theoryDisplayName";
 
 describe("theoryDisplayName", () => {
@@ -20,6 +22,34 @@ describe("theoryDisplayName", () => {
       { name: "second", value: "2" },
       { name: "result", value: "3" },
     ]);
+  });
+
+  it("parses unquoted scalars and keeps __pickleIndex for tie-break", () => {
+    const parsed = parseTheoryDisplayName(
+      'Paint the tile(color: "red", __pickleIndex: 11, exampleTags: [])',
+    );
+    assert.ok(parsed);
+    assert.deepStrictEqual(parsed!.params, [
+      { name: "color", value: "red" },
+      { name: "__pickleIndex", value: "11" },
+    ]);
+  });
+
+  it("treats __* as metadata and pickleIndex without __ as business", () => {
+    const parsed = parseTheoryDisplayName(
+      'Paint the tile(color: "red", __pickleIndex: 2, pickleIndex: "9", exampleTags: [])',
+    );
+    assert.ok(parsed);
+    assert.deepStrictEqual(businessTheoryParams(parsed!.params), [
+      { name: "color", value: "red" },
+      { name: "pickleIndex", value: "9" },
+    ]);
+    assert.strictEqual(
+      pickleIndexFromTestName(
+        'Ns.AlphaFeature.PaintTheTile(color: "red", __pickleIndex: 2, pickleIndex: "9", exampleTags: [])',
+      ),
+      2,
+    );
   });
 
   it("extracts listed test names from dotnet output", () => {
@@ -53,6 +83,15 @@ describe("theoryExamples", () => {
     assert.strictEqual(rows.length, 2);
     assert.strictEqual(rows[0].label, "name=Alice");
     assert.strictEqual(rows[1].label, "name=Bob");
+  });
+
+  it("does not infer runner metadata as Examples columns", () => {
+    const rows = inferExamplesFromTestNames(scenario, [
+      'Welcome user(name: "Alice", __pickleIndex: 0, exampleTags: [])',
+    ]);
+    assert.strictEqual(rows.length, 1);
+    assert.deepStrictEqual(rows[0].headers, ["name"]);
+    assert.deepStrictEqual(rows[0].values, ["Alice"]);
   });
 
   it("enriches features missing Examples tables", () => {

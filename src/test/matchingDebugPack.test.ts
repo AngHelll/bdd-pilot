@@ -161,6 +161,20 @@ describe("matchingDebugPack", () => {
     assert.strictEqual(line, "unmapped=1 · hint=missing_trx_or_filter");
   });
 
+  it("buildMatchingDebugPack lists residual outline keys", () => {
+    const md = buildMatchingDebugPack({
+      report: baseReport({
+        unusedTrx: [{ testName: "Acme.AlphaFeature.PaintTheTile", outcome: "passed" }],
+        residualOutlineLines: ["theoryKeys=color:red,__pickleIndex:0 vs exampleHeaders=color"],
+      }),
+      meta: { stage: "test", mode: "headless" },
+    });
+    assert.ok(md);
+    assert.match(md!, /## Residual outline keys/);
+    assert.match(md!, /theoryKeys=color:red,__pickleIndex:0 vs exampleHeaders=color/);
+    assert.match(md!, /__pickleIndex.*tie-break/);
+  });
+
   it("buildMatchingDebugPack splits unused into Gherkin-like and Other", () => {
     const md = buildMatchingDebugPack({
       report: baseReport({

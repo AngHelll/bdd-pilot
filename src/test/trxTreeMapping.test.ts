@@ -317,6 +317,199 @@ describe("trxTreeMapping", () => {
     assert.strictEqual(store.get(outlineRowKey(taxFeature, taxScenario, 2)), "passed");
   });
 
+  it("maps color Outline Theory 1:1 with runner metadata on the display name", () => {
+    const colorExamples = ["red", "blue", "green"].map((color, rowIndex) => ({
+      rowIndex,
+      line: 10 + rowIndex,
+      headers: ["color"],
+      values: [color],
+      label: `color=${color}`,
+    }));
+    const colorDomains: DomainGroup[] = [
+      {
+        name: "General",
+        features: [
+          {
+            name: "Alpha",
+            filePath: "/x/Alpha.feature",
+            tags: [],
+            scenarios: [
+              {
+                name: "Paint the tile",
+                tags: [],
+                line: 4,
+                isOutline: true,
+                examples: colorExamples,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const feature = colorDomains[0].features[0];
+    const scenario = feature.scenarios[0];
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 3,
+      failed: 0,
+      skipped: 0,
+      total: 3,
+      results: ["red", "blue", "green"].map((color, i) => ({
+        testName: `Ns.AlphaFeature.PaintTheTile(color: "${color}", __pickleIndex: ${i}, exampleTags: [])`,
+        outcome: "passed" as const,
+        durationMs: 4,
+      })),
+    };
+    const stats = applyScopedTrxResults(
+      store,
+      colorDomains,
+      summary,
+      [{ kind: "feature", feature }],
+    );
+    assert.ok(stats);
+    assert.strictEqual(stats!.mapped, 3);
+    assert.deepStrictEqual(stats!.ambiguousLeaves, []);
+    assert.deepStrictEqual(stats!.unusedTrx, []);
+    assert.strictEqual(store.get(outlineRowKey(feature, scenario, 0)), "passed");
+    assert.strictEqual(store.get(outlineRowKey(feature, scenario, 1)), "passed");
+    assert.strictEqual(store.get(outlineRowKey(feature, scenario, 2)), "passed");
+  });
+
+  it("does not first-apply a Theory without FQN across Alpha and Beta Outlines", () => {
+    const row = {
+      rowIndex: 0,
+      line: 10,
+      headers: ["color"],
+      values: ["red"],
+      label: "color=red",
+    };
+    const twin: DomainGroup[] = [
+      {
+        name: "General",
+        features: [
+          {
+            name: "Alpha",
+            filePath: "/x/Alpha.feature",
+            tags: [],
+            scenarios: [
+              { name: "Paint the tile", tags: [], line: 4, isOutline: true, examples: [row] },
+            ],
+          },
+          {
+            name: "Beta",
+            filePath: "/x/Beta.feature",
+            tags: [],
+            scenarios: [
+              { name: "Paint the tile", tags: [], line: 4, isOutline: true, examples: [row] },
+            ],
+          },
+        ],
+      },
+    ];
+    const alpha = twin[0].features[0];
+    const beta = twin[0].features[1];
+
+    const fqnStore = new OutcomeStore();
+    const fqnSummary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      results: [
+        {
+          testName:
+            'Ns.AlphaFeature.PaintTheTile(color: "red", __pickleIndex: 0, exampleTags: [])',
+          outcome: "passed",
+          durationMs: 3,
+        },
+      ],
+    };
+    applyScopedTrxResults(fqnStore, twin, fqnSummary, [{ kind: "all" }]);
+    assert.strictEqual(fqnStore.get(outlineRowKey(alpha, alpha.scenarios[0], 0)), "passed");
+    assert.strictEqual(fqnStore.get(outlineRowKey(beta, beta.scenarios[0], 0)), undefined);
+
+    const bareStore = new OutcomeStore();
+    const bareSummary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      results: [
+        {
+          testName: 'Paint the tile(color: "red", __pickleIndex: 0, exampleTags: [])',
+          outcome: "passed",
+          durationMs: 3,
+        },
+      ],
+    };
+    const bareStats = applyScopedTrxResults(bareStore, twin, bareSummary, [{ kind: "all" }]);
+    assert.strictEqual(bareStore.get(outlineRowKey(alpha, alpha.scenarios[0], 0)), undefined);
+    assert.strictEqual(bareStore.get(outlineRowKey(beta, beta.scenarios[0], 0)), undefined);
+    assert.ok((bareStats!.ambiguousLeaves?.length ?? 0) >= 1);
+    assert.ok(bareStats!.unusedTrx?.some((row) => row.testName.includes("Paint the tile")));
+  });
+
+  it("uses unquoted __pickleIndex only to break a business-key tie", () => {
+    const tied = [0, 1, 2].map((rowIndex) => ({
+      rowIndex,
+      line: 10 + rowIndex,
+      headers: ["flag"],
+      values: ["yes"],
+      label: `flag=yes#${rowIndex}`,
+    }));
+    const colorDomains: DomainGroup[] = [
+      {
+        name: "General",
+        features: [
+          {
+            name: "Alpha",
+            filePath: "/x/Alpha.feature",
+            tags: [],
+            scenarios: [
+              {
+                name: "Paint the tile",
+                tags: [],
+                line: 4,
+                isOutline: true,
+                examples: tied,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const feature = colorDomains[0].features[0];
+    const scenario = feature.scenarios[0];
+    const store = new OutcomeStore();
+    const summary: UnifiedSummary = {
+      source: "trx",
+      passed: 1,
+      failed: 0,
+      skipped: 0,
+      total: 1,
+      results: [
+        {
+          testName:
+            'Ns.AlphaFeature.PaintTheTile(flag: "yes", __pickleIndex: 2, exampleTags: [])',
+          outcome: "passed",
+          durationMs: 4,
+        },
+      ],
+    };
+    const stats = applyScopedTrxResults(store, colorDomains, summary, [
+      { kind: "feature", feature },
+    ]);
+    assert.ok(stats);
+    assert.strictEqual(store.get(outlineRowKey(feature, scenario, 2)), "passed");
+    assert.strictEqual(store.get(outlineRowKey(feature, scenario, 0)), undefined);
+    assert.strictEqual(store.get(outlineRowKey(feature, scenario, 1)), undefined);
+    assert.deepStrictEqual(stats!.unusedTrx, []);
+    assert.deepStrictEqual(stats!.ambiguousLeaves, []);
+  });
+
   it("counts shared TRX when one row is chosen by two Gherkin leaves", () => {
     const store = new OutcomeStore();
     const summary: UnifiedSummary = {

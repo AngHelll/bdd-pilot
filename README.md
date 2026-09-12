@@ -135,7 +135,9 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   scenarios lack a TRX match (`not_in_trx`), lists them (capped) and the palette command
   **Show Unmapped Scenarios** opens a QuickPick to jump to the `.feature` line.
   The same Output also lists **TRX rows unused** by any Gherkin leaf (capped) and **ambiguous**
-  matches (first TRX row applied) — including after **Run All** — mapping honesty, not a generic unit-test runner.
+  matches (Outline Theory: no silent first-apply when one row matches K>1 leaves; `__pickleIndex`
+  is a row-index tie-break only; non-outline still first-applied) — including after **Run All** —
+  mapping honesty, not a generic unit-test runner.
   Unused TRX lists split **gherkin-like** vs **other** (unit/helpers) so mixed solutions are easier to read.
   When tree (mapped) totals differ from TRX, the summary shows both.
   Use **BDD Pilot: Copy Matching Debug Pack** to copy a sanitized cross-layer snapshot for support

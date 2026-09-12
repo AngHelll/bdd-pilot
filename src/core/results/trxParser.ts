@@ -55,7 +55,8 @@ const parser = new XMLParser({
 /**
  * Parses the content of a Visual Studio TRX file into a flat list of results.
  * Resilient to single vs. multiple <UnitTestResult> nodes and missing fields.
- * When ResultSummary.Counters exists, run totals use those counters (B1.4).
+ * When ResultSummary.Counters exists, run totals use those counters (B1.4),
+ * except skipped is raised to the UnitTestResult count when the summary omits skips.
  */
 export function parseTrx(xml: string): TrxSummary {
   const doc = parser.parse(xml) as { TestRun?: { Results?: { UnitTestResult?: TrxUnitTestResultNode[] }; ResultSummary?: { Counters?: TrxCountersNode } } };
@@ -67,14 +68,8 @@ export function parseTrx(xml: string): TrxSummary {
     .filter((r): r is TrxUnitTestResultNode => Boolean(r && r["@_testName"] !== undefined))
     .map((r) => toTestResult(r));
 
-  const fromResults = {
-    total: results.length,
-    passed: results.filter((r) => r.outcome === "passed").length,
-    failed: results.filter((r) => r.outcome === "failed").length,
-    skipped: results.filter((r) => r.outcome === "skipped").length,
-  };
   const counters = parseCounters(run?.ResultSummary?.Counters);
-  const totals = counters ?? fromResults;
+  const totals = reconcileTrxTotals(counters, results);
 
   const summary: TrxSummary = {
     total: totals.total,
@@ -87,6 +82,31 @@ export function parseTrx(xml: string): TrxSummary {
     summary.counters = counters;
   }
   return summary;
+}
+
+/**
+ * Prefer ResultSummary counters for passed/failed; raise skipped to the row
+ * count when the summary under-reports NotExecuted/Skipped/Inconclusive.
+ */
+export function reconcileTrxTotals(
+  counters: Pick<TrxCounters, "passed" | "failed" | "skipped" | "total"> | undefined,
+  results: readonly TestResult[],
+): { passed: number; failed: number; skipped: number; total: number } {
+  const rowSkipped = results.filter((row) => row.outcome === "skipped").length;
+  if (!counters) {
+    return {
+      passed: results.filter((row) => row.outcome === "passed").length,
+      failed: results.filter((row) => row.outcome === "failed").length,
+      skipped: rowSkipped,
+      total: results.length,
+    };
+  }
+  const skipped = counters.skipped >= rowSkipped ? counters.skipped : rowSkipped;
+  const passed = counters.passed;
+  const failed = counters.failed;
+  const honestSum = passed + failed + skipped;
+  const total = counters.total >= honestSum ? counters.total : honestSum;
+  return { passed, failed, skipped, total };
 }
 
 function parseCounters(raw: TrxCountersNode | undefined): TrxCounters | undefined {

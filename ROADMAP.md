@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.45.0** · **Marketplace: v1.45.0** · **Next: watch (CF2 solo backlog)** · **603 unit tests**
+> **Current release: v1.47.0** · **Marketplace: v1.45.0** · **Next: watch (CF2 solo backlog)** · **615 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.45.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.45.0** (local **v1.47.0** residual matching) |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -52,6 +52,8 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.47.0** | Skipped honesty — TRX skipped from `UnitTestResult` when ResultSummary is 0 · spec `skipped-honesty-v1.47.md` |
+| **1.46.0** | Residual Outline / Theory keys — runner metadata, unquoted scalars, no first-apply K>1 · spec `residual-outline-theory-keys-v1.46.md` |
 | **1.45.0** | Diagnostics by domain — Output roll-up of failure buckets per discovery domain · spec `diagnostics-by-domain-v1.45.md` |
 | **1.44.0** | Unused TRX split — gherkin-like vs other in health/Output/Debug Pack · spec `unused-trx-split-v1.44.md` |
 | **1.43.0** | Run-domain-first — scoped Run All nudge + fail-concentration tip · spec `run-domain-first-v1.43.md` |
@@ -222,6 +224,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.47.0 — Residual matching (Outline keys + skipped honesty) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Matching** | Theory metadata `__*` / `exampleTags` ignorados; escalares sin comillas; no first-apply si K>1; `__pickleIndex` solo desempate; Debug Pack `theoryKeys=` vs `exampleHeaders=` (1.46) |
+| **TRX totals** | `skipped` sube al conteo de filas `NotExecuted`/`Skipped` cuando ResultSummary queda en 0 (1.47) |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Tests** | 615 unit tests |
 
 ### v1.45.0 — Diagnostics by domain ✅ shipped
 
@@ -1004,4 +1015,4 @@ src/
 
 ---
 
-*Last updated: v1.45.0 Diagnostics by domain shipped Marketplace (watch CF2 still backlog).*
+*Last updated: v1.47.0 residual matching tagged/pushed (Marketplace still v1.45.0; watch CF2 still backlog).*

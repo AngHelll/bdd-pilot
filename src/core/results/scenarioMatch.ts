@@ -5,7 +5,13 @@ import {
   toReqnrollParamName,
 } from "../runner/filterMapping";
 import { featureClassName, sanitizeIdentifier } from "../runner/filterBuilder";
-import { parseTheoryDisplayName, ParsedTheoryDisplayName } from "../runner/theoryDisplayName";
+import {
+  businessTheoryParams,
+  parseTheoryDisplayName,
+  ParsedTheoryDisplayName,
+  pickleIndexFromTestName,
+  theoryCandidateFromTestName,
+} from "../runner/theoryDisplayName";
 
 export function normalizeName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -103,23 +109,6 @@ export function matchesOutlineExample(testName: string, example: OutlineExample)
   });
 }
 
-function theoryCandidateFromTestName(testName: string): string {
-  if (parseTheoryDisplayName(testName)) {
-    return testName;
-  }
-  const open = testName.indexOf("(");
-  if (open <= 0 || !testName.endsWith(")")) {
-    return testName;
-  }
-  const beforeParen = testName.slice(0, open);
-  const lastDot = beforeParen.lastIndexOf(".");
-  const title = (lastDot >= 0 ? beforeParen.slice(lastDot + 1) : beforeParen).trim();
-  if (!title) {
-    return testName;
-  }
-  return `${title}${testName.slice(open)}`;
-}
-
 function paramNamesEquivalent(header: string, theoryParamName: string): boolean {
   const candidates = [header, toReqnrollParamName(header)].map((n) => n.toLowerCase());
   const theory = theoryParamName.toLowerCase();
@@ -141,13 +130,18 @@ export function matchesOutlineExampleTheory(
     return undefined;
   }
 
+  const business = businessTheoryParams(parsed.params);
+  if (business.length === 0) {
+    return undefined;
+  }
+
   for (let i = 0; i < example.headers.length; i++) {
     const header = example.headers[i] ?? "";
     const value = (example.values[i] ?? "").trim();
     if (!value) {
       continue;
     }
-    const found = parsed.params.some(
+    const found = business.some(
       (param) => paramNamesEquivalent(header, param.name) && param.value === value,
     );
     if (!found) {
@@ -177,7 +171,21 @@ export function matchesOutlineExampleRow(testName: string, example: OutlineExamp
 }
 
 function pickOutlineExample(testName: string, examples: OutlineExample[]): OutlineExample | undefined {
-  return examples.find((ex) => matchesOutlineExampleRow(testName, ex));
+  const hits = examples.filter((ex) => matchesOutlineExampleRow(testName, ex));
+  if (hits.length === 1) {
+    return hits[0];
+  }
+  const pickle = pickleIndexFromTestName(testName);
+  if (hits.length === 0) {
+    if (pickle === undefined) {
+      return undefined;
+    }
+    return examples.find((ex) => ex.rowIndex === pickle);
+  }
+  if (pickle === undefined) {
+    return undefined;
+  }
+  return hits.find((ex) => ex.rowIndex === pickle);
 }
 
 /**

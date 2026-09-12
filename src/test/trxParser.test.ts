@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
-import { parseTrx, matchesScenario } from "../core/results/trxParser";
+import { parseTrx, matchesScenario, reconcileTrxTotals } from "../core/results/trxParser";
 
 const TRX = `<?xml version="1.0" encoding="UTF-8"?>
 <TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
@@ -68,5 +68,56 @@ describe("trxParser", () => {
     assert.strictEqual(summary.results.length, 2);
     assert.strictEqual(summary.results[0].executionId, "e1");
     assert.strictEqual(summary.results[0].testId, "t1");
+  });
+
+  it("raises skipped when ResultSummary is 0 but rows are NotExecuted", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TestRun>
+  <ResultSummary outcome="Completed">
+    <Counters total="4" executed="2" passed="1" failed="1" notExecuted="0" skipped="0" />
+  </ResultSummary>
+  <Results>
+    <UnitTestResult testName="AlphaFeature.RowOne" outcome="Passed" />
+    <UnitTestResult testName="AlphaFeature.RowTwo" outcome="Failed" />
+    <UnitTestResult testName="AlphaFeature.RowThree" outcome="NotExecuted" />
+    <UnitTestResult testName="AlphaFeature.RowFour" outcome="Skipped" />
+  </Results>
+</TestRun>`;
+    const summary = parseTrx(xml);
+    assert.strictEqual(summary.skipped, 2);
+    assert.strictEqual(summary.passed, 1);
+    assert.strictEqual(summary.failed, 1);
+    assert.strictEqual(summary.total, 4);
+  });
+
+  it("does not lower skipped when ResultSummary already reports the rows", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<TestRun>
+  <ResultSummary>
+    <Counters total="3" passed="0" failed="0" notExecuted="3" />
+  </ResultSummary>
+  <Results>
+    <UnitTestResult testName="AlphaFeature.RowOne" outcome="NotExecuted" />
+    <UnitTestResult testName="AlphaFeature.RowTwo" outcome="NotExecuted" />
+    <UnitTestResult testName="AlphaFeature.RowThree" outcome="NotExecuted" />
+  </Results>
+</TestRun>`;
+    const summary = parseTrx(xml);
+    assert.strictEqual(summary.skipped, 3);
+    assert.strictEqual(summary.total, 3);
+  });
+
+  it("keeps skipped at 0 when neither counters nor rows report skips", () => {
+    const totals = reconcileTrxTotals(
+      { total: 2, passed: 1, failed: 1, skipped: 0 },
+      [
+        { testName: "AlphaFeature.RowOne", outcome: "passed" },
+        { testName: "AlphaFeature.RowTwo", outcome: "failed" },
+      ],
+    );
+    assert.strictEqual(totals.skipped, 0);
+    assert.strictEqual(totals.passed, 1);
+    assert.strictEqual(totals.failed, 1);
+    assert.strictEqual(totals.total, 2);
   });
 });

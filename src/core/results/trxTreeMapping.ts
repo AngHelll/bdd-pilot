@@ -3,6 +3,7 @@ import { collectOutcomeKeysForTargets, outlineRowKey, scenarioKey } from "../run
 import { RunTarget } from "../runner/filterBuilder";
 import { MATCHING_DEBUG_CANDIDATE_CAP } from "./mappingReportFormat";
 import { setMatchingDebugSource } from "./matchingDebugSession";
+import { parseTheoryDisplayName, pickleIndexFromTestName, theoryCandidateFromTestName } from "../runner/theoryDisplayName";
 import {
   matchesOutlineExampleRow,
   matchesScenarioInFeature,
@@ -39,11 +40,12 @@ export interface UnusedTrxRow {
   outcome: TestOutcome;
 }
 
-/** Gherkin leaf with 2+ TRX rows matching the same predicate (first still applied). */
+/** Gherkin leaf with 2+ TRX rows matching the same predicate. */
 export interface AmbiguousMappedLeaf {
   label: string;
   candidateCount: number;
-  chosenTestName: string;
+  /** Omitted when an Outline Theory matches K>1 leaves and none is chosen (R3). */
+  chosenTestName?: string;
 }
 
 export interface TreeMappingReport extends TreeMappingStats {
@@ -55,6 +57,8 @@ export interface TreeMappingReport extends TreeMappingStats {
   sharedChosenCount?: number;
   /** `summary.results.length` of the applied run. */
   trxTotal?: number;
+  /** Debug Pack: Theory keys vs Examples headers (capped, sanitized upstream). */
+  residualOutlineLines?: string[];
 }
 
 export interface OutcomeStoreTrxWriter {
@@ -88,6 +92,14 @@ function trxRowMatchesLeaf(
   return true;
 }
 
+interface OutlineLeaf {
+  feature: FeatureInfo;
+  scenario: ScenarioInfo;
+  example: OutlineExample;
+  key: string;
+  label: string;
+}
+
 interface TrxApplyHonesty {
   matchedKeys: Set<string>;
   unusedTrx: UnusedTrxRow[];
@@ -95,11 +107,103 @@ interface TrxApplyHonesty {
   sharedChosenCount: number;
   /** Cap-N candidate testNames per leaf that matched ≥1 TRX row (debug pack). */
   candidatesByLabel: { label: string; candidateTestNames: string[]; chosenTestName?: string }[];
+  residualOutlineLines: string[];
+}
+
+function collectOutlineLeaves(domains: DomainGroup[]): OutlineLeaf[] {
+  const leaves: OutlineLeaf[] = [];
+  for (const domain of domains) {
+    for (const feature of domain.features) {
+      for (const scenario of feature.scenarios) {
+        if (!scenario.examples?.length) {
+          continue;
+        }
+        for (const example of scenario.examples) {
+          leaves.push({
+            feature,
+            scenario,
+            example,
+            key: outlineRowKey(feature, scenario, example.rowIndex),
+            label: leafLabel(feature.name, scenario.name, example.label),
+          });
+        }
+      }
+    }
+  }
+  return leaves;
+}
+
+function scopedOutlinesForTestName(
+  testName: string,
+  domains: DomainGroup[],
+): { feature: FeatureInfo; scenario: ScenarioInfo }[] {
+  const found: { feature: FeatureInfo; scenario: ScenarioInfo }[] = [];
+  for (const domain of domains) {
+    for (const feature of domain.features) {
+      for (const scenario of feature.scenarios) {
+        if (!scenario.examples?.length) {
+          continue;
+        }
+        if (matchesScenarioInFeature(testName, feature, scenario)) {
+          found.push({ feature, scenario });
+        }
+      }
+    }
+  }
+  return found;
+}
+
+function formatResidualOutlineLine(testName: string, exampleHeaders: string[]): string {
+  const parsed = parseTheoryDisplayName(theoryCandidateFromTestName(testName));
+  const theoryKeys = parsed
+    ? parsed.params
+        .map((param) => `${param.name}:${param.value}`)
+        .join(",")
+    : "";
+  return `theoryKeys=${theoryKeys} vs exampleHeaders=${exampleHeaders.join(",")}`;
+}
+
+function resolveOutlineLeavesForTrx(
+  result: TestResult,
+  outlineLeaves: OutlineLeaf[],
+  domains: DomainGroup[],
+): { resolved: OutlineLeaf[]; matched: OutlineLeaf[] } {
+  const matched = outlineLeaves.filter((leaf) =>
+    trxRowMatchesLeaf(result, leaf.feature, leaf.scenario, leaf.example),
+  );
+  if (matched.length === 1) {
+    return { resolved: matched, matched };
+  }
+  const pickle = pickleIndexFromTestName(result.testName);
+  if (matched.length > 1) {
+    if (pickle !== undefined) {
+      const byIndex = matched.filter((leaf) => leaf.example.rowIndex === pickle);
+      if (byIndex.length === 1) {
+        return { resolved: byIndex, matched };
+      }
+    }
+    return { resolved: [], matched };
+  }
+  if (pickle === undefined) {
+    return { resolved: [], matched };
+  }
+  const scoped = scopedOutlinesForTestName(result.testName, domains);
+  if (scoped.length !== 1) {
+    return { resolved: [], matched };
+  }
+  const { feature, scenario } = scoped[0];
+  const leaf = outlineLeaves.find(
+    (item) =>
+      item.feature === feature &&
+      item.scenario === scenario &&
+      item.example.rowIndex === pickle,
+  );
+  return { resolved: leaf ? [leaf] : [], matched };
 }
 
 /**
- * Same first-match apply as today, plus unused / ambiguous / shared classification
- * by **result index** (not testName).
+ * Outline: Theory-first (no silent first-apply when K>1). Non-outline: first match.
+ * Unused / ambiguous / shared classified by **result index** (not testName).
  */
 function applyTrxMatchesWithHonesty(
   store: OutcomeStoreTrxWriter,
@@ -110,19 +214,21 @@ function applyTrxMatchesWithHonesty(
   const chosenCounts = new Array<number>(summary.results.length).fill(0);
   const ambiguousLeaves: AmbiguousMappedLeaf[] = [];
   const candidatesByLabel: TrxApplyHonesty["candidatesByLabel"] = [];
+  const residualOutlineLines: string[] = [];
+  const residualSeen = new Set<string>();
 
   const applyChosen = (
     chosenIndex: number,
     key: string,
     label: string,
     candidateIndices: number[],
+    markAmbiguous: boolean,
   ): void => {
     const match = summary.results[chosenIndex];
     store.set(key, match.outcome, match.durationMs, match.errorMessage);
     store.clearSkipReason(key);
     matchedKeys.add(key);
     chosenCounts[chosenIndex] += 1;
-    const candidateCount = candidateIndices.length;
     candidatesByLabel.push({
       label,
       candidateTestNames: candidateIndices
@@ -130,53 +236,112 @@ function applyTrxMatchesWithHonesty(
         .map((i) => summary.results[i].testName),
       chosenTestName: match.testName,
     });
-    if (candidateCount > 1) {
+    if (markAmbiguous && candidateIndices.length > 1) {
       ambiguousLeaves.push({
         label,
-        candidateCount,
+        candidateCount: candidateIndices.length,
         chosenTestName: match.testName,
       });
     }
   };
 
+  const pushResidual = (testName: string, headers: string[]): void => {
+    if (residualOutlineLines.length >= MATCHING_DEBUG_CANDIDATE_CAP) {
+      return;
+    }
+    const line = formatResidualOutlineLine(testName, headers);
+    if (residualSeen.has(line)) {
+      return;
+    }
+    residualSeen.add(line);
+    residualOutlineLines.push(line);
+  };
+
+  const outlineLeaves = collectOutlineLeaves(domains);
+  const pendingOutlineAmbiguous = new Map<
+    string,
+    { candidateCount: number; testNames: string[] }
+  >();
+
+  for (let i = 0; i < summary.results.length; i++) {
+    const result = summary.results[i];
+    const { resolved, matched } = resolveOutlineLeavesForTrx(result, outlineLeaves, domains);
+    if (resolved.length === 1) {
+      const leaf = resolved[0];
+      if (matchedKeys.has(leaf.key)) {
+        continue;
+      }
+      const candidateIndices: number[] = [];
+      for (let j = 0; j < summary.results.length; j++) {
+        if (trxRowMatchesLeaf(summary.results[j], leaf.feature, leaf.scenario, leaf.example)) {
+          candidateIndices.push(j);
+        }
+      }
+      if (!candidateIndices.includes(i)) {
+        candidateIndices.unshift(i);
+      }
+      applyChosen(i, leaf.key, leaf.label, candidateIndices, false);
+      continue;
+    }
+    if (matched.length > 1) {
+      for (const leaf of matched) {
+        const entry = pendingOutlineAmbiguous.get(leaf.label) ?? {
+          candidateCount: 0,
+          testNames: [],
+        };
+        entry.candidateCount = Math.max(entry.candidateCount, matched.length);
+        if (entry.testNames.length < MATCHING_DEBUG_CANDIDATE_CAP) {
+          entry.testNames.push(result.testName);
+        }
+        pendingOutlineAmbiguous.set(leaf.label, entry);
+        pushResidual(result.testName, leaf.example.headers);
+      }
+    } else if (parseTheoryDisplayName(theoryCandidateFromTestName(result.testName))) {
+      const scoped = scopedOutlinesForTestName(result.testName, domains);
+      const headers = scoped[0]?.scenario.examples?.[0]?.headers ?? [];
+      if (headers.length > 0) {
+        pushResidual(result.testName, headers);
+      }
+    }
+  }
+
+  for (const [label, entry] of pendingOutlineAmbiguous) {
+    const leaf = outlineLeaves.find((item) => item.label === label);
+    if (leaf && matchedKeys.has(leaf.key)) {
+      continue;
+    }
+    ambiguousLeaves.push({
+      label,
+      candidateCount: entry.candidateCount,
+    });
+    candidatesByLabel.push({
+      label,
+      candidateTestNames: entry.testNames.slice(0, MATCHING_DEBUG_CANDIDATE_CAP),
+    });
+  }
+
   for (const domain of domains) {
     for (const feature of domain.features) {
       for (const scenario of feature.scenarios) {
         if (scenario.examples && scenario.examples.length > 0) {
-          for (const example of scenario.examples) {
-            const candidates: number[] = [];
-            for (let i = 0; i < summary.results.length; i++) {
-              if (trxRowMatchesLeaf(summary.results[i], feature, scenario, example)) {
-                candidates.push(i);
-              }
-            }
-            if (candidates.length === 0) {
-              continue;
-            }
-            applyChosen(
-              candidates[0],
-              outlineRowKey(feature, scenario, example.rowIndex),
-              leafLabel(feature.name, scenario.name, example.label),
-              candidates,
-            );
-          }
-        } else {
-          const candidates: number[] = [];
-          for (let i = 0; i < summary.results.length; i++) {
-            if (trxRowMatchesLeaf(summary.results[i], feature, scenario)) {
-              candidates.push(i);
-            }
-          }
-          if (candidates.length === 0) {
-            continue;
-          }
-          applyChosen(
-            candidates[0],
-            scenarioKey(feature, scenario),
-            leafLabel(feature.name, scenario.name),
-            candidates,
-          );
+          continue;
         }
+        const candidates: number[] = [];
+        for (let i = 0; i < summary.results.length; i++) {
+          if (trxRowMatchesLeaf(summary.results[i], feature, scenario)) {
+            candidates.push(i);
+          }
+        }
+        if (candidates.length === 0) {
+          continue;
+        }
+        applyChosen(
+          candidates[0],
+          scenarioKey(feature, scenario),
+          leafLabel(feature.name, scenario.name),
+          candidates,
+          true,
+        );
       }
     }
   }
@@ -195,6 +360,7 @@ function applyTrxMatchesWithHonesty(
     ambiguousLeaves,
     sharedChosenCount: chosenCounts.filter((count) => count >= 2).length,
     candidatesByLabel,
+    residualOutlineLines,
   };
 }
 
@@ -323,6 +489,7 @@ export function applyScopedTrxResults(
       ambiguousLeaves: honesty.ambiguousLeaves,
       sharedChosenCount: honesty.sharedChosenCount,
       trxTotal: summary.results.length,
+      residualOutlineLines: honesty.residualOutlineLines,
     };
   }
 
@@ -333,5 +500,6 @@ export function applyScopedTrxResults(
     ambiguousLeaves: honesty.ambiguousLeaves,
     sharedChosenCount: honesty.sharedChosenCount,
     trxTotal: summary.results.length,
+    residualOutlineLines: honesty.residualOutlineLines,
   };
 }

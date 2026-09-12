@@ -6,6 +6,12 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.47.0] — 2026-09-12
+
+### Fixed
+- **Residual Outline / Theory keys** (1.46) — ignore Reqnroll runner metadata (`__*` / `exampleTags`) when matching Theory↔Examples; parse unquoted Theory scalars; do not first-apply a Theory that still matches K>1 leaves; `__pickleIndex` is a 0-based Examples-row tie-break only. Debug Pack adds `theoryKeys=` vs `exampleHeaders=`
+- **Skipped honesty** — when `ResultSummary` reports 0 skipped but `UnitTestResult` rows are `NotExecuted`/`Skipped`/`Inconclusive`, Output `Results (trx)` / toast / snapshot use the row count (never lower a skip the runner already declared)
+
 ## [1.45.0] — 2026-09-11
 
 ### Added
