@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.49.0] — 2026-09-12
+
+### Added
+- **Discover-time matching** — scoped runs compare `dotnet test --list-tests` (same `--filter`) to the Gherkin leaf estimate: listed=0 toast + Output (run continues); 1 vs N Output only; empty Gherkin scope toast and no start; silence if aligned or list-tests times out. No extra list-tests on Run All.
+
 ## [1.48.0] — 2026-09-12
 
 ### Changed

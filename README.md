@@ -115,6 +115,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   - Scenario → `FullyQualifiedName~<Feature>Feature.<Scenario>`
   - Outline row → `DisplayName~parameter: %22…%22, value: %22…%22` (single Theory row)
   - Tag → `Category=<tag>`
+  Before a **scoped** run, Output can show a **Discover** line if `--list-tests` lists 0 tests or 1 vs many Gherkin leaves (empty scope does not start `dotnet test`). Run All does not add a list-tests probe.
 - **Tree search** to filter by name, tag, or path. Active filter shows on the summary row; **Run filtered** replaces Run All while filtered. Use `@tag` for tag-only matching. Persists per workspace. **Ctrl+F** highlights in the list only — Pilot Search controls run scope. Test Explorer does not inherit the tree filter.
 - **Re-run failed** from the last run's filter.
 - **Saved execution profiles** for common filters.

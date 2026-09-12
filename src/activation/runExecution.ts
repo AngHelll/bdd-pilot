@@ -13,7 +13,14 @@ import {
 } from "../core/feedback/dotnetOutputFilter";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { resolveRunKind, RunKind } from "../core/results/runHistory";
-import { RunTarget } from "../core/runner/filterBuilder";
+import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import {
+  DISCOVER_LIST_TIMEOUT_MS,
+  classifyDiscoverTime,
+  formatDiscoverTimeLine,
+  shouldProbeDiscoverList,
+} from "../core/runner/discoverTime";
+import { listDotnetTestsWithBudget } from "../core/runner/listTests";
 import {
   formatProgressMessage,
   LiveProgressState,
@@ -145,6 +152,17 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         runTargets = resolveRunTargets(nudge.target);
         totalExpected = estimateTestCount(runTargets, project.discoveryRoot);
       }
+    }
+
+    if (totalExpected === 0) {
+      const emptyLine = formatDiscoverTimeLine(classifyDiscoverTime({ gherkin: 0 }));
+      deps.output.show(true);
+      if (emptyLine) {
+        deps.output.appendLine(`[bdd-pilot] ${emptyLine}`);
+      }
+      void vscode.window.showInformationMessage(deps.tr("toast.discoverEmptyScope"));
+      releaseRunLock();
+      return;
     }
 
     if (opts?.debug && deps.treeProvider.needsTheoryDiscovery()) {
@@ -293,6 +311,45 @@ export function createRunExecutor(deps: RunExecutionDeps) {
               scopeLabel,
             }),
           );
+
+          const scopedFilter =
+            opts?.rawFilter?.trim() ||
+            (runTargets.length === 0 || runTargets.some((t) => t.kind === "all")
+              ? undefined
+              : buildCombinedFilter(runTargets, settings.filterMapping));
+          if (
+            shouldProbeDiscoverList({
+              targets: runTargets,
+              filter: scopedFilter,
+              rawFilter: Boolean(opts?.rawFilter),
+              debug: Boolean(opts?.debug),
+            })
+          ) {
+            let listed: number | undefined;
+            try {
+              const names = await listDotnetTestsWithBudget(
+                {
+                  dotnetPath: settings.dotnetPath || "dotnet",
+                  projectDir: project.projectDir,
+                  testTarget: project.testTarget,
+                  filter: scopedFilter,
+                },
+                DISCOVER_LIST_TIMEOUT_MS,
+                controller.signal,
+              );
+              listed = names.length;
+            } catch {
+              listed = undefined;
+            }
+            const classified = classifyDiscoverTime({ listed, gherkin: totalExpected });
+            const discoverLine = formatDiscoverTimeLine(classified);
+            if (discoverLine) {
+              deps.output.appendLine(`[bdd-pilot] ${discoverLine}`);
+            }
+            if (classified.kind === "zero") {
+              void vscode.window.showInformationMessage(deps.tr("toast.discoverListedZero"));
+            }
+          }
 
           const appendFiltered = (chunk: string): void => {
             const filtered = processDotnetOutputChunk(chunk, filterState, verbosity);

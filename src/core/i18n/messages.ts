@@ -166,6 +166,10 @@ const EN = {
   "toast.runCanceledPartial": "Run canceled — {completed}/{expected} tests finished.",
   "toast.projectNotFound":
     "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
+  "toast.discoverEmptyScope":
+    "No Gherkin leaves in this scope. The run will not start.",
+  "toast.discoverListedZero":
+    "The filter listed 0 tests (Gherkin scope is non-empty). The run will continue.",
   "toast.noProjectsFound":
     "No .NET test projects found. Add .feature files and a .csproj, or set bddPilot.projectPath.",
   "toast.multiProjectPrompt": "BDD Pilot found multiple test projects. Select which one to use.",
@@ -580,6 +584,10 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.runCanceledPartial": "Ejecución cancelada — {completed}/{expected} tests completados.",
   "toast.projectNotFound":
     "BDD Pilot: no se encontró el proyecto .NET de tests. Usa 'Select Test Project' o configura 'bddPilot.projectPath'.",
+  "toast.discoverEmptyScope":
+    "No hay hojas Gherkin en este alcance. La ejecución no se iniciará.",
+  "toast.discoverListedZero":
+    "El filtro no listó tests (el alcance Gherkin no está vacío). La ejecución continúa.",
   "toast.noProjectsFound":
     "No se encontraron proyectos .NET de tests. Añade archivos .feature y un .csproj, o configura bddPilot.projectPath.",
   "toast.multiProjectPrompt": "BDD Pilot encontró varios proyectos de tests. Elige cuál usar.",
