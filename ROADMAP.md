@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.45.0** · **Marketplace: v1.44.0** · **Next: watch (CF2 solo backlog)** · **603 unit tests**
+> **Current release: v1.45.0** · **Marketplace: v1.45.0** · **Next: watch (CF2 solo backlog)** · **603 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.44.0** (local **v1.45.0** Diagnostics by domain) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.45.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -229,6 +229,7 @@ _Nothing queued._
 |------|--------|
 | **Diagnostics** | Output roll-up de fallos TRX por `deriveDomain` + buckets (`pending`, `testData`, `http`, …); silencio si <2 dominios o <3 fails |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.45.0 |
 | **Tests** | 603 unit tests |
 
 ### v1.44.0 — Unused TRX split ✅ shipped
@@ -1003,4 +1004,4 @@ src/
 
 ---
 
-*Last updated: v1.45.0 Diagnostics by domain tagged/pushed (Marketplace still v1.44.0; watch CF2 still backlog).*
+*Last updated: v1.45.0 Diagnostics by domain shipped Marketplace (watch CF2 still backlog).*
