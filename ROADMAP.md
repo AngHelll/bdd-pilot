@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.49.0** · **Marketplace: v1.48.0** · **Next: watch** · **635 unit tests**
+> **Current release: v1.49.0** · **Marketplace: v1.49.0** · **Next: watch** · **635 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.48.0** (local **v1.49.0** discover-time) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.49.0** |
 | 🎯 Next | watch (Cockpit fidelity CF1–CF3+CF-docs closed) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -233,6 +233,7 @@ _Nothing queued._
 |------|--------|
 | **Runner** | Scoped `list-tests` with the same `--filter`; toast+Output on listed=0; Output only on 1 vs N; empty Gherkin scope does not start `dotnet test` |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.49.0 |
 | **Tests** | 635 unit tests |
 
 ### v1.48.0 — Cockpit fidelity CF2 (leaf story strip) ✅ shipped
@@ -1035,4 +1036,4 @@ src/
 
 ---
 
-*Last updated: v1.49.0 discover-time tagged/pushed (Marketplace still v1.48.0).*
+*Last updated: v1.49.0 discover-time shipped Marketplace.*
