@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { describe, it } from "node:test";
 import {
   buildLeafStatusDescription,
+  formatLeafStoryStrip,
   resolveTreeLeafIconKind,
 } from "../core/results/treeLeafVisual";
 
@@ -38,5 +39,53 @@ describe("treeLeafVisual", () => {
       buildLeafStatusDescription("@a", undefined, undefined, "es", true),
       "@a · sin ejecutar",
     );
+  });
+
+  it("formatLeafStoryStrip prefers failed snippet over skip and tags", () => {
+    const desc = formatLeafStoryStrip({
+      outcome: "failed",
+      skipReason: "not_in_trx",
+      errorSnippet: "Expected true",
+      displayMode: "detailed",
+      locale: "en",
+      tagsPart: "@smoke",
+      durationPart: "2.3 s",
+    });
+    assert.strictEqual(desc, "failed · Expected true · 2.3 s · @smoke");
+  });
+
+  it("formatLeafStoryStrip compact omits tags and duration on failed", () => {
+    const desc = formatLeafStoryStrip({
+      outcome: "failed",
+      errorSnippet: "Expected true",
+      displayMode: "compact",
+      locale: "en",
+      tagsPart: "@smoke",
+      durationPart: "2.3 s",
+    });
+    assert.strictEqual(desc, "failed · Expected true");
+    assert.ok(!desc!.includes("@smoke"));
+  });
+
+  it("formatLeafStoryStrip compact omits tags on narrative skip", () => {
+    const desc = formatLeafStoryStrip({
+      skipReason: "not_in_trx",
+      displayMode: "compact",
+      locale: "en",
+      tagsPart: "@smoke",
+      durationPart: "1 s",
+    });
+    assert.strictEqual(desc, "not in results · 1 s");
+  });
+
+  it("formatLeafStoryStrip passed compact does not invent a fail strip", () => {
+    const desc = formatLeafStoryStrip({
+      outcome: "passed",
+      displayMode: "compact",
+      locale: "en",
+      tagsPart: "@smoke",
+      durationPart: "400 ms",
+    });
+    assert.strictEqual(desc, "400 ms · @smoke");
   });
 });

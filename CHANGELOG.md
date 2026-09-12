@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.48.0] — 2026-09-12
+
+### Changed
+- **Leaf story strip (CF2)** — failed leaves show a sanitized error snippet on the tree and Test Explorer description (not only hover); `displayMode=compact` drops tags (and duration on fail) so the narrative wins. Same helper for Pilot tree and TE.
+
 ## [1.47.0] — 2026-09-12
 
 ### Fixed

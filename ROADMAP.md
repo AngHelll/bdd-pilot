@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.47.0** · **Marketplace: v1.47.0** · **Next: watch (CF2 solo backlog)** · **615 unit tests**
+> **Current release: v1.48.0** · **Marketplace: v1.47.0** · **Next: watch** · **621 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.47.0** |
-| 🎯 Next | watch (Cockpit fidelity CF1+CF3+CF-docs closed · CF2 solo backlog) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.47.0** (local **v1.48.0** CF2 leaf story) |
+| 🎯 Next | watch (Cockpit fidelity CF1–CF3+CF-docs closed) |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.48.0** | CF2 leaf story strip — fail snippet on tree/TE description; compact omits tags · spec `cockpit-fidelity-cf2-v1.48.md` |
 | **1.47.0** | Skipped honesty — TRX skipped from `UnitTestResult` when ResultSummary is 0 · spec `skipped-honesty-v1.47.md` |
 | **1.46.0** | Residual Outline / Theory keys — runner metadata, unquoted scalars, no first-apply K>1 · spec `residual-outline-theory-keys-v1.46.md` |
 | **1.45.0** | Diagnostics by domain — Output roll-up of failure buckets per discovery domain · spec `diagnostics-by-domain-v1.45.md` |
@@ -224,6 +225,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.48.0 — Cockpit fidelity CF2 (leaf story strip) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Tree / TE** | `formatLeafStoryStrip`: fail snippet + skip narrativo en description; compact omite tags (y duration en fail) |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Tests** | 621 unit tests |
 
 ### v1.47.0 — Residual matching (Outline keys + skipped honesty) ✅ shipped
 
@@ -1016,4 +1025,4 @@ src/
 
 ---
 
-*Last updated: v1.47.0 residual matching shipped Marketplace (watch CF2 still backlog).*
+*Last updated: v1.48.0 CF2 leaf story tagged/pushed (Marketplace still v1.47.0).*

@@ -23,7 +23,6 @@ import {
 } from "../core/gherkin/treeContainerLabels";
 import {
   formatOutcomeForTooltip,
-  prependFailedOutcomeToDescription,
   truncateErrorSnippet,
 } from "../core/results/outcomeFeedback";
 import {
@@ -32,7 +31,7 @@ import {
   SkipReason,
 } from "../core/results/skipReason";
 import {
-  buildLeafStatusDescription,
+  formatLeafStoryStrip,
   resolveTreeLeafIconKind,
   TreeLeafIconKind,
 } from "../core/results/treeLeafVisual";
@@ -55,6 +54,7 @@ import {
   buildFeatureTooltipMarkdown,
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
+  formatTagDescription,
 } from "../core/gherkin/treeLabels";
 import {
   buildDomainStructuralBase,
@@ -717,18 +717,20 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         tagBase,
       );
     } else {
-      let base = buildScenarioDescription(
-        tags,
-        leafTags,
-        display.compactTagLimit,
-        formatDurationLabel(durationMs, display.durationDisplay),
-        featureHint,
-      );
-      base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
       const showPendingHint =
         !this.outcomeStore.isEmpty() && !outcome && !skipReason;
       item.description =
-        buildLeafStatusDescription(base, outcome, skipReason, locale, showPendingHint) ?? "";
+        formatLeafStoryStrip({
+          outcome,
+          skipReason,
+          errorSnippet: errorMessage,
+          displayMode: display.displayMode,
+          locale,
+          tagsPart: formatTagDescription(tags, leafTags, display.compactTagLimit) || undefined,
+          durationPart: formatDurationLabel(durationMs, display.durationDisplay),
+          featureHint,
+          showPendingHint,
+        }) ?? "";
     }
 
     const rollupText = rollup
@@ -791,16 +793,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
     const item = new vscode.TreeItem(node.example.label, vscode.TreeItemCollapsibleState.None);
-    let base = buildScenarioDescription(
-      tags,
-      leafTags,
-      display.compactTagLimit,
-      formatDurationLabel(durationMs, display.durationDisplay),
-    );
-    base = prependFailedOutcomeToDescription(locale, outcome, errorMessage, base);
     const showPendingHint = !this.outcomeStore.isEmpty() && !outcome && !skipReason;
     item.description =
-      buildLeafStatusDescription(base, outcome, skipReason, locale, showPendingHint) ?? "";
+      formatLeafStoryStrip({
+        outcome,
+        skipReason,
+        errorSnippet: errorMessage,
+        displayMode: display.displayMode,
+        locale,
+        tagsPart: formatTagDescription(tags, leafTags, display.compactTagLimit) || undefined,
+        durationPart: formatDurationLabel(durationMs, display.durationDisplay),
+        showPendingHint,
+      }) ?? "";
 
     const tooltip = new vscode.MarkdownString(
       buildScenarioTooltipMarkdown(

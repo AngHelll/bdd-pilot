@@ -1,7 +1,16 @@
 import { PilotLocale, t } from "../i18n";
+import { TreeDisplayMode } from "../gherkin/treeContainerLabels";
 import { joinDescriptionParts } from "../gherkin/treeLabels";
-import { SkipReason, appendSkipReasonToDescription } from "./skipReason";
+import {
+  formatOutcomeForTooltip,
+  sanitizeErrorForStore,
+  truncateErrorSnippet,
+} from "./outcomeFeedback";
+import { SkipReason, appendSkipReasonToDescription, skipReasonMessage } from "./skipReason";
 import { TestOutcome } from "./trxParser";
+
+/** Description snippet cap (tooltip may stay longer via existing helpers). */
+const STORY_SNIPPET_MAX = 100;
 
 /** Visual kind for BDD tree / TE leaf icons (providers map to ThemeIcon). */
 export type TreeLeafIconKind =
@@ -62,4 +71,71 @@ export function buildLeafStatusDescription(
     return joinDescriptionParts(base, t(locale, "tree.leafPending")) || undefined;
   }
   return base && base.length > 0 ? base : undefined;
+}
+
+export interface LeafStoryStripInput {
+  outcome?: TestOutcome;
+  skipReason?: SkipReason;
+  errorSnippet?: string;
+  displayMode: TreeDisplayMode;
+  locale: PilotLocale;
+  tagsPart?: string;
+  durationPart?: string;
+  featureHint?: string;
+  showPendingHint?: boolean;
+  /** Test Explorer includes the localized outcome word; the BDD tree uses the icon. */
+  includeOutcomeLabel?: boolean;
+}
+
+function isNarrativeSkip(reason: SkipReason | undefined): boolean {
+  return reason === "not_in_trx" || reason === "canceled";
+}
+
+/**
+ * Unified leaf description for BDD tree and Test Explorer.
+ * Priority: failed+snippet → narrative skip → pending hint → base parts.
+ */
+export function formatLeafStoryStrip(input: LeafStoryStripInput): string | undefined {
+  const compact = input.displayMode === "compact";
+  const cleaned = input.errorSnippet ? sanitizeErrorForStore(input.errorSnippet) : undefined;
+  const snippet = cleaned ? truncateErrorSnippet(cleaned, STORY_SNIPPET_MAX) : undefined;
+  const failedStrip =
+    input.outcome === "failed" && snippet
+      ? joinDescriptionParts(formatOutcomeForTooltip("failed", input.locale), snippet)
+      : undefined;
+  const omitTags = compact && (!!failedStrip || isNarrativeSkip(input.skipReason));
+  const omitDuration = compact && !!failedStrip;
+  const tags = omitTags ? undefined : input.tagsPart;
+  const duration = omitDuration ? undefined : input.durationPart;
+  const hint = compact ? undefined : input.featureHint;
+
+  if (failedStrip) {
+    return joinDescriptionParts(failedStrip, duration, tags, hint) || undefined;
+  }
+  if (isNarrativeSkip(input.skipReason)) {
+    return (
+      joinDescriptionParts(
+        skipReasonMessage(input.skipReason!, input.locale),
+        duration,
+        tags,
+        hint,
+      ) || undefined
+    );
+  }
+
+  const outcomeLabel =
+    input.includeOutcomeLabel && input.outcome
+      ? formatOutcomeForTooltip(input.outcome, input.locale)
+      : undefined;
+  if (input.skipReason) {
+    const base = joinDescriptionParts(outcomeLabel, duration, tags, hint);
+    return appendSkipReasonToDescription(base || undefined, input.skipReason, input.locale) || undefined;
+  }
+  if (!input.outcome && input.showPendingHint) {
+    return (
+      joinDescriptionParts(outcomeLabel, duration, tags, hint, t(input.locale, "tree.leafPending")) ||
+      undefined
+    );
+  }
+  return joinDescriptionParts(outcomeLabel, duration, tags, hint) || undefined;
 }

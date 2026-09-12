@@ -105,7 +105,8 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
 - **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); while running, **Cancel** replaces Run at the front of the toolbar and the summary row click cancels.
 - **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
-  or `compact` (less duplicate roll-ups; outcomes emphasized on leaves).
+  or `compact` (less duplicate roll-ups; failed/skip narrative on the leaf wins over tags).
+  Failed leaves show a sanitized error snippet on the tree and Test Explorer description.
 - **CodeLens** on Feature, Scenario, and **Scenario Outline example rows** (Run / Debug).
 - **One-click run**: domain, feature, scenario, tag, or **Scenario Outline row** —
   the correct `dotnet test --filter` is built automatically.
@@ -261,7 +262,7 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.run.blameHangTimeout` | `10m` | Timeout for `--blame-hang-timeout` when `blameHang` is `on`. |
 | `bddPilot.run.byStage` | `{}` | Per-`STAGE` overrides for `configuration` / `runSettings` only (not cliVerbosity/blame). Example: `{ "stg": { "configuration": "Release", "runSettings": "config/stg.runsettings" } }`. |
 | `bddPilot.feedback.dotnetVerbosity` | `filtered` | Live `dotnet test` stream in Output: `filtered` (hide discovery/build noise) or `raw`. Distinct from `run.cliVerbosity`. |
-| `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (less duplicate roll-ups). |
+| `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (narrative fail/skip over tags). |
 | `bddPilot.tree.groupBy` | `domain` | Tree grouping: `domain` (folder layout) or `tag` (`@smoke` folders). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags when `tagDisplay` is `compact`. |

@@ -1,7 +1,7 @@
 import { PilotLocale, t } from "../i18n";
 import { formatDuration } from "../results/durationFormat";
 import { SkipReason } from "../results/skipReason";
-import { buildLeafStatusDescription } from "../results/treeLeafVisual";
+import { formatLeafStoryStrip } from "../results/treeLeafVisual";
 import { TestOutcome } from "../results/trxParser";
 import { outlineRowKey, scenarioKey } from "../runner/runScope";
 import { TagGroup } from "./groupByTag";
@@ -16,7 +16,6 @@ import {
 import {
   buildFeatureDescription,
   buildScenarioDescription,
-  joinDescriptionParts,
 } from "./treeLabels";
 import {
   buildDomainStructuralBase,
@@ -31,6 +30,7 @@ export interface OutcomeReader {
   get(key: string): TestOutcome | undefined;
   getDuration(key: string): number | undefined;
   getSkipReason?(key: string): SkipReason | undefined;
+  getErrorMessage?(key: string): string | undefined;
 }
 
 export function formatOutcomeLabel(outcome: TestOutcome, locale: PilotLocale): string {
@@ -65,18 +65,21 @@ export function buildTestExplorerLeafDescription(
   contextLabel?: string,
   skipReason?: SkipReason,
   showPendingHint = false,
+  errorSnippet?: string,
 ): string | undefined {
-  const outcomeLabel = outcome ? formatOutcomeLabel(outcome, locale) : undefined;
   const durationLabel =
     durationMs !== undefined ? formatDuration(durationMs, display.durationDisplay) : undefined;
-  const joined = joinDescriptionParts(outcomeLabel, durationLabel, contextLabel);
-  return buildLeafStatusDescription(
-    joined || undefined,
+  return formatLeafStoryStrip({
     outcome,
     skipReason,
+    errorSnippet,
+    displayMode: display.displayMode,
     locale,
+    tagsPart: contextLabel,
+    durationPart: durationLabel,
     showPendingHint,
-  );
+    includeOutcomeLabel: true,
+  });
 }
 
 export function buildTestExplorerOutlineRowDescription(
@@ -107,6 +110,7 @@ export function buildTestExplorerOutlineRowDescription(
     tagPart || undefined,
     skipReason,
     showPendingHint,
+    store.getErrorMessage?.(key),
   );
 }
 
@@ -155,6 +159,7 @@ export function buildTestExplorerScenarioDescription(
     featureHint,
     skipReason,
     showPendingHint,
+    store.getErrorMessage?.(key),
   );
 }
 

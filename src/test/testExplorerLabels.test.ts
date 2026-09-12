@@ -27,11 +27,20 @@ const compactDisplay = { ...display, displayMode: "compact" as const };
 class MemoryStore implements OutcomeReader {
   private outcomes = new Map<string, "passed" | "failed" | "skipped">();
   private durations = new Map<string, number>();
+  private errors = new Map<string, string>();
 
-  set(key: string, outcome: "passed" | "failed" | "skipped", durationMs?: number): void {
+  set(
+    key: string,
+    outcome: "passed" | "failed" | "skipped",
+    durationMs?: number,
+    errorMessage?: string,
+  ): void {
     this.outcomes.set(key, outcome);
     if (durationMs !== undefined) {
       this.durations.set(key, durationMs);
+    }
+    if (errorMessage !== undefined) {
+      this.errors.set(key, errorMessage);
     }
   }
 
@@ -41,6 +50,10 @@ class MemoryStore implements OutcomeReader {
 
   getDuration(key: string) {
     return this.durations.get(key);
+  }
+
+  getErrorMessage(key: string) {
+    return this.errors.get(key);
   }
 }
 
@@ -66,6 +79,46 @@ describe("testExplorerLabels", () => {
   it("buildTestExplorerLeafDescription uses Spanish outcome label", () => {
     const desc = buildTestExplorerLeafDescription("failed", undefined, display, "es", "Login");
     assert.strictEqual(desc, "fallido · Login");
+  });
+
+  it("buildTestExplorerLeafDescription includes fail snippet when provided", () => {
+    const detailed = buildTestExplorerLeafDescription(
+      "failed",
+      450,
+      display,
+      "en",
+      "Login",
+      undefined,
+      false,
+      "Expected true",
+    );
+    assert.strictEqual(detailed, "failed · Expected true · 450 ms · Login");
+    const compact = buildTestExplorerLeafDescription(
+      "failed",
+      450,
+      compactDisplay,
+      "en",
+      "Login",
+      undefined,
+      false,
+      "Expected true",
+    );
+    assert.strictEqual(compact, "failed · Expected true");
+  });
+
+  it("buildTestExplorerScenarioDescription reads getErrorMessage from the store", () => {
+    const f = feature("Alpha", [plainScenario("One", 10)]);
+    const store = new MemoryStore();
+    store.set("/f/Alpha.feature::10::One", "failed", 800, "Expected true");
+    const desc = buildTestExplorerScenarioDescription(
+      f,
+      f.scenarios[0],
+      store,
+      compactDisplay,
+      "en",
+      false,
+    );
+    assert.strictEqual(desc, "failed · Expected true");
   });
 
   it("buildTestExplorerScenarioDescription includes feature hint under tag group", () => {
