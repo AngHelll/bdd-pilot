@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.51.0** · **Marketplace: v1.50.0** *(publish in progress)* · **Next: watch** · **657 unit tests**
+> **Current release: v1.51.0** · **Marketplace: v1.51.0** · **Next: watch** · **657 unit tests**
 
 ---
 
@@ -9,8 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub) | v0.1.0 → **v1.51.0** |
-| ✅ Marketplace | **v1.50.0** · v1.51.0 publishing |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.51.0** |
 | 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -237,7 +236,7 @@ _Nothing queued._
 | **Output / toast** | `Review first:` + optional Hotspot after failed runs; Jump lands on top failure class |
 | **Tree** | Command **Filter Failures by Class** (QuickPick → collapse to bucket) |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Publishing v1.51.0 |
+| **Marketplace** | Published v1.51.0 |
 | **Tests** | 657 unit tests |
 
 ### v1.50.0 — Hard cancel + abort watchdog ✅ shipped
