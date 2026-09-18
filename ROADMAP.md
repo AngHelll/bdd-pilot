@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.49.0** · **Marketplace: v1.49.0** · **Next: watch** · **635 unit tests**
+> **Current release: v1.50.0** · **Marketplace: v1.49.0** · **Next: watch** · **650 unit tests**
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.49.0** |
-| 🎯 Next | watch (Cockpit fidelity CF1–CF3+CF-docs closed) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.49.0** (local **v1.50.0** hard cancel) |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -52,6 +52,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.1** | Controls polish (Slice C) — debug inline, GroupBy icon, toolbar overflow · spec `controls-polish-v1.7.1.md` |
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
+| **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
 | **1.49.0** | Discover-time matching — listed vs Gherkin before `dotnet test` · spec `discover-time-matching-v1.49.md` |
 | **1.48.0** | CF2 leaf story strip — fail snippet on tree/TE description; compact omits tags · spec `cockpit-fidelity-cf2-v1.48.md` |
 | **1.47.0** | Skipped honesty — TRX skipped from `UnitTestResult` when ResultSummary is 0 · spec `skipped-honesty-v1.47.md` |
@@ -226,6 +227,14 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.50.0 — Hard cancel + abort watchdog ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Runner** | Cancel kills the `dotnet` process tree (Unix group / Windows `taskkill /T`); abort watchdog SIGKILL + always release lock; debug Cancel stops the Pilot session |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Tests** | 650 unit tests |
 
 ### v1.49.0 — Discover-time matching ✅ shipped
 
@@ -1036,4 +1045,4 @@ src/
 
 ---
 
-*Last updated: v1.49.0 discover-time shipped Marketplace.*
+*Last updated: v1.50.0 hard cancel tagged/pushed (Marketplace still v1.49.0).*

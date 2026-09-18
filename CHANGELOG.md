@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.50.0] — 2026-09-18
+
+### Fixed
+- **Hard cancel** — Cancel kills the `dotnet test` process tree (testhost / browsers), not only the child PID. If the host ignores SIGTERM, Pilot escalates to SIGKILL / `taskkill /T /F` and always releases the run lock. Debug Cancel stops the Pilot debug session instead of reporting “no active run”.
+
 ## [1.49.0] — 2026-09-12
 
 ### Added

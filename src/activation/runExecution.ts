@@ -14,6 +14,7 @@ import {
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { resolveRunKind, RunKind } from "../core/results/runHistory";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import { formatRunCanceledLine } from "../core/runner/processTree";
 import {
   DISCOVER_LIST_TIMEOUT_MS,
   classifyDiscoverTime,
@@ -259,7 +260,8 @@ export function createRunExecutor(deps: RunExecutionDeps) {
               // list-tests canceled — handled below via signal.aborted
             }
             if (controller.signal.aborted) {
-              deps.output.appendLine("\n[bdd-pilot] Run canceled.");
+              deps.output.appendLine("");
+              deps.output.appendLine(formatRunCanceledLine({ forced: false }));
               deps.notifyPostRunFeedback({
                 canceled: true,
                 debug: false,
@@ -389,7 +391,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
 
           if (result.canceled) {
             beginResultsSection();
-            deps.output.appendLine("[bdd-pilot] Run canceled.");
+            deps.output.appendLine(formatRunCanceledLine({ forced: !!result.forced }));
             if (result.summary) {
               deps.applyRunSummaryToTree(result.summary, runTargets, { canceled: true });
               deps.output.appendLine(

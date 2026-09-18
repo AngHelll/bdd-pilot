@@ -103,7 +103,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   (`N unmapped — Show Unmapped`, command **BDD Pilot: Show Unmapped Scenarios**). Click opens
   dashboard (or the unmapped QuickPick when that chip is shown).
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
-- **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); while running, **Cancel** replaces Run at the front of the toolbar and the summary row click cancels.
+- **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); while running, **Cancel** replaces Run at the front of the toolbar and the summary row click cancels (kills the `dotnet` / testhost process tree, not only the UI lock).
 - **Tree display mode** (`bddPilot.tree.displayMode`): `detailed` (roll-ups on folders, default)
   or `compact` (less duplicate roll-ups; failed/skip narrative on the leaf wins over tags).
   Failed leaves show a sanitized error snippet on the tree and Test Explorer description.
@@ -184,7 +184,7 @@ BDD Pilot uses **VS Code codicons** for actions and outcomes, plus two **brand a
 | **`not_in_trx`** | Scenario in scope but missing from TRX | TE shows missing tests differently; Pilot maps Gherkin leaves |
 | **Unmapped chip** | Scoped run left scenarios without TRX match | Jump to `.feature` via Pilot mapping report |
 | **Fail-first outline** | Compact parent shows failures first | TE roll-ups are test-hierarchy, not Gherkin outline |
-| **Cancel busy** | Toolbar Cancel + summary click + **hub QuickPick first row** while running | TE cancel is native Testing UI, not Pilot tree chrome |
+| **Cancel busy** | Toolbar Cancel + summary click + **hub QuickPick first row** while running — stops the `dotnet` process tree (testhost / browsers) | TE cancel is native Testing UI, not Pilot tree chrome |
 | **Restored / rehydrate** | Outcomes from TestResults, not a new run | TE reload does not narrate Pilot rehydrate provenance |
 
 **ForgeOne family:** [**BDD Pilot**](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot) = execution · [**BDD Guardian**](https://github.com/AngHelll/bdd-guardian) = navigation & step bindings · [**BDD Gherkin Format**](https://github.com/AngHelll/bdd-gherkin-format) = mute `.feature` layout · [**BDD Jarvis**](https://github.com/AngHelll/bdd-jarvis) = workspace insights (consumes Pilot’s read-only Run API). Complementary extensions — not a monorepo and not an “AI test fixer.”

@@ -18,6 +18,10 @@ import {
   findFirstFailedLeaf,
 } from "../core/results/failureTreeNav";
 import { buildRerunFailedFilter } from "../providers/testController";
+import {
+  DEBUG_TERMINATE_GRACE_MS,
+  resolveCancelIntent,
+} from "../core/runner/processTree";
 import { BDD_PILOT_DEBUG_SESSION_NAME } from "../providers/runService";
 import { DashboardPanel } from "../providers/dashboardPanel";
 import { LocaleService } from "../providers/localeService";
@@ -77,6 +81,23 @@ export interface RegisterCommandsDeps {
 }
 
 export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Disposable[] {
+  let debugTerminateWatchdog: ReturnType<typeof setTimeout> | undefined;
+  const clearDebugTerminateWatchdog = (): void => {
+    if (debugTerminateWatchdog !== undefined) {
+      clearTimeout(debugTerminateWatchdog);
+      debugTerminateWatchdog = undefined;
+    }
+  };
+  const armDebugTerminateWatchdog = (): void => {
+    clearDebugTerminateWatchdog();
+    debugTerminateWatchdog = setTimeout(() => {
+      debugTerminateWatchdog = undefined;
+      if (deps.runService.isDebugActive()) {
+        deps.handleDebugSessionEnded();
+      }
+    }, DEBUG_TERMINATE_GRACE_MS);
+  };
+
   return [
     vscode.commands.registerCommand("bddPilot.refresh", () => deps.refreshAll()),
 
@@ -348,12 +369,27 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     }),
 
     vscode.commands.registerCommand("bddPilot.cancel", () => {
-      if (deps.getActiveRun()) {
+      const intent = resolveCancelIntent({
+        hasActiveRun: !!deps.getActiveRun(),
+        debugActive: deps.runService.isDebugActive(),
+      });
+      if (intent === "abort") {
         deps.abortActiveRun();
         deps.output.appendLine("\n[bdd-pilot] Cancellation requested...");
-      } else {
-        void vscode.window.showInformationMessage(deps.tr("toast.noActiveRun"));
+        return;
       }
+      if (intent === "stopDebug") {
+        const session = vscode.debug.activeDebugSession;
+        if (session?.name === BDD_PILOT_DEBUG_SESSION_NAME) {
+          void vscode.debug.stopDebugging(session);
+          armDebugTerminateWatchdog();
+          return;
+        }
+        deps.handleDebugSessionEnded();
+        void vscode.window.showInformationMessage(deps.tr("toast.debugStopFromCancel"));
+        return;
+      }
+      void vscode.window.showInformationMessage(deps.tr("toast.noActiveRun"));
     }),
 
     vscode.commands.registerCommand("bddPilot.runAll", async () => {
@@ -474,8 +510,10 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
 
     vscode.debug.onDidTerminateDebugSession((session) => {
       if (session.name === BDD_PILOT_DEBUG_SESSION_NAME) {
+        clearDebugTerminateWatchdog();
         deps.handleDebugSessionEnded();
       }
     }),
+    { dispose: () => clearDebugTerminateWatchdog() },
   ];
 }

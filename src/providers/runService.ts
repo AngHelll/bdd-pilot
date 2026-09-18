@@ -111,6 +111,8 @@ export interface RunServiceResult {
   historyEntry?: RunHistoryEntry;
   /** Set when a debug session was launched and results arrive on session end. */
   debugStarted?: boolean;
+  /** Abort escalated to SIGKILL / forced settle (Output `(forced).`). */
+  forced?: boolean;
 }
 
 export interface DebugSessionResult {
@@ -315,6 +317,7 @@ export class RunService {
       summary,
       outputBuffer: buffer,
       historyEntry,
+      forced: result.forced,
     };
   }
 

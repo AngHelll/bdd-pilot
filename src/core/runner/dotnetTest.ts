@@ -1,6 +1,11 @@
 import { spawn } from "child_process";
 import * as path from "path";
 import { ModeProfile, Stage } from "../config/types";
+import {
+  isCanceledOnClose,
+  shouldDetachForProcessGroup,
+  startAbortKillWatchdog,
+} from "./processTree";
 
 export interface RunRequest {
   dotnetPath: string;
@@ -45,6 +50,8 @@ export interface RunResult {
   exitCode: number | null;
   canceled: boolean;
   trxPath: string;
+  /** True when abort escalated to SIGKILL / taskkill /F or the close never arrived. */
+  forced?: boolean;
 }
 
 export interface RunCallbacks {
@@ -144,27 +151,59 @@ export function runDotnetTest(
   callbacks.onStart?.(`${req.dotnetPath} ${args.join(" ")}`);
 
   return new Promise<RunResult>((resolve, reject) => {
-    let canceled = false;
+    let settled = false;
+    let forced = false;
+    let disposeWatchdog = (): void => undefined;
+    const settle = (result: RunResult): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      disposeWatchdog();
+      resolve(result);
+    };
+
     const child = spawn(req.dotnetPath, args, {
       cwd: req.projectDir,
       env,
-      signal,
+      detached: shouldDetachForProcessGroup(process.platform),
     });
+
+    disposeWatchdog = startAbortKillWatchdog(
+      () => child.pid,
+      signal,
+      {
+        onForce: () => {
+          forced = true;
+        },
+        onGiveUp: () => {
+          settle({ exitCode: null, canceled: true, forced: true, trxPath });
+        },
+      },
+    );
 
     child.stdout?.on("data", (d) => callbacks.onStdout?.(d.toString()));
     child.stderr?.on("data", (d) => callbacks.onStderr?.(d.toString()));
 
     child.on("error", (err) => {
-      if ((err as NodeJS.ErrnoException).name === "AbortError") {
-        canceled = true;
-        resolve({ exitCode: null, canceled: true, trxPath });
+      if ((err as NodeJS.ErrnoException).name === "AbortError" || signal.aborted) {
+        settle({ exitCode: null, canceled: true, forced, trxPath });
         return;
       }
-      reject(err);
+      if (!settled) {
+        settled = true;
+        disposeWatchdog();
+        reject(err);
+      }
     });
 
     child.on("close", (code) => {
-      resolve({ exitCode: code, canceled, trxPath });
+      settle({
+        exitCode: code,
+        canceled: isCanceledOnClose(signal.aborted),
+        forced,
+        trxPath,
+      });
     });
   });
 }

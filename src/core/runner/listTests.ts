@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { shouldDetachForProcessGroup, startAbortKillWatchdog } from "./processTree";
 import { extractListedTestNames } from "./theoryDisplayName";
 
 export interface ListTestsRequest {
@@ -32,10 +33,13 @@ export function listDotnetTests(req: ListTestsRequest, signal?: AbortSignal): Pr
       cwd: req.projectDir,
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
+      detached: shouldDetachForProcessGroup(process.platform),
     });
 
+    let settled = false;
     let stdout = "";
     let stderr = "";
+    let disposeWatchdog = (): void => undefined;
     child.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();
     });
@@ -43,23 +47,47 @@ export function listDotnetTests(req: ListTestsRequest, signal?: AbortSignal): Pr
       stderr += chunk.toString();
     });
 
-    const onAbort = () => {
-      child.kill();
-      reject(new Error("list-tests canceled"));
-    };
-    signal?.addEventListener("abort", onAbort, { once: true });
-
-    child.on("error", (err) => {
-      signal?.removeEventListener("abort", onAbort);
-      reject(err);
-    });
-    child.on("close", (code) => {
-      signal?.removeEventListener("abort", onAbort);
-      if (code !== 0 && code !== null) {
-        reject(new Error(stderr.trim() || `dotnet test --list-tests exited ${code}`));
+    const finishReject = (err: Error): void => {
+      if (settled) {
         return;
       }
-      resolve(extractListedTestNames(stdout));
+      settled = true;
+      disposeWatchdog();
+      reject(err);
+    };
+    const finishResolve = (names: string[]): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      disposeWatchdog();
+      resolve(names);
+    };
+
+    disposeWatchdog = signal
+      ? startAbortKillWatchdog(
+          () => child.pid,
+          signal,
+          {
+            onForce: () => undefined,
+            onGiveUp: () => finishReject(new Error("list-tests canceled")),
+          },
+        )
+      : (): void => undefined;
+
+    child.on("error", (err) => {
+      finishReject(err);
+    });
+    child.on("close", (code) => {
+      if (signal?.aborted) {
+        finishReject(new Error("list-tests canceled"));
+        return;
+      }
+      if (code !== 0 && code !== null) {
+        finishReject(new Error(stderr.trim() || `dotnet test --list-tests exited ${code}`));
+        return;
+      }
+      finishResolve(extractListedTestNames(stdout));
     });
   });
 }

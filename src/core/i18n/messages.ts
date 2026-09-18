@@ -162,6 +162,7 @@ const EN = {
   "toast.debugAlreadyActive": "A BDD Pilot debug session is already active.",
   "toast.debugNoTrx":
     "Debug session ended. No test results file was produced — check the terminal.",
+  "toast.debugStopFromCancel": "Stop the debug session from the Debug toolbar.",
   "toast.runCanceled": "Run canceled.",
   "toast.runCanceledPartial": "Run canceled — {completed}/{expected} tests finished.",
   "toast.projectNotFound":
@@ -580,6 +581,7 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.debugAlreadyActive": "Ya hay una sesión de depuración BDD Pilot activa.",
   "toast.debugNoTrx":
     "Sesión de depuración finalizada. No se generó archivo de resultados — revisa la terminal.",
+  "toast.debugStopFromCancel": "Detén la sesión de depuración desde la barra de Depuración.",
   "toast.runCanceled": "Ejecución cancelada.",
   "toast.runCanceledPartial": "Ejecución cancelada — {completed}/{expected} tests completados.",
   "toast.projectNotFound":
