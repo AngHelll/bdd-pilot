@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.52.0** · **Marketplace: v1.51.0** · **Next: publish v1.52.0** · **659 unit tests**
+> **Current release: v1.52.0** · **Marketplace: v1.52.0** · **Next: watch** · **659 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.51.0** |
-| 📦 GitHub (pending Marketplace) | **v1.52.0** — activation & discovery perf |
-| 🎯 Next | publish **v1.52.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.52.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -231,14 +230,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.52.0 — Activation & discovery perf ✅ shipped (Marketplace pending)
+### v1.52.0 — Activation & discovery perf ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Activate** | Theory enrich deferred (~1 s idle) when needed; no longer blocks rehydrate |
 | **Run** | `estimateTestCount` reuses tree domains (tree + TE hot path) |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.52.0 |
 | **Tests** | 659 unit tests |
 
 ### v1.51.0 — Failure triage (review-first) ✅ shipped
