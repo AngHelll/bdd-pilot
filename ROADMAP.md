@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.50.0** · **Marketplace: v1.49.0** · **Next: watch** · **650 unit tests**
+> **Current release: v1.50.0** · **Marketplace: v1.50.0** · **Next: watch** · **650 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.49.0** (local **v1.50.0** hard cancel) |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.50.0** |
 | 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -234,6 +234,7 @@ _Nothing queued._
 |------|--------|
 | **Runner** | Cancel kills the `dotnet` process tree (Unix group / Windows `taskkill /T`); abort watchdog SIGKILL + always release lock; debug Cancel stops the Pilot session |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.50.0 |
 | **Tests** | 650 unit tests |
 
 ### v1.49.0 — Discover-time matching ✅ shipped
@@ -1045,4 +1046,4 @@ src/
 
 ---
 
-*Last updated: v1.50.0 hard cancel tagged/pushed (Marketplace still v1.49.0).*
+*Last updated: v1.50.0 hard cancel shipped Marketplace.*
