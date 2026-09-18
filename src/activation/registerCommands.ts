@@ -73,7 +73,7 @@ export interface RegisterCommandsDeps {
   refreshAll: (immediateEnrich?: boolean) => void;
   refreshUi: () => void;
   refreshTreeSurfaces: () => void;
-  scheduleEnrichTheoryRows: () => void;
+  scheduleEnrichTheoryRows: (delayMs?: number) => void;
   updateTreeGroupByContext: () => void;
   buildDashboardContext: () => DashboardContext;
   executeRun: ExecuteRunFn;

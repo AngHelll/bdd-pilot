@@ -124,11 +124,12 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       return;
     }
 
+    const domains = deps.treeProvider.getDomains();
     let runTargets = opts?.rawFilter ? [] : resolveRunTargets(target);
     let totalExpected =
       opts?.rawFilter || opts?.debug
         ? undefined
-        : estimateTestCount(runTargets, project.discoveryRoot);
+        : estimateTestCount(runTargets, project.discoveryRoot, domains);
 
     const isPlainRunAll =
       !opts?.rawFilter &&
@@ -141,7 +142,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         tr: deps.tr,
         suggestEnabled: readSuggestScopedWhenLarge(),
         groupBy: readTreeGroupBy(),
-        domains: deps.treeProvider.getDomains(),
+        domains,
         tagGroups: deps.treeProvider.getTagGroups(),
         estimatedLeafCount: totalExpected ?? 0,
       });
@@ -151,7 +152,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       }
       if (nudge.action === "scoped") {
         runTargets = resolveRunTargets(nudge.target);
-        totalExpected = estimateTestCount(runTargets, project.discoveryRoot);
+        totalExpected = estimateTestCount(runTargets, project.discoveryRoot, domains);
       }
     }
 

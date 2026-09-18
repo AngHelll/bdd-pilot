@@ -339,6 +339,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     const totalExpected = estimateTestCount(
       runningAll ? [{ kind: "all" }] : targets,
       project.discoveryRoot,
+      deps.getDomains(),
     );
     const signal = new AbortController();
     token.onCancellationRequested(() => {

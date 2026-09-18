@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.51.0** · **Marketplace: v1.51.0** · **Next: watch** · **657 unit tests**
+> **Current release: v1.52.0** · **Marketplace: v1.51.0** · **Next: publish v1.52.0** · **659 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.51.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.52.0** — activation & discovery perf |
+| 🎯 Next | publish **v1.52.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.52.0** | Activation & discovery perf — lazy Theory enrich + domain reuse · spec `activation-discovery-perf-v1.52.md` |
 | **1.51.0** | Failure triage — Review first headline, Jump by class, Filter Failures by Class · spec `failure-triage-v1.51.md` |
 | **1.49.0** | Discover-time matching — listed vs Gherkin before `dotnet test` · spec `discover-time-matching-v1.49.md` |
 | **1.48.0** | CF2 leaf story strip — fail snippet on tree/TE description; compact omits tags · spec `cockpit-fidelity-cf2-v1.48.md` |
@@ -228,6 +230,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.52.0 — Activation & discovery perf ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Activate** | Theory enrich deferred (~1 s idle) when needed; no longer blocks rehydrate |
+| **Run** | `estimateTestCount` reuses tree domains (tree + TE hot path) |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 659 unit tests |
 
 ### v1.51.0 — Failure triage (review-first) ✅ shipped
 

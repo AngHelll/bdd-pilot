@@ -4,17 +4,26 @@ import { effectiveScenarioTags } from "../gherkin/tags";
 import { discoverDomains } from "../gherkin/discovery";
 import { RunTarget } from "./filterBuilder";
 
-/** Counts executable tests for a run scope (outline rows count individually). */
-export function estimateTestCount(targets: RunTarget[], projectDir: string): number | undefined {
+/**
+ * Counts executable tests for a run scope (outline rows count individually).
+ * When `domains` is provided, skips a filesystem rediscovery.
+ */
+export function estimateTestCount(
+  targets: RunTarget[],
+  projectDir: string,
+  domains?: DomainGroup[],
+): number | undefined {
+  const resolved = domains ?? discoverDomains(projectDir);
+
   if (targets.length === 0 || targets.some((t) => t.kind === "all")) {
-    return countAllTests(discoverDomains(projectDir));
+    return countAllTests(resolved);
   }
 
   let total = 0;
   let hasScope = false;
 
   for (const target of targets) {
-    const n = countForTarget(target, projectDir);
+    const n = countForTarget(target, resolved);
     if (n !== undefined) {
       total += n;
       hasScope = true;
@@ -34,10 +43,10 @@ function countAllTests(domains: DomainGroup[]): number {
   return n;
 }
 
-function countForTarget(target: RunTarget, projectDir: string): number | undefined {
+function countForTarget(target: RunTarget, domains: DomainGroup[]): number | undefined {
   switch (target.kind) {
     case "all":
-      return countAllTests(discoverDomains(projectDir));
+      return countAllTests(domains);
     case "domain":
       return target.group.features.reduce((sum, f) => sum + countFeatureTests(f), 0);
     case "feature":
@@ -47,7 +56,6 @@ function countForTarget(target: RunTarget, projectDir: string): number | undefin
     case "outlineRow":
       return 1;
     case "tag": {
-      const domains = discoverDomains(projectDir);
       let n = 0;
       for (const domain of domains) {
         for (const feature of domain.features) {

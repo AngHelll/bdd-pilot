@@ -22,6 +22,10 @@ import {
 } from "./core/runner/stageRunFlags";
 import { formatDiagnosticRunFlagsParts } from "./core/runner/runDiagnosticFlags";
 import { listDotnetTests } from "./core/runner/listTests";
+import {
+  FEATURE_ENRICH_DEBOUNCE_MS,
+  activateEnrichDelayMs,
+} from "./core/runner/activateEnrich";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
 import { LocaleService } from "./providers/localeService";
@@ -192,7 +196,6 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   runService.onHistoryChanged(() => persistHistory());
 
-  const FEATURE_ENRICH_DEBOUNCE_MS = 2000;
   let enrichTheoryTimer: ReturnType<typeof setTimeout> | undefined;
   let onExecutionFeedbackChanged = (): void => {};
 
@@ -244,12 +247,12 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }
   }
 
-  const scheduleEnrichTheoryRows = () => {
+  const scheduleEnrichTheoryRows = (delayMs: number = FEATURE_ENRICH_DEBOUNCE_MS) => {
     cancelScheduledEnrich();
     enrichTheoryTimer = setTimeout(() => {
       enrichTheoryTimer = undefined;
       void enrichTheoryRows();
-    }, FEATURE_ENRICH_DEBOUNCE_MS);
+    }, delayMs);
   };
 
   const refreshUi = () => {
@@ -496,9 +499,12 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     dashboard.refreshLocale(localeService.getLocale(), buildDashboardContext());
   });
 
-  async function bootstrapWorkspace(): Promise<void> {
-    await enrichTheoryRows();
+  function bootstrapWorkspace(): void {
     rehydrate.tryRehydrateOutcomes();
+    const delayMs = activateEnrichDelayMs(treeProvider.needsTheoryDiscovery());
+    if (delayMs !== undefined) {
+      scheduleEnrichTheoryRows(delayMs);
+    }
   }
 
   context.subscriptions.push(

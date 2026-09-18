@@ -6,6 +6,12 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.52.0] — 2026-09-18
+
+### Changed
+- **Activation performance** — Theory `list-tests` enrich no longer blocks activate; idle schedule (~1 s) only when outlines need discovery; Refresh / project switch / pre-run still enrich immediately
+- **Run estimate** — scoped counts reuse the tree domain snapshot instead of rediscovering features from disk
+
 ## [1.51.0] — 2026-09-18
 
 ### Added
