@@ -4,11 +4,13 @@ import { DomainGroup } from "../core/gherkin/model";
 import {
   containerKeysToExpandForFailures,
   findFirstFailedLeaf,
+  findFirstFailedLeafForBucket,
   isAutoShowOutputMode,
   shouldAutoShowOutput,
 } from "../core/results/failureTreeNav";
 import { outlineRowKey, scenarioKey } from "../core/runner/runScope";
 import { TestOutcome } from "../core/results/trxParser";
+import { FailureBucket } from "../core/diagnostics/classifyFailedTests";
 
 const domains: DomainGroup[] = [
   {
@@ -47,10 +49,16 @@ const domains: DomainGroup[] = [
   },
 ];
 
-function store(map: Record<string, TestOutcome>) {
+function store(
+  map: Record<string, TestOutcome>,
+  errors: Record<string, string> = {},
+) {
   return {
     get(key: string): TestOutcome | undefined {
       return map[key];
+    },
+    getErrorMessage(key: string): string | undefined {
+      return errors[key];
     },
   };
 }
@@ -85,6 +93,38 @@ describe("failureTreeNav", () => {
     );
     assert.strictEqual(leaf?.label, "Boom");
     assert.strictEqual(leaf?.featurePath, "/x/Second.feature");
+  });
+
+  it("findFirstFailedLeafForBucket prefers review-first class over tree order", () => {
+    const feature = domains[0].features[0];
+    const outline = feature.scenarios[1];
+    const boom = domains[1].features[0].scenarios[0];
+    const outlineKey = outlineRowKey(feature, outline, 0);
+    const boomKey = scenarioKey(domains[1].features[0], boom);
+    const leaf = findFirstFailedLeafForBucket(
+      domains,
+      store(
+        { [outlineKey]: "failed", [boomKey]: "failed" },
+        {
+          [outlineKey]: "Xunit.Sdk.EqualException",
+          [boomKey]: "No matching step definition",
+        },
+      ),
+      "pending",
+    );
+    assert.ok(leaf);
+    assert.strictEqual(leaf!.label, "Boom");
+  });
+
+  it("findFirstFailedLeafForBucket skips leaves without error message", () => {
+    const boom = domains[1].features[0].scenarios[0];
+    const boomKey = scenarioKey(domains[1].features[0], boom);
+    const leaf = findFirstFailedLeafForBucket(
+      domains,
+      store({ [boomKey]: "failed" }, {}),
+      "pending" as FailureBucket,
+    );
+    assert.strictEqual(leaf, undefined);
   });
 
   it("containerKeysToExpandForFailures includes ancestors of failed leaves", () => {

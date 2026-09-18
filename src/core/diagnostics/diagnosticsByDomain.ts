@@ -13,7 +13,8 @@ export const MIN_TOTAL_FAILS = 3;
 export const MAX_DOMAINS_SHOWN = 8;
 export const MAX_BUCKETS_PER_DOMAIN = 4;
 
-const BUCKET_ORDER: FailureBucket[] = [
+/** Review-first priority (pending/fixture before asserts). Shared with failure triage. */
+export const REVIEW_BUCKET_ORDER: FailureBucket[] = [
   "pending",
   "testData",
   "http",
@@ -82,7 +83,7 @@ export function buildDiagnosticsByDomainRollUp(
 
 export function domainFailTotal(counts: DomainBucketCounts): number {
   let n = 0;
-  for (const bucket of BUCKET_ORDER) {
+  for (const bucket of REVIEW_BUCKET_ORDER) {
     n += counts[bucket] ?? 0;
   }
   return n;
@@ -102,7 +103,7 @@ export function shouldEmitDiagnosticsByDomain(rollUp: DiagnosticsByDomainRollUp)
 }
 
 function topBuckets(counts: DomainBucketCounts, maxBuckets: number): string[] {
-  const entries = BUCKET_ORDER.map((bucket) => ({
+  const entries = REVIEW_BUCKET_ORDER.map((bucket) => ({
     bucket,
     count: counts[bucket] ?? 0,
   })).filter((e) => e.count > 0);

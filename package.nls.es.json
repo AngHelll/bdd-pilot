@@ -23,6 +23,7 @@
   "bddPilot.command.runFiltered.title": "BDD Pilot: Ejecutar tests filtrados",
   "bddPilot.command.rerunFailed.title": "BDD Pilot: Reejecutar tests fallidos",
   "bddPilot.command.jumpToFirstFailure.title": "BDD Pilot: Ir al primer fallo",
+  "bddPilot.command.filterFailuresByClass.title": "BDD Pilot: Filtrar fallos por clase",
   "bddPilot.command.collapseToFailures.title": "BDD Pilot: Colapsar hacia fallos",
   "bddPilot.command.runFromCodeLens.title": "BDD Pilot: Ejecutar desde CodeLens",
   "bddPilot.command.saveProfile.title": "BDD Pilot: Guardar perfil de ejecución",

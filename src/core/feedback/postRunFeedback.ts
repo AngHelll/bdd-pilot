@@ -1,6 +1,10 @@
 import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions, Diagnostic } from "../diagnostics/analyzer";
 import { pickPrimaryDiagnostic } from "../diagnostics/primaryDiagnostic";
 import { classifyRunCompletion } from "../diagnostics/runOutcomeClass";
+import {
+  FailureTriage,
+  formatFailureTriageToastHint,
+} from "../diagnostics/failureTriage";
 import { PilotLocale, t } from "../i18n";
 import { UnifiedSummary } from "../results/resultLoader";
 
@@ -32,6 +36,8 @@ export interface PostRunFeedbackInput {
   analyzeOptions?: AnalyzeDotnetOutputOptions;
   /** Used when analyzer finds no rules (e.g. unexpected exception text). */
   fallbackMessage?: string;
+  /** Review-first triage from TRX (optional). */
+  failureTriage?: FailureTriage;
 }
 
 export interface PostRunFeedbackViewModel {
@@ -173,8 +179,13 @@ export function buildPostRunFeedback(input: PostRunFeedbackInput): PostRunFeedba
 
   if (input.summary && input.summary.total > 0) {
     const countLine = buildCountLine(input.summary, input.locale);
+    const triageHint =
+      hasFailed && input.failureTriage
+        ? formatFailureTriageToastHint(input.failureTriage, input.locale)
+        : undefined;
+    const withTriage = triageHint ? `${countLine} — ${triageHint}` : countLine;
     const diagLine = toastDiagnostic ? formatToastDiagnosticLine(toastDiagnostic) : undefined;
-    const message = diagLine ? `${countLine}\n${diagLine}` : countLine;
+    const message = diagLine ? `${withTriage}\n${diagLine}` : withTriage;
     return {
       message,
       severity: hasFailed ? "warning" : "info",

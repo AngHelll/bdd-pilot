@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.51.0] — 2026-09-18
+
+### Added
+- **Failure triage (review-first)** — after failed runs, Results Output and the post-run toast show which failure class to review first (`pending` → `testData` → …), optional domain hotspot, Jump to failure lands on that class, and **Filter Failures by Class** collapses the tree to one bucket
+
 ## [1.50.0] — 2026-09-18
 
 ### Fixed

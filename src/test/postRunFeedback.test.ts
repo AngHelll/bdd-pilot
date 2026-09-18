@@ -69,6 +69,26 @@ describe("postRunFeedback", () => {
     assert.strictEqual(vm!.severity, "warning");
   });
 
+  it("includes review-first triage hint when failureTriage provided", () => {
+    const vm = buildPostRunFeedback({
+      ...baseInput,
+      summary: summary({ failed: 3, passed: 1, total: 4 }),
+      outputBuffer: SIMPLE_FAILURE_OUTPUT,
+      exitCode: 1,
+      failureTriage: {
+        topBucket: "pending",
+        counts: { pending: 2, assert: 1 },
+        orderedBuckets: [
+          { bucket: "pending", count: 2 },
+          { bucket: "assert", count: 1 },
+        ],
+      },
+    });
+    assert.ok(vm);
+    assert.match(vm!.message, /3 failed/);
+    assert.match(vm!.message, /Review first: pending \(2\)/);
+  });
+
   it("pending steps merges diagnostic into one toast", () => {
     const vm = buildPostRunFeedback({
       ...baseInput,

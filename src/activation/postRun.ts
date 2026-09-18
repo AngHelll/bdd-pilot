@@ -9,6 +9,14 @@ import {
   buildDiagnosticsByDomainRollUp,
   formatDiagnosticsByDomainLines,
 } from "../core/diagnostics/diagnosticsByDomain";
+import {
+  buildFailureTriage,
+  formatFailureTriageLines,
+} from "../core/diagnostics/failureTriage";
+import {
+  clearLastFailureTriage,
+  setLastFailureTriage,
+} from "../core/diagnostics/lastFailureTriage";
 import { DomainGroup } from "../core/gherkin/model";
 import {
   buildMatchingDebugPack,
@@ -25,7 +33,7 @@ import {
 import { formatOutputSectionHeader } from "../core/feedback/dotnetOutputFilter";
 import { MessageKey } from "../core/i18n";
 import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
-import { TrxSummary } from "../core/results/trxParser";
+import { TestResult, TrxSummary } from "../core/results/trxParser";
 import { buildRerunFailedFilter, ProjectContext } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
 import { RunService } from "../providers/runService";
@@ -51,6 +59,26 @@ export interface PostRunDeps {
 }
 
 export function createPostRunHandlers(deps: PostRunDeps) {
+  function appendFailureTriageToOutput(summary: {
+    failed: number;
+    results: TestResult[];
+  }): ReturnType<typeof buildFailureTriage> {
+    if (summary.failed <= 0 || summary.results.length === 0) {
+      clearLastFailureTriage();
+      return undefined;
+    }
+    const triage = buildFailureTriage(summary.results, deps.getDomains());
+    setLastFailureTriage(triage);
+    if (!triage) {
+      return undefined;
+    }
+    const locale = deps.localeService.getLocale();
+    for (const line of formatFailureTriageLines(triage, locale)) {
+      deps.output.appendLine(line);
+    }
+    return triage;
+  }
+
   function appendRunDiagnosticsToOutput(text: string, trxSummary?: TrxSummary): void {
     const analyzeOptions = {
       ...readAnalyzeOptions(deps.localeService.getLocale()),
@@ -145,6 +173,15 @@ export function createPostRunHandlers(deps: PostRunDeps) {
   }
 
   function notifyPostRunFeedback(request: PostRunFeedbackRequest): void {
+    let failureTriage: ReturnType<typeof buildFailureTriage>;
+    if (!request.debug && request.summary && request.summary.failed > 0) {
+      failureTriage = appendFailureTriageToOutput({
+        failed: request.summary.failed,
+        results: request.summary.results,
+      });
+    } else if (!request.debug) {
+      clearLastFailureTriage();
+    }
     if (!request.canceled && !request.debug) {
       if (request.exitCode !== 0 || (request.summary?.failed ?? 0) > 0) {
         appendRunDiagnosticsToOutput(
@@ -180,11 +217,17 @@ export function createPostRunHandlers(deps: PostRunDeps) {
       toastMode: readPostRunToast(),
       canRerunFailed: !!buildRerunFailedFilter(deps.runService, readSettings().filterMapping),
       canCopyForAi: readAiSettings().enabled && !!deps.runService.getLastFailedRunSnapshot(),
+      failureTriage,
     });
     presentPostRunFeedback(vm);
   }
 
-  return { notifyPostRunFeedback, appendRunDiagnosticsToOutput, presentPostRunFeedback };
+  return {
+    notifyPostRunFeedback,
+    appendRunDiagnosticsToOutput,
+    presentPostRunFeedback,
+    appendFailureTriageToOutput,
+  };
 }
 
 export function createCopyFailureContextForAi(deps: {

@@ -15,8 +15,14 @@ import { scenarioHistoryKey } from "../core/results/runHistory";
 import { formatDuration } from "../core/results/durationFormat";
 import {
   containerKeysToExpandForFailures,
+  countFailedLeavesByBucket,
   findFirstFailedLeaf,
+  findFirstFailedLeafForBucket,
+  classifyFailedLeafFromStore,
 } from "../core/results/failureTreeNav";
+import { getLastFailureTriage } from "../core/diagnostics/lastFailureTriage";
+import { FailureBucket } from "../core/diagnostics/classifyFailedTests";
+import { REVIEW_BUCKET_ORDER } from "../core/diagnostics/failureTriage";
 import { buildRerunFailedFilter } from "../providers/testController";
 import {
   DEBUG_TERMINATE_GRACE_MS,
@@ -104,10 +110,13 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     vscode.commands.registerCommand("bddPilot.showOutput", () => deps.output.show(true)),
 
     vscode.commands.registerCommand("bddPilot.jumpToFirstFailure", async () => {
-      const leaf = findFirstFailedLeaf(
-        deps.treeProvider.getDomains(),
-        deps.treeProvider.getOutcomeStore(),
-      );
+      const domains = deps.treeProvider.getDomains();
+      const store = deps.treeProvider.getOutcomeStore();
+      const topBucket = getLastFailureTriage()?.topBucket;
+      const leaf =
+        (topBucket
+          ? findFirstFailedLeafForBucket(domains, store, topBucket)
+          : undefined) ?? findFirstFailedLeaf(domains, store);
       if (!leaf) {
         void vscode.window.showInformationMessage(deps.tr("toast.noFailedScenarios"));
         return;
@@ -124,6 +133,90 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
         await openFeatureAtLine(leaf.featurePath, leaf.scenarioLine);
       } catch {
         void vscode.window.showWarningMessage(deps.tr("toast.unmappedOpenFailed"));
+      }
+    }),
+
+    vscode.commands.registerCommand("bddPilot.filterFailuresByClass", async () => {
+      const triage = getLastFailureTriage();
+      const domains = deps.treeProvider.getDomains();
+      const store = deps.treeProvider.getOutcomeStore();
+
+      const counts =
+        triage && Object.keys(triage.counts).length > 0
+          ? triage.counts
+          : countFailedLeavesByBucket(domains, store);
+      const picks = REVIEW_BUCKET_ORDER.filter((bucket) => (counts[bucket] ?? 0) > 0).map(
+        (bucket) => ({
+          bucket,
+          count: counts[bucket]!,
+        }),
+      );
+      if (picks.length === 0) {
+        void vscode.window.showInformationMessage(deps.tr("toast.noFailureClasses"));
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(
+        picks.map((row) => ({
+          label: row.bucket,
+          description: String(row.count),
+          bucket: row.bucket as FailureBucket,
+        })),
+        { placeHolder: deps.tr("prompt.filterFailuresByClass") },
+      );
+      if (!selected) {
+        return;
+      }
+
+      const includeOutcomeKey = (key: string): boolean =>
+        store.get(key) === "failed" &&
+        classifyFailedLeafFromStore(store, key) === selected.bucket;
+
+      const containers = containerKeysToExpandForFailures(domains, store, { includeOutcomeKey });
+      if (containers.length === 0) {
+        void vscode.window.showInformationMessage(deps.tr("toast.noFailedScenariosFocus"));
+        return;
+      }
+      try {
+        await vscode.commands.executeCommand(
+          "workbench.actions.treeView.bddPilot.tests.collapseAll",
+        );
+      } catch {
+        // Command id can vary by host; continue with expands.
+      }
+      for (const container of containers) {
+        let node: TreeNode | undefined;
+        if (container.kind === "domain") {
+          node = deps.treeProvider.findDomainNode(container.id);
+        } else if (container.kind === "feature") {
+          node = deps.treeProvider.findFeatureNode(container.id);
+        } else {
+          const featurePath = container.id.split("::")[0];
+          node = deps.treeProvider.findScenarioOutlineNode(featurePath, container.id);
+        }
+        if (node) {
+          try {
+            await deps.treeView.reveal(node, { expand: true, select: false, focus: false });
+          } catch {
+            // ignore expand failures for filtered nodes
+          }
+        }
+      }
+      const first = findFirstFailedLeafForBucket(domains, store, selected.bucket);
+      if (first) {
+        const leafNode = deps.treeProvider.findLeafNodeByOutcomeKey(first.outcomeKey);
+        if (leafNode) {
+          try {
+            await deps.treeView.reveal(leafNode, { expand: true, select: true, focus: true });
+          } catch {
+            // ignore
+          }
+        }
+        try {
+          await openFeatureAtLine(first.featurePath, first.scenarioLine);
+        } catch {
+          // ignore open failures
+        }
       }
     }),
 

@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Gherkin cockpit for Reqnroll & SpecFlow in VS Code/Cursor: domain/@tag tree, STAGE hub, TRX↔scenario mapping — alongside Test Explorer, not a replacement. Use with BDD Guardian.",
-  "version": "1.50.0",
+  "version": "1.51.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -165,6 +165,11 @@
         "icon": "$(error)"
       },
       {
+        "command": "bddPilot.filterFailuresByClass",
+        "title": "%bddPilot.command.filterFailuresByClass.title%",
+        "icon": "$(filter)"
+      },
+      {
         "command": "bddPilot.collapseToFailures",
         "title": "%bddPilot.command.collapseToFailures.title%",
         "icon": "$(collapse-all)"
@@ -297,20 +302,24 @@
           "group": "1_more@0"
         },
         {
-          "command": "bddPilot.collapseToFailures",
+          "command": "bddPilot.filterFailuresByClass",
           "group": "1_more@1"
         },
         {
-          "command": "bddPilot.rerunFailed",
+          "command": "bddPilot.collapseToFailures",
           "group": "1_more@2"
         },
         {
-          "command": "bddPilot.showScenarioHistory",
+          "command": "bddPilot.rerunFailed",
           "group": "1_more@3"
         },
         {
-          "submenu": "bddPilot.profilesMenu",
+          "command": "bddPilot.showScenarioHistory",
           "group": "1_more@4"
+        },
+        {
+          "submenu": "bddPilot.profilesMenu",
+          "group": "1_more@5"
         }
       ],
       "bddPilot.profilesMenu": [

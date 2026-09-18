@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.50.0** · **Marketplace: v1.50.0** · **Next: watch** · **650 unit tests**
+> **Current release: v1.51.0** · **Marketplace: v1.50.0** *(publish in progress)* · **Next: watch** · **657 unit tests**
 
 ---
 
@@ -9,7 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.50.0** |
+| ✅ Shipped (GitHub) | v0.1.0 → **v1.51.0** |
+| ✅ Marketplace | **v1.50.0** · v1.51.0 publishing |
 | 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.51.0** | Failure triage — Review first headline, Jump by class, Filter Failures by Class · spec `failure-triage-v1.51.md` |
 | **1.49.0** | Discover-time matching — listed vs Gherkin before `dotnet test` · spec `discover-time-matching-v1.49.md` |
 | **1.48.0** | CF2 leaf story strip — fail snippet on tree/TE description; compact omits tags · spec `cockpit-fidelity-cf2-v1.48.md` |
 | **1.47.0** | Skipped honesty — TRX skipped from `UnitTestResult` when ResultSummary is 0 · spec `skipped-honesty-v1.47.md` |
@@ -227,6 +229,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.51.0 — Failure triage (review-first) ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Output / toast** | `Review first:` + optional Hotspot after failed runs; Jump lands on top failure class |
+| **Tree** | Command **Filter Failures by Class** (QuickPick → collapse to bucket) |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Publishing v1.51.0 |
+| **Tests** | 657 unit tests |
 
 ### v1.50.0 — Hard cancel + abort watchdog ✅ shipped
 

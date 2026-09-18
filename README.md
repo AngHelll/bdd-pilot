@@ -146,6 +146,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   (clipboard only; no remote telemetry), including **layout/grouping** (Pilot domain, feature path,
   subpath, `groupBy`). When gaps exist, Output also prints a one-line **Matching health** hint.
   After multi-domain failed runs, Output can add a **Diagnostics by domain** roll-up (failure buckets per Pilot domain).
+  After any failed run with TRX, Results also shows **Review first** (which failure class to open first); Jump and **Filter Failures by Class** follow that priority.
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
@@ -366,7 +367,7 @@ Optional: pin `Release` via `bddPilot.run.configuration` / `bddPilot.run.byStage
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md). Current release is **v1.38.1**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
+See [ROADMAP.md](./ROADMAP.md). Current release is **v1.51.0**. Requires [BDD Guardian](https://github.com/AngHelll/bdd-guardian) v0.8.3+ for optional pre-run binding checks.
 Works alongside
 [BDD Guardian](https://github.com/AngHelll/bdd-guardian).
 
