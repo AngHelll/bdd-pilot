@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.52.1** · **Marketplace: v1.52.0** · **Next: publish v1.52.1** · **664 unit tests**
+> **Current release: v1.52.1** · **Marketplace: v1.52.1** · **Next: watch** · **664 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.52.0** |
-| 📦 GitHub (pending Marketplace) | **v1.52.1** — busy-lock recovery (MSBuild contention) |
-| 🎯 Next | publish **v1.52.1** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.52.1** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -232,14 +231,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.52.1 — Busy-lock recovery (MSBuild contention) ✅ shipped (Marketplace pending)
+### v1.52.1 — Busy-lock recovery (MSBuild contention) ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Enrich** | Theory `list-tests` always budgeted (15s); background enrich abortable on Cancel / deactivate |
 | **Cancel** | Second Cancel after abort force-clears busy lock (identity-safe); Output hint on MSB3021 / file-in-use |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.52.1 |
 | **Tests** | 664 unit tests |
 
 ### v1.52.0 — Activation & discovery perf ✅ shipped
