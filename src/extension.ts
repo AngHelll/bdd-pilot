@@ -21,7 +21,8 @@ import {
   resolveEffectiveRunFlags,
 } from "./core/runner/stageRunFlags";
 import { formatDiagnosticRunFlagsParts } from "./core/runner/runDiagnosticFlags";
-import { listDotnetTests } from "./core/runner/listTests";
+import { listDotnetTestsWithBudget } from "./core/runner/listTests";
+import { DISCOVER_LIST_TIMEOUT_MS } from "./core/runner/discoverTime";
 import {
   FEATURE_ENRICH_DEBOUNCE_MS,
   activateEnrichDelayMs,
@@ -53,6 +54,9 @@ import { createRunExecutor } from "./activation/runExecution";
 import { registerMcpServerProvider } from "./activation/mcpServerProvider";
 import { HISTORY_KEY } from "./activation/storageKeys";
 
+/** Wired in activate so deactivate can abort enrich / clear busy lock. */
+let deactivateCleanup: (() => void) | undefined;
+
 export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   const output = vscode.window.createOutputChannel("BDD Pilot");
   const localeService = new LocaleService();
@@ -65,6 +69,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   let currentStage: Stage = readStoredStage(context) ?? readSettings().defaultStage;
   let currentMode: ParallelismMode = readStoredMode(context) ?? readSettings().defaultMode;
   let activeRun: AbortController | undefined;
+  /** Owner token for Test Explorer acquire/release (identity-safe clear). */
+  let managedLockOwner: AbortController | undefined;
+  let backgroundEnrichAbort: AbortController | undefined;
   let activeLiveProgress: LiveProgressState | undefined;
   let progressSummaryRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -206,6 +213,32 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }
   };
 
+  const abortBackgroundEnrich = (): void => {
+    if (!backgroundEnrichAbort) {
+      return;
+    }
+    backgroundEnrichAbort.abort();
+    backgroundEnrichAbort = undefined;
+  };
+
+  const forceReleaseRunLock = (): void => {
+    const current = activeRun;
+    if (!current) {
+      abortBackgroundEnrich();
+      return;
+    }
+    current.abort();
+    if (activeRun === current) {
+      activeRun = undefined;
+      if (managedLockOwner === current) {
+        managedLockOwner = undefined;
+      }
+      clearActiveLiveProgress();
+      refreshUi();
+    }
+    abortBackgroundEnrich();
+  };
+
   const refreshTreeSurfaces = () => {
     treeProvider.refresh();
     managed.refresh();
@@ -220,20 +253,37 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       return;
     }
     const settings = readSettings();
-    const enriched = await treeProvider.enrichTheoryRows(
-      () =>
-        listDotnetTests(
-          {
-            dotnetPath: settings.dotnetPath,
-            projectDir: ctx.projectDir,
-            testTarget: ctx.testTarget,
-          },
-          signal,
-        ),
-      signal,
-    );
-    if (enriched) {
-      managed.refresh();
+    abortBackgroundEnrich();
+
+    let localController: AbortController | undefined;
+    let effectiveSignal = signal;
+    if (!effectiveSignal) {
+      localController = new AbortController();
+      backgroundEnrichAbort = localController;
+      effectiveSignal = localController.signal;
+    }
+
+    try {
+      const enriched = await treeProvider.enrichTheoryRows(
+        () =>
+          listDotnetTestsWithBudget(
+            {
+              dotnetPath: settings.dotnetPath,
+              projectDir: ctx.projectDir,
+              testTarget: ctx.testTarget,
+            },
+            DISCOVER_LIST_TIMEOUT_MS,
+            effectiveSignal,
+          ),
+        effectiveSignal,
+      );
+      if (enriched) {
+        managed.refresh();
+      }
+    } finally {
+      if (localController && backgroundEnrichAbort === localController) {
+        backgroundEnrichAbort = undefined;
+      }
     }
   };
 
@@ -406,15 +456,20 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       if (activeRun || runService.isDebugActive()) {
         return false;
       }
-      activeRun = new AbortController();
+      const controller = new AbortController();
+      managedLockOwner = controller;
+      activeRun = controller;
       clearActiveLiveProgress();
       refreshUi();
       return true;
     },
     releaseRunLock: () => {
-      activeRun = undefined;
-      clearActiveLiveProgress();
-      refreshUi();
+      if (activeRun === managedLockOwner) {
+        activeRun = undefined;
+        clearActiveLiveProgress();
+        refreshUi();
+      }
+      managedLockOwner = undefined;
     },
     abortActiveRun: () => activeRun?.abort(),
   });
@@ -535,6 +590,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       },
       getActiveRun: () => activeRun,
       abortActiveRun: () => activeRun?.abort(),
+      forceReleaseRunLock,
+      abortBackgroundEnrich,
       refreshAll,
       refreshUi,
       refreshTreeSurfaces,
@@ -566,6 +623,17 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   void projectHub.maybePromptProjectSelection();
   registerMcpServerProvider(context);
 
+  deactivateCleanup = () => {
+    cancelScheduledEnrich();
+    abortBackgroundEnrich();
+    if (activeRun) {
+      activeRun.abort();
+      activeRun = undefined;
+      managedLockOwner = undefined;
+      clearActiveLiveProgress();
+    }
+  };
+
   return createPilotRunApi({
     runService,
     outcomeStore,
@@ -576,5 +644,6 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 }
 
 export function deactivate(): void {
-  // no-op
+  deactivateCleanup?.();
+  deactivateCleanup = undefined;
 }

@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.52.1] — 2026-09-24
+
+### Fixed
+- **Busy-lock recovery after external clean/build** — Theory enrich always uses the 15s `list-tests` budget; Cancel aborts background enrich; a second Cancel after abort force-clears the run lock; Output hints on MSB3021 / file-in-use. Spec `msbuild-contention-containment-v1.52.1.md`
+
 ## [1.52.0] — 2026-09-18
 
 ### Changed

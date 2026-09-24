@@ -87,6 +87,13 @@ describe("resolveCancelIntent", () => {
     assert.strictEqual(resolveCancelIntent({ hasActiveRun: true, debugActive: true }), "abort");
   });
 
+  it("force-unlocks when the run was already aborted", () => {
+    assert.strictEqual(
+      resolveCancelIntent({ hasActiveRun: true, runAlreadyAborted: true, debugActive: false }),
+      "forceUnlock",
+    );
+  });
+
   it("stops debug when only a debug session is busy", () => {
     assert.strictEqual(resolveCancelIntent({ hasActiveRun: false, debugActive: true }), "stopDebug");
   });

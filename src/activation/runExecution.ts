@@ -16,6 +16,10 @@ import { resolveRunKind, RunKind } from "../core/results/runHistory";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
 import { formatRunCanceledLine } from "../core/runner/processTree";
 import {
+  detectBuildFileLock,
+  formatBuildFileLockHintLine,
+} from "../core/runner/buildFileLockHint";
+import {
   DISCOVER_LIST_TIMEOUT_MS,
   classifyDiscoverTime,
   formatDiscoverTimeLine,
@@ -97,9 +101,12 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         return;
       }
       runLockHeld = false;
-      deps.setActiveRun(undefined);
-      deps.clearActiveLiveProgress();
-      deps.refreshUi();
+      // Identity-safe: do not clear a newer run started after force-unlock.
+      if (deps.getActiveRun() === controller) {
+        deps.setActiveRun(undefined);
+        deps.clearActiveLiveProgress();
+        deps.refreshUi();
+      }
     };
     if (!opts?.debug) {
       runLockHeld = true;
@@ -301,6 +308,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           const runLocale = deps.localeService.getLocale();
           const filterState = createDotnetOutputFilterState();
           const verbosity = readDotnetVerbosity();
+          let fileLockHinted = false;
           const scopeLabel = opts?.rawFilter
             ? opts.rawFilter
             : formatRunTargetScopeLabels(runTargets.length > 0 ? runTargets : [{ kind: "all" }]).join(
@@ -355,6 +363,10 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           }
 
           const appendFiltered = (chunk: string): void => {
+            if (!fileLockHinted && detectBuildFileLock(chunk)) {
+              fileLockHinted = true;
+              deps.output.appendLine(formatBuildFileLockHintLine());
+            }
             const filtered = processDotnetOutputChunk(chunk, filterState, verbosity);
             if (filtered.length > 0) {
               deps.output.append(filtered);

@@ -70,6 +70,8 @@ export interface RegisterCommandsDeps {
   setMode: (mode: ParallelismMode) => void;
   getActiveRun: () => AbortController | undefined;
   abortActiveRun: () => void;
+  forceReleaseRunLock: () => void;
+  abortBackgroundEnrich: () => void;
   refreshAll: (immediateEnrich?: boolean) => void;
   refreshUi: () => void;
   refreshTreeSurfaces: () => void;
@@ -462,13 +464,22 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     }),
 
     vscode.commands.registerCommand("bddPilot.cancel", () => {
+      deps.abortBackgroundEnrich();
+      const active = deps.getActiveRun();
       const intent = resolveCancelIntent({
-        hasActiveRun: !!deps.getActiveRun(),
+        hasActiveRun: !!active,
+        runAlreadyAborted: active?.signal.aborted === true,
         debugActive: deps.runService.isDebugActive(),
       });
       if (intent === "abort") {
         deps.abortActiveRun();
         deps.output.appendLine("\n[bdd-pilot] Cancellation requested...");
+        return;
+      }
+      if (intent === "forceUnlock") {
+        deps.forceReleaseRunLock();
+        deps.output.appendLine("\n[bdd-pilot] Busy lock force-cleared.");
+        void vscode.window.showInformationMessage(deps.tr("toast.forceUnlock"));
         return;
       }
       if (intent === "stopDebug") {

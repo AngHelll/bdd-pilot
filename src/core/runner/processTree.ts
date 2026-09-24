@@ -14,7 +14,7 @@ export type ProcessTreeKillPlan =
   | { kind: "posix-group"; targetPid: number; signal: NodeJS.Signals }
   | { kind: "win-taskkill"; args: string[] };
 
-export type CancelIntent = "abort" | "stopDebug" | "none";
+export type CancelIntent = "abort" | "forceUnlock" | "stopDebug" | "none";
 
 export function isKillablePid(pid: number | undefined): pid is number {
   return typeof pid === "number" && Number.isInteger(pid) && pid > 0;
@@ -72,10 +72,12 @@ export function formatRunCanceledLine(input: { forced: boolean }): string {
 
 export function resolveCancelIntent(input: {
   hasActiveRun: boolean;
+  /** True when the active run's AbortSignal was already aborted (second Cancel). */
+  runAlreadyAborted?: boolean;
   debugActive: boolean;
 }): CancelIntent {
   if (input.hasActiveRun) {
-    return "abort";
+    return input.runAlreadyAborted ? "forceUnlock" : "abort";
   }
   if (input.debugActive) {
     return "stopDebug";

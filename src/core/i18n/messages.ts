@@ -157,6 +157,8 @@ const EN = {
   "toast.treeGroupByDomain": "BDD Pilot tree: group by domain.",
   "toast.runInProgress":
     "A test run is already in progress. Cancel from the tree toolbar or summary row.",
+  "toast.forceUnlock":
+    "Busy lock cleared. You can run again. If a terminal build is still running, wait for it to finish.",
   "toast.debugWhileRunning":
     "Stop the current run before starting a debug session. Cancel from the tree toolbar or summary row.",
   "toast.debugAlreadyActive": "A BDD Pilot debug session is already active.",
@@ -582,6 +584,8 @@ const ES: Record<keyof typeof EN, string> = {
   "toast.treeGroupByDomain": "Árbol BDD Pilot: agrupado por dominio.",
   "toast.runInProgress":
     "Ya hay una ejecución de tests en curso. Cancela desde la barra del árbol o la fila de resumen.",
+  "toast.forceUnlock":
+    "Bloqueo liberado. Ya puedes ejecutar. Si un build en terminal sigue activo, espera a que termine.",
   "toast.debugWhileRunning":
     "Detén la ejecución actual antes de depurar. Cancela desde la barra del árbol o la fila de resumen.",
   "toast.debugAlreadyActive": "Ya hay una sesión de depuración BDD Pilot activa.",
