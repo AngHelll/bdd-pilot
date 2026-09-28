@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.56.0** · **Marketplace: v1.56.0** · **Next: watch** · **681 unit tests**
+> **Current release: v1.57.0** · **Marketplace: v1.56.0** · **Next: publish v1.57.0** · **689 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.56.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.57.0** — live progress detail |
+| 🎯 Next | publish **v1.57.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.57.0** | Live progress — short name of the latest failure; `waiting —` after 20s without a result · spec `live-progress-detail-v1.57.md` |
 | **1.56.0** | Feature save — incremental tree update; `list-tests` only when that file still needs theory rows · spec `editor-save-responsiveness-v1.56.md` |
 | **1.55.0** | Tree identity — permanent `Pilot · STAGE · groupBy` on the summary, Gherkin prefixes on Scenario/Outline/Example · spec `tree-identity-v1.55.md` |
 | **1.54.0** | Terminal run output — `dotnet test` stream in the BDD Pilot terminal; Pilot narrative no longer printed · spec `terminal-run-output-v1.54.md` |
@@ -234,6 +236,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.57.0 — Live progress detail ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Progress** | Notification and summary label append the short name of the latest failure. After 20s without a new result, once a test has finished, the same message prefixes `waiting —`. Build and run close do not |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 689 unit tests |
 
 ### v1.56.0 — Feature save responsiveness ✅ shipped
 
@@ -1125,4 +1136,4 @@ src/
 
 ---
 
-*Last updated: v1.56.0 feature save shipped Marketplace.*
+*Last updated: v1.57.0 live progress detail on GitHub; Marketplace pending.*

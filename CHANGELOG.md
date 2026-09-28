@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.57.0] — 2026-09-28
+
+### Changed
+- **Live progress** — the run notification and summary label append the short name of the latest failure, and prefix `waiting —` after 20s without a new result once at least one test has finished. Spec `live-progress-detail-v1.57.md`
+
 ## [1.56.0] — 2026-09-28
 
 ### Changed

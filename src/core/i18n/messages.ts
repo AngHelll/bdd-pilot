@@ -233,6 +233,7 @@ const EN = {
   "progress.debugging": "Debugging tests ({stage})",
   "progress.starting": "Starting…",
   "progress.failurePrefix": "! {count} failed — ",
+  "progress.quietPrefix": "waiting — ",
   "progress.doneCount": "{count} done",
 
   "envGuard.prodConfirm":
@@ -672,6 +673,7 @@ const ES: Record<keyof typeof EN, string> = {
   "progress.debugging": "Depurando tests ({stage})",
   "progress.starting": "Iniciando…",
   "progress.failurePrefix": "! {count} fallidos — ",
+  "progress.quietPrefix": "en espera — ",
   "progress.doneCount": "{count} listos",
 
   "envGuard.prodConfirm":

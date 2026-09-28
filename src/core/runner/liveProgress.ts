@@ -2,6 +2,11 @@ import { PilotLocale, t } from "../i18n";
 
 export type LiveOutcome = "passed" | "failed" | "skipped";
 
+/** Silence after the last result line before the progress message says it is waiting. */
+export const PROGRESS_QUIET_AFTER_MS = 20_000;
+
+const SHORT_TEST_NAME_MAX = 48;
+
 export interface LiveProgressState {
   passed: number;
   failed: number;
@@ -11,7 +16,14 @@ export interface LiveProgressState {
   totalExpected?: number;
   /** Most recently finished test (fully qualified or method name). */
   lastTestName?: string;
+  /** Most recent failure. Later passes do not clear it. Set by the parser, not the clock. */
+  lastFailedTestName?: string;
   lastOutcome?: LiveOutcome;
+  /**
+   * Milliseconds since the last result line. The caller sets this; the parser does not.
+   * At or above {@link PROGRESS_QUIET_AFTER_MS} the message can say it is waiting.
+   */
+  quietMs?: number;
 }
 
 export interface TestCompletionEvent {
@@ -29,6 +41,7 @@ export class LiveProgressParser {
   private failed = 0;
   private skipped = 0;
   private lastTestName: string | undefined;
+  private lastFailedTestName: string | undefined;
   private lastOutcome: LiveOutcome | undefined;
 
   constructor(private totalExpected?: number) {}
@@ -66,6 +79,7 @@ export class LiveProgressParser {
       completed: this.passed + this.failed + this.skipped,
       totalExpected: this.totalExpected,
       lastTestName: this.lastTestName,
+      lastFailedTestName: this.lastFailedTestName,
       lastOutcome: this.lastOutcome,
     };
   }
@@ -75,6 +89,7 @@ export class LiveProgressParser {
       this.passed++;
     } else if (event.outcome === "failed") {
       this.failed++;
+      this.lastFailedTestName = event.testName;
     } else {
       this.skipped++;
     }
@@ -140,10 +155,56 @@ export function formatProgressMessage(state: LiveProgressState, locale: PilotLoc
     return t(locale, "progress.starting");
   }
   const body = parts.join(sep);
+  const quiet = isQuietProgress(state);
+  let message =
+    failed > 0 ? `${t(locale, "progress.failurePrefix", { count: String(failed) })}${body}` : body;
+  let nameSource: string | undefined;
   if (failed > 0) {
-    return `${t(locale, "progress.failurePrefix", { count: String(failed) })}${body}`;
+    nameSource = state.lastFailedTestName;
+  } else if (quiet) {
+    nameSource = state.lastTestName;
   }
-  return body;
+  const shortName = shortTestLabel(nameSource);
+  if (shortName) {
+    message = `${message}${sep}${shortName}`;
+  }
+  if (quiet) {
+    return `${t(locale, "progress.quietPrefix")}${message}`;
+  }
+  return message;
+}
+
+function isQuietProgress(state: LiveProgressState): boolean {
+  if (state.quietMs === undefined || state.quietMs < PROGRESS_QUIET_AFTER_MS) {
+    return false;
+  }
+  if (state.completed <= 0) {
+    return false;
+  }
+  if (state.totalExpected !== undefined && state.completed >= state.totalExpected) {
+    return false;
+  }
+  return true;
+}
+
+/** Last dotted segment, truncated. Empty when there is nothing safe to show. */
+function shortTestLabel(name: string | undefined): string {
+  if (!name) {
+    return "";
+  }
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const dot = trimmed.lastIndexOf(".");
+  const segment = dot >= 0 ? trimmed.slice(dot + 1).trim() : trimmed;
+  if (!segment) {
+    return "";
+  }
+  if (segment.length > SHORT_TEST_NAME_MAX) {
+    return `${segment.slice(0, SHORT_TEST_NAME_MAX - 1)}…`;
+  }
+  return segment;
 }
 
 export function formatProgressTitle(

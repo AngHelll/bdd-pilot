@@ -19,6 +19,7 @@ import { listDotnetTestsWithBudget } from "../core/runner/listTests";
 import {
   formatProgressMessage,
   LiveProgressState,
+  PROGRESS_QUIET_AFTER_MS,
   TestCompletionEvent,
 } from "../core/runner/liveProgress";
 import { estimateTestCount } from "../core/runner/runEstimate";
@@ -226,6 +227,40 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         let lastMessage = "";
         let lastProgressState: LiveProgressState | undefined;
         let holdListedZeroNotice = false;
+        let quietTimer: ReturnType<typeof setTimeout> | undefined;
+
+        const clearQuietTimer = (): void => {
+          if (quietTimer) {
+            clearTimeout(quietTimer);
+            quietTimer = undefined;
+          }
+        };
+
+        const armQuietTimer = (): void => {
+          if (opts?.debug) {
+            return;
+          }
+          clearQuietTimer();
+          quietTimer = setTimeout(() => {
+            quietTimer = undefined;
+            if (holdListedZeroNotice || !lastProgressState) {
+              return;
+            }
+            const state: LiveProgressState = {
+              ...lastProgressState,
+              quietMs: PROGRESS_QUIET_AFTER_MS,
+            };
+            const message = formatProgressMessage(state, deps.localeService.getLocale());
+            if (message === lastMessage) {
+              return;
+            }
+            lastProgressState = state;
+            lastMessage = message;
+            deps.setActiveLiveProgress(state);
+            deps.scheduleProgressSummaryRefresh();
+            progress.report({ message });
+          }, PROGRESS_QUIET_AFTER_MS);
+        };
 
         const onProgress = (state: LiveProgressState, event?: TestCompletionEvent) => {
           lastProgressState = state;
@@ -249,6 +284,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           }
           if (event) {
             deps.treeProvider.applyLiveResult(event.testName, event.outcome);
+            armQuietTimer();
           }
         };
 
@@ -396,6 +432,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             fallbackMessage: `BDD Pilot: ${String(err)}`,
           });
         } finally {
+          clearQuietTimer();
           releaseRunLock();
         }
       },
