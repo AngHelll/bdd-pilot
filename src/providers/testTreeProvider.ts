@@ -54,6 +54,9 @@ import {
   buildFeatureTooltipMarkdown,
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
+  formatExampleIdentityLabel,
+  formatOutlineIdentityLabel,
+  formatScenarioIdentityLabel,
   formatTagDescription,
 } from "../core/gherkin/treeLabels";
 import {
@@ -696,7 +699,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const item = new vscode.TreeItem(
-      node.scenario.name,
+      node.scenario.isOutline || hasExamples
+        ? formatOutlineIdentityLabel(node.scenario.name, locale)
+        : formatScenarioIdentityLabel(node.scenario.name, locale),
       hasExamples ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
     );
     const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
@@ -787,7 +792,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
-    const item = new vscode.TreeItem(node.example.label, vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(
+      formatExampleIdentityLabel(node.example.label, locale),
+      vscode.TreeItemCollapsibleState.None,
+    );
     const showPendingHint = !this.outcomeStore.isEmpty() && !outcome && !skipReason;
     item.description =
       formatLeafStoryStrip({

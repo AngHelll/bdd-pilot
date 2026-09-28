@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.55.0] — 2026-09-28
+
+### Changed
+- **Tree identity** — the Pilot summary description always shows `Pilot · STAGE {stage} · by domain` or `by @tag` (Spanish: `por dominio` / `por @tag`), including when a run chip is present. Counts stay on the label. Scenario, Outline, and Example rows use localized Gherkin prefixes. Test Explorer labels are unchanged. Spec `tree-identity-v1.55.md`
+
 ## [1.54.0] — 2026-09-28
 
 ### Changed

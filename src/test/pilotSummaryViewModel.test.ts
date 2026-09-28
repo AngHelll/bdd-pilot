@@ -409,7 +409,10 @@ describe("pilotSummaryViewModel", () => {
       unmappedCount: 2,
       stage: "test",
     });
-    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "2 unmapped — Show Unmapped");
+    assert.strictEqual(
+      formatPilotSummaryDescription(vm, "en"),
+      "Pilot · STAGE test · by domain · 2 unmapped — Show Unmapped",
+    );
   });
 
   it("formatPilotSummaryDescription shows 0/N before first test completes", () => {
@@ -421,7 +424,7 @@ describe("pilotSummaryViewModel", () => {
       running: true,
       liveProgress: new LiveProgressParser(12).getState(),
     });
-    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "0/12");
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "Pilot · by domain · 0/12");
   });
 
   it("formatPilotSummaryDescription hides live progress when no expected and completed zero", () => {
@@ -433,7 +436,7 @@ describe("pilotSummaryViewModel", () => {
       running: true,
       liveProgress: new LiveProgressParser().getState(),
     });
-    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), undefined);
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "Pilot · by domain");
   });
 
   it("formatPilotSummaryDescription shows diagnostic chip when idle", () => {
@@ -465,7 +468,10 @@ describe("pilotSummaryViewModel", () => {
       storeFailureSnippet: "Expected true but was false",
     });
     const description = formatPilotSummaryDescription(vm, "en");
-    assert.strictEqual(description, formatStoreFailureChip("Expected true but was false", "en"));
+    assert.strictEqual(
+      description,
+      `Pilot · by domain · ${formatStoreFailureChip("Expected true but was false", "en")}`,
+    );
   });
 
   it("formatPilotSummaryDescription shows unmapped chip when idle without diagnostic", () => {
@@ -477,7 +483,10 @@ describe("pilotSummaryViewModel", () => {
       running: false,
       unmappedCount: 3,
     });
-    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "3 unmapped — Show Unmapped");
+    assert.strictEqual(
+      formatPilotSummaryDescription(vm, "en"),
+      "Pilot · by domain · 3 unmapped — Show Unmapped",
+    );
   });
 
   it("formatPilotSummaryDescription prefers unmapped over diagnostic chip", () => {
@@ -497,10 +506,10 @@ describe("pilotSummaryViewModel", () => {
       unmappedCount: 2,
     });
     const description = formatPilotSummaryDescription(vm, "en");
-    assert.strictEqual(description, "2 unmapped — Show Unmapped");
+    assert.strictEqual(description, "Pilot · by domain · 2 unmapped — Show Unmapped");
   });
 
-  it("formatPilotSummaryDescription falls back to STAGE chip", () => {
+  it("formatPilotSummaryDescription shows identity instead of a lone STAGE chip", () => {
     const vm = buildPilotSummaryViewModel({
       storeRollup: undefined,
       storeNonEmpty: false,
@@ -509,7 +518,43 @@ describe("pilotSummaryViewModel", () => {
       running: false,
       stage: "stg",
     });
-    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "STAGE: stg");
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "Pilot · STAGE stg · by domain");
+  });
+
+  it("formatPilotSummaryDescription keeps identity when counts exist and a chip wins", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 3, failed: 1, skipped: 0, withResults: 4 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      stage: "test",
+      groupBy: "tag",
+      unmappedCount: 2,
+    });
+    assert.match(formatPilotSummaryLabel(vm, "en"), /passed/);
+    assert.strictEqual(
+      formatPilotSummaryDescription(vm, "en"),
+      "Pilot · STAGE test · by @tag · 2 unmapped — Show Unmapped",
+    );
+    assert.strictEqual(
+      formatPilotSummaryDescription(vm, "es"),
+      "Pilot · STAGE test · por @tag · 2 sin mapear — Ver sin mapear",
+    );
+  });
+
+  it("formatPilotSummaryDescription skips identity on the empty guide", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      emptyKind: "no_features",
+      stage: "test",
+      groupBy: "domain",
+    });
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "STAGE: test");
   });
 
   it("cockpit copy keys mention Gherkin (en)", () => {

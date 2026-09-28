@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.54.0** · **Marketplace: v1.54.0** · **Next: watch** · **667 unit tests**
+> **Current release: v1.55.0** · **Marketplace: v1.54.0** · **Next: publish v1.55.0** · **670 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.54.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.55.0** — tree identity |
+| 🎯 Next | publish **v1.55.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.55.0** | Tree identity — permanent `Pilot · STAGE · groupBy` on the summary, Gherkin prefixes on Scenario/Outline/Example · spec `tree-identity-v1.55.md` |
 | **1.54.0** | Terminal run output — `dotnet test` stream in the BDD Pilot terminal; Pilot narrative no longer printed · spec `terminal-run-output-v1.54.md` |
 | **1.53.0** | Quiet run communication — short failure toast, `listed=0` on progress only, Output reveal only via `autoShowOutput` · spec `quiet-run-communication-v1.53.md` |
 | **1.52.1** | Busy-lock recovery — enrich budget + second Cancel force-unlock · spec `msbuild-contention-containment-v1.52.1.md` |
@@ -232,6 +234,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.55.0 — Tree identity ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Summary** | Description always shows `Pilot · STAGE {stage} · by domain` or `by @tag`. Counts stay on the label. The STAGE chip is not repeated |
+| **Labels** | Pilot leaves use `Scenario:` / `Outline:` / `Example:` (ES: `Escenario:` / `Esquema:` / `Ejemplo:`). Test Explorer labels unchanged |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 670 unit tests |
 
 ### v1.54.0 — Terminal run output ✅ shipped
 

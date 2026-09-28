@@ -30,6 +30,19 @@ export function formatTagDescription(
   return rest > 0 ? `${shown} +${rest}` : shown;
 }
 
+/** Gherkin vocabulary on Pilot tree labels. Test Explorer labels stay unchanged. */
+export function formatScenarioIdentityLabel(name: string, locale: PilotLocale): string {
+  return t(locale, "tree.labelScenario", { name });
+}
+
+export function formatOutlineIdentityLabel(name: string, locale: PilotLocale): string {
+  return t(locale, "tree.labelOutline", { name });
+}
+
+export function formatExampleIdentityLabel(cells: string, locale: PilotLocale): string {
+  return t(locale, "tree.labelExample", { name: cells });
+}
+
 /** Joins optional description parts with a middle dot. */
 export function joinDescriptionParts(...parts: Array<string | undefined>): string {
   return parts.filter((p) => p !== undefined && p.length > 0).join(" · ");

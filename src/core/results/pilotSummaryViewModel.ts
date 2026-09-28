@@ -1,3 +1,4 @@
+import { TreeGroupBy } from "../gherkin/treeDisplaySettings";
 import { FILTER_CHIP_MAX_LEN } from "../gherkin/treeSearch";
 import { OutcomeRollup } from "../gherkin/outcomeRollup";
 import { TreeEmptyKind } from "../gherkin/treeEmptyState";
@@ -35,8 +36,10 @@ export interface PilotSummaryViewModel {
   liveProgress?: LiveProgressState;
   /** Unmapped leaf count from last scoped mapping report (session). */
   unmappedCount?: number;
-  /** Current STAGE for cockpit chrome (idle stage chip). */
+  /** Current STAGE for cockpit chrome (idle stage chip and identity). */
   stage?: string;
+  /** Tree grouping. Identity defaults to domain when omitted. */
+  groupBy?: TreeGroupBy;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -53,6 +56,7 @@ export interface BuildPilotSummaryOptions {
   liveProgress?: LiveProgressState;
   unmappedCount?: number;
   stage?: string;
+  groupBy?: TreeGroupBy;
 }
 
 export { formatTrxDivergenceTooltip, LastKnownSnapshot };
@@ -75,6 +79,7 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     liveProgress: options.running ? options.liveProgress : undefined,
     unmappedCount: options.running ? undefined : options.unmappedCount,
     stage: options.stage,
+    groupBy: options.groupBy,
   };
 }
 
@@ -262,12 +267,43 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
   return label;
 }
 
-/** Tree row description: one cockpit chip (priority in resolvePilotSummaryChip). */
+function isEmptyGuide(kind: TreeEmptyKind | undefined): boolean {
+  return kind === "no_project" || kind === "no_features" || kind === "search_no_match";
+}
+
+/**
+ * Permanent Pilot identity. Counts stay on the label; this does not wait for the STAGE chip.
+ * Empty-guide rows already speak as Pilot, so they skip the prefix.
+ */
+export function formatPilotIdentity(
+  model: PilotSummaryViewModel,
+  locale: PilotLocale,
+): string | undefined {
+  if (isEmptyGuide(model.emptyKind)) {
+    return undefined;
+  }
+  const by = t(
+    locale,
+    model.groupBy === "tag" ? "tree.identityByTag" : "tree.identityByDomain",
+  );
+  if (model.stage) {
+    return t(locale, "tree.identityWithStage", { stage: model.stage, by });
+  }
+  return t(locale, "tree.identity", { by });
+}
+
+/** Tree row description: identity, then the cockpit chip when it adds something else. */
 export function formatPilotSummaryDescription(
   model: PilotSummaryViewModel,
   locale: PilotLocale,
 ): string | undefined {
-  return resolvePilotSummaryChip(model, locale)?.text;
+  const identity = formatPilotIdentity(model, locale);
+  const chip = resolvePilotSummaryChip(model, locale);
+  const chipText = chip && chip.kind !== "stage" ? chip.text : undefined;
+  if (identity && chipText) {
+    return `${identity} · ${chipText}`;
+  }
+  return identity ?? chip?.text;
 }
 
 /** Summary row description when a tree search filter is active. */

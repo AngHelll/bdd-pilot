@@ -94,13 +94,11 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
 ### Discovery & run
 - **Native Test Explorer** (`TestController`): Run and Debug profiles with results; follows `bddPilot.tree.groupBy` (`domain` or `@tag`); descriptions mirror BDD tree settings (`tree.durationDisplay`, `tree.tagDisplay`) and locale for outcomes/roll-ups.
 - **BDD Pilot side view**: Domain → Feature → Scenario tree from `.feature` files,
-  with tag badges. Domain grouping uses a `Feature/` or `Features/` folder.
+  with tag badges. Leaves read `Scenario:`, `Outline:`, and `Example:` (localized). Domain grouping uses a `Feature/` or `Features/` folder.
 - **Pilot summary row** at the top of the tree — last run status (`3 passed`, `Running…`);
-  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); **live progress** in the
-  description during runs (`7/19 · 2 failed`); **post-run diagnostic chip**
-  (top actionable hint from the last run) with severity icon (`warning` / `info`); **filter chip** when
-  tree search is active; **unmapped chip** after a scoped run when scenarios did not match TRX
-  (`N unmapped — Show Unmapped`, command **BDD Pilot: Show Unmapped Scenarios**). Click opens
+  the description always starts with `Pilot · STAGE {stage} · by domain` (or `by @tag`);
+  dynamic icon while tests run (`loading~spin`) or debug (`debug-alt`); **live progress**,
+  **diagnostic**, **filter**, and **unmapped** chips follow that identity line. Click opens
   dashboard (or the unmapped QuickPick when that chip is shown).
   Activity bar **BDD Pilot** icon shows a badge during active runs. Toolbar **Dashboard** icon (`$(graph)`) opens the same panel.
 - **Tree toolbar** — Run · Search · Dashboard · Refresh · GroupBy · **More** (`…`) overflow for Re-run Failed and Execution Profiles; **Debug** inline on rows (`bddPilot.debugNode`); while running, **Cancel** replaces Run at the front of the toolbar and the summary row click cancels (kills the `dotnet` / testhost process tree, not only the UI lock).

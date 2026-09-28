@@ -5,6 +5,9 @@ import {
   buildFeatureDescription,
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
+  formatExampleIdentityLabel,
+  formatOutlineIdentityLabel,
+  formatScenarioIdentityLabel,
   formatTagDescription,
 } from "../core/gherkin/treeLabels";
 
@@ -34,6 +37,15 @@ describe("treeLabels", () => {
       buildFeatureDescription(19, tags, "count", 2),
       "19 scenarios · 6 tags",
     );
+  });
+
+  it("prefixes Gherkin vocabulary on Pilot labels", () => {
+    assert.strictEqual(formatScenarioIdentityLabel("Login works", "en"), "Scenario: Login works");
+    assert.strictEqual(formatOutlineIdentityLabel("Checkout", "en"), "Outline: Checkout");
+    assert.strictEqual(formatExampleIdentityLabel("plan | monthly", "en"), "Example: plan | monthly");
+    assert.strictEqual(formatScenarioIdentityLabel("Login works", "es"), "Escenario: Login works");
+    assert.strictEqual(formatOutlineIdentityLabel("Checkout", "es"), "Esquema: Checkout");
+    assert.strictEqual(formatExampleIdentityLabel("plan | monthly", "es"), "Ejemplo: plan | monthly");
   });
 
   it("tooltip includes full tag lists and localized outcome", () => {

@@ -129,6 +129,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       liveProgress: activeLiveProgress,
       unmappedCount: getLastMappingReport()?.unmapped,
       stage: currentStage,
+      groupBy: readTreeGroupBy(),
     });
   }
 
