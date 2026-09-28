@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.52.1** · **Marketplace: v1.52.1** · **Next: watch** · **664 unit tests**
+> **Current release: v1.53.0** · **Marketplace: v1.52.1** · **Next: publish v1.53.0** · **667 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.52.1** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.53.0** — quiet run communication |
+| 🎯 Next | publish **v1.53.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.53.0** | Quiet run communication — short failure toast, `listed=0` on progress only, Output reveal only via `autoShowOutput` · spec `quiet-run-communication-v1.53.md` |
 | **1.52.1** | Busy-lock recovery — enrich budget + second Cancel force-unlock · spec `msbuild-contention-containment-v1.52.1.md` |
 | **1.52.0** | Activation & discovery perf — lazy Theory enrich + domain reuse · spec `activation-discovery-perf-v1.52.md` |
 | **1.51.0** | Failure triage — Review first headline, Jump by class, Filter Failures by Class · spec `failure-triage-v1.51.md` |
@@ -230,6 +232,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.53.0 — Quiet run communication ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Toast** | Failure toast is one line: `Review first: …` or `N failed`. Counts and the diagnostic paragraph stay on the summary row and in Output |
+| **Discover** | `listed=0` is an Output line plus one progress-notification message until the first result — no second toast |
+| **Output** | Run start, preflight, and empty scope no longer call `output.show`. `feedback.autoShowOutput` reveals at the end only |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 667 unit tests |
 
 ### v1.52.1 — Busy-lock recovery (MSBuild contention) ✅ shipped
 

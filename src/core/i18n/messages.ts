@@ -202,6 +202,7 @@ const EN = {
     "This context may include staging or production environment details. Review before sharing with external AI.",
   "toast.runSummary": "{failed} failed, {passed} passed, {skipped} skipped ({total} total)",
   "toast.runSummaryFailures": "{failed} failed, {passed} passed ({total} total)",
+  "toast.runFailedShort": "{failed} failed",
   "toast.runInfraFallback":
     "The test run did not complete successfully. Check the BDD Pilot output for details.",
   "toast.searchNoMatches": "No scenarios match the current filter.",
@@ -633,6 +634,7 @@ const ES: Record<keyof typeof EN, string> = {
     "Este contexto puede incluir detalles de entorno staging o producción. Revísalo antes de compartirlo con IA externa.",
   "toast.runSummary": "{failed} fallidos, {passed} correctos, {skipped} omitidos ({total} total)",
   "toast.runSummaryFailures": "{failed} fallidos, {passed} correctos ({total} total)",
+  "toast.runFailedShort": "{failed} fallidos",
   "toast.runInfraFallback":
     "La ejecución no terminó correctamente. Revisa la salida de BDD Pilot para más detalles.",
   "toast.searchNoMatches": "Ningún escenario coincide con el filtro actual.",

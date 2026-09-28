@@ -52,7 +52,7 @@ describe("postRunFeedback", () => {
     assert.strictEqual(findToastDiagnostic(SIMPLE_FAILURE_OUTPUT), undefined);
   });
 
-  it("simple failure shows count and Re-run Failed without diagnostic line", () => {
+  it("simple failure is a short action line without counts or diagnostic", () => {
     const vm = buildPostRunFeedback({
       ...baseInput,
       summary: summary({ failed: 2, passed: 5, total: 7 }),
@@ -60,16 +60,27 @@ describe("postRunFeedback", () => {
       exitCode: 1,
     });
     assert.ok(vm);
-    assert.match(vm!.message, /2 failed, 5 passed \(7 total\)/);
+    assert.strictEqual(vm!.message, "2 failed");
+    assert.ok(!vm!.message.includes("passed"));
     assert.ok(!vm!.message.includes("step definition"));
-    assert.ok(!vm!.message.includes("Review failure categories"));
     assert.ok(vm!.actions.includes("showOutput"));
     assert.ok(vm!.actions.includes("jumpToFailure"));
     assert.ok(vm!.actions.includes("rerunFailed"));
     assert.strictEqual(vm!.severity, "warning");
   });
 
-  it("includes review-first triage hint when failureTriage provided", () => {
+  it("short failure line is localized", () => {
+    const vm = buildPostRunFeedback({
+      ...baseInput,
+      locale: "es",
+      summary: summary({ failed: 2, passed: 5, total: 7 }),
+      outputBuffer: SIMPLE_FAILURE_OUTPUT,
+      exitCode: 1,
+    });
+    assert.strictEqual(vm?.message, "2 fallidos");
+  });
+
+  it("failure with triage is the review-first hint only", () => {
     const vm = buildPostRunFeedback({
       ...baseInput,
       summary: summary({ failed: 3, passed: 1, total: 4 }),
@@ -85,11 +96,12 @@ describe("postRunFeedback", () => {
       },
     });
     assert.ok(vm);
-    assert.match(vm!.message, /3 failed/);
-    assert.match(vm!.message, /Review first: pending \(2\)/);
+    assert.strictEqual(vm!.message, "Review first: pending (2)");
+    assert.ok(!vm!.message.includes("3 failed"));
+    assert.ok(!vm!.message.includes("\n"));
   });
 
-  it("pending steps merges diagnostic into one toast", () => {
+  it("pending steps stay out of the failure toast", () => {
     const vm = buildPostRunFeedback({
       ...baseInput,
       summary: summary({ failed: 6, passed: 0, total: 6 }),
@@ -97,8 +109,8 @@ describe("postRunFeedback", () => {
       exitCode: 1,
     });
     assert.ok(vm);
-    assert.match(vm!.message, /6 failed/);
-    assert.match(vm!.message, /pending or missing step/i);
+    assert.strictEqual(vm!.message, "6 failed");
+    assert.ok(!/pending or missing step/i.test(vm!.message));
     assert.ok(vm!.actions.includes("rerunFailed"));
     assert.ok(vm!.actions.includes("jumpToFailure"));
   });
@@ -126,7 +138,7 @@ describe("postRunFeedback", () => {
     assert.strictEqual(vm!.actions.join(","), "showOutput");
   });
 
-  it("always mode with pending steps is a single toast", () => {
+  it("always mode with failures is still one short line", () => {
     const vm = buildPostRunFeedback({
       ...baseInput,
       toastMode: "always",
@@ -135,8 +147,34 @@ describe("postRunFeedback", () => {
       exitCode: 1,
     });
     assert.ok(vm);
-    const lines = vm!.message.split("\n");
-    assert.strictEqual(lines.length, 2);
+    assert.strictEqual(vm!.message, "6 failed");
+    assert.strictEqual(vm!.message.includes("\n"), false);
+  });
+
+  it("infra with counts and no diagnostic is the fallback line only", () => {
+    const vm = buildPostRunFeedback({
+      ...baseInput,
+      summary: summary({ failed: 0, passed: 3, skipped: 0, total: 3 }),
+      outputBuffer: "",
+      exitCode: 1,
+    });
+    assert.ok(vm);
+    assert.match(vm!.message, /did not complete successfully/);
+    assert.ok(!vm!.message.includes("passed"));
+    assert.strictEqual(vm!.severity, "error");
+  });
+
+  it("infra with counts and a diagnostic is that line only", () => {
+    const vm = buildPostRunFeedback({
+      ...baseInput,
+      summary: summary({ failed: 0, passed: 3, skipped: 0, total: 3 }),
+      outputBuffer: SDK_MISSING_OUTPUT,
+      exitCode: 145,
+    });
+    assert.ok(vm);
+    assert.match(vm!.message, /SDK 8\.0\.418/);
+    assert.ok(!vm!.message.includes("passed"));
+    assert.ok(!vm!.message.includes("\n"));
   });
 
   it("cancel shows partial progress only", () => {

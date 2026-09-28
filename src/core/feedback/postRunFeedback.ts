@@ -178,18 +178,36 @@ export function buildPostRunFeedback(input: PostRunFeedbackInput): PostRunFeedba
   const infraError = isInfra && toastDiagnostic?.severity === "error";
 
   if (input.summary && input.summary.total > 0) {
-    const countLine = buildCountLine(input.summary, input.locale);
-    const triageHint =
-      hasFailed && input.failureTriage
+    if (hasFailed) {
+      const message = input.failureTriage
         ? formatFailureTriageToastHint(input.failureTriage, input.locale)
-        : undefined;
-    const withTriage = triageHint ? `${countLine} — ${triageHint}` : countLine;
-    const diagLine = toastDiagnostic ? formatToastDiagnosticLine(toastDiagnostic) : undefined;
-    const message = diagLine ? `${withTriage}\n${diagLine}` : withTriage;
+        : t(input.locale, "toast.runFailedShort", { failed: input.summary.failed });
+      return {
+        message,
+        severity: "warning",
+        actions: buildActions(input, true, infraError),
+      };
+    }
+
+    if (isInfra) {
+      if (toastDiagnostic) {
+        return {
+          message: formatToastDiagnosticLine(toastDiagnostic),
+          severity: severityFromDiagnostic(toastDiagnostic),
+          actions: buildActions(input, false, infraError),
+        };
+      }
+      return {
+        message: t(input.locale, "toast.runInfraFallback"),
+        severity: "error",
+        actions: buildActions(input, false, true),
+      };
+    }
+
     return {
-      message,
-      severity: hasFailed ? "warning" : "info",
-      actions: buildActions(input, hasFailed, infraError),
+      message: buildCountLine(input.summary, input.locale),
+      severity: "info",
+      actions: buildActions(input, false, false),
     };
   }
 

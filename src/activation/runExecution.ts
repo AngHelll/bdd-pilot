@@ -165,7 +165,6 @@ export function createRunExecutor(deps: RunExecutionDeps) {
 
     if (totalExpected === 0) {
       const emptyLine = formatDiscoverTimeLine(classifyDiscoverTime({ gherkin: 0 }));
-      deps.output.show(true);
       if (emptyLine) {
         deps.output.appendLine(`[bdd-pilot] ${emptyLine}`);
       }
@@ -197,13 +196,11 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       domains: deps.treeProvider.getDomains(),
       analyzeOptions: readAnalyzeOptions(locale),
       onOutput: (chunk) => {
-        deps.output.show(true);
         deps.output.append(chunk);
       },
     });
     if (!preflight.proceed) {
       releaseRunLock();
-      deps.output.show(true);
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
         deps.output.appendLine(line);
       }
@@ -239,12 +236,19 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         const progressIncrement = totalExpected && totalExpected > 0 ? 100 / totalExpected : 0;
         let lastMessage = "";
         let lastProgressState: LiveProgressState | undefined;
+        let holdListedZeroNotice = false;
 
         const onProgress = (state: LiveProgressState, event?: TestCompletionEvent) => {
           lastProgressState = state;
           if (!opts?.debug) {
             deps.setActiveLiveProgress(state);
             deps.scheduleProgressSummaryRefresh();
+          }
+          if (holdListedZeroNotice && !event) {
+            return;
+          }
+          if (event) {
+            holdListedZeroNotice = false;
           }
           const message = formatProgressMessage(state, deps.localeService.getLocale());
           if (event && progressIncrement > 0) {
@@ -282,7 +286,6 @@ export function createRunExecutor(deps: RunExecutionDeps) {
 
           if (!opts?.debug) {
             deps.output.clear();
-            deps.output.show(true);
             if (!opts?.rawFilter) {
               const scopeTargets = runTargets.length > 0 ? runTargets : [{ kind: "all" as const }];
               deps.treeProvider.clearResultsForRunScope(scopeTargets);
@@ -358,7 +361,10 @@ export function createRunExecutor(deps: RunExecutionDeps) {
               deps.output.appendLine(`[bdd-pilot] ${discoverLine}`);
             }
             if (classified.kind === "zero") {
-              void vscode.window.showInformationMessage(deps.tr("toast.discoverListedZero"));
+              const listedZeroMessage = deps.tr("toast.discoverListedZero");
+              lastMessage = listedZeroMessage;
+              holdListedZeroNotice = true;
+              progress.report({ message: listedZeroMessage });
             }
           }
 

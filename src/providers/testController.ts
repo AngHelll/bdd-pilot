@@ -303,12 +303,10 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       domains: deps.getDomains(),
       analyzeOptions: deps.getAnalyzeOptions(),
       onOutput: (chunk) => {
-        deps.output.show(true);
         deps.output.append(chunk);
       },
     });
     if (!preflight.proceed) {
-      deps.output.show(true);
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
         deps.output.appendLine(line);
       }

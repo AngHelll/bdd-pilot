@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.53.0] — 2026-09-28
+
+### Changed
+- **Quiet run communication** — a failed run toast is one action line (`Review first: …` or `N failed`) without repeating counts or the diagnostic paragraph. `listed=0` stays on the progress notification and in Output, not a second toast. Output no longer opens when a run starts or during preflight; `feedback.autoShowOutput` is the only automatic reveal, at the end. Spec `quiet-run-communication-v1.53.md`
+
 ## [1.52.1] — 2026-09-24
 
 ### Fixed
