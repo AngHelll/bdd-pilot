@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.54.0** · **Marketplace: v1.53.0** · **Next: publish v1.54.0** · **667 unit tests**
+> **Current release: v1.54.0** · **Marketplace: v1.54.0** · **Next: watch** · **667 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.53.0** |
-| 📦 GitHub (pending Marketplace) | **v1.54.0** — terminal run output |
-| 🎯 Next | publish **v1.54.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.54.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -234,7 +233,7 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.54.0 — Terminal run output ✅ shipped (Marketplace pending)
+### v1.54.0 — Terminal run output ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -242,7 +241,7 @@ _Nothing queued._
 | **Narrative** | Triage, diagnostics, honesty, rehydrate, and section headers are no longer printed. Summary chip, one-line toast, and Copy Matching Debug Pack stay |
 | **Exceptions** | Cancel, run-not-started, file-lock, binding-gate log, and empty-scope discover write to that terminal. `showOutput` / `autoShowOutput` reveal it |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.54.0 |
 | **Tests** | 667 unit tests |
 
 ### v1.53.0 — Quiet run communication ✅ shipped
