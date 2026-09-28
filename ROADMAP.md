@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.56.0** · **Marketplace: v1.55.0** · **Next: publish v1.56.0** · **681 unit tests**
+> **Current release: v1.56.0** · **Marketplace: v1.56.0** · **Next: watch** · **681 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.55.0** |
-| 📦 GitHub (pending Marketplace) | **v1.56.0** — feature save |
-| 🎯 Next | publish **v1.56.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.56.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -236,14 +235,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.56.0 — Feature save responsiveness ✅ shipped (Marketplace pending)
+### v1.56.0 — Feature save responsiveness ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Save** | One `.feature` save parses that file only. Unchanged structure skips tree and Test Explorer refresh. Auto-saves coalesce ~300 ms. Delete and rename update the model |
 | **Theory** | `list-tests` only when that file still needs theory rows and the cached list is stale; otherwise rows reapply in memory. Deferred while a run or debug holds the lock |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.56.0 |
 | **Tests** | 681 unit tests |
 
 ### v1.55.0 — Tree identity ✅ shipped
@@ -1126,4 +1125,4 @@ src/
 
 ---
 
-*Last updated: v1.56.0 feature save on GitHub; Marketplace pending.*
+*Last updated: v1.56.0 feature save shipped Marketplace.*
