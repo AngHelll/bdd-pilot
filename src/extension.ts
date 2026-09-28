@@ -27,6 +27,7 @@ import {
   FEATURE_ENRICH_DEBOUNCE_MS,
   activateEnrichDelayMs,
 } from "./core/runner/activateEnrich";
+import { createFeatureFileSync, theoryDiscoveryKeys } from "./core/gherkin/featureFileSync";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
 import { LocaleService } from "./providers/localeService";
@@ -205,6 +206,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   runService.onHistoryChanged(() => persistHistory());
 
   let enrichTheoryTimer: ReturnType<typeof setTimeout> | undefined;
+  // eslint-disable-next-line prefer-const
+  let featureSync!: ReturnType<typeof createFeatureFileSync>;
   let onExecutionFeedbackChanged = (): void => {};
 
   const cancelScheduledEnrich = () => {
@@ -226,6 +229,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     const current = activeRun;
     if (!current) {
       abortBackgroundEnrich();
+      featureSync.flushDeferredEnrich();
       return;
     }
     current.abort();
@@ -238,6 +242,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       refreshUi();
     }
     abortBackgroundEnrich();
+    featureSync.flushDeferredEnrich();
   };
 
   const refreshTreeSurfaces = () => {
@@ -264,6 +269,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       effectiveSignal = localController.signal;
     }
 
+    const theoryKeysBefore = theoryDiscoveryKeys(treeProvider.getDomains());
+    let listedNames: string[] | undefined;
     try {
       const enriched = await treeProvider.enrichTheoryRows(
         () =>
@@ -275,9 +282,15 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
             },
             DISCOVER_LIST_TIMEOUT_MS,
             effectiveSignal,
-          ),
+          ).then((names) => {
+            listedNames = names;
+            return names;
+          }),
         effectiveSignal,
       );
+      if (listedNames) {
+        featureSync.noteTheoryList(listedNames, theoryKeysBefore);
+      }
       if (enriched) {
         managed.refresh();
       }
@@ -289,6 +302,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   };
 
   function refreshAll(immediateEnrich = true) {
+    featureSync.invalidateTheoryCache();
     refreshTreeSurfaces();
     if (immediateEnrich) {
       cancelScheduledEnrich();
@@ -471,13 +485,26 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         refreshUi();
       }
       managedLockOwner = undefined;
+      featureSync.flushDeferredEnrich();
     },
     abortActiveRun: () => activeRun?.abort(),
+  });
+
+  featureSync = createFeatureFileSync({
+    getProjectDir: () => projectHub.getProjectContext()?.projectDir,
+    isRunActive: () => !!activeRun || runService.isDebugActive(),
+    applySavedFeature: (feature) => treeProvider.applyParsedFeature(feature),
+    removeFeature: (filePath) => treeProvider.removeFeatureFile(filePath),
+    renameFeature: (oldPath, newPath) => treeProvider.renameFeatureFile(oldPath, newPath),
+    refreshManaged: () => managed.refresh(),
+    reapplyTheory: (names) => treeProvider.enrichTheoryRows(() => Promise.resolve(names)),
+    scheduleEnrich: () => scheduleEnrichTheoryRows(),
   });
 
   const handleDebugSessionEnded = () => {
     const debugResult = runService.finishDebugSession();
     if (!debugResult) {
+      featureSync.flushDeferredEnrich();
       return;
     }
 
@@ -490,6 +517,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
     managed.finalizePendingDebugRun(debugResult.summary, debugResult.completionKind, "");
     refreshUi();
+    featureSync.flushDeferredEnrich();
   };
 
   // eslint-disable-next-line prefer-const
@@ -505,6 +533,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     getActiveRun: () => activeRun,
     setActiveRun: (controller) => {
       activeRun = controller;
+      if (!controller) {
+        featureSync.flushDeferredEnrich();
+      }
     },
     clearActiveLiveProgress,
     scheduleProgressSummaryRefresh,
@@ -563,6 +594,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     localeService,
     statusBar,
     { dispose: cancelScheduledEnrich },
+    { dispose: () => featureSync.dispose() },
     treeView,
     managed.controller,
     codeLens.disposable,
@@ -590,8 +622,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       abortBackgroundEnrich,
       refreshAll,
       refreshUi,
-      refreshTreeSurfaces,
-      scheduleEnrichTheoryRows,
+      onFeatureDocumentSaved: (filePath, text) => featureSync.onSaved(filePath, text),
+      onFeatureFilesDeleted: (paths) => featureSync.onDeleted(paths),
+      onFeatureFilesRenamed: (moves) => featureSync.onRenamed(moves),
       updateTreeGroupByContext,
       buildDashboardContext,
       executeRun,
@@ -621,6 +654,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   deactivateCleanup = () => {
     cancelScheduledEnrich();
+    featureSync.dispose();
     abortBackgroundEnrich();
     if (activeRun) {
       activeRun.abort();

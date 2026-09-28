@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.55.0** · **Marketplace: v1.55.0** · **Next: watch** · **670 unit tests**
+> **Current release: v1.56.0** · **Marketplace: v1.55.0** · **Next: publish v1.56.0** · **681 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.55.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.56.0** — feature save |
+| 🎯 Next | publish **v1.56.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.56.0** | Feature save — incremental tree update; `list-tests` only when that file still needs theory rows · spec `editor-save-responsiveness-v1.56.md` |
 | **1.55.0** | Tree identity — permanent `Pilot · STAGE · groupBy` on the summary, Gherkin prefixes on Scenario/Outline/Example · spec `tree-identity-v1.55.md` |
 | **1.54.0** | Terminal run output — `dotnet test` stream in the BDD Pilot terminal; Pilot narrative no longer printed · spec `terminal-run-output-v1.54.md` |
 | **1.53.0** | Quiet run communication — short failure toast, `listed=0` on progress only, Output reveal only via `autoShowOutput` · spec `quiet-run-communication-v1.53.md` |
@@ -233,6 +235,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.56.0 — Feature save responsiveness ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Save** | One `.feature` save parses that file only. Unchanged structure skips tree and Test Explorer refresh. Auto-saves coalesce ~300 ms. Delete and rename update the model |
+| **Theory** | `list-tests` only when that file still needs theory rows and the cached list is stale; otherwise rows reapply in memory. Deferred while a run or debug holds the lock |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 681 unit tests |
 
 ### v1.55.0 — Tree identity ✅ shipped
 
@@ -1114,4 +1126,4 @@ src/
 
 ---
 
-*Last updated: v1.50.0 hard cancel shipped Marketplace.*
+*Last updated: v1.56.0 feature save on GitHub; Marketplace pending.*

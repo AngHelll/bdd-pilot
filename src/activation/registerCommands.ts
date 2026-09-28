@@ -75,8 +75,9 @@ export interface RegisterCommandsDeps {
   abortBackgroundEnrich: () => void;
   refreshAll: (immediateEnrich?: boolean) => void;
   refreshUi: () => void;
-  refreshTreeSurfaces: () => void;
-  scheduleEnrichTheoryRows: (delayMs?: number) => void;
+  onFeatureDocumentSaved: (filePath: string, text: string) => void;
+  onFeatureFilesDeleted: (paths: string[]) => void;
+  onFeatureFilesRenamed: (moves: Array<{ oldPath: string; newPath: string }>) => void;
   updateTreeGroupByContext: () => void;
   buildDashboardContext: () => DashboardContext;
   executeRun: ExecuteRunFn;
@@ -608,8 +609,29 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
 
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.fileName.toLowerCase().endsWith(".feature")) {
-        deps.refreshTreeSurfaces();
-        deps.scheduleEnrichTheoryRows();
+        deps.onFeatureDocumentSaved(doc.uri.fsPath, doc.getText());
+      }
+    }),
+
+    vscode.workspace.onDidDeleteFiles((event) => {
+      const paths = event.files
+        .map((file) => file.fsPath)
+        .filter((filePath) => filePath.toLowerCase().endsWith(".feature"));
+      if (paths.length > 0) {
+        deps.onFeatureFilesDeleted(paths);
+      }
+    }),
+
+    vscode.workspace.onDidRenameFiles((event) => {
+      const moves = event.files
+        .filter(
+          (file) =>
+            file.oldUri.fsPath.toLowerCase().endsWith(".feature") ||
+            file.newUri.fsPath.toLowerCase().endsWith(".feature"),
+        )
+        .map((file) => ({ oldPath: file.oldUri.fsPath, newPath: file.newUri.fsPath }));
+      if (moves.length > 0) {
+        deps.onFeatureFilesRenamed(moves);
       }
     }),
 

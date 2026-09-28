@@ -79,6 +79,12 @@ import {
   outlineRowKey,
   scenarioKey,
 } from "../core/runner/runScope";
+import {
+  applySavedFeature as applySavedFeatureModel,
+  indexFeatureFileKeys,
+  removeSavedFeature,
+  renameSavedFeature,
+} from "../core/gherkin/featureFileSync";
 import { enrichFeaturesWithTheoryTests, scenarioNeedsTheoryDiscovery } from "../core/gherkin/theoryExamples";
 import {
   formatPilotSummaryDescription,
@@ -154,6 +160,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private searchQuery = "";
   private searchQueryDisplay = "";
   private refreshPending = false;
+  private fileKeys = new Map<string, string>();
 
   constructor(
     private projectDir: () => string | undefined,
@@ -177,7 +184,42 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   refresh(): void {
     const dir = this.projectDir();
     this.allDomains = dir ? discoverDomains(dir) : [];
+    this.fileKeys = indexFeatureFileKeys(this.allDomains);
     this.applySearch();
+  }
+
+  /** Replaces one parsed feature. Returns false when its file identity did not change. */
+  applyParsedFeature(feature: FeatureInfo): boolean {
+    const next = applySavedFeatureModel(this.allDomains, this.fileKeys, feature);
+    if (!next.changed) {
+      return false;
+    }
+    this.allDomains = next.domains;
+    this.fileKeys = next.fileKeys;
+    this.applySearch();
+    return true;
+  }
+
+  removeFeatureFile(filePath: string): boolean {
+    const next = removeSavedFeature(this.allDomains, this.fileKeys, filePath);
+    if (!next.changed) {
+      return false;
+    }
+    this.allDomains = next.domains;
+    this.fileKeys = next.fileKeys;
+    this.applySearch();
+    return true;
+  }
+
+  renameFeatureFile(oldPath: string, newPath: string): boolean {
+    const next = renameSavedFeature(this.allDomains, this.fileKeys, oldPath, newPath);
+    if (!next.changed) {
+      return false;
+    }
+    this.allDomains = next.domains;
+    this.fileKeys = next.fileKeys;
+    this.applySearch();
+    return true;
   }
 
   getDomains(): DomainGroup[] {

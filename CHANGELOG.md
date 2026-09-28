@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.56.0] — 2026-09-28
+
+### Changed
+- **Feature save** — saving a `.feature` updates that file in the tree instead of rediscovering the project. Unchanged scenario structure does not refresh the Test Explorer. `list-tests` runs only when that file still needs theory rows and the cached list is stale; otherwise rows are reapplied in memory. A save during a run waits until the lock is free. Spec `editor-save-responsiveness-v1.56.md`
+
 ## [1.55.0] — 2026-09-28
 
 ### Changed
