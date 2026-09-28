@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.55.0** · **Marketplace: v1.54.0** · **Next: publish v1.55.0** · **670 unit tests**
+> **Current release: v1.55.0** · **Marketplace: v1.55.0** · **Next: watch** · **670 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.54.0** |
-| 📦 GitHub (pending Marketplace) | **v1.55.0** — tree identity |
-| 🎯 Next | publish **v1.55.0** |
+| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.55.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -235,14 +234,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.55.0 — Tree identity ✅ shipped (Marketplace pending)
+### v1.55.0 — Tree identity ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Summary** | Description always shows `Pilot · STAGE {stage} · by domain` or `by @tag`. Counts stay on the label. The STAGE chip is not repeated |
 | **Labels** | Pilot leaves use `Scenario:` / `Outline:` / `Example:` (ES: `Escenario:` / `Esquema:` / `Ejemplo:`). Test Explorer labels unchanged |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.55.0 |
 | **Tests** | 670 unit tests |
 
 ### v1.54.0 — Terminal run output ✅ shipped
