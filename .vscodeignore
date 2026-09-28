@@ -9,6 +9,7 @@ node_modules/**
 .gitignore
 docs-internal/**
 .cursor/**
+.architecture-lens/**
 esbuild.js
 tsconfig*.json
 .eslintrc.json
