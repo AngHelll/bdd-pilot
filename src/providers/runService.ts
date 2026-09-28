@@ -251,7 +251,7 @@ export class RunService {
     this.runStartedAt = Date.now();
     const progressParser = new LiveProgressParser(req.totalExpected);
 
-    const { dotnetReq, preCommandMessages } = this.buildDotnetRunRequest(
+    const { dotnetReq } = this.buildDotnetRunRequest(
       req,
       filter,
       trxFileName,
@@ -274,9 +274,6 @@ export class RunService {
       {
         onStart: (cmd) => {
           this.rememberEffectiveCommand(dotnetReq.dotnetPath, buildArgs(dotnetReq), "run");
-          for (const msg of preCommandMessages) {
-            capture(`${msg}\n`);
-          }
           req.onStart?.(cmd);
           capture(`[bdd-pilot] ${sanitize(cmd)}\n`);
         },
@@ -454,7 +451,7 @@ export class RunService {
     const trxPath = resolveTrxPath(req.projectDir, "TestResults", trxFileName);
     this.runStartedAt = Date.now();
 
-    const { dotnetReq, preCommandMessages } = this.buildDotnetRunRequest(req, filter, trxFileName);
+    const { dotnetReq } = this.buildDotnetRunRequest(req, filter, trxFileName);
     const args = buildArgs(dotnetReq, { includeXUnitRunSettings: false });
     this.rememberEffectiveCommand(req.settings.dotnetPath, args, "debug");
 
@@ -470,12 +467,6 @@ export class RunService {
     };
 
     this.pendingDebug = { trxPath, req, filter };
-    for (const msg of preCommandMessages) {
-      req.onOutput?.(`${msg}\n`);
-    }
-    req.onOutput?.(
-      `[bdd-pilot] Starting debugger: ${req.settings.dotnetPath} ${args.join(" ")}\n`,
-    );
     const started = await vscode.debug.startDebugging(folder, config);
     if (!started) {
       this.pendingDebug = undefined;

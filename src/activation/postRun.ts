@@ -1,17 +1,10 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { Stage } from "../core/config/types";
-import { analyzeDotnetOutput } from "../core/diagnostics/analyzer";
 import { buildAiFailureContext } from "../core/diagnostics/aiFailureContext";
 import { tryBuildRehydratedFailureSnapshot } from "../core/diagnostics/failureSnapshotFromArtifacts";
-import { formatDiagnosticsOutputLines } from "../core/diagnostics/diagnosticsOutput";
-import {
-  buildDiagnosticsByDomainRollUp,
-  formatDiagnosticsByDomainLines,
-} from "../core/diagnostics/diagnosticsByDomain";
 import {
   buildFailureTriage,
-  formatFailureTriageLines,
 } from "../core/diagnostics/failureTriage";
 import {
   clearLastFailureTriage,
@@ -30,10 +23,10 @@ import {
   PostRunFeedbackRequest,
   PostRunFeedbackViewModel,
 } from "../core/feedback/postRunFeedback";
-import { formatOutputSectionHeader } from "../core/feedback/dotnetOutputFilter";
+import { showRunTerminal } from "./runTerminal";
 import { MessageKey } from "../core/i18n";
 import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
-import { TestResult, TrxSummary } from "../core/results/trxParser";
+import { TestResult } from "../core/results/trxParser";
 import { buildRerunFailedFilter, ProjectContext } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
 import { RunService } from "../providers/runService";
@@ -41,7 +34,6 @@ import {
   readAiSettings,
   readAnalyzeOptions,
   readAutoShowOutput,
-  readDiagnosticsInOutput,
   readOutcomeRehydrateSettings,
   readPostRunToast,
   readSettings,
@@ -69,57 +61,7 @@ export function createPostRunHandlers(deps: PostRunDeps) {
     }
     const triage = buildFailureTriage(summary.results, deps.getDomains());
     setLastFailureTriage(triage);
-    if (!triage) {
-      return undefined;
-    }
-    const locale = deps.localeService.getLocale();
-    for (const line of formatFailureTriageLines(triage, locale)) {
-      deps.output.appendLine(line);
-    }
     return triage;
-  }
-
-  function appendRunDiagnosticsToOutput(text: string, trxSummary?: TrxSummary): void {
-    const analyzeOptions = {
-      ...readAnalyzeOptions(deps.localeService.getLocale()),
-      trxSummary,
-    };
-    const locale = analyzeOptions.locale ?? deps.localeService.getLocale();
-    const diagnostics = analyzeDotnetOutput(text, analyzeOptions);
-    const lines = formatDiagnosticsOutputLines(
-      diagnostics,
-      readDiagnosticsInOutput(),
-      locale,
-    );
-    const byDomainLines =
-      trxSummary && trxSummary.failed > 0
-        ? formatDiagnosticsByDomainLines(
-            buildDiagnosticsByDomainRollUp(trxSummary.results, deps.getDomains()),
-            locale,
-          )
-        : [];
-
-    if (lines.length === 0 && byDomainLines.length === 0) {
-      return;
-    }
-    if (lines.length > 0) {
-      deps.output.appendLine(
-        formatOutputSectionHeader(deps.localeService.getLocale(), "diagnostics"),
-      );
-      for (const line of lines) {
-        deps.output.appendLine(line);
-      }
-    }
-    if (byDomainLines.length > 0) {
-      if (lines.length === 0) {
-        deps.output.appendLine(
-          formatOutputSectionHeader(deps.localeService.getLocale(), "diagnostics"),
-        );
-      }
-      for (const line of byDomainLines) {
-        deps.output.appendLine(line);
-      }
-    }
   }
 
   function presentPostRunFeedback(vm: PostRunFeedbackViewModel | undefined): void {
@@ -146,7 +88,7 @@ export function createPostRunHandlers(deps: PostRunDeps) {
           : vscode.window.showInformationMessage;
     void show(vm.message, ...labels).then((choice) => {
       if (choice === deps.tr("action.showOutput")) {
-        deps.output.show(true);
+        showRunTerminal(true);
       } else if (choice === deps.tr("action.jumpToFailure")) {
         void vscode.commands.executeCommand("bddPilot.jumpToFirstFailure");
       } else if (choice === deps.tr("action.rerunFailed")) {
@@ -168,7 +110,7 @@ export function createPostRunHandlers(deps: PostRunDeps) {
         canceled: request.canceled,
       })
     ) {
-      deps.output.show(true);
+      showRunTerminal(true);
     }
   }
 
@@ -181,22 +123,6 @@ export function createPostRunHandlers(deps: PostRunDeps) {
       });
     } else if (!request.debug) {
       clearLastFailureTriage();
-    }
-    if (!request.canceled && !request.debug) {
-      if (request.exitCode !== 0 || (request.summary?.failed ?? 0) > 0) {
-        appendRunDiagnosticsToOutput(
-          request.outputBuffer,
-          request.summary
-            ? {
-                total: request.summary.total,
-                passed: request.summary.passed,
-                failed: request.summary.failed,
-                skipped: request.summary.skipped,
-                results: request.summary.results,
-              }
-            : undefined,
-        );
-      }
     }
     maybeAutoShowOutput(request);
     const vm = buildPostRunFeedback({
@@ -224,7 +150,6 @@ export function createPostRunHandlers(deps: PostRunDeps) {
 
   return {
     notifyPostRunFeedback,
-    appendRunDiagnosticsToOutput,
     presentPostRunFeedback,
     appendFailureTriageToOutput,
   };

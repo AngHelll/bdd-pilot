@@ -480,13 +480,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       return;
     }
 
-    output.appendLine("\n[bdd-pilot] Debug session ended.");
     if (debugResult.summary && debugResult.summary.total > 0) {
       treeProvider.applyResults(debugResult.summary);
       managed.refresh();
-      output.appendLine(
-        `[bdd-pilot] Results (${debugResult.summary.source}): ${debugResult.summary.passed} passed, ${debugResult.summary.failed} failed, ${debugResult.summary.skipped} skipped (${debugResult.summary.total} total).`,
-      );
     } else {
       void vscode.window.showInformationMessage(tr("toast.debugNoTrx"));
     }
@@ -521,7 +517,6 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     applyRunSummaryToTree,
     notifyPostRunFeedback,
     persistHistory,
-    appendRunDiagnosticsToOutput: postRun.appendRunDiagnosticsToOutput,
   });
 
   const dashboardCommands = createDashboardCommands({

@@ -12,12 +12,7 @@ import {
 } from "../core/gherkin/testExplorerLabels";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
-import {
-  createDotnetOutputFilterState,
-  flushDotnetOutputFilter,
-  formatOutputSectionHeader,
-  processDotnetOutputChunk,
-} from "../core/feedback/dotnetOutputFilter";
+import { writeRunTerminal } from "../activation/runTerminal";
 import {
   findOutlineExampleMatchInFeature,
   matchesScenarioInFeature,
@@ -32,6 +27,10 @@ import { analyzeDotnetOutput, AnalyzeDotnetOutputOptions } from "../core/diagnos
 import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
 import { t } from "../core/i18n";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import {
+  detectBuildFileLock,
+  formatBuildFileLockHintLine,
+} from "../core/runner/buildFileLockHint";
 import { DEFAULT_FILTER_MAPPING } from "../core/runner/filterMapping";
 import { estimateTestCount } from "../core/runner/runEstimate";
 import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
@@ -43,7 +42,6 @@ import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
 import { readTreeDisplaySettings } from "./treeSettings";
-import { readDotnetVerbosity } from "../activation/extensionSettings";
 import type { TreeGroupBy } from "../core/gherkin/treeDisplaySettings";
 import {
   TestExplorerItemData,
@@ -303,12 +301,12 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       domains: deps.getDomains(),
       analyzeOptions: deps.getAnalyzeOptions(),
       onOutput: (chunk) => {
-        deps.output.append(chunk);
+        writeRunTerminal(chunk);
       },
     });
     if (!preflight.proceed) {
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
-        deps.output.appendLine(line);
+        writeRunTerminal(`${line}\n`);
       }
       run.end();
       return;
@@ -346,15 +344,18 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     });
 
     try {
-      const filterState = createDotnetOutputFilterState();
-      const verbosity = readDotnetVerbosity();
-      const locale = deps.getLocale();
-      deps.output.appendLine(formatOutputSectionHeader(locale, "run"));
+      let fileLockHinted = false;
+      if (!debug) {
+        writeRunTerminal("\n");
+      }
 
-      const appendFiltered = (chunk: string): void => {
-        const filtered = processDotnetOutputChunk(chunk, filterState, verbosity);
-        if (filtered.length > 0) {
-          deps.output.append(filtered);
+      const writeStream = (chunk: string): void => {
+        if (!debug) {
+          if (!fileLockHinted && detectBuildFileLock(chunk)) {
+            fileLockHinted = true;
+            writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);
+          }
+          writeRunTerminal(chunk);
         }
         run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
       };
@@ -391,17 +392,8 @@ export function createManagedController(deps: ControllerDeps): ManagedController
             readTreeDisplaySettings(),
           );
         },
-        onOutput: appendFiltered,
+        onOutput: writeStream,
       });
-
-      const flushed = flushDotnetOutputFilter(filterState);
-      if (flushed.length > 0) {
-        deps.output.append(flushed);
-      }
-      if (!debug) {
-        deps.output.appendLine("");
-        deps.output.appendLine(formatOutputSectionHeader(locale, "results"));
-      }
 
       if (result.canceled) {
         applyRunResults({

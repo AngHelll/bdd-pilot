@@ -8,17 +8,8 @@ import { UnifiedSummary } from "../core/results/resultLoader";
 import { TreeMappingReport } from "../core/results/trxTreeMapping";
 import {
   planHonestyOutput,
-  selectUnmappedForOutput,
-  truncateMappingLabel,
 } from "../core/results/mappingReportFormat";
-import { formatMatchingHealthBuckets } from "../core/results/matchingDebugPack";
 import { clearLastMappingReport, setLastMappingReport } from "../core/results/lastMappingReport";
-import {
-  countFailedLeavesByDomain,
-  countFailedLeavesByTag,
-  detectFailConcentration,
-} from "../core/runner/scopedRunNudge";
-import { readTreeGroupBy } from "../providers/treeSettings";
 import {
   applySkipReasonSnapshot,
   buildSkipReasonSnapshot,
@@ -33,11 +24,7 @@ import { TestTreeProvider } from "../providers/testTreeProvider";
 import { ProjectContext } from "../providers/testController";
 import { readAiSettings, readOutcomeRehydrateSettings } from "./extensionSettings";
 import { loadRunResults } from "../core/results/resultLoader";
-import {
-  findPilotTrxCandidates,
-  selectEligiblePilotTrx,
-  selectLatestPilotTrx,
-} from "../core/results/pilotTrxDiscovery";
+import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
 import { SKIP_REASON_SNAPSHOT_KEY } from "./storageKeys";
 
 export interface RehydrateDeps {
@@ -84,135 +71,7 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
     setLastMappingReport(report);
     if (!honestyOnly) {
       persistSkipReasonSnapshot(report);
-      deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.treeMapping", {
-          mapped: report.mapped,
-          inScope: report.inScope,
-          unmapped: report.unmapped,
-        })}`,
-      );
-      if (report.unmapped > 0) {
-        const { shown, remaining } = selectUnmappedForOutput(report.unmappedLeaves);
-        for (const leaf of shown) {
-          deps.output.appendLine(
-            `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedItem", { label: leaf.label })}`,
-          );
-        }
-        if (remaining > 0) {
-          deps.output.appendLine(
-            `[bdd-pilot] ${deps.tr("log.treeMappingUnmappedMore", { count: remaining })}`,
-          );
-        }
-      }
     }
-    if (honesty.unused) {
-      deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.treeMappingUnused", {
-          unused: honesty.unused.unused,
-          trxTotal: honesty.unused.trxTotal,
-        })}`,
-      );
-      if (honesty.unused.gherkinLike) {
-        deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedGherkin", {
-            count: honesty.unused.gherkinLike.count,
-          })}`,
-        );
-        for (const row of honesty.unused.gherkinLike.shown) {
-          deps.output.appendLine(
-            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedItem", {
-              testName: truncateMappingLabel(row.testName),
-            })}`,
-          );
-        }
-        if (honesty.unused.gherkinLike.remaining > 0) {
-          deps.output.appendLine(
-            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedGherkinMore", {
-              count: honesty.unused.gherkinLike.remaining,
-            })}`,
-          );
-        }
-      }
-      if (honesty.unused.other) {
-        deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingUnusedOther", {
-            count: honesty.unused.other.count,
-          })}`,
-        );
-        for (const row of honesty.unused.other.shown) {
-          deps.output.appendLine(
-            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedItem", {
-              testName: truncateMappingLabel(row.testName),
-            })}`,
-          );
-        }
-        if (honesty.unused.other.remaining > 0) {
-          deps.output.appendLine(
-            `[bdd-pilot] ${deps.tr("log.treeMappingUnusedOtherMore", {
-              count: honesty.unused.other.remaining,
-            })}`,
-          );
-        }
-      }
-    }
-    if (honesty.ambiguous) {
-      deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.treeMappingAmbiguous", {
-          count: honesty.ambiguous.count,
-        })}`,
-      );
-      for (const leaf of honesty.ambiguous.shown) {
-        deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingAmbiguousItem", {
-            label: truncateMappingLabel(leaf.label),
-            count: leaf.candidateCount,
-          })}`,
-        );
-      }
-      if (honesty.ambiguous.remaining > 0) {
-        deps.output.appendLine(
-          `[bdd-pilot] ${deps.tr("log.treeMappingAmbiguousMore", {
-            count: honesty.ambiguous.remaining,
-          })}`,
-        );
-      }
-    }
-    if (honesty.sharedCount > 0) {
-      deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.treeMappingShared", { count: honesty.sharedCount })}`,
-      );
-    }
-    const healthBuckets = formatMatchingHealthBuckets(report);
-    if (healthBuckets) {
-      deps.output.appendLine(
-        `[bdd-pilot] ${deps.tr("log.matchingHealth", { buckets: healthBuckets })}`,
-      );
-    }
-  }
-
-  function logFailConcentrationTip(targets: RunTarget[]): void {
-    const isAll = targets.some((t) => t.kind === "all");
-    if (!isAll) {
-      return;
-    }
-    const groupBy = readTreeGroupBy();
-    const getOutcome = (key: string) => deps.outcomeStore.get(key);
-    const failCounts =
-      groupBy === "tag"
-        ? countFailedLeavesByTag(deps.treeProvider.getTagGroups(), getOutcome)
-        : countFailedLeavesByDomain(deps.treeProvider.getDomains(), getOutcome);
-    const hit = detectFailConcentration(failCounts);
-    if (!hit) {
-      return;
-    }
-    const containerLabel = groupBy === "tag" ? `@${hit.container}` : hit.container;
-    deps.output.appendLine(
-      `[bdd-pilot] ${deps.tr("log.failConcentrationTip", {
-        container: containerLabel,
-        fails: hit.failCount,
-        total: hit.totalFails,
-      })}`,
-    );
   }
 
   function applyRunSummaryToTree(
@@ -228,9 +87,6 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
         canceled: options?.canceled,
       });
       logTreeMapping(stats);
-      if (!options?.canceled) {
-        logFailConcentrationTip(targets);
-      }
       deps.refreshPilotSurfaces();
     }
     deps.refreshManaged();
@@ -276,14 +132,6 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       historyTrxAbsolutePath: historyTrx,
     });
     if (!latest) {
-      if (historyTrx) {
-        const newest = selectLatestPilotTrx(findPilotTrxCandidates(ctx.projectDir), {
-          maxAgeMs: rehydrate.maxAgeMs,
-        });
-        if (newest && path.resolve(newest.absolutePath) !== historyTrx) {
-          deps.output.appendLine(`[bdd-pilot] ${deps.tr("log.rehydrateSkippedHistoryMismatch")}`);
-        }
-      }
       return;
     }
 
@@ -304,15 +152,6 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       total: summary.total,
     });
     deps.refreshPilotSurfaces();
-    deps.output.appendLine(
-      `[bdd-pilot] ${deps.tr("log.rehydrateRestored", {
-        file: latest.fileName,
-        passed: summary.passed,
-        failed: summary.failed,
-        skipped: summary.skipped,
-        total: summary.total,
-      })}`,
-    );
 
     const historyMeta = lastHistory
       ? {
@@ -334,7 +173,7 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       }
     }
 
-    const artifactResult = maybeWriteLastFailureArtifactFromRehydrate({
+    maybeWriteLastFailureArtifactFromRehydrate({
       projectDir: ctx.projectDir,
       trxAbsolutePath: latest.absolutePath,
       summary,
@@ -342,9 +181,6 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
       history: historyMeta,
     });
-    if (!artifactResult.written && artifactResult.error) {
-      deps.output.appendLine(`[bdd-pilot] last failure artifact: ${artifactResult.error}`);
-    }
   }
 
   return { tryRehydrateOutcomes, applyRunSummaryToTree, logTreeMapping };

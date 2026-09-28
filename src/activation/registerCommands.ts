@@ -29,6 +29,7 @@ import {
   resolveCancelIntent,
 } from "../core/runner/processTree";
 import { BDD_PILOT_DEBUG_SESSION_NAME } from "../providers/runService";
+import { showRunTerminal, writeRunTerminal } from "./runTerminal";
 import { DashboardPanel } from "../providers/dashboardPanel";
 import { LocaleService } from "../providers/localeService";
 import { ProfileStore } from "../providers/profileStore";
@@ -109,7 +110,7 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
   return [
     vscode.commands.registerCommand("bddPilot.refresh", () => deps.refreshAll()),
 
-    vscode.commands.registerCommand("bddPilot.showOutput", () => deps.output.show(true)),
+    vscode.commands.registerCommand("bddPilot.showOutput", () => showRunTerminal(true)),
 
     vscode.commands.registerCommand("bddPilot.jumpToFirstFailure", async () => {
       const domains = deps.treeProvider.getDomains();
@@ -473,12 +474,12 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
       });
       if (intent === "abort") {
         deps.abortActiveRun();
-        deps.output.appendLine("\n[bdd-pilot] Cancellation requested...");
+        writeRunTerminal("\n[bdd-pilot] Cancellation requested...\n");
         return;
       }
       if (intent === "forceUnlock") {
         deps.forceReleaseRunLock();
-        deps.output.appendLine("\n[bdd-pilot] Busy lock force-cleared.");
+        writeRunTerminal("\n[bdd-pilot] Busy lock force-cleared.\n");
         void vscode.window.showInformationMessage(deps.tr("toast.forceUnlock"));
         return;
       }

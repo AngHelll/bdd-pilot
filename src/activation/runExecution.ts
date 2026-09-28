@@ -1,16 +1,6 @@
-import * as path from "path";
 import * as vscode from "vscode";
 import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
-import { loadStageEnv } from "../core/config/envFile";
 import { ParallelismMode, Stage } from "../core/config/types";
-import { formatRunTargetScopeLabels } from "../core/diagnostics/aiFailureContext";
-import {
-  createDotnetOutputFilterState,
-  flushDotnetOutputFilter,
-  formatOutputSectionHeader,
-  formatRunContextLine,
-  processDotnetOutputChunk,
-} from "../core/feedback/dotnetOutputFilter";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { resolveRunKind, RunKind } from "../core/results/runHistory";
 import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
@@ -40,10 +30,10 @@ import { TestTreeProvider, readTreeGroupBy } from "../providers/testTreeProvider
 import {
   readAnalyzeOptions,
   readBindingGate,
-  readDotnetVerbosity,
   readSettings,
   readSuggestScopedWhenLarge,
 } from "./extensionSettings";
+import { writeRunTerminal } from "./runTerminal";
 import { resolveRunTargets } from "./runTargets";
 import { promptScopedRunNudgeIfNeeded } from "./scopedRunNudgeUi";
 
@@ -72,7 +62,6 @@ export interface RunExecutionDeps {
   ) => void;
   notifyPostRunFeedback: (request: PostRunFeedbackRequest) => void;
   persistHistory: () => void;
-  appendRunDiagnosticsToOutput: (text: string) => void;
 }
 
 export function createRunExecutor(deps: RunExecutionDeps) {
@@ -166,7 +155,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     if (totalExpected === 0) {
       const emptyLine = formatDiscoverTimeLine(classifyDiscoverTime({ gherkin: 0 }));
       if (emptyLine) {
-        deps.output.appendLine(`[bdd-pilot] ${emptyLine}`);
+        writeRunTerminal(`[bdd-pilot] ${emptyLine}\n`);
       }
       void vscode.window.showInformationMessage(deps.tr("toast.discoverEmptyScope"));
       releaseRunLock();
@@ -196,13 +185,13 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       domains: deps.treeProvider.getDomains(),
       analyzeOptions: readAnalyzeOptions(locale),
       onOutput: (chunk) => {
-        deps.output.append(chunk);
+        writeRunTerminal(chunk);
       },
     });
     if (!preflight.proceed) {
       releaseRunLock();
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
-        deps.output.appendLine(line);
+        writeRunTerminal(`${line}\n`);
       }
       return;
     }
@@ -272,8 +261,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
               // list-tests canceled — handled below via signal.aborted
             }
             if (controller.signal.aborted) {
-              deps.output.appendLine("");
-              deps.output.appendLine(formatRunCanceledLine({ forced: false }));
+              writeRunTerminal(`\n${formatRunCanceledLine({ forced: false })}\n`);
               deps.notifyPostRunFeedback({
                 canceled: true,
                 debug: false,
@@ -285,46 +273,15 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           }
 
           if (!opts?.debug) {
-            deps.output.clear();
+            writeRunTerminal("\n");
             if (!opts?.rawFilter) {
               const scopeTargets = runTargets.length > 0 ? runTargets : [{ kind: "all" as const }];
               deps.treeProvider.clearResultsForRunScope(scopeTargets);
             }
-
-            const loadedEnv = loadStageEnv(project.projectDir, currentStage);
-            const envMissingKey = `bddPilot.envMissingNotified.${currentStage}`;
-            if (loadedEnv.loadedFiles.length > 0) {
-              void deps.context.workspaceState.update(envMissingKey, undefined);
-              const names = loadedEnv.loadedFiles.map((f) => path.basename(f)).join(", ");
-              deps.output.appendLine(
-                deps.tr("log.envLoaded", {
-                  files: names,
-                  count: Object.keys(loadedEnv.vars).length,
-                }),
-              );
-            } else if (!deps.context.workspaceState.get<boolean>(envMissingKey)) {
-              deps.output.appendLine(deps.tr("log.envMissing", { stage: currentStage }));
-              void deps.context.workspaceState.update(envMissingKey, true);
-            }
           }
 
           const runLocale = deps.localeService.getLocale();
-          const filterState = createDotnetOutputFilterState();
-          const verbosity = readDotnetVerbosity();
           let fileLockHinted = false;
-          const scopeLabel = opts?.rawFilter
-            ? opts.rawFilter
-            : formatRunTargetScopeLabels(runTargets.length > 0 ? runTargets : [{ kind: "all" }]).join(
-                " | ",
-              );
-          deps.output.appendLine(formatOutputSectionHeader(runLocale, "run"));
-          deps.output.appendLine(
-            formatRunContextLine(runLocale, {
-              stage: currentStage,
-              mode: currentMode,
-              scopeLabel,
-            }),
-          );
 
           const scopedFilter =
             opts?.rawFilter?.trim() ||
@@ -356,10 +313,6 @@ export function createRunExecutor(deps: RunExecutionDeps) {
               listed = undefined;
             }
             const classified = classifyDiscoverTime({ listed, gherkin: totalExpected });
-            const discoverLine = formatDiscoverTimeLine(classified);
-            if (discoverLine) {
-              deps.output.appendLine(`[bdd-pilot] ${discoverLine}`);
-            }
             if (classified.kind === "zero") {
               const listedZeroMessage = deps.tr("toast.discoverListedZero");
               lastMessage = listedZeroMessage;
@@ -368,24 +321,15 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             }
           }
 
-          const appendFiltered = (chunk: string): void => {
+          const writeRunStream = (chunk: string): void => {
+            if (opts?.debug) {
+              return;
+            }
             if (!fileLockHinted && detectBuildFileLock(chunk)) {
               fileLockHinted = true;
-              deps.output.appendLine(formatBuildFileLockHintLine());
+              writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);
             }
-            const filtered = processDotnetOutputChunk(chunk, filterState, verbosity);
-            if (filtered.length > 0) {
-              deps.output.append(filtered);
-            }
-          };
-
-          const beginResultsSection = (): void => {
-            const flushed = flushDotnetOutputFilter(filterState);
-            if (flushed.length > 0) {
-              deps.output.append(flushed);
-            }
-            deps.output.appendLine("");
-            deps.output.appendLine(formatOutputSectionHeader(runLocale, "results"));
+            writeRunTerminal(chunk);
           };
 
           const result = await deps.runService.runExecution({
@@ -405,17 +349,13 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             domains: deps.treeProvider.getDomains(),
             analyzeOptions: readAnalyzeOptions(runLocale),
             onProgress,
-            onOutput: appendFiltered,
+            onOutput: writeRunStream,
           });
 
           if (result.canceled) {
-            beginResultsSection();
-            deps.output.appendLine(formatRunCanceledLine({ forced: !!result.forced }));
+            writeRunTerminal(`${formatRunCanceledLine({ forced: !!result.forced })}\n`);
             if (result.summary) {
               deps.applyRunSummaryToTree(result.summary, runTargets, { canceled: true });
-              deps.output.appendLine(
-                `[bdd-pilot] Partial results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
-              );
             }
             deps.notifyPostRunFeedback({
               canceled: true,
@@ -435,13 +375,8 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             return;
           }
 
-          beginResultsSection();
-          deps.output.appendLine(`[bdd-pilot] Process exited with code ${result.exitCode}.`);
           if (result.summary) {
             deps.applyRunSummaryToTree(result.summary, runTargets, { rawFilter: !!opts?.rawFilter });
-            deps.output.appendLine(
-              `[bdd-pilot] Results (${result.summary.source}): ${result.summary.passed} passed, ${result.summary.failed} failed, ${result.summary.skipped} skipped (${result.summary.total} total).`,
-            );
           }
           deps.notifyPostRunFeedback({
             canceled: false,
@@ -452,8 +387,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           });
           deps.persistHistory();
         } catch (err) {
-          deps.output.appendLine(`\n[bdd-pilot] Error: ${String(err)}`);
-          deps.appendRunDiagnosticsToOutput(String(err));
+          writeRunTerminal(`\n[bdd-pilot] Error: ${String(err)}\n`);
           deps.notifyPostRunFeedback({
             canceled: false,
             debug: false,

@@ -8,6 +8,7 @@ import { DashboardContext } from "../providers/dashboardPanel";
 import { RunService } from "../providers/runService";
 import { TestTreeProvider } from "../providers/testTreeProvider";
 import { readSettings } from "./extensionSettings";
+import { showRunTerminal } from "./runTerminal";
 
 export type ExecuteRunFn = (
   target: RunTarget | RunTarget[],
@@ -49,7 +50,7 @@ export function createDashboardCommands(deps: DashboardCommandsDeps) {
     const target = ctx.actions?.target;
     switch (command) {
       case "showOutput":
-        deps.output.show(true);
+        showRunTerminal(true);
         return;
       case "copyForAi":
         await deps.copyFailureContextForAi();

@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.54.0] — 2026-09-28
+
+### Changed
+- **Terminal run output** — the `dotnet test` stream is written to the integrated terminal **BDD Pilot** (reused, raw). Pilot no longer prints triage, diagnostics, honesty, rehydrate, or section headers to the Output channel. The live summary, the one-line toast, and Copy Matching Debug Pack stay. Cancel, preflight decline, file-lock, and empty-scope discover use that terminal. `bddPilot.showOutput` and `feedback.autoShowOutput` reveal it. Spec `terminal-run-output-v1.54.md`
+
 ## [1.53.0] — 2026-09-28
 
 ### Changed

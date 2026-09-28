@@ -115,7 +115,7 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
   - Scenario → `FullyQualifiedName~<Feature>Feature.<Scenario>`
   - Outline row → `DisplayName~parameter: %22…%22, value: %22…%22` (single Theory row)
   - Tag → `Category=<tag>`
-  Before a **scoped** run, Output can show a **Discover** line if `--list-tests` lists 0 tests or 1 vs many Gherkin leaves (empty scope does not start `dotnet test`). Run All does not add a list-tests probe.
+  Empty Gherkin scope does not start `dotnet test` and writes one discover line to the **BDD Pilot** terminal. Run All does not add a list-tests probe.
 - **Tree search** to filter by name, tag, or path. Active filter shows on the summary row; **Run filtered** replaces Run All while filtered. Use `@tag` for tag-only matching. Persists per workspace. **Ctrl+F** highlights in the list only — Pilot Search controls run scope. Test Explorer does not inherit the tree filter.
 - **Re-run failed** from the last run's filter.
 - **Saved execution profiles** for common filters.
@@ -127,31 +127,22 @@ Use both: discover/run unit tests in TE; drive Reqnroll/SpecFlow scenarios from 
 - **Parallelism mode** (`debug`/`parallel`/`ci`) passed as xUnit RunSettings, so
   the project's `xunit.runner.json` is never mutated on disk.
 - **Reliable execution**: progress UI, cancellation, and live streaming to the
-  *BDD Pilot* output channel.
+  integrated terminal **BDD Pilot**.
 - **Copy effective command** — palette copies the exact `dotnet test …` from the last Pilot run or debug (filter + run flags) for CI or a terminal.
 - **Debug** launches `dotnet test` under the .NET debugger (`coreclr`).
 
 ### Results & diagnostics
 - **TRX + Cucumber JSON**: scenarios decorated with pass / fail / skip and duration.
-- **Tree mapping report**: after a **scoped** run, Output shows `mapped/inScope` counts; when some
-  scenarios lack a TRX match (`not_in_trx`), lists them (capped) and the palette command
-  **Show Unmapped Scenarios** opens a QuickPick to jump to the `.feature` line.
-  The same Output also lists **TRX rows unused** by any Gherkin leaf (capped) and **ambiguous**
-  matches (Outline Theory: no silent first-apply when one row matches K>1 leaves; `__pickleIndex`
-  is a row-index tie-break only; non-outline still first-applied) — including after **Run All** —
-  mapping honesty, not a generic unit-test runner.
-  Unused TRX lists split **gherkin-like** vs **other** (unit/helpers) so mixed solutions are easier to read.
-  When tree (mapped) totals differ from TRX, the summary shows both.
-  Use **BDD Pilot: Copy Matching Debug Pack** to copy a sanitized cross-layer snapshot for support
-  (clipboard only; no remote telemetry), including **layout/grouping** (Pilot domain, feature path,
-  subpath, `groupBy`). When gaps exist, Output also prints a one-line **Matching health** hint.
-  After multi-domain failed runs, Output can add a **Diagnostics by domain** roll-up (failure buckets per Pilot domain).
-  After any failed run with TRX, Results also shows **Review first** (which failure class to open first); Jump and **Filter Failures by Class** follow that priority.
+- **Tree mapping report**: after a **scoped** run, scenarios without a TRX match (`not_in_trx`) show on the summary unmapped chip; **Show Unmapped Scenarios** opens a QuickPick to jump to the `.feature` line.
+  Outline Theory does not silent-first-apply when one row matches K>1 leaves; `__pickleIndex` is a row-index tie-break only.
+  Unused TRX rows split **gherkin-like** vs **other** (unit/helpers). When tree (mapped) totals differ from TRX, the summary shows both.
+  **Copy Matching Debug Pack** copies that sanitized snapshot (clipboard only; no remote telemetry), including layout/grouping.
+  After a failed run, the toast says **Review first**; Jump and **Filter Failures by Class** follow that priority.
 - **Webview dashboard**: run history (with **Scope** per run, e.g. All tests / `@tag`), totals, **enriched flaky scenario table** (failure rate, avg duration, last error, click to open `.feature`), and **last-run diagnostic card** (same top-1 rule as the tree summary row).
 - **Evidence links** on failures (screenshots, traces, videos when present).
 - **Actionable diagnostics**: missing SDK from `global.json`, private NuGet feed/auth
   errors, vulnerability-as-error, filter mismatches, broken Playwright drivers, pending step definitions, etc.
-  Surfaced in **Output** (`summary` or `full`), **post-run toast**, **tree summary chip**, and **dashboard card**.
+  Surfaced in the **tree summary chip**, **post-run toast**, and **dashboard card**.
 - **AI-ready failure context**: copy structured markdown of the last failed run to the
   clipboard for Cursor/Copilot (no embedded LLM — review before sharing externally).
   Optional **`bddPilot.ai.rehydrateFromTrx`** (default off) rebuilds that context after Reload
@@ -258,12 +249,12 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.run.noBuild` | `false` | When `true`, pass `--no-build` (skip build; requires prior successful build). |
 | `bddPilot.run.suggestScopedWhenLarge` | `true` | Before Run All on large multi-domain/tag suites, suggest a scoped run. Small trees stay silent. |
 | `bddPilot.run.runSettings` | `""` | Path to a `.runsettings` file (workspace-relative or absolute) for `--settings`. |
-| `bddPilot.run.cliVerbosity` | `""` | Optional `dotnet test --verbosity` (`quiet`…`diagnostic`). Empty omits the flag. **Not** the Output stream filter — that is `feedback.dotnetVerbosity`. |
+| `bddPilot.run.cliVerbosity` | `""` | Optional `dotnet test --verbosity` (`quiet`…`diagnostic`). Empty omits the flag. The BDD Pilot terminal shows the stream this flag produces. |
 | `bddPilot.run.blame` | `false` | When `true`, pass `--blame` (Sequence.xml for crash isolation). |
 | `bddPilot.run.blameHang` | `off` | When `on`, pass `--blame-hang` with `blameHangTimeout` (aborts tests that exceed the timeout). |
 | `bddPilot.run.blameHangTimeout` | `10m` | Timeout for `--blame-hang-timeout` when `blameHang` is `on`. |
 | `bddPilot.run.byStage` | `{}` | Per-`STAGE` overrides for `configuration` / `runSettings` only (not cliVerbosity/blame). Example: `{ "stg": { "configuration": "Release", "runSettings": "config/stg.runsettings" } }`. |
-| `bddPilot.feedback.dotnetVerbosity` | `filtered` | Live `dotnet test` stream in Output: `filtered` (hide discovery/build noise) or `raw`. Distinct from `run.cliVerbosity`. |
+| `bddPilot.feedback.dotnetVerbosity` | `filtered` | Kept for compatibility. The terminal shows the sanitized stream; this setting no longer filters it. |
 | `bddPilot.tree.displayMode` | `detailed` | Tree density: `detailed` (roll-ups on folders) or `compact` (narrative fail/skip over tags). |
 | `bddPilot.tree.groupBy` | `domain` | Tree grouping: `domain` (folder layout) or `tag` (`@smoke` folders). |
 | `bddPilot.tree.tagDisplay` | `count` | How tags show in the tree: `hidden`, `count`, `compact`, or `full`. |
@@ -275,8 +266,8 @@ testable and reusable (e.g. a future CLI).
 | `bddPilot.filter.outlineRowFilter` | `displayName` | `displayName` = one outline row; `scenarioOnly` = whole Theory. |
 | `bddPilot.locale` | `auto` | UI language: `auto` (follow VS Code), `en`, or `es`. |
 | `bddPilot.diagnostics.extendedRules` | `false` | Opt-in extended post-run rules (cloud, X-Ray, API HTTP). |
-| `bddPilot.feedback.diagnosticsInOutput` | `summary` | Output diagnostics: `summary`, `full`, or `off`. Multi-domain failure roll-ups still appear when thresholds are met. |
-| `bddPilot.feedback.autoShowOutput` | `off` | Auto-show Output when a run finishes: `off`, `onFailure`, or `always`. |
+| `bddPilot.feedback.diagnosticsInOutput` | `summary` | Kept for compatibility. Diagnostics are not printed; the summary chip and toast carry the top hint. |
+| `bddPilot.feedback.autoShowOutput` | `off` | Auto-show the BDD Pilot terminal when a run finishes: `off`, `onFailure`, or `always`. |
 | `bddPilot.feedback.postRunToast` | `failures` | Post-run toast: `off`, `failures`, or `always`. |
 | `bddPilot.preRun.bindingGate` | `warn` | Pre-run binding check via BDD Guardian: `off`, `warn`, or `block`. |
 

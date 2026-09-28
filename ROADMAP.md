@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.53.0** · **Marketplace: v1.53.0** · **Next: watch** · **667 unit tests**
+> **Current release: v1.54.0** · **Marketplace: v1.53.0** · **Next: publish v1.54.0** · **667 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.53.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.54.0** — terminal run output |
+| 🎯 Next | publish **v1.54.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.54.0** | Terminal run output — `dotnet test` stream in the BDD Pilot terminal; Pilot narrative no longer printed · spec `terminal-run-output-v1.54.md` |
 | **1.53.0** | Quiet run communication — short failure toast, `listed=0` on progress only, Output reveal only via `autoShowOutput` · spec `quiet-run-communication-v1.53.md` |
 | **1.52.1** | Busy-lock recovery — enrich budget + second Cancel force-unlock · spec `msbuild-contention-containment-v1.52.1.md` |
 | **1.52.0** | Activation & discovery perf — lazy Theory enrich + domain reuse · spec `activation-discovery-perf-v1.52.md` |
@@ -231,6 +233,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.54.0 — Terminal run output ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Terminal** | stdout/stderr of a non-debug `dotnet test` go to a reused pseudoterminal named BDD Pilot |
+| **Narrative** | Triage, diagnostics, honesty, rehydrate, and section headers are no longer printed. Summary chip, one-line toast, and Copy Matching Debug Pack stay |
+| **Exceptions** | Cancel, run-not-started, file-lock, binding-gate log, and empty-scope discover write to that terminal. `showOutput` / `autoShowOutput` reveal it |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 667 unit tests |
 
 ### v1.53.0 — Quiet run communication ✅ shipped
 
