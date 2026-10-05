@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.58.0** · **Marketplace: v1.56.0** · **Next: publish v1.58.0** · **719 unit tests**
+> **Current release: v1.58.0** · **Marketplace: v1.58.0** · **Open VSX: v1.58.0** · **Next: watch** · **719 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.56.0** |
-| 📦 GitHub (pending Marketplace) | **v1.58.0** — debug attach to testhost (includes v1.57.0) |
-| 🎯 Next | publish **v1.58.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.58.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -238,7 +237,7 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.58.0 — Debug attach to testhost ✅ shipped (Marketplace pending)
+### v1.58.0 — Debug attach to testhost ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -246,7 +245,7 @@ _Nothing queued._
 | **Publish** | Same VSIX to Marketplace and Open VSX |
 | **Listing** | New README, description, keywords, gallery banner |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.58.0 (Marketplace + Open VSX) |
 | **Tests** | 719 unit tests |
 
 ### v1.57.0 — Live progress detail ✅ shipped (Marketplace pending)
@@ -1148,4 +1147,4 @@ src/
 
 ---
 
-*Last updated: v1.58.0 debug attach on GitHub; Marketplace pending.*
+*Last updated: v1.58.0 debug attach shipped Marketplace + Open VSX.*
