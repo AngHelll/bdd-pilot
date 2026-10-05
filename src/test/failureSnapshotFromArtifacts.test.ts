@@ -58,6 +58,29 @@ describe("failureSnapshotFromArtifacts", () => {
     assert.strictEqual(hasFailureContext(undefined, "Passed!  - Failed: 0, Passed: 10, Skipped: 0, Total: 10"), false);
   });
 
+  it("sanitizes TRX error text copied onto the failure snapshot", () => {
+    const secret = "snapshot-error-secret";
+    const rawError = `CLIENT_SECRET=${secret} expected 401`;
+    const trx = FAILED_TRX.replace("Expected true but was false", rawError);
+    const trxPath = writeTemp(trx, ".trx");
+    try {
+      const snapshot = buildFailureSnapshotFromArtifacts({
+        projectDir: sampleDir,
+        trxPath,
+      });
+      assert.strictEqual(
+        snapshot.failedScenarios[0]?.errorMessage,
+        "CLIENT_SECRET=***REDACTED*** expected 401",
+      );
+      assert.ok(!snapshot.outputForAnalysis.includes(secret));
+      assert.ok(snapshot.outputForAnalysis.includes("***REDACTED***"));
+      assert.strictEqual(snapshot.trxSummary?.results[0]?.errorMessage, rawError);
+      assert.ok(!JSON.stringify(snapshot.failedScenarios).includes(secret));
+    } finally {
+      fs.unlinkSync(trxPath);
+    }
+  });
+
   it("builds snapshot from TRX with mapped failed scenario", () => {
     const trxPath = writeTemp(FAILED_TRX, ".trx");
     try {

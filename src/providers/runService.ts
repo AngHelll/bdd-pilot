@@ -11,20 +11,30 @@ import {
 import { classifyRunCompletion, RunCompletionKind } from "../core/diagnostics/runOutcomeClass";
 import { AnalyzeDotnetOutputOptions } from "../core/diagnostics/analyzer";
 import { loadStageEnv } from "../core/config/envFile";
-import { MODE_PROFILES, ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
+import { ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { PilotLocale, t } from "../core/i18n";
 import { DomainGroup } from "../core/gherkin/model";
 import { findRecentEvidence } from "../core/results/evidence";
 import { loadRunResults, UnifiedSummary } from "../core/results/resultLoader";
 import {
   createDebugTrxFileName,
-  createRunTrxFileName,
   resolveTrxPath,
 } from "../core/runner/trxArgs";
-import { RunTarget, buildCombinedFilter, buildFilter } from "../core/runner/filterBuilder";
+import { RunTarget, buildFilter } from "../core/runner/filterBuilder";
 import { formatPreRunDrySummary } from "../core/runner/preRunDrySummary";
-import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
-import { buildArgs, runDotnetTest, RunRequest as DotnetRunRequest } from "../core/runner/dotnetTest";
+import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgress";
+import { buildArgs, RunRequest as DotnetRunRequest, runDotnetTest } from "../core/runner/dotnetTest";
+import {
+  buildAttachDebugConfig,
+  DEBUG_HOST_ENV,
+  parseTesthostPids,
+} from "../core/runner/debugAttach";
+import {
+  buildDotnetTestRequest,
+  executeTestRun,
+  matchScenarioRecords,
+  resolveExecutionFilter,
+} from "../core/runner/executeTestRun";
 import {
   EffectiveDotnetCommandSnapshot,
   formatEffectiveDotnetCommand,
@@ -135,11 +145,16 @@ interface PendingDebugSession {
   trxPath: string;
   req: RunRequest;
   filter?: string;
+  controller: AbortController;
 }
 
 export class RunService {
   private readonly _onHistory = new vscode.EventEmitter<RunHistoryEntry[]>();
   readonly onHistoryChanged = this._onHistory.event;
+
+  /** Fires when the debug `dotnet test` process exits (TRX is written by then). */
+  private readonly _onDebugEnded = new vscode.EventEmitter<void>();
+  readonly onDebugEnded = this._onDebugEnded.event;
 
   private readonly _onCompleteRun = new vscode.EventEmitter<void>();
   readonly onRunCompleted = this._onCompleteRun.event;
@@ -240,81 +255,82 @@ export class RunService {
   }
 
   async runExecution(req: RunRequest): Promise<RunServiceResult> {
-    const filter = this.resolveDotnetFilter(req);
-
     if (req.debug) {
-      return this.runDebug(req, filter);
+      return this.runDebug(req, this.resolveDotnetFilter(req));
     }
 
-    const loadedEnv = loadStageEnv(req.projectDir, req.stage);
-    const trxFileName = createRunTrxFileName();
-    this.runStartedAt = Date.now();
-    const progressParser = new LiveProgressParser(req.totalExpected);
-
-    const { dotnetReq } = this.buildDotnetRunRequest(
-      req,
-      filter,
-      trxFileName,
-      loadedEnv.vars,
-    );
-
-    let buffer = "";
-    const capture = (chunk: string): string => {
-      const clean = sanitize(chunk);
-      buffer += clean;
-      req.onOutput?.(clean);
-      for (const event of progressParser.feed(clean)) {
-        req.onProgress?.(progressParser.getState(), event);
-      }
-      return clean;
-    };
-
-    const result = await runDotnetTest(
-      dotnetReq,
-      {
-        onStart: (cmd) => {
-          this.rememberEffectiveCommand(dotnetReq.dotnetPath, buildArgs(dotnetReq), "run");
-          req.onStart?.(cmd);
-          capture(`[bdd-pilot] ${sanitize(cmd)}\n`);
-        },
-        onStdout: capture,
-        onStderr: capture,
+    const executed = await executeTestRun({
+      targets: req.targets,
+      rawFilter: req.rawFilter,
+      stage: req.stage,
+      mode: req.mode,
+      settings: req.settings,
+      projectDir: req.projectDir,
+      testTarget: req.testTarget,
+      domains: req.domains,
+      totalExpected: req.totalExpected,
+      workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+      signal: req.signal,
+      onOutput: req.onOutput,
+      onStart: req.onStart,
+      onProgress: req.onProgress,
+      onRunStarted: () => {
+        this.runStartedAt = Date.now();
       },
-      req.signal ?? new AbortController().signal,
-    );
+      onEffectiveCommand: (dotnetPath, args) => {
+        this.rememberEffectiveCommand(dotnetPath, args, "run");
+      },
+    });
 
-    const summary = loadRunResults(req.projectDir, result.trxPath);
-    const liveState = progressParser.getState();
-    const absoluteTrxPath = toAbsoluteTrxPath(result.trxPath);
-    const historyEntry = result.canceled
-      ? this.recordCanceledHistory(req, filter, summary, liveState, absoluteTrxPath)
-      : this.recordHistory(req, filter, summary, absoluteTrxPath);
+    const processResult = {
+      exitCode: executed.exitCode,
+      canceled: executed.canceled,
+      trxPath: executed.trxPath,
+    };
+    const scenarios = sanitizeScenarioRecords(executed.matchedScenarios);
+    const historyEntry = executed.canceled
+      ? this.recordCanceledHistory(
+          req,
+          executed.filter,
+          executed.summary,
+          executed.liveState,
+          executed.absoluteTrxPath,
+          scenarios,
+        )
+      : this.recordHistory(req, executed.filter, executed.summary, executed.absoluteTrxPath, scenarios);
     if (historyEntry) {
       this.history = trimHistory(this.history, HISTORY_MAX);
       this._onHistory.fire(this.history);
     }
-    if (!result.canceled) {
-      this.updateFailedRunSnapshot(req, filter, result, summary, buffer, historyEntry);
+    if (!executed.canceled) {
+      this.updateFailedRunSnapshot(
+        req,
+        executed.filter,
+        processResult,
+        executed.summary,
+        executed.outputBuffer,
+        historyEntry,
+      );
     }
     this.updateSessionRunSnapshot(
       req,
-      filter,
-      result,
-      summary,
-      buffer,
+      executed.filter,
+      processResult,
+      executed.summary,
+      executed.outputBuffer,
       historyEntry,
-      liveState,
+      executed.liveState,
     );
     this.notifyRunCompleted();
 
     return {
-      exitCode: result.exitCode,
-      canceled: result.canceled,
-      trxPath: result.trxPath,
-      summary,
-      outputBuffer: buffer,
+      exitCode: executed.exitCode,
+      canceled: executed.canceled,
+      trxPath: executed.trxPath,
+      summary: executed.summary,
+      outputBuffer: executed.outputBuffer,
       historyEntry,
-      forced: result.forced,
+      forced: executed.forced,
     };
   }
 
@@ -330,7 +346,7 @@ export class RunService {
     const summary = loadRunResults(pending.req.projectDir, pending.trxPath);
     const completionKind = classifyRunCompletion({
       exitCode: summary && summary.total > 0 ? 0 : 1,
-      canceled: false,
+      canceled: pending.controller.signal.aborted,
       summary,
       outputBuffer: "",
     });
@@ -338,7 +354,13 @@ export class RunService {
     let historyEntry: RunHistoryEntry | undefined;
     if (summary && summary.total > 0) {
       const absoluteTrxPath = toAbsoluteTrxPath(pending.trxPath);
-      historyEntry = this.recordHistory(pending.req, pending.filter, summary, absoluteTrxPath);
+      historyEntry = this.recordHistory(
+        pending.req,
+        pending.filter,
+        summary,
+        absoluteTrxPath,
+        this.buildScenarioRecords(pending.req, summary),
+      );
       if (historyEntry) {
         this.history = trimHistory(this.history, HISTORY_MAX);
         this._onHistory.fire(this.history);
@@ -409,29 +431,18 @@ export class RunService {
     if (resolution.missingPath) {
       preCommandMessages.push(formatRunSettingsMissingMessage(resolution.missingPath));
     }
-    const configuration = effective.runConfiguration.trim() || undefined;
     return {
-      dotnetReq: {
-        dotnetPath: req.settings.dotnetPath,
+      dotnetReq: buildDotnetTestRequest({
+        settings: req.settings,
+        stage: req.stage,
+        mode: req.mode,
         projectDir: req.projectDir,
         testTarget: req.testTarget,
         filter,
-        stage: req.stage,
-        mode: MODE_PROFILES[req.mode],
-        resultsDir: "TestResults",
         trxFileName,
-        configuration,
-        noBuild: req.settings.runNoBuild,
-        settingsPath: resolution.settingsPath,
-        cliVerbosity: req.settings.runCliVerbosity.trim() || undefined,
-        blame: req.settings.runBlame || undefined,
-        blameHang: req.settings.runBlameHang === "on" || undefined,
-        blameHangTimeout:
-          req.settings.runBlameHang === "on"
-            ? req.settings.runBlameHangTimeout.trim() || "10m"
-            : undefined,
         extraEnv,
-      },
+        workspaceRoot,
+      }),
       preCommandMessages,
     };
   }
@@ -451,29 +462,66 @@ export class RunService {
     const trxPath = resolveTrxPath(req.projectDir, "TestResults", trxFileName);
     this.runStartedAt = Date.now();
 
-    const { dotnetReq } = this.buildDotnetRunRequest(req, filter, trxFileName);
-    const args = buildArgs(dotnetReq, { includeXUnitRunSettings: false });
-    this.rememberEffectiveCommand(req.settings.dotnetPath, args, "debug");
+    const { dotnetReq } = this.buildDotnetRunRequest(req, filter, trxFileName, {
+      ...loadedEnv.vars,
+      ...DEBUG_HOST_ENV,
+    });
+    const argsOptions = { includeXUnitRunSettings: false };
+    this.rememberEffectiveCommand(req.settings.dotnetPath, buildArgs(dotnetReq, argsOptions), "debug");
 
-    const config: vscode.DebugConfiguration = {
-      type: "coreclr",
-      name: BDD_PILOT_DEBUG_SESSION_NAME,
-      request: "launch",
-      program: req.settings.dotnetPath,
-      args,
-      cwd: req.projectDir,
-      env: { ...process.env, ...loadedEnv.vars, STAGE: req.stage },
-      console: "integratedTerminal",
+    const controller = new AbortController();
+    const pending: PendingDebugSession = { trxPath, req, filter, controller };
+    this.pendingDebug = pending;
+    this.debugActive = true;
+
+    const attached = new Set<number>();
+    let carry = "";
+    const attach = async (pid: number): Promise<void> => {
+      let started = false;
+      try {
+        started = await vscode.debug.startDebugging(
+          folder,
+          buildAttachDebugConfig(BDD_PILOT_DEBUG_SESSION_NAME, pid),
+        );
+      } catch {
+        started = false;
+      }
+      if (!started && !controller.signal.aborted) {
+        void vscode.window.showWarningMessage(t(req.locale, "toast.debugNoDebugger"));
+        controller.abort();
+      }
+    };
+    const onChunk = (chunk: string): void => {
+      req.onOutput?.(sanitize(chunk));
+      const scan = parseTesthostPids(chunk, carry);
+      carry = scan.carry;
+      for (const pid of scan.pids) {
+        if (!attached.has(pid)) {
+          attached.add(pid);
+          void attach(pid);
+        }
+      }
     };
 
-    this.pendingDebug = { trxPath, req, filter };
-    const started = await vscode.debug.startDebugging(folder, config);
-    if (!started) {
-      this.pendingDebug = undefined;
-      return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
-    }
+    const settle = (): void => {
+      if (this.pendingDebug === pending) {
+        this._onDebugEnded.fire();
+      }
+    };
+    runDotnetTest(
+      dotnetReq,
+      {
+        onStdout: onChunk,
+        onStderr: (chunk) => req.onOutput?.(sanitize(chunk)),
+        onStart: (cmd) => req.onOutput?.(`[bdd-pilot] ${sanitize(cmd)}\n`),
+      },
+      controller.signal,
+      argsOptions,
+    ).then(settle, (err: unknown) => {
+      req.onOutput?.(`\n[bdd-pilot] Error: ${sanitize(String(err))}\n`);
+      settle();
+    });
 
-    this.debugActive = true;
     return {
       exitCode: null,
       canceled: false,
@@ -483,17 +531,26 @@ export class RunService {
     };
   }
 
+  /** Cancel while debugging: kill the `dotnet test` tree and detach Pilot sessions. */
+  cancelDebug(): void {
+    this.pendingDebug?.controller.abort();
+    const session = vscode.debug.activeDebugSession;
+    if (session?.name === BDD_PILOT_DEBUG_SESSION_NAME) {
+      void vscode.debug.stopDebugging(session);
+    }
+  }
+
   private recordHistory(
     req: RunRequest,
     filter: string | undefined,
     summary: UnifiedSummary | undefined,
-    trxPath?: string,
+    trxPath: string | undefined,
+    scenarios: ScenarioRunRecord[],
   ): RunHistoryEntry | undefined {
     if (!summary) {
       return undefined;
     }
 
-    const scenarios = this.buildScenarioRecords(req, summary);
     this.updateFailedTargetsFromSummary(req, summary);
 
     const entry: RunHistoryEntry = {
@@ -522,7 +579,8 @@ export class RunService {
     filter: string | undefined,
     summary: UnifiedSummary | undefined,
     liveState: LiveProgressState,
-    trxPath?: string,
+    trxPath: string | undefined,
+    scenarioRecords: ScenarioRunRecord[],
   ): RunHistoryEntry | undefined {
     const hasSummary = !!summary && summary.total > 0;
     const hasLive = liveState.completed > 0;
@@ -530,7 +588,7 @@ export class RunService {
       return undefined;
     }
 
-    const scenarios = hasSummary ? this.buildScenarioRecords(req, summary!) : [];
+    const scenarios = hasSummary ? scenarioRecords : [];
     const passed = hasSummary ? summary!.passed : liveState.passed;
     const failed = hasSummary ? summary!.failed : liveState.failed;
     const skipped = hasSummary ? summary!.skipped : liveState.skipped;
@@ -558,33 +616,9 @@ export class RunService {
   }
 
   private buildScenarioRecords(req: RunRequest, summary: UnifiedSummary): ScenarioRunRecord[] {
-    const scenarios: ScenarioRunRecord[] = [];
-    for (const r of summary.results) {
-      const match = matchRunTarget(req.targets, r.testName, req.domains ?? []);
-      if (match) {
-        scenarios.push({
-          featurePath: match.feature.filePath,
-          scenarioLine: match.scenario.line,
-          scenarioName: match.scenario.name,
-          outcome: r.outcome,
-          durationMs: r.durationMs,
-          errorMessage: r.errorMessage,
-        });
-      }
-    }
-    if (scenarios.length === 0) {
-      for (const r of summary.results) {
-        scenarios.push({
-          featurePath: "",
-          scenarioLine: 0,
-          scenarioName: r.testName,
-          outcome: r.outcome,
-          durationMs: r.durationMs,
-          errorMessage: r.errorMessage,
-        });
-      }
-    }
-    return scenarios;
+    return sanitizeScenarioRecords(
+      matchScenarioRecords(req.targets, summary, req.domains ?? []),
+    );
   }
 
   private updateFailedTargetsFromSummary(req: RunRequest, summary: UnifiedSummary): void {
@@ -627,7 +661,7 @@ export class RunService {
     const evidence = findRecentEvidence(projectDir, this.runStartedAt - 5000);
     const parts: string[] = [];
     if (errorMessage) {
-      parts.push(errorMessage);
+      parts.push(sanitize(errorMessage));
     }
     if (evidence.length > 0) {
       parts.push("\n--- Evidence (recent) ---");
@@ -834,12 +868,11 @@ export class RunService {
   }
 
   private resolveDotnetFilter(req: RunRequest): string | undefined {
-    return (
-      req.rawFilter?.trim() ||
-      (req.targets.length === 0 || req.targets.some((t) => t.kind === "all")
-        ? undefined
-        : buildCombinedFilter(req.targets, req.settings.filterMapping))
-    );
+    return resolveExecutionFilter({
+      rawFilter: req.rawFilter,
+      targets: req.targets,
+      filterMapping: req.settings.filterMapping,
+    });
   }
 
   private formatReqDrySummary(req: RunRequest, filter: string | undefined): string | undefined {
@@ -924,6 +957,21 @@ export class RunService {
     const line = t(req.locale, "bindingGate.skipped", { reason: reasonText });
     req.onOutput?.(`\n[bdd-pilot] ${line}\n`);
   }
+}
+
+/** History and failure snapshots are persisted or re-read later. Keep parser text raw until this copy. */
+function sanitizeStoredError(message: string | undefined): string | undefined {
+  if (message === undefined) {
+    return undefined;
+  }
+  return sanitize(message);
+}
+
+function sanitizeScenarioRecords(records: ScenarioRunRecord[]): ScenarioRunRecord[] {
+  return records.map((record) => ({
+    ...record,
+    errorMessage: sanitizeStoredError(record.errorMessage),
+  }));
 }
 
 function shortTestName(fqn: string): string {

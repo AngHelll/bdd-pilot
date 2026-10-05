@@ -358,9 +358,6 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           }
 
           const writeRunStream = (chunk: string): void => {
-            if (opts?.debug) {
-              return;
-            }
             if (!fileLockHinted && detectBuildFileLock(chunk)) {
               fileLockHinted = true;
               writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);

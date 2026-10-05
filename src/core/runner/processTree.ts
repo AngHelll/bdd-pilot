@@ -4,7 +4,7 @@ import { spawn } from "child_process";
 export const ABORT_KILL_GRACE_MS = 3000;
 /** After SIGKILL, resolve canceled even if `close` never fires. */
 export const ABORT_KILL_FORCE_WAIT_MS = 1000;
-/** Debug Cancel: force-finish if `onDidTerminateDebugSession` never arrives. */
+/** Debug Cancel: force-finish if the debug `dotnet test` process never reports exit. */
 export const DEBUG_TERMINATE_GRACE_MS = 5000;
 
 export type KillPhase = "term" | "kill";

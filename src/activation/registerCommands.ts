@@ -28,7 +28,6 @@ import {
   DEBUG_TERMINATE_GRACE_MS,
   resolveCancelIntent,
 } from "../core/runner/processTree";
-import { BDD_PILOT_DEBUG_SESSION_NAME } from "../providers/runService";
 import { showRunTerminal, writeRunTerminal } from "./runTerminal";
 import { DashboardPanel } from "../providers/dashboardPanel";
 import { LocaleService } from "../providers/localeService";
@@ -485,14 +484,9 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
         return;
       }
       if (intent === "stopDebug") {
-        const session = vscode.debug.activeDebugSession;
-        if (session?.name === BDD_PILOT_DEBUG_SESSION_NAME) {
-          void vscode.debug.stopDebugging(session);
-          armDebugTerminateWatchdog();
-          return;
-        }
-        deps.handleDebugSessionEnded();
-        void vscode.window.showInformationMessage(deps.tr("toast.debugStopFromCancel"));
+        deps.runService.cancelDebug();
+        writeRunTerminal("\n[bdd-pilot] Cancellation requested...\n");
+        armDebugTerminateWatchdog();
         return;
       }
       void vscode.window.showInformationMessage(deps.tr("toast.noActiveRun"));
@@ -635,11 +629,9 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
       }
     }),
 
-    vscode.debug.onDidTerminateDebugSession((session) => {
-      if (session.name === BDD_PILOT_DEBUG_SESSION_NAME) {
-        clearDebugTerminateWatchdog();
-        deps.handleDebugSessionEnded();
-      }
+    deps.runService.onDebugEnded(() => {
+      clearDebugTerminateWatchdog();
+      deps.handleDebugSessionEnded();
     }),
     { dispose: () => clearDebugTerminateWatchdog() },
   ];

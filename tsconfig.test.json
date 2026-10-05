@@ -5,6 +5,13 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["src/core/**/*.ts", "src/security/**/*.ts", "src/api/**/*.ts", "src/test/**/*.ts"],
+  "include": [
+    "src/core/**/*.ts",
+    "src/security/**/*.ts",
+    "src/agent/**/*.ts",
+    "src/api/**/*.ts",
+    "src/providers/runService.ts",
+    "src/test/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

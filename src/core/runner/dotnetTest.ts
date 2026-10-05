@@ -143,8 +143,9 @@ export function runDotnetTest(
   req: RunRequest,
   callbacks: RunCallbacks,
   signal: AbortSignal,
+  argsOptions: BuildArgsOptions = {},
 ): Promise<RunResult> {
-  const args = buildArgs(req);
+  const args = buildArgs(req, argsOptions);
   const env = buildEnv(process.env, req.stage, req.extraEnv);
   const trxPath = resolveTrxPath(req);
 

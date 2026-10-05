@@ -17,6 +17,7 @@ echo ""
 echo "  package.json version : $VERSION"
 echo "  publisher            : anghelll"
 echo "  VSCE_PAT             : set (${#VSCE_PAT} chars)"
+echo "  OVSX_PAT             : set (${#OVSX_PAT} chars)"
 echo ""
 
 echo "-- package VSIX --"

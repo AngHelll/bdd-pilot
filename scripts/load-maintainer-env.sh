@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Load maintainer.local for VSCE_PAT (never log the token).
+# Load maintainer.local for VSCE_PAT and OVSX_PAT (never log the tokens).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,5 +19,15 @@ if [[ -z "${VSCE_PAT:-}" ]]; then
   echo "  # add Marketplace Manage PAT → https://dev.azure.com/anghelll/_usersSettings/tokens" >&2
   echo "" >&2
   echo "  Or export VSCE_PAT in your shell for this session only." >&2
+  exit 2
+fi
+
+if [[ -z "${OVSX_PAT:-}" ]]; then
+  echo "error: OVSX_PAT is not set." >&2
+  echo "" >&2
+  echo "  Add OVSX_PAT to config/maintainer.local (Open VSX access token)." >&2
+  echo "  Create it at: https://open-vsx.org/user-settings/tokens" >&2
+  echo "" >&2
+  echo "  Or export OVSX_PAT in your shell for this session only." >&2
   exit 2
 fi

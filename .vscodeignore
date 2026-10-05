@@ -10,6 +10,7 @@ node_modules/**
 docs-internal/**
 .cursor/**
 .architecture-lens/**
+experiments/**
 esbuild.js
 tsconfig*.json
 .eslintrc.json

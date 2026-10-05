@@ -28,7 +28,16 @@ echo "-- vsce publish --"
 npx @vscode/vsce publish --no-dependencies
 
 echo ""
+echo "-- ovsx publish (same VSIX) --"
+if [[ ! -f bdd-pilot.vsix ]]; then
+  echo "error: bdd-pilot.vsix not found after package" >&2
+  exit 1
+fi
+npx ovsx publish bdd-pilot.vsix
+
+echo ""
 echo "Published. Verify:"
 echo "  https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot"
+echo "  https://open-vsx.org/extension/anghelll/bdd-pilot"
 echo ""
 echo "Post-publish: pin ROADMAP checklist · good first issue · watch 1–2 weeks."

@@ -6,6 +6,16 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.58.0] — 2026-10-05
+
+### Fixed
+- **Debug stops on breakpoints** — Debug (tree, CodeLens, Test Explorer) runs `dotnet test` with `VSTEST_HOST_DEBUG=1` / `VSTEST_DEBUG_NOBP=1` and attaches the `coreclr` debugger to each `testhost` PID it prints. Before, the debugger was attached to the `dotnet` CLI process and step definition breakpoints never hit. The session ends when `dotnet test` exits, so the TRX is complete. Cancel kills the process tree; Stop on the Debug toolbar detaches and lets the run finish. Without a C# debugger, a toast explains it and the run is canceled. Debug output goes to the **BDD Pilot** terminal. Spec `debug-attach-testhost-v1.58.md`
+- **Sanitized TRX failure messages** in failure snapshots rebuilt from artifacts.
+
+### Changed
+- **Publish** — `publish:marketplace` also publishes the same VSIX to Open VSX (`OVSX_PAT` in `config/maintainer.local`).
+- **Marketplace listing** — new README, description, keywords, gallery banner, and `Debuggers` category.
+
 ## [1.57.0] — 2026-09-28
 
 ### Changed

@@ -1,10 +1,15 @@
 {
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
-  "description": "Gherkin cockpit for Reqnroll & SpecFlow in VS Code/Cursor: domain/@tag tree, STAGE hub, TRX↔scenario mapping — alongside Test Explorer, not a replacement. Use with BDD Guardian.",
-  "version": "1.57.0",
+  "description": "Run Reqnroll and SpecFlow scenarios from VS Code and Cursor: one-click dotnet test by feature, scenario or @tag, results mapped to each scenario, plain-language failure diagnosis.",
+  "version": "1.58.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1a2332",
+    "theme": "dark"
+  },
+  "homepage": "https://github.com/AngHelll/bdd-pilot#readme",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,7 +22,8 @@
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Testing"
+    "Testing",
+    "Debuggers"
   ],
   "keywords": [
     "bdd",
@@ -25,12 +31,17 @@
     "specflow",
     "cucumber",
     "gherkin",
+    "feature",
+    "scenario",
     "xunit",
     "dotnet",
     "dotnet test",
+    "csharp",
+    "trx",
     "test explorer",
     "test runner",
     "playwright",
+    "mcp",
     "cursor",
     "copilot",
     "qa"

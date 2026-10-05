@@ -76,7 +76,7 @@ function buildOutputFromTrx(trxSummary: TrxSummary): string {
     .filter((result) => result.outcome === "failed")
     .map((result) => {
       const err = result.errorMessage?.trim();
-      return err ? `${result.testName}: ${err}` : result.testName;
+      return err ? `${result.testName}: ${sanitize(err)}` : result.testName;
     })
     .join("\n");
 }
@@ -127,7 +127,8 @@ function mapFailedScenariosFromTrx(
     mapped.push({
       featurePath: featurePath || path.join(projectDir, result.testName),
       scenarioName,
-      errorMessage: result.errorMessage,
+      errorMessage:
+        result.errorMessage === undefined ? undefined : sanitize(result.errorMessage),
     });
   }
 

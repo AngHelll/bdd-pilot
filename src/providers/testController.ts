@@ -350,13 +350,11 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       }
 
       const writeStream = (chunk: string): void => {
-        if (!debug) {
-          if (!fileLockHinted && detectBuildFileLock(chunk)) {
-            fileLockHinted = true;
-            writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);
-          }
-          writeRunTerminal(chunk);
+        if (!fileLockHinted && detectBuildFileLock(chunk)) {
+          fileLockHinted = true;
+          writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);
         }
+        writeRunTerminal(chunk);
         run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
       };
 

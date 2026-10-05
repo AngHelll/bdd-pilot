@@ -15,8 +15,8 @@ if git diff --cached --name-only | grep -qx 'config/maintainer.local'; then
   exit 1
 fi
 
-if git diff --cached | grep -E '^\+[^#]*VSCE_PAT=[^[:space:]]+' | grep -v 'maintainer.local.example' | grep -v 'VSCE_PAT=$' | grep -v 'VSCE_PAT=""'; then
-  echo "error: staged diff may contain VSCE_PAT value — never commit tokens" >&2
+if git diff --cached | grep -E '^\+[^#]*(VSCE_PAT|OVSX_PAT)=[^[:space:]]+' | grep -v 'maintainer.local.example' | grep -vE '(VSCE_PAT|OVSX_PAT)=$' | grep -vE '(VSCE_PAT|OVSX_PAT)=""'; then
+  echo "error: staged diff may contain VSCE_PAT or OVSX_PAT value — never commit tokens" >&2
   exit 1
 fi
 

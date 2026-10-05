@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.57.0** · **Marketplace: v1.56.0** · **Next: publish v1.57.0** · **689 unit tests**
+> **Current release: v1.58.0** · **Marketplace: v1.56.0** · **Next: publish v1.58.0** · **719 unit tests**
 
 ---
 
@@ -10,8 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace) | v0.1.0 → **v1.56.0** |
-| 📦 GitHub (pending Marketplace) | **v1.57.0** — live progress detail |
-| 🎯 Next | publish **v1.57.0** |
+| 📦 GitHub (pending Marketplace) | **v1.58.0** — debug attach to testhost (includes v1.57.0) |
+| 🎯 Next | publish **v1.58.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -54,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.58.0** | Debug attach — `VSTEST_HOST_DEBUG` + `coreclr` attach to `testhost`; step breakpoints hit · spec `debug-attach-testhost-v1.58.md` |
 | **1.57.0** | Live progress — short name of the latest failure; `waiting —` after 20s without a result · spec `live-progress-detail-v1.57.md` |
 | **1.56.0** | Feature save — incremental tree update; `list-tests` only when that file still needs theory rows · spec `editor-save-responsiveness-v1.56.md` |
 | **1.55.0** | Tree identity — permanent `Pilot · STAGE · groupBy` on the summary, Gherkin prefixes on Scenario/Outline/Example · spec `tree-identity-v1.55.md` |
@@ -237,13 +238,24 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
+### v1.58.0 — Debug attach to testhost ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Debug** | `dotnet test` runs with `VSTEST_HOST_DEBUG=1` / `VSTEST_DEBUG_NOBP=1`; Pilot attaches `coreclr` to each `testhost` PID, so step breakpoints hit. Session ends on `dotnet test` exit; Cancel kills the tree; toast when no C# debugger. Output in the BDD Pilot terminal |
+| **Publish** | Same VSIX to Marketplace and Open VSX |
+| **Listing** | New README, description, keywords, gallery banner |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 719 unit tests |
+
 ### v1.57.0 — Live progress detail ✅ shipped (Marketplace pending)
 
 | Area | Change |
 |------|--------|
 | **Progress** | Notification and summary label append the short name of the latest failure. After 20s without a new result, once a test has finished, the same message prefixes `waiting —`. Build and run close do not |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Superseded by v1.58.0 |
 | **Tests** | 689 unit tests |
 
 ### v1.56.0 — Feature save responsiveness ✅ shipped
@@ -1136,4 +1148,4 @@ src/
 
 ---
 
-*Last updated: v1.57.0 live progress detail on GitHub; Marketplace pending.*
+*Last updated: v1.58.0 debug attach on GitHub; Marketplace pending.*
