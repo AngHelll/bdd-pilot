@@ -134,6 +134,7 @@ describe("diagnostics analyzer", () => {
     assert.ok(d, "expected PLAYWRIGHT_DRIVER_INCOMPLETE");
     assert.match(d!.detail ?? "", /yaml/);
     assert.match(d!.hint, /rebuild/i);
+    assert.doesNotMatch(d!.hint, /net8\.0/);
   });
 
   it("detects a Playwright runtime failure (TargetClosedException: Process exited)", () => {

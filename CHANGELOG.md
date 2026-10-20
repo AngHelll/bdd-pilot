@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.58.1] — 2026-10-20
+
+### Changed
+- **Sample and Playwright hint** — `samples/minimal-bdd`, the CI smoke job, and the README CI snippet target the .NET 10 SDK (`net10.0` / `10.0.x`). The incomplete-Playwright hint no longer hardcodes `net8.0`. Spec `sample-net10-v1.58.1.md`
+
 ## [1.58.0] — 2026-10-05
 
 ### Fixed

@@ -401,7 +401,7 @@ const EN = {
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.title":
     "Playwright driver bundle is incomplete in the test output folder.",
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.hint":
-    "Run `dotnet build` then `pwsh bin/Debug/net8.0/playwright.ps1 install` (or rebuild so Playwright copies driver assets).",
+    "Run `dotnet build` then `pwsh bin/Debug/<TargetFramework>/playwright.ps1 install` (or rebuild so Playwright copies driver assets).",
   "diagnostic.PLAYWRIGHT_RUNTIME.title": "Playwright failed to launch or connect to the browser.",
   "diagnostic.PLAYWRIGHT_RUNTIME.hint":
     "Run `playwright install` for the browsers you need, then retry. Check for sandbox/CI restrictions.",
@@ -842,7 +842,7 @@ const ES: Record<keyof typeof EN, string> = {
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.title":
     "El bundle del driver de Playwright está incompleto en la carpeta de salida.",
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.hint":
-    "Ejecuta `dotnet build` y luego `pwsh bin/Debug/net8.0/playwright.ps1 install` (o recompila para copiar assets).",
+    "Ejecuta `dotnet build` y luego `pwsh bin/Debug/<TargetFramework>/playwright.ps1 install` (o recompila para copiar assets).",
   "diagnostic.PLAYWRIGHT_RUNTIME.title": "Playwright no pudo lanzar o conectar con el navegador.",
   "diagnostic.PLAYWRIGHT_RUNTIME.hint":
     "Ejecuta `playwright install` para los navegadores necesarios y reintenta. Revisa restricciones sandbox/CI.",

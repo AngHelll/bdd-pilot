@@ -164,7 +164,7 @@ env:
 steps:
   - uses: actions/setup-dotnet@v4
     with:
-      dotnet-version: "8.0.x"
+      dotnet-version: "10.0.x"
   - run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --filter "Category=smoke"
 ```
 

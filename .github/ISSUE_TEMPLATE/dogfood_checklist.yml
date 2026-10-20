@@ -64,5 +64,5 @@ body:
       label: Notes / blockers
       description: Redact secrets. Link issues if something failed.
       placeholder: |
-        - VS Code 1.9x, BDD Pilot 0.3.0, .NET 8
+        - VS Code 1.9x, BDD Pilot, .NET 10
         - Blocker: ...
