@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.58.1** · **Marketplace: v1.58.0** · **Open VSX: v1.58.0** · **Next: publish v1.58.1** · **766 unit tests**
+> **Current release: v1.59.0** · **Marketplace: v1.58.0** · **Open VSX: v1.58.0** · **Next: publish v1.59.0** · **766 unit tests**
 
 ---
 
@@ -10,8 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.58.0** |
-| 📦 GitHub (pending Marketplace) | **v1.58.1** — sample on .NET 10 |
-| 🎯 Next | publish **v1.58.1** |
+| 📦 GitHub (pending Marketplace) | **v1.59.0** — sample on Reqnroll 3 |
+| 🎯 Next | publish **v1.59.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -54,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.59.0** | Sample on Reqnroll 3 — `minimal-bdd` uses `Reqnroll.xUnit` 3.3.4 on the same VSTest stack (xUnit 2, `net10.0`); README names that verified stack · spec `stack-reqnroll3-v1.59.0.md` |
 | **1.58.1** | Sample on .NET 10 — `minimal-bdd`, CI smoke, and the README snippet use SDK 10; Playwright hint uses `<TargetFramework>` · spec `sample-net10-v1.58.1.md` |
 | **1.58.0** | Debug attach — `VSTEST_HOST_DEBUG` + `coreclr` attach to `testhost`; step breakpoints hit · spec `debug-attach-testhost-v1.58.md` |
 | **1.57.0** | Live progress — short name of the latest failure; `waiting —` after 20s without a result · spec `live-progress-detail-v1.57.md` |
@@ -238,6 +239,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.59.0 — Sample on Reqnroll 3 ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Sample** | `samples/minimal-bdd` uses `Reqnroll.xUnit` 3.3.4. Same VSTest stack (xUnit 2, `net10.0`) |
+| **README** | Verified stack named as .NET 10, Reqnroll 3, xUnit v2, VSTest. SpecFlow stays on that VSTest contract |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 766 unit tests |
 
 ### v1.58.1 — Sample on .NET 10 ✅ shipped (Marketplace pending)
 
@@ -1159,4 +1170,4 @@ src/
 
 ---
 
-*Last updated: v1.58.1 sample on .NET 10 on GitHub; Marketplace pending.*
+*Last updated: v1.59.0 sample on Reqnroll 3 on GitHub; Marketplace pending.*

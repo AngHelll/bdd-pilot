@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.59.0] — 2026-10-23
+
+### Changed
+- **Sample on Reqnroll 3** — `samples/minimal-bdd` uses `Reqnroll.xUnit` 3.3.4 with the same VSTest stack (xUnit 2, `net10.0`). The README names that stack as the one Pilot verifies. Spec `stack-reqnroll3-v1.59.0.md`
+
 ## [1.58.1] — 2026-10-20
 
 ### Changed
