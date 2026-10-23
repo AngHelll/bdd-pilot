@@ -19,6 +19,41 @@ function progressState(overrides: Partial<LiveProgressState> = {}): LiveProgress
 }
 
 describe("liveProgress", () => {
+  it("parses an xUnit v3 VSTest failure line", () => {
+    const line = "[xUnit.net 00:00:00.80]     System is ready [FAIL]";
+    const event = parseResultLine(line);
+    assert.ok(event);
+    assert.strictEqual(event.outcome, "failed");
+    assert.strictEqual(event.testName, "System is ready");
+  });
+
+  it("parses an xUnit v3 VSTest skip line", () => {
+    const line = "[xUnit.net 00:00:00.68]     Store is available [SKIP]";
+    const event = parseResultLine(line);
+    assert.ok(event);
+    assert.strictEqual(event.outcome, "skipped");
+    assert.strictEqual(event.testName, "Store is available");
+  });
+
+  it("counts an xUnit v3 failure once when the adapter also prints an indented Failed line", () => {
+    const parser = new LiveProgressParser(1);
+    const events = parser.feed(
+      "[xUnit.net 00:00:00.80]     System is ready [FAIL]\n  Failed System is ready [9 ms]\n",
+    );
+    assert.strictEqual(events.length, 1);
+    assert.strictEqual(parser.getState().failed, 1);
+    assert.strictEqual(parser.getState().lastFailedTestName, "System is ready");
+  });
+
+  it("counts an xUnit v3 skip once when the adapter also prints an indented Skipped line", () => {
+    const parser = new LiveProgressParser(1);
+    const events = parser.feed(
+      "[xUnit.net 00:00:00.68]     Store is available [SKIP]\n  Skipped Store is available [1 ms]\n",
+    );
+    assert.strictEqual(events.length, 1);
+    assert.strictEqual(parser.getState().skipped, 1);
+  });
+
   it("parses xUnit result lines", () => {
     const line =
       "[xUnit.net 00:00:02.50]     Passed LoginFeature.SuccessfullyAuthenticateAndReceiveValidToken [1 s]";

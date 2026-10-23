@@ -24,7 +24,7 @@ The official Reqnroll extension targets Visual Studio. On VS Code and Cursor you
 1. Install BDD Pilot:
    - **VS Code:** Extensions view → *BDD Pilot*, or `ext install anghelll.bdd-pilot`.
    - **Cursor, VSCodium, and other Open VSX editors:** search *BDD Pilot* in Extensions ([Open VSX listing](https://open-vsx.org/extension/anghelll/bdd-pilot)).
-2. Open a .NET solution with `.feature` files. The verified stack is .NET 10, Reqnroll 3, xUnit v2, and VSTest. SpecFlow projects that already run on that VSTest contract work the same way.
+2. Open a .NET solution with `.feature` files. The verified stack is .NET 10, Reqnroll 3, and VSTest, on xUnit v2 or xUnit v3. SpecFlow projects that already run on that VSTest contract work the same way.
 3. Open the **BDD Pilot** view in the Activity Bar and press **Run** on any row.
 
 No project at hand? Open [`samples/minimal-bdd/`](./samples/minimal-bdd/) from this repo.
@@ -33,7 +33,7 @@ No project at hand? Open [`samples/minimal-bdd/`](./samples/minimal-bdd/) from t
 
 | | |
 |---|---|
-| **For** | .NET 10 BDD with `.feature` files — Reqnroll 3, xUnit v2, VSTest (API, UI, or Playwright). SpecFlow projects on that same VSTest contract |
+| **For** | .NET 10 BDD with `.feature` files — Reqnroll 3 on VSTest, xUnit v2 (`samples/minimal-bdd`) and xUnit v3 (`samples/xunit-v3-bdd`), API, UI, or Playwright. SpecFlow projects on that same VSTest contract |
 | **Not for** | Repos without `.feature` files, or plain xUnit/NUnit suites — use [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) |
 
 Pilot works **alongside** Test Explorer, not instead of it: Test Explorer for unit tests, Pilot for scenarios.

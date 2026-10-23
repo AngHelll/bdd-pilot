@@ -47,3 +47,25 @@ jobs:
         run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "Category=smoke" --verbosity minimal
       - name: Smoke feature filter (FullyQualifiedName~SmokeFeature)
         run: dotnet test samples/minimal-bdd/MinimalBdd.csproj --no-build --filter "FullyQualifiedName~SmokeFeature" --verbosity minimal
+
+  sample-smoke-xunit-v3:
+    runs-on: ubuntu-latest
+    env:
+      STAGE: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore xUnit v3 sample
+        run: dotnet restore samples/xunit-v3-bdd/XunitV3Bdd.csproj
+      - name: Build xUnit v3 sample
+        run: dotnet build samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-restore
+      - name: Run all xUnit v3 sample tests
+        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --verbosity normal
+      - name: Smoke tag filter (Category=smoke)
+        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter "Category=smoke" --verbosity minimal
+      - name: Smoke feature filter (FullyQualifiedName~SmokeFeature)
+        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter "FullyQualifiedName~SmokeFeature" --verbosity minimal
+      - name: Outline row filter (one Examples row)
+        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter "DisplayName~first: %221%22, second: %222%22, result: %223%22" --verbosity minimal

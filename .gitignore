@@ -19,8 +19,9 @@ config/maintainer.local
 samples/**/.vscode/
 scripts/edit-readme-screenshot.py
 
-# .NET (samples/minimal-bdd)
+# .NET samples
 **/bin/
 **/obj/
 samples/minimal-bdd/Features/*.feature.cs
+samples/xunit-v3-bdd/Features/*.feature.cs
 **/TestResults/

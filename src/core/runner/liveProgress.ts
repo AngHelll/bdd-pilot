@@ -43,6 +43,8 @@ export class LiveProgressParser {
   private lastTestName: string | undefined;
   private lastFailedTestName: string | undefined;
   private lastOutcome: LiveOutcome | undefined;
+  /** Last recorded name, so an xUnit v3 `[FAIL]`/`[SKIP]` line and its indented echo count once. */
+  private lastRecordedName: string | undefined;
 
   constructor(private totalExpected?: number) {}
 
@@ -62,7 +64,7 @@ export class LiveProgressParser {
         line = line.slice(0, -1);
       }
       const event = parseResultLine(line);
-      if (event) {
+      if (event && !this.isDuplicate(event)) {
         this.record(event);
         events.push(event);
       }
@@ -84,7 +86,12 @@ export class LiveProgressParser {
     };
   }
 
+  private isDuplicate(event: TestCompletionEvent): boolean {
+    return event.testName === this.lastRecordedName && event.outcome === this.lastOutcome;
+  }
+
   private record(event: TestCompletionEvent): void {
+    this.lastRecordedName = event.testName;
     if (event.outcome === "passed") {
       this.passed++;
     } else if (event.outcome === "failed") {
@@ -109,6 +116,17 @@ export function parseResultLine(line: string): TestCompletionEvent | undefined {
   const xunit = /^\[xUnit\.net[^\]]*\]\s+(Passed|Failed|Skipped)\s+(.+?)(?:\s*\[|$)/i.exec(trimmed);
   if (xunit) {
     return { outcome: normalizeOutcome(xunit[1]), testName: xunit[2].trim() };
+  }
+
+  // xUnit v3 VSTest adapter: [xUnit.net 00:00:00.80]     System is ready [FAIL]
+  // Skip token observed on this adapter: [SKIP]
+  const xunitV3 = /^\[xUnit\.net[^\]]*\]\s+(.+?)\s+\[(FAIL|SKIP)\]\s*$/i.exec(trimmed);
+  if (xunitV3) {
+    const token = xunitV3[2].toUpperCase();
+    return {
+      outcome: token === "FAIL" ? "failed" : "skipped",
+      testName: xunitV3[1].trim(),
+    };
   }
 
   // Passed Namespace.Class.Method [42 ms]  or  Failed ... [FAIL]

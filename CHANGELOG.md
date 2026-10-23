@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.60.0] — 2026-10-23
+
+### Changed
+- **xUnit v3 on VSTest** — `samples/xunit-v3-bdd` runs Reqnroll 3 with `Reqnroll.xunit.v3` and the xUnit v3 VSTest adapter. Live progress counts `[FAIL]` and `[SKIP]` lines from that adapter. `samples/minimal-bdd` stays on xUnit v2. Spec `xunit-v3-vstest-v1.60.0.md`
+
 ## [1.59.0] — 2026-10-23
 
 ### Changed

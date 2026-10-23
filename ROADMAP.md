@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.59.0** · **Marketplace: v1.59.0** · **Open VSX: v1.59.0** · **Next: watch** · **766 unit tests**
+> **Current release: v1.60.0** · **Marketplace: v1.59.0** · **Open VSX: v1.59.0** · **Next: publish v1.60.0** · **770 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.59.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.60.0** — xUnit v3 on VSTest |
+| 🎯 Next | publish **v1.60.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.60.0** | xUnit v3 on VSTest — `samples/xunit-v3-bdd` (`Reqnroll.xunit.v3`, adapter 3.x); live progress counts `[FAIL]` and `[SKIP]`; `minimal-bdd` stays on xUnit v2 · spec `xunit-v3-vstest-v1.60.0.md` |
 | **1.59.0** | Sample on Reqnroll 3 — `minimal-bdd` uses `Reqnroll.xUnit` 3.3.4 on the same VSTest stack (xUnit 2, `net10.0`); README names that verified stack · spec `stack-reqnroll3-v1.59.0.md` |
 | **1.58.1** | Sample on .NET 10 — `minimal-bdd`, CI smoke, and the README snippet use SDK 10; Playwright hint uses `<TargetFramework>` · spec `sample-net10-v1.58.1.md` |
 | **1.58.0** | Debug attach — `VSTEST_HOST_DEBUG` + `coreclr` attach to `testhost`; step breakpoints hit · spec `debug-attach-testhost-v1.58.md` |
@@ -238,6 +240,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.60.0 — xUnit v3 on VSTest ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Sample** | `samples/xunit-v3-bdd` on `net10.0` with `Reqnroll.xunit.v3` 3.3.4, `xunit.v3` 3.2.2, VSTest adapter 3.1.5. `minimal-bdd` stays on xUnit v2 |
+| **Live progress** | Counts adapter lines `[FAIL]` and `[SKIP]` once, beside the xUnit v2 `Passed` lines |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 770 unit tests |
 
 ### v1.59.0 — Sample on Reqnroll 3 ✅ shipped
 
@@ -1169,4 +1181,4 @@ src/
 
 ---
 
-*Last updated: v1.59.0 sample on Reqnroll 3 shipped Marketplace + Open VSX.*
+*Last updated: v1.60.0 xUnit v3 on VSTest on GitHub; Marketplace pending.*
