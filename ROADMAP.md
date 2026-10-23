@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.62.0** · **Marketplace: v1.60.0** · **Open VSX: v1.60.0** · **Next: publish v1.62.0** · **786 unit tests**
+> **Current release: v1.62.0** · **Marketplace: v1.62.0** · **Open VSX: v1.62.0** · **Next: watch** · **786 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.60.0** |
-| 📦 GitHub (pending Marketplace) | **v1.62.0** — Microsoft Testing Platform (opt-in) |
-| 🎯 Next | publish **v1.62.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.62.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -242,14 +241,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.62.0 — Microsoft Testing Platform (opt-in) ✅ shipped (Marketplace pending)
+### v1.62.0 — Microsoft Testing Platform (opt-in) ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Runner** | MTP when `global.json` `test.runner` or `DOTNET_TEST_RUNNER` is `Microsoft.Testing.Platform`. VSTest stays the default and keeps today's argv |
 | **Fixture** | `samples/mtp-bdd` on `net10.0` with `Reqnroll.xunit.v3` 3.3.4, `xunit.v3` 4.0.2, `Microsoft.Testing.Extensions.TrxReport` 2.5.1 |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.62.0 (Marketplace + Open VSX) |
 | **Tests** | 786 unit tests |
 
 ### v1.60.0 — xUnit v3 on VSTest ✅ shipped
@@ -1192,4 +1191,4 @@ src/
 
 ---
 
-*Last updated: v1.62.0 Microsoft Testing Platform (opt-in) on GitHub; Marketplace pending.*
+*Last updated: v1.62.0 Microsoft Testing Platform (opt-in) shipped Marketplace + Open VSX.*
