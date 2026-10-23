@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.59.0** · **Marketplace: v1.58.0** · **Open VSX: v1.58.0** · **Next: publish v1.59.0** · **766 unit tests**
+> **Current release: v1.59.0** · **Marketplace: v1.59.0** · **Open VSX: v1.59.0** · **Next: watch** · **766 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.58.0** |
-| 📦 GitHub (pending Marketplace) | **v1.59.0** — sample on Reqnroll 3 |
-| 🎯 Next | publish **v1.59.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.59.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -240,24 +239,24 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.59.0 — Sample on Reqnroll 3 ✅ shipped (Marketplace pending)
+### v1.59.0 — Sample on Reqnroll 3 ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Sample** | `samples/minimal-bdd` uses `Reqnroll.xUnit` 3.3.4. Same VSTest stack (xUnit 2, `net10.0`) |
 | **README** | Verified stack named as .NET 10, Reqnroll 3, xUnit v2, VSTest. SpecFlow stays on that VSTest contract |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.59.0 (Marketplace + Open VSX) |
 | **Tests** | 766 unit tests |
 
-### v1.58.1 — Sample on .NET 10 ✅ shipped (Marketplace pending)
+### v1.58.1 — Sample on .NET 10 ✅ shipped (included in the v1.59.0 publish)
 
 | Area | Change |
 |------|--------|
 | **Sample** | `samples/minimal-bdd` targets `net10.0`. CI smoke and the README snippet use SDK `10.0.x`. Same VSTest stack (Reqnroll.xUnit + xUnit 2) |
 | **Diagnostics** | Incomplete Playwright driver hint uses `bin/Debug/<TargetFramework>/playwright.ps1` instead of `net8.0` |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Included in the v1.59.0 publish |
 | **Tests** | 766 unit tests |
 
 ### v1.58.0 — Debug attach to testhost ✅ shipped
@@ -1170,4 +1169,4 @@ src/
 
 ---
 
-*Last updated: v1.59.0 sample on Reqnroll 3 on GitHub; Marketplace pending.*
+*Last updated: v1.59.0 sample on Reqnroll 3 shipped Marketplace + Open VSX.*
