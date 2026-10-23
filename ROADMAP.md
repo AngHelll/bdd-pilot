@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.60.0** · **Marketplace: v1.59.0** · **Open VSX: v1.59.0** · **Next: publish v1.60.0** · **770 unit tests**
+> **Current release: v1.60.0** · **Marketplace: v1.60.0** · **Open VSX: v1.60.0** · **Next: watch** · **770 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.59.0** |
-| 📦 GitHub (pending Marketplace) | **v1.60.0** — xUnit v3 on VSTest |
-| 🎯 Next | publish **v1.60.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.60.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -241,14 +240,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.60.0 — xUnit v3 on VSTest ✅ shipped (Marketplace pending)
+### v1.60.0 — xUnit v3 on VSTest ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Sample** | `samples/xunit-v3-bdd` on `net10.0` with `Reqnroll.xunit.v3` 3.3.4, `xunit.v3` 3.2.2, VSTest adapter 3.1.5. `minimal-bdd` stays on xUnit v2 |
 | **Live progress** | Counts adapter lines `[FAIL]` and `[SKIP]` once, beside the xUnit v2 `Passed` lines |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.60.0 (Marketplace + Open VSX) |
 | **Tests** | 770 unit tests |
 
 ### v1.59.0 — Sample on Reqnroll 3 ✅ shipped
@@ -1181,4 +1180,4 @@ src/
 
 ---
 
-*Last updated: v1.60.0 xUnit v3 on VSTest on GitHub; Marketplace pending.*
+*Last updated: v1.60.0 xUnit v3 on VSTest shipped Marketplace + Open VSX.*
