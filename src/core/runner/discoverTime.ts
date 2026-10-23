@@ -61,8 +61,10 @@ export function shouldProbeDiscoverList(input: {
   filter?: string;
   rawFilter?: boolean;
   debug?: boolean;
+  /** MTP skips the probe so listed=0 cannot block the run. */
+  runner?: "vstest" | "mtp";
 }): boolean {
-  if (input.rawFilter || input.debug) {
+  if (input.runner === "mtp" || input.rawFilter || input.debug) {
     return false;
   }
   if (!input.filter?.trim()) {

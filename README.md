@@ -29,6 +29,8 @@ The official Reqnroll extension targets Visual Studio. On VS Code and Cursor you
 
 No project at hand? Open [`samples/minimal-bdd/`](./samples/minimal-bdd/) from this repo.
 
+Microsoft Testing Platform is opt-in. Set `test.runner` to `Microsoft.Testing.Platform` in the test directory's `global.json`, or set `DOTNET_TEST_RUNNER` to that value. The fixture is [`samples/mtp-bdd`](./samples/mtp-bdd/). VSTest stays the default.
+
 ## Who it's for
 
 | | |

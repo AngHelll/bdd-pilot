@@ -19,6 +19,32 @@ function progressState(overrides: Partial<LiveProgressState> = {}): LiveProgress
 }
 
 describe("liveProgress", () => {
+  it("parses an MTP failed line with a duration", () => {
+    const event = parseResultLine("failed System is ready (24ms)");
+    assert.ok(event);
+    assert.strictEqual(event.outcome, "failed");
+    assert.strictEqual(event.testName, "System is ready");
+  });
+
+  it("parses an MTP passed line and drops the duration", () => {
+    const event = parseResultLine(
+      'passed Add two numbers(first: "1", second: "2", result: "3", __pickleIndex: "1", exampleTags: []) (7ms)',
+    );
+    assert.ok(event);
+    assert.strictEqual(event.outcome, "passed");
+    assert.strictEqual(
+      event.testName,
+      'Add two numbers(first: "1", second: "2", result: "3", __pickleIndex: "1", exampleTags: [])',
+    );
+  });
+
+  it("parses an MTP skipped line without a duration", () => {
+    const event = parseResultLine("skipped Store is available");
+    assert.ok(event);
+    assert.strictEqual(event.outcome, "skipped");
+    assert.strictEqual(event.testName, "Store is available");
+  });
+
   it("parses an xUnit v3 VSTest failure line", () => {
     const line = "[xUnit.net 00:00:00.80]     System is ready [FAIL]";
     const event = parseResultLine(line);

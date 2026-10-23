@@ -173,6 +173,8 @@ const EN = {
     "Debug session ended. No test results file was produced — check the terminal.",
   "toast.debugNoDebugger":
     "No C# debugger available to attach. Install a C# extension with debugging support.",
+  "toast.debugMtpNoAttach":
+    "BDD Pilot cannot attach the debugger: this Microsoft Testing Platform run does not print a process id. The tree is free.",
   "toast.runCanceled": "Run canceled.",
   "toast.runCanceledPartial": "Run canceled — {completed}/{expected} tests finished.",
   "toast.projectNotFound":
@@ -398,6 +400,10 @@ const EN = {
     "Some failures: authenticated user has no contracts in test environment.",
   "diagnostic.API_HTTP_ERRORS.hint":
     "Verify test users, endpoints in your environment file, and that the target environment has the expected data.",
+  "diagnostic.MTP_TRX_REPORT_MISSING.title":
+    "The TRX report extension is not available for this Microsoft Testing Platform run.",
+  "diagnostic.MTP_TRX_REPORT_MISSING.hint":
+    "Microsoft Testing Platform rejected the run (exit code 5) before writing the TRX. Add the Microsoft.Testing.Extensions.TrxReport package to the test project.",
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.title":
     "Playwright driver bundle is incomplete in the test output folder.",
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.hint":
@@ -610,6 +616,8 @@ const ES: Record<keyof typeof EN, string> = {
     "Sesión de depuración finalizada. No se generó archivo de resultados — revisa la terminal.",
   "toast.debugNoDebugger":
     "No hay depurador de C# disponible para adjuntar. Instala una extensión de C# con soporte de depuración.",
+  "toast.debugMtpNoAttach":
+    "BDD Pilot no puede adjuntar el depurador: esta corrida de Microsoft Testing Platform no imprime un id de proceso. El árbol queda libre.",
   "toast.runCanceled": "Ejecución cancelada.",
   "toast.runCanceledPartial": "Ejecución cancelada — {completed}/{expected} tests completados.",
   "toast.projectNotFound":
@@ -839,6 +847,10 @@ const ES: Record<keyof typeof EN, string> = {
     "Algunos fallos: el usuario autenticado no tiene contratos en el entorno de prueba.",
   "diagnostic.API_HTTP_ERRORS.hint":
     "Verifica usuarios de prueba, endpoints en tu archivo de entorno y datos esperados en el entorno.",
+  "diagnostic.MTP_TRX_REPORT_MISSING.title":
+    "La extensión de informe TRX no está disponible en esta corrida de Microsoft Testing Platform.",
+  "diagnostic.MTP_TRX_REPORT_MISSING.hint":
+    "Microsoft Testing Platform rechazó la corrida (salida 5) antes de escribir el TRX. Agrega el paquete Microsoft.Testing.Extensions.TrxReport al proyecto de tests.",
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.title":
     "El bundle del driver de Playwright está incompleto en la carpeta de salida.",
   "diagnostic.PLAYWRIGHT_DRIVER_INCOMPLETE.hint":

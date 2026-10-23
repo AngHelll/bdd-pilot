@@ -125,6 +125,17 @@ describe("shouldProbeDiscoverList", () => {
       false,
     );
   });
+
+  it("skips the listed=0 probe on Microsoft Testing Platform", () => {
+    assert.strictEqual(
+      shouldProbeDiscoverList({
+        targets: scoped,
+        filter: "FullyQualifiedName~AlphaFeature",
+        runner: "mtp",
+      }),
+      false,
+    );
+  });
 });
 
 describe("buildListTestsArgs", () => {

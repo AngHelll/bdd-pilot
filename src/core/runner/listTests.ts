@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import { shouldDetachForProcessGroup, startAbortKillWatchdog } from "./processTree";
+import { DotnetTestRunner } from "./testRunner";
 import { extractListedTestNames } from "./theoryDisplayName";
 
 export interface ListTestsRequest {
@@ -8,10 +9,19 @@ export interface ListTestsRequest {
   testTarget?: string;
   /** Same `--filter` as the upcoming `dotnet test` run, when probing discover-time. */
   filter?: string;
+  /** MTP does not receive `--list-tests`. Callers skip the probe instead. */
+  runner?: DotnetTestRunner;
 }
 
-/** Pure argv for `dotnet test --list-tests` (optional `--filter`). */
+/**
+ * Pure argv for `dotnet test --list-tests` (optional `--filter`).
+ * Microsoft Testing Platform gets no `--list-tests`: a listed=0 result would
+ * be a false "no tests" signal. Discovery is skipped for that runner.
+ */
 export function buildListTestsArgs(req: ListTestsRequest): string[] {
+  if (req.runner === "mtp") {
+    return ["test"];
+  }
   const args = ["test"];
   if (req.testTarget) {
     args.push(req.testTarget);
@@ -26,6 +36,9 @@ export function buildListTestsArgs(req: ListTestsRequest): string[] {
 
 /** Runs `dotnet test --list-tests` and returns discovered display names. */
 export function listDotnetTests(req: ListTestsRequest, signal?: AbortSignal): Promise<string[]> {
+  if (req.runner === "mtp") {
+    return Promise.resolve([]);
+  }
   return new Promise((resolve, reject) => {
     const args = buildListTestsArgs(req);
 

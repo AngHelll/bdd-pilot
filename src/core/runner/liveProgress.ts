@@ -129,6 +129,14 @@ export function parseResultLine(line: string): TestCompletionEvent | undefined {
     };
   }
 
+  // Microsoft Testing Platform + `--output Detailed` (samples/mtp-bdd, 2026-10-23):
+  // `failed System is ready (24ms)`, `passed Add two numbers(...) (7ms)`,
+  // `skipped Store is available` (no duration).
+  const mtp = /^(passed|failed|skipped)\s+(.+?)(?:\s+\(\d+ms\))?\s*$/.exec(trimmed);
+  if (mtp) {
+    return { outcome: mtp[1] as LiveOutcome, testName: mtp[2].trim() };
+  }
+
   // Passed Namespace.Class.Method [42 ms]  or  Failed ... [FAIL]
   const plain = /^(Passed|Failed|Skipped)\s+(.+?)(?:\s*\[|$)/i.exec(trimmed);
   if (plain) {

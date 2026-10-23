@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.60.0** · **Marketplace: v1.60.0** · **Open VSX: v1.60.0** · **Next: watch** · **770 unit tests**
+> **Current release: v1.62.0** · **Marketplace: v1.60.0** · **Open VSX: v1.60.0** · **Next: publish v1.62.0** · **786 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.60.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.62.0** — Microsoft Testing Platform (opt-in) |
+| 🎯 Next | publish **v1.62.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.62.0** | Microsoft Testing Platform (opt-in) — `global.json` or `DOTNET_TEST_RUNNER`; `--report-trx` and xUnit MTP filters; VSTest argv unchanged; fixture `samples/mtp-bdd` · spec `mtp-runner-v1.62.0.md` |
 | **1.60.0** | xUnit v3 on VSTest — `samples/xunit-v3-bdd` (`Reqnroll.xunit.v3`, adapter 3.x); live progress counts `[FAIL]` and `[SKIP]`; `minimal-bdd` stays on xUnit v2 · spec `xunit-v3-vstest-v1.60.0.md` |
 | **1.59.0** | Sample on Reqnroll 3 — `minimal-bdd` uses `Reqnroll.xUnit` 3.3.4 on the same VSTest stack (xUnit 2, `net10.0`); README names that verified stack · spec `stack-reqnroll3-v1.59.0.md` |
 | **1.58.1** | Sample on .NET 10 — `minimal-bdd`, CI smoke, and the README snippet use SDK 10; Playwright hint uses `<TargetFramework>` · spec `sample-net10-v1.58.1.md` |
@@ -239,6 +241,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.62.0 — Microsoft Testing Platform (opt-in) ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Runner** | MTP when `global.json` `test.runner` or `DOTNET_TEST_RUNNER` is `Microsoft.Testing.Platform`. VSTest stays the default and keeps today's argv |
+| **Fixture** | `samples/mtp-bdd` on `net10.0` with `Reqnroll.xunit.v3` 3.3.4, `xunit.v3` 4.0.2, `Microsoft.Testing.Extensions.TrxReport` 2.5.1 |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 786 unit tests |
 
 ### v1.60.0 — xUnit v3 on VSTest ✅ shipped
 
@@ -1180,4 +1192,4 @@ src/
 
 ---
 
-*Last updated: v1.60.0 xUnit v3 on VSTest shipped Marketplace + Open VSX.*
+*Last updated: v1.62.0 Microsoft Testing Platform (opt-in) on GitHub; Marketplace pending.*

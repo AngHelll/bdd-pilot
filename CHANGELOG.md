@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.62.0] — 2026-10-23
+
+### Changed
+- **Microsoft Testing Platform (opt-in)** — When `global.json` `test.runner` or `DOTNET_TEST_RUNNER` is `Microsoft.Testing.Platform`, Pilot runs `dotnet test` with `--report-trx` and the xUnit MTP filters. VSTest projects keep the current argv. Fixture: `samples/mtp-bdd`. Spec `mtp-runner-v1.62.0.md`
+
 ## [1.60.0] — 2026-10-23
 
 ### Changed

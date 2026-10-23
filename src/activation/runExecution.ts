@@ -16,6 +16,7 @@ import {
   shouldProbeDiscoverList,
 } from "../core/runner/discoverTime";
 import { listDotnetTestsWithBudget } from "../core/runner/listTests";
+import { readTestRunner } from "../core/runner/testRunner";
 import {
   formatProgressMessage,
   LiveProgressState,
@@ -330,6 +331,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
               filter: scopedFilter,
               rawFilter: Boolean(opts?.rawFilter),
               debug: Boolean(opts?.debug),
+              runner: readTestRunner(project.projectDir, process.env),
             })
           ) {
             let listed: number | undefined;

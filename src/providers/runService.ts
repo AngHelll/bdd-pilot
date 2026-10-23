@@ -29,6 +29,7 @@ import {
   DEBUG_HOST_ENV,
   parseTesthostPids,
 } from "../core/runner/debugAttach";
+import { readTestRunner } from "../core/runner/testRunner";
 import {
   buildDotnetTestRequest,
   executeTestRun,
@@ -453,6 +454,17 @@ export class RunService {
     }
 
     const loadedEnv = loadStageEnv(req.projectDir, req.stage);
+    const runner = readTestRunner(req.projectDir, {
+      ...process.env,
+      ...loadedEnv.vars,
+    });
+    if (runner === "mtp") {
+      const message = t(req.locale, "toast.debugMtpNoAttach");
+      req.onOutput?.(`[bdd-pilot] ${message}\n`);
+      void vscode.window.showWarningMessage(message);
+      return { exitCode: null, canceled: false, trxPath: "", outputBuffer: message };
+    }
+
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
       throw new Error("Open a workspace folder to debug tests.");

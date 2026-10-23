@@ -1,11 +1,13 @@
 import { spawn } from "child_process";
 import * as path from "path";
 import { ModeProfile, Stage } from "../config/types";
+import { appendMtpFilterArgs } from "./mtpFilter";
 import {
   isCanceledOnClose,
   shouldDetachForProcessGroup,
   startAbortKillWatchdog,
 } from "./processTree";
+import { DotnetTestRunner } from "./testRunner";
 
 export interface RunRequest {
   dotnetPath: string;
@@ -39,6 +41,11 @@ export interface RunRequest {
    * into the child process environment. Never logged or persisted.
    */
   extraEnv?: Record<string, string>;
+  /**
+   * Test host `dotnet test` will launch. Omitted means VSTest, so existing
+   * callers keep today's argv.
+   */
+  runner?: DotnetTestRunner;
 }
 
 export interface BuildArgsOptions {
@@ -64,6 +71,9 @@ export interface RunCallbacks {
  * Builds the argument vector for `dotnet test`. Kept pure for unit testing.
  */
 export function buildArgs(req: RunRequest, options: BuildArgsOptions = {}): string[] {
+  if (req.runner === "mtp") {
+    return buildMtpArgs(req);
+  }
   const includeXUnit = options.includeXUnitRunSettings !== false;
   const args = ["test"];
   if (req.testTarget && isExplicitTestTarget(req.testTarget)) {
@@ -111,6 +121,44 @@ export function buildArgs(req: RunRequest, options: BuildArgsOptions = {}): stri
     );
   }
 
+  return args;
+}
+
+/**
+ * MTP argv locked from `dotnet test --help` in `samples/mtp-bdd` on 2026-10-23.
+ * TRX comes from `--report-trx` / `--report-trx-filename`. No VSTest `--filter`,
+ * `--logger`, or xUnit v2 RunSettings. `--output Detailed` is what prints
+ * `passed` / `failed` / `skipped` lines.
+ */
+function buildMtpArgs(req: RunRequest): string[] {
+  const args = ["test"];
+  if (req.testTarget && isExplicitTestTarget(req.testTarget)) {
+    args.push(req.testTarget);
+  }
+
+  const configuration = req.configuration?.trim();
+  if (configuration) {
+    args.push("--configuration", configuration);
+  }
+  if (req.noBuild) {
+    args.push("--no-build");
+  }
+
+  const cliVerbosity = req.cliVerbosity?.trim();
+  if (cliVerbosity) {
+    args.push("--verbosity", cliVerbosity);
+  }
+
+  args.push(
+    "--results-directory",
+    req.resultsDir,
+    "--report-trx",
+    "--report-trx-filename",
+    req.trxFileName,
+    "--output",
+    "Detailed",
+  );
+  appendMtpFilterArgs(args, req.filter);
   return args;
 }
 

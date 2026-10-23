@@ -22,6 +22,7 @@ import {
 } from "./core/runner/stageRunFlags";
 import { formatDiagnosticRunFlagsParts } from "./core/runner/runDiagnosticFlags";
 import { listDotnetTestsWithBudget } from "./core/runner/listTests";
+import { readTestRunner } from "./core/runner/testRunner";
 import { DISCOVER_LIST_TIMEOUT_MS } from "./core/runner/discoverTime";
 import {
   FEATURE_ENRICH_DEBOUNCE_MS,
@@ -270,6 +271,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }
 
     const theoryKeysBefore = theoryDiscoveryKeys(treeProvider.getDomains());
+    if (readTestRunner(ctx.projectDir, process.env) === "mtp") {
+      return;
+    }
     let listedNames: string[] | undefined;
     try {
       const enriched = await treeProvider.enrichTheoryRows(

@@ -73,6 +73,11 @@ function testsExecuted(output: string): boolean {
   return testsExecutedInOutput(output);
 }
 
+/** Captured from samples/mtp-bdd on 2026-10-23 with the TRX package removed. */
+function isMtpTrxReportRejected(output: string): boolean {
+  return /Test run completed with non-success exit code:\s*5\b/.test(output);
+}
+
 function isPlaywrightDriverIncomplete(output: string): boolean {
   return (
     /Cannot find module ['"].*\.playwright/i.test(output) ||
@@ -247,6 +252,15 @@ const ANALYZERS: Analyzer[] = [
         hint: diagnosticHint(locale, "API_HTTP_ERRORS"),
       };
     },
+  },
+  {
+    code: "MTP_TRX_REPORT_MISSING",
+    severity: "error",
+    match: isMtpTrxReportRejected,
+    build: (_o, locale) => ({
+      title: t(locale, "diagnostic.MTP_TRX_REPORT_MISSING.title"),
+      hint: diagnosticHint(locale, "MTP_TRX_REPORT_MISSING"),
+    }),
   },
   {
     code: "PLAYWRIGHT_DRIVER_INCOMPLETE",

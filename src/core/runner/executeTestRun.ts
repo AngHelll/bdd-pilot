@@ -18,6 +18,7 @@ import {
 } from "./dotnetTest";
 import { resolveRunSettingsPath } from "./runSettingsPath";
 import { resolveEffectiveRunFlags } from "./stageRunFlags";
+import { readTestRunner } from "./testRunner";
 import { createRunTrxFileName } from "./trxArgs";
 
 export type RunDotnetTestFn = (
@@ -85,6 +86,10 @@ export function buildDotnetTestRequest(input: DotnetTestRequestInput): DotnetRun
         ? input.settings.runBlameHangTimeout.trim() || "10m"
         : undefined,
     extraEnv: input.extraEnv,
+    runner: readTestRunner(input.projectDir, {
+      ...process.env,
+      ...(input.extraEnv ?? {}),
+    }),
   };
 }
 

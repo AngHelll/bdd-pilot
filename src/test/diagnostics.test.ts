@@ -124,6 +124,31 @@ describe("diagnostics analyzer", () => {
     assert.ok(codes(out, true).includes("AWS_CREDENTIALS"));
   });
 
+  it("diagnoses a missing MTP TRX report from the captured exit 5 text", () => {
+    const out = [
+      "/repo/samples/mtp-bdd/bin/Debug/net10.0/MtpBdd.dll (net10.0) Zero tests ran",
+      "Exit code: 5",
+      "",
+      "Test run summary: Zero tests ran",
+      "  error: 1",
+      "",
+      "  total: 0",
+      "  failed: 0",
+      "  succeeded: 0",
+      "  skipped: 0",
+      "  duration: 239ms",
+      "Test run completed with non-success exit code: 5 (see: https://aka.ms/testingplatform/exitcodes)",
+    ].join("\n");
+    const en = analyzeDotnetOutput(out).find((item) => item.code === "MTP_TRX_REPORT_MISSING");
+    assert.ok(en, "expected MTP_TRX_REPORT_MISSING");
+    assert.match(en!.hint, /Microsoft\.Testing\.Extensions\.TrxReport/);
+    const es = analyzeDotnetOutput(out, { locale: "es" }).find(
+      (item) => item.code === "MTP_TRX_REPORT_MISSING",
+    );
+    assert.match(es?.title ?? "", /TRX/);
+    assert.match(es?.hint ?? "", /Microsoft\.Testing\.Extensions\.TrxReport/);
+  });
+
   it("detects an incomplete Playwright driver (Cannot find module in .playwright)", () => {
     const out = [
       "Error: Cannot find module './utils/isomorphic/yaml'",

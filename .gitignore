@@ -24,4 +24,5 @@ scripts/edit-readme-screenshot.py
 **/obj/
 samples/minimal-bdd/Features/*.feature.cs
 samples/xunit-v3-bdd/Features/*.feature.cs
+samples/mtp-bdd/Features/*.feature.cs
 **/TestResults/
