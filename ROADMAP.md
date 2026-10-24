@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.62.0** · **Marketplace: v1.62.0** · **Open VSX: v1.62.0** · **Next: watch** · **786 unit tests**
+> **Current release: v1.63.0** · **Marketplace: v1.62.0** · **Open VSX: v1.62.0** · **Next: publish v1.63.0** · **798 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.62.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.63.0** — Dashboard Stage |
+| 🎯 Next | publish **v1.63.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.63.0** | Dashboard Stage — `editor` (default) / `stage`; header, wide run table, rail; segmented filters; Re-run Failed primary · spec `dashboard-stage-v1.63.0.md` |
 | **1.62.0** | Microsoft Testing Platform (opt-in) — `global.json` or `DOTNET_TEST_RUNNER`; `--report-trx` and xUnit MTP filters; VSTest argv unchanged; fixture `samples/mtp-bdd` · spec `mtp-runner-v1.62.0.md` |
 | **1.60.0** | xUnit v3 on VSTest — `samples/xunit-v3-bdd` (`Reqnroll.xunit.v3`, adapter 3.x); live progress counts `[FAIL]` and `[SKIP]`; `minimal-bdd` stays on xUnit v2 · spec `xunit-v3-vstest-v1.60.0.md` |
 | **1.59.0** | Sample on Reqnroll 3 — `minimal-bdd` uses `Reqnroll.xUnit` 3.3.4 on the same VSTest stack (xUnit 2, `net10.0`); README names that verified stack · spec `stack-reqnroll3-v1.59.0.md` |
@@ -240,6 +242,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.63.0 — Dashboard Stage ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Dashboard** | Header, wide recent-runs table, and a rail (diagnostic, last known, actions, flaky). Segmented filters. Re-run Failed is the only primary action. The open panel patches in place so scroll stays |
+| **Theme** | `bddPilot.dashboard.theme`: `editor` (default, follows VS Code) or `stage` (Forge One dark palette). Outcome color is pass / fail / warning / muted |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 798 unit tests |
 
 ### v1.62.0 — Microsoft Testing Platform (opt-in) ✅ shipped
 
@@ -1191,4 +1203,4 @@ src/
 
 ---
 
-*Last updated: v1.62.0 Microsoft Testing Platform (opt-in) shipped Marketplace + Open VSX.*
+*Last updated: v1.63.0 Dashboard Stage on GitHub; Marketplace pending.*

@@ -61,7 +61,7 @@ Pilot works **alongside** Test Explorer, not instead of it: Test Explorer for un
 ### Results you can act on
 
 - **TRX and Cucumber JSON** outcomes decorate the tree and Test Explorer.
-- **Dashboard** with run history, flaky scenarios (failure rate, average duration, last error), and the top diagnosis of the last run.
+- **Dashboard** with run history, flaky scenarios (failure rate, average duration, last error), and the top diagnosis of the last run. It follows the VS Code theme; set `bddPilot.dashboard.theme` to `stage` for the Forge One dark palette.
 
   ![BDD Pilot dashboard: run history and flaky scenarios](./media/gallery/03-mapping-or-dashboard.png)
 

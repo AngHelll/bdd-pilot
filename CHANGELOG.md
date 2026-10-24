@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.63.0] — 2026-10-23
+
+### Changed
+- **Dashboard Stage** — Full-width header, wide recent-runs table, and a rail for the diagnostic, last known results, actions, and flaky scenarios. Filters are segmented buttons. Re-run Failed is the only primary action. An open panel patches in place, so scroll position stays. Setting `bddPilot.dashboard.theme`: `editor` (default, follows VS Code) or `stage` (Forge One dark palette). Spec `dashboard-stage-v1.63.0.md`
+
 ## [1.62.0] — 2026-10-23
 
 ### Changed
