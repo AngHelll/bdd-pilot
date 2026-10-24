@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.64.0** · **Marketplace: v1.63.0** · **Open VSX: v1.63.0** · **Next: publish v1.64.0** · **804 unit tests**
+> **Current release: v1.64.0** · **Marketplace: v1.64.0** · **Open VSX: v1.64.0** · **Next: watch** · **804 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.63.0** |
-| 📦 GitHub (pending Marketplace) | **v1.64.0** — Dashboard fit |
-| 🎯 Next | publish **v1.64.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -244,7 +243,7 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.64.0 — Dashboard fit ✅ shipped (Marketplace pending)
+### v1.64.0 — Dashboard fit ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -253,7 +252,7 @@ _Nothing queued._
 | **Flaky** | Scenario name is text. Open is a secondary button |
 | **History** | Clear history confirms and wipes only `bddPilot.runHistory`. Tree icons stay. The button is off while a run is active |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.64.0 (Marketplace + Open VSX) |
 | **Tests** | 804 unit tests |
 
 ### v1.63.0 — Dashboard Stage ✅ shipped
@@ -1216,4 +1215,4 @@ src/
 
 ---
 
-*Last updated: v1.64.0 Dashboard fit on GitHub; Marketplace pending.*
+*Last updated: v1.64.0 Dashboard fit shipped Marketplace + Open VSX.*
