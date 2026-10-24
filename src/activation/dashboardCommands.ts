@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
-import { DashboardWebviewCommand, buildRerunFilterFromHistoryEntry } from "../core/results/dashboardActions";
+import {
+  canClearDashboardHistory,
+  DashboardWebviewCommand,
+  buildRerunFilterFromHistoryEntry,
+} from "../core/results/dashboardActions";
 import { resolveFlakyFeaturePath } from "../core/results/flakyDashboard";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { MessageKey } from "../core/i18n";
@@ -80,6 +84,25 @@ export function createDashboardCommands(deps: DashboardCommandsDeps) {
           return;
         }
         await deps.executeRun({ kind: "all" }, { rawFilter: filter });
+        return;
+      }
+      case "clearHistory": {
+        if (!canClearDashboardHistory(deps.buildDashboardContext().running === true)) {
+          return;
+        }
+        const action = deps.tr("dashboard.clearHistoryAction");
+        const choice = await vscode.window.showWarningMessage(
+          deps.tr("dashboard.clearHistoryConfirm"),
+          { modal: true },
+          action,
+        );
+        if (choice !== action) {
+          return;
+        }
+        if (!canClearDashboardHistory(deps.buildDashboardContext().running === true)) {
+          return;
+        }
+        deps.runService.setHistory([]);
         return;
       }
     }

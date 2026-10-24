@@ -195,6 +195,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
         filterMapping: settings.filterMapping,
         aiEnabled: readAiSettings().enabled,
       }),
+      running: summary.running,
     };
   };
 

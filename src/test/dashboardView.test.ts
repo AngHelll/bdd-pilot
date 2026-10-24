@@ -127,6 +127,76 @@ describe("dashboardView", () => {
 
     const all = regions({ history });
     assert.strictEqual(tbodyRows(all.main), 20);
+    assert.strictEqual(all.header.match(/data-bar="/g)?.length, 20);
+    assert.match(all.header, /<strong>25<\/strong>/);
+    assert.strictEqual(filtered.header.match(/data-bar="/g)?.length, 1);
+    assert.match(filtered.header, /data-command="clearHistory"/);
+    const none = regions({
+      history,
+      filter: { stage: "missing", outcome: "all", runKind: "all" },
+    });
+    assert.doesNotMatch(none.header, /<svg/);
+    assert.match(none.header, /<strong>25<\/strong>/);
+  });
+
+  it("draws a chart only for the visible runs and keeps full totals", () => {
+    const history = [
+      entry({ id: "old", stage: "test", timestamp: 1, passed: 1, failed: 0, skipped: 0, total: 1 }),
+      entry({ id: "new", stage: "stg", timestamp: 2, passed: 0, failed: 2, skipped: 1, total: 3 }),
+    ];
+    const shown = regions({ history });
+    assert.match(shown.header, /<strong>2<\/strong>/);
+    assert.match(shown.header, /<svg/);
+    const bars = shown.header.match(/data-bar="(\d)"/g) ?? [];
+    assert.deepStrictEqual(bars, ['data-bar="0"', 'data-bar="1"']);
+    const passFirst = shown.header.indexOf('data-kind="pass"');
+    const failAfter = shown.header.indexOf('data-kind="fail"');
+    assert.ok(passFirst >= 0 && failAfter > passFirst);
+  });
+
+  it("offers clear history only when there is history, and disables it while running", () => {
+    assert.doesNotMatch(regions({ history: [] }).header, /clearHistory/);
+    const idle = regions({ history: [entry({ id: "1", stage: "test" })] }).header;
+    assert.match(idle, /data-command="clearHistory"/);
+    assert.doesNotMatch(idle, /data-command="clearHistory"[^>]*disabled/);
+    const busy = regions({
+      history: [entry({ id: "1", stage: "test" })],
+      context: { running: true },
+    }).header;
+    assert.match(busy, /data-command="clearHistory"[^>]*disabled/);
+  });
+
+  it("keeps the flaky name as text and opens from a secondary button", () => {
+    const scenario = {
+      featurePath: "/tmp/pay.feature",
+      scenarioLine: 4,
+      scenarioName: "Guest pays",
+      outcome: "failed" as const,
+    };
+    const history = [
+      entry({
+        id: "1",
+        stage: "test",
+        timestamp: 1,
+        failed: 1,
+        passed: 0,
+        scenarios: [{ ...scenario, outcome: "failed" }],
+      }),
+      entry({
+        id: "2",
+        stage: "test",
+        timestamp: 2,
+        scenarios: [{ ...scenario, outcome: "passed" }],
+      }),
+    ];
+    const rail = regions({ history }).rail;
+    assert.match(rail, /<td>Guest pays<\/td>/);
+    assert.doesNotMatch(rail, /flaky-open-btn/);
+    assert.match(
+      rail,
+      /class="action-btn" data-feature-path="\/tmp\/pay\.feature" data-scenario-line="4"/,
+    );
+    assert.doesNotMatch(rail, /action-btn--primary" data-feature-path/);
   });
 
   it("builds one shell with both themes and the current regions", () => {
@@ -136,6 +206,8 @@ describe("dashboardView", () => {
       lang: "en",
       theme: "editor",
       regions: built,
+      runsTabLabel: "Runs",
+      detailTabLabel: "Detail",
     });
     assert.match(html, /script-src 'nonce-abc\+\/=';/);
     assert.match(html, /nonce="abc\+\/=/);
@@ -143,6 +215,8 @@ describe("dashboardView", () => {
     assert.match(html, /id="dash-header"/);
     assert.match(html, /id="dash-main"/);
     assert.match(html, /id="dash-rail"/);
+    assert.match(html, /id="dash-tabs"/);
+    assert.match(html, /data-tab="runs"/);
     assert.match(html, /html\[data-theme="stage"\]/);
     assert.match(html, /html\[data-theme="editor"\]/);
     assert.match(html, /type: "ready"/);

@@ -226,12 +226,18 @@ function shortTestName(name: string): string {
   return parts[parts.length - 1] ?? name;
 }
 
-export type DashboardWebviewCommand = "showOutput" | "rerunFailed" | "copyForAi";
+export type DashboardWebviewCommand = "showOutput" | "rerunFailed" | "copyForAi" | "clearHistory";
+
+/** False while a run or debug session is active. */
+export function canClearDashboardHistory(running: boolean): boolean {
+  return !running;
+}
 
 const WEBVIEW_COMMANDS = new Set<DashboardWebviewCommand>([
   "showOutput",
   "rerunFailed",
   "copyForAi",
+  "clearHistory",
 ]);
 
 export function parseDashboardWebviewMessage(

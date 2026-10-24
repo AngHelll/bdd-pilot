@@ -7,6 +7,7 @@ import {
   buildDashboardActionsViewModel,
   buildRerunFilterFromHistoryEntry,
   canRerunFailedForTarget,
+  canClearDashboardHistory,
   parseDashboardWebviewMessage,
   resolveDashboardActionTarget,
 } from "../core/results/dashboardActions";
@@ -102,7 +103,10 @@ describe("dashboardActions", () => {
 
   it("parseDashboardWebviewMessage whitelists commands", () => {
     assert.strictEqual(parseDashboardWebviewMessage({ command: "showOutput" }), "showOutput");
+    assert.strictEqual(parseDashboardWebviewMessage({ command: "clearHistory" }), "clearHistory");
     assert.strictEqual(parseDashboardWebviewMessage({ command: "evil" }), undefined);
+    assert.strictEqual(canClearDashboardHistory(true), false);
+    assert.strictEqual(canClearDashboardHistory(false), true);
   });
 });
 

@@ -1,6 +1,7 @@
 import { Diagnostic } from "../diagnostics/analyzer";
 import { PilotLocale, t } from "../i18n";
-import { DashboardActionsViewModel } from "./dashboardActions";
+import { canClearDashboardHistory, DashboardActionsViewModel } from "./dashboardActions";
+import { buildDashboardHistoryBars, renderDashboardHistoryChart } from "./dashboardChart";
 import {
   dashboardDiagnosticSeverityClass,
   formatDashboardDiagnosticLines,
@@ -36,6 +37,7 @@ export interface DashboardViewContext {
   rehydrateNotice?: RehydrateNotice;
   actions?: DashboardActionsViewModel;
   primaryDiagnostic?: Diagnostic;
+  running?: boolean;
 }
 
 export interface DashboardViewInput {
@@ -65,12 +67,22 @@ export interface DashboardApplyPayload {
   header: string;
   main: string;
   rail: string;
+  runsTabLabel: string;
+  detailTabLabel: string;
+}
+
+export function dashboardTabLabels(locale: PilotLocale): { runs: string; detail: string } {
+  return {
+    runs: t(locale, "dashboard.tabRuns"),
+    detail: t(locale, "dashboard.tabDetail"),
+  };
 }
 
 export function dashboardApplyPayload(
   theme: DashboardTheme,
   lang: "en" | "es",
   regions: DashboardRegions,
+  tabs: { runs: string; detail: string },
 ): DashboardApplyPayload {
   return {
     type: "apply",
@@ -79,6 +91,8 @@ export function dashboardApplyPayload(
     header: regions.header,
     main: regions.main,
     rail: regions.rail,
+    runsTabLabel: tabs.runs,
+    detailTabLabel: tabs.detail,
   };
 }
 
@@ -117,16 +131,39 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
       ? `<p>${escapeHtml(t(locale, "dashboard.flakyEmpty"))}</p>`
       : flakyTable(flaky, locale);
 
+  const bars = buildDashboardHistoryBars(recent);
+  const chart =
+    bars.length === 0
+      ? ""
+      : renderDashboardHistoryChart(bars, t(locale, "dashboard.chartLabel", { count: bars.length }), (bar) =>
+          t(locale, "dashboard.chartBar", {
+            passed: bar.passed,
+            failed: bar.failed,
+            skipped: bar.skipped,
+          }),
+        );
+  const clearDisabled = canClearDashboardHistory(context.running === true) ? "" : " disabled";
+  const clearButton =
+    history.length === 0
+      ? ""
+      : `<button type="button" class="action-btn" data-command="clearHistory"${clearDisabled}>${escapeHtml(t(locale, "dashboard.clearHistory"))}</button>`;
+
   return {
-    header: `<h1>${escapeHtml(t(locale, "dashboard.title"))}</h1>
-<p class="subtitle">${escapeHtml(t(locale, "dashboard.subtitle"))}</p>
-${rehydrateChip}
-<div class="stats">
-  <div class="stat"><strong>${totals.runs}</strong> <span>${escapeHtml(t(locale, "dashboard.statRuns"))}</span></div>
-  <div class="stat"><strong class="pass">${totals.passed}</strong> <span>${escapeHtml(t(locale, "dashboard.statPassed"))}</span></div>
-  <div class="stat"><strong class="fail">${totals.failed}</strong> <span>${escapeHtml(t(locale, "dashboard.statFailed"))}</span></div>
-  ${canceledStat}
-</div>`,
+    header: `<div class="dash-top">
+  <div class="dash-top__copy">
+    <h1>${escapeHtml(t(locale, "dashboard.title"))}</h1>
+    <p class="subtitle">${escapeHtml(t(locale, "dashboard.subtitle"))}</p>
+    ${rehydrateChip}
+  </div>
+  <div class="stats">
+    <div class="stat"><strong>${totals.runs}</strong> <span>${escapeHtml(t(locale, "dashboard.statRuns"))}</span></div>
+    <div class="stat"><strong class="pass">${totals.passed}</strong> <span>${escapeHtml(t(locale, "dashboard.statPassed"))}</span></div>
+    <div class="stat"><strong class="fail">${totals.failed}</strong> <span>${escapeHtml(t(locale, "dashboard.statFailed"))}</span></div>
+    ${canceledStat}
+    ${clearButton}
+  </div>
+</div>
+${chart}`,
     main: `<h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
 ${renderHistoryFilterBar(stages, filter, locale)}
 ${recentSection}`,
@@ -143,8 +180,10 @@ export function renderDashboardShell(input: {
   lang: "en" | "es";
   theme: DashboardTheme;
   regions: DashboardRegions;
+  runsTabLabel: string;
+  detailTabLabel: string;
 }): string {
-  const { nonce, lang, theme, regions } = input;
+  const { nonce, lang, theme, regions, runsTabLabel, detailTabLabel } = input;
   return `<!DOCTYPE html>
 <html lang="${lang}" data-theme="${theme}">
 <head>
@@ -157,7 +196,11 @@ ${dashboardLayoutCss()}
 </head>
 <body>
   <div id="dash-header">${regions.header}</div>
-  <div id="dash-body">
+  <div id="dash-tabs" role="tablist">
+    <button type="button" id="dash-tab-runs" role="tab" data-tab="runs" aria-selected="true">${escapeHtml(runsTabLabel)}</button>
+    <button type="button" id="dash-tab-detail" role="tab" data-tab="detail" aria-selected="false">${escapeHtml(detailTabLabel)}</button>
+  </div>
+  <div id="dash-body" data-tab="runs">
     <main id="dash-main">${regions.main}</main>
     <aside id="dash-rail">${regions.rail}</aside>
   </div>
@@ -339,18 +382,19 @@ function scopeCell(entry: RunHistoryEntry, locale: PilotLocale): string {
 function flakyTable(rows: FlakyDashboardRow[], locale: PilotLocale): string {
   const body = rows
     .map((row) => {
-      const scenarioCell = row.canOpen
-        ? `<button type="button" class="flaky-open-btn" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}">${escapeHtml(row.scenarioName)}</button>`
-        : escapeHtml(row.scenarioName);
+      const scenarioCell = escapeHtml(row.scenarioName);
+      const openCell = row.canOpen
+        ? `<td><button type="button" class="action-btn" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}" aria-label="${escapeAttr(t(locale, "dashboard.flakyOpenLabel", { name: row.scenarioName }))}">${escapeHtml(t(locale, "dashboard.flakyOpen"))}</button></td>`
+        : "<td></td>";
       const avgDuration =
         row.averageDurationMs !== undefined ? formatDuration(row.averageDurationMs, "auto") : "—";
       const errorCell = row.lastErrorSnippet
         ? `<td class="flaky-error" title="${escapeAttr(row.lastErrorSnippet.slice(0, 500))}">${escapeHtml(row.lastErrorSnippet)}</td>`
         : `<td class="muted">${escapeHtml(t(locale, "dashboard.flakyNoError"))}</td>`;
-      return `<tr><td>${scenarioCell}</td><td>${Math.round(row.failureRate * 100)}%</td><td class="mono">${escapeHtml(avgDuration)}</td>${errorCell}</tr>`;
+      return `<tr><td>${scenarioCell}</td><td>${Math.round(row.failureRate * 100)}%</td><td class="mono">${escapeHtml(avgDuration)}</td>${errorCell}${openCell}</tr>`;
     })
     .join("");
-  return `<table><thead><tr><th>${escapeHtml(t(locale, "dashboard.colScenario"))}</th><th>${escapeHtml(t(locale, "dashboard.colFailureRate"))}</th><th>${escapeHtml(t(locale, "dashboard.colAvgDuration"))}</th><th>${escapeHtml(t(locale, "dashboard.colLastError"))}</th></tr></thead><tbody>${body}</tbody></table>`;
+  return `<table><thead><tr><th>${escapeHtml(t(locale, "dashboard.colScenario"))}</th><th>${escapeHtml(t(locale, "dashboard.colFailureRate"))}</th><th>${escapeHtml(t(locale, "dashboard.colAvgDuration"))}</th><th>${escapeHtml(t(locale, "dashboard.colLastError"))}</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 /** acquireVsCodeApi() once. Clicks are delegated so a patch can replace the regions. */
@@ -371,11 +415,32 @@ function renderDashboardScript(nonce: string): string {
           runKind: picked.runKind || "all"
         };
       }
+      var activeTab = "runs";
+      function applyTab(runsLabel, detailLabel) {
+        var body = document.getElementById("dash-body");
+        if (body) body.setAttribute("data-tab", activeTab);
+        var runs = document.getElementById("dash-tab-runs");
+        var detail = document.getElementById("dash-tab-detail");
+        if (runs) {
+          runs.setAttribute("aria-selected", activeTab === "runs" ? "true" : "false");
+          if (runsLabel) runs.textContent = runsLabel;
+        }
+        if (detail) {
+          detail.setAttribute("aria-selected", activeTab === "detail" ? "true" : "false");
+          if (detailLabel) detail.textContent = detailLabel;
+        }
+      }
       document.addEventListener("click", function(event) {
         var target = event.target;
         if (!target || !target.closest) return;
         var btn = target.closest("button");
         if (!btn) return;
+        var tab = btn.getAttribute("data-tab");
+        if (tab === "runs" || tab === "detail") {
+          activeTab = tab;
+          applyTab();
+          return;
+        }
         if (btn.id === "reset-history-filters") {
           vscode.postMessage({ type: "filterHistory", stage: "all", outcome: "all", runKind: "all" });
           return;
@@ -390,7 +455,7 @@ function renderDashboardScript(nonce: string): string {
           vscode.postMessage({ command: btn.getAttribute("data-command") });
           return;
         }
-        if (btn.classList.contains("flaky-open-btn")) {
+        if (btn.hasAttribute("data-feature-path")) {
           vscode.postMessage({
             command: "openFlakyScenario",
             featurePath: btn.getAttribute("data-feature-path"),
@@ -413,6 +478,7 @@ function renderDashboardScript(nonce: string): string {
         if (header) header.innerHTML = msg.header || "";
         if (main) main.innerHTML = msg.main || "";
         if (rail) rail.innerHTML = msg.rail || "";
+        applyTab(msg.runsTabLabel, msg.detailTabLabel);
       });
       vscode.postMessage({ type: "ready" });
     })();

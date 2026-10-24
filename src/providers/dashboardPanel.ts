@@ -18,6 +18,7 @@ import {
   buildDashboardRegions,
   dashboardApplyPayload,
   dashboardPaintKind,
+  dashboardTabLabels,
   renderDashboardShell,
   resolveDashboardTheme,
 } from "../core/results/dashboardView";
@@ -29,6 +30,7 @@ export interface DashboardContext {
   rehydrateNotice?: RehydrateNotice;
   actions?: DashboardActionsViewModel;
   primaryDiagnostic?: Diagnostic;
+  running?: boolean;
 }
 
 export class DashboardPanel {
@@ -128,11 +130,19 @@ export class DashboardPanel {
       locale,
       context: this.lastContext,
     });
+    const tabs = dashboardTabLabels(locale);
 
     if (dashboardPaintKind(this.documentReady) === "shell") {
       const nonce = crypto.randomBytes(16).toString("base64");
       this.webviewReady = false;
-      this.panel.webview.html = renderDashboardShell({ nonce, lang, theme, regions });
+      this.panel.webview.html = renderDashboardShell({
+        nonce,
+        lang,
+        theme,
+        regions,
+        runsTabLabel: tabs.runs,
+        detailTabLabel: tabs.detail,
+      });
       this.documentReady = true;
       return;
     }
@@ -141,7 +151,7 @@ export class DashboardPanel {
       return;
     }
 
-    void this.panel.webview.postMessage(dashboardApplyPayload(theme, lang, regions));
+    void this.panel.webview.postMessage(dashboardApplyPayload(theme, lang, regions, tabs));
   }
 }
 

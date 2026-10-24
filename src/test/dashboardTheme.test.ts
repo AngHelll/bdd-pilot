@@ -77,5 +77,7 @@ describe("dashboardTheme", () => {
     const css = dashboardLayoutCss();
     assert.match(css, /max-width:\s*760px/);
     assert.doesNotMatch(css, /560px/);
+    assert.match(css, /body \{[^}]*overflow:\s*hidden/);
+    assert.match(css, /#dash-main, #dash-rail \{[^}]*overflow:\s*auto/);
   });
 });

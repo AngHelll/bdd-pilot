@@ -76,9 +76,14 @@ export function dashboardThemeCss(): string {
 
 export function dashboardLayoutCss(): string {
   return `
+html, body { height: 100%; }
 body {
+  box-sizing: border-box;
   margin: 0;
-  padding: 16px 18px 28px;
+  padding: 12px 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   font-family: var(--pilot-font);
   font-size: var(--pilot-font-size, 13px);
   color: var(--pilot-text);
@@ -87,7 +92,15 @@ body {
 h1 { font-size: 1.35em; font-weight: 600; margin: 0 0 4px; }
 h2 { font-size: 0.95em; font-weight: 600; margin: 18px 0 8px; }
 #dash-rail h2:first-child { margin-top: 0; }
-.subtitle { margin: 0 0 10px; color: var(--pilot-text-2); }
+.subtitle {
+  margin: 0 0 8px;
+  color: var(--pilot-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-top { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; justify-content: space-between; }
+.history-chart { display: block; width: 100%; height: 56px; margin-top: 10px; }
 .rehydrate-chip {
   display: inline-block;
   margin: 0 0 12px;
@@ -112,16 +125,29 @@ h2 { font-size: 0.95em; font-weight: 600; margin: 18px 0 8px; }
   margin-bottom: 2px;
 }
 .stat span { color: var(--pilot-text-2); font-size: 12px; }
+#dash-header { flex: 0 0 auto; }
+#dash-tabs { display: none; flex: 0 0 auto; gap: 6px; margin-top: 8px; }
+#dash-tabs button[aria-selected="true"] {
+  background: var(--pilot-surface-3);
+  color: var(--pilot-text);
+  border-color: var(--pilot-border-strong);
+}
 #dash-body {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  grid-template-rows: minmax(0, 1fr);
   gap: 22px;
-  align-items: start;
-  margin-top: 18px;
+  margin-top: 12px;
+  overflow: hidden;
 }
-#dash-main, #dash-rail { min-width: 0; }
+#dash-main, #dash-rail { min-width: 0; min-height: 0; overflow: auto; }
 @media (max-width: 760px) {
+  #dash-tabs { display: flex; }
   #dash-body { grid-template-columns: minmax(0, 1fr); }
+  #dash-body[data-tab="runs"] #dash-rail { display: none; }
+  #dash-body[data-tab="detail"] #dash-main { display: none; }
 }
 .card {
   background: var(--pilot-surface);
@@ -146,8 +172,8 @@ th { color: var(--pilot-text-2); font-weight: 600; }
 .filters { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; margin: 8px 0 4px; }
 .filter-group { display: flex; flex-direction: column; gap: 4px; }
 .filter-label { color: var(--pilot-text-2); font-size: 12px; }
-.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
-.seg button, .action-btn, .filter-reset, .flaky-open-btn { font: inherit; cursor: pointer; }
+.seg { display: inline-flex; flex-wrap: nowrap; gap: 4px; max-width: 100%; overflow-x: auto; }
+.seg button, .action-btn, .filter-reset, #dash-tabs button { font: inherit; cursor: pointer; }
 .seg button {
   border: 1px solid var(--pilot-border);
   background: var(--pilot-surface-2);
@@ -163,7 +189,7 @@ th { color: var(--pilot-text-2); font-weight: 600; }
   border-color: var(--pilot-border-strong);
 }
 .actions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-.action-btn, .filter-reset {
+.action-btn, .filter-reset, #dash-tabs button {
   color: var(--pilot-button-secondary-fg);
   background: var(--pilot-button-secondary-bg);
   border: 1px solid var(--pilot-border);
@@ -184,15 +210,6 @@ th { color: var(--pilot-text-2); font-weight: 600; }
 .diagnostic-card.diag-error .diag-title { color: var(--pilot-danger); }
 .diagnostic-card.diag-warning .diag-title { color: var(--pilot-warn); }
 .diag-title { font-weight: 600; margin: 0 0 6px; }
-.flaky-open-btn {
-  color: var(--pilot-link);
-  background: none;
-  border: none;
-  padding: 0;
-  text-align: left;
-  text-decoration: underline;
-}
-.flaky-open-btn:hover { color: var(--pilot-link-hover); }
 .flaky-error { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `.trim();
 }

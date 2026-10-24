@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.64.0] — 2026-10-23
+
+### Changed
+- **Dashboard fit** — The panel stays at editor height; the runs table and the detail rail scroll inside it. Below 760px, Runs and Detail are tabs. A stacked pass/fail/skip chart shows the same runs as the table, newest on the right. Flaky names are text with an Open button. Clear history confirms and wipes only the workspace run history. Spec `dashboard-fit-v1.64.0.md`
+
 ## [1.63.0] — 2026-10-23
 
 ### Changed
