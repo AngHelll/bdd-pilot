@@ -98,6 +98,15 @@ export interface ScenarioTooltipParts {
   exampleRowLabel?: string;
 }
 
+/**
+ * 1-based line a tree leaf opens and shows in its tooltip.
+ * An Examples row passes its data line. A scenario or outline header omits it.
+ * Callers subtract 1 for `vscode.Range`, the same conversion scenario rows already use.
+ */
+export function treeLeafNavigationLine(scenarioLine: number, exampleLine?: number): number {
+  return exampleLine ?? scenarioLine;
+}
+
 /** Multi-line tooltip content (Markdown). Full tag lists live here, not in the label. */
 export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts, locale: PilotLocale): string {
   const lines: string[] = [`**${parts.scenarioName}**`, ""];

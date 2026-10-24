@@ -56,6 +56,7 @@ import {
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
   formatTagDescription,
+  treeLeafNavigationLine,
 } from "../core/gherkin/treeLabels";
 import {
   containerResultStateLabel,
@@ -941,6 +942,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
     const presentation = readTreePresentation();
+    const navigationLine = treeLeafNavigationLine(node.scenario.line, node.example.line);
     const item = new vscode.TreeItem(
       formatTreeLeafLabel("example", node.example.label, locale, presentation),
       vscode.TreeItemCollapsibleState.None,
@@ -973,7 +975,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
           scenarioName: node.scenario.name,
           featureName: node.feature.name,
           fileName: path.basename(node.feature.filePath),
-          line: node.scenario.line,
+          line: navigationLine,
           featureTags: node.feature.tags,
           scenarioTags: node.scenario.tags,
           isOutline: true,
@@ -1017,7 +1019,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       title: "Open Feature",
       arguments: [
         vscode.Uri.file(node.feature.filePath),
-        { selection: new vscode.Range(node.scenario.line - 1, 0, node.scenario.line - 1, 0) },
+        {
+          selection: new vscode.Range(navigationLine - 1, 0, navigationLine - 1, 0),
+        },
       ],
     };
     return item;
