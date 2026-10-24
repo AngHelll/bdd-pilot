@@ -68,7 +68,7 @@ jobs:
       - name: Smoke feature filter (FullyQualifiedName~SmokeFeature)
         run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter "FullyQualifiedName~SmokeFeature" --verbosity minimal
       - name: Outline row filter (one Examples row)
-        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter "DisplayName~first: %221%22, second: %222%22, result: %223%22" --verbosity minimal
+        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter 'DisplayName~first: "1", second: "2", result: "3"' --verbosity minimal
 
   sample-smoke-mtp:
     runs-on: ubuntu-latest
