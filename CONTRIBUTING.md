@@ -23,7 +23,7 @@ npm run test:unit   # core unit tests (node:test)
 npm run build       # bundle
 ```
 
-Press `F5` in VS Code to launch the Extension Development Host.
+Press `F5` and choose **BDD Pilot: Extension Development Host**. The launch configuration runs `node esbuild.js`, then opens `samples/minimal-bdd` with `--extensionDevelopmentPath` set to this repository. That host loads `dist/extension.js` from the working tree, not an installed VSIX. `npm run build` is the production bundle used for packaging.
 
 ## Pull requests
 
