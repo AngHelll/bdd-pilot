@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll and SpecFlow scenarios from VS Code and Cursor: one-click dotnet test by feature, scenario or @tag, results mapped to each scenario, plain-language failure diagnosis.",
-  "version": "1.64.1",
+  "version": "1.65.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "galleryBanner": {
@@ -586,6 +586,19 @@
             "%bddPilot.configuration.tree.displayMode.enum.detailed%"
           ],
           "description": "%bddPilot.configuration.tree.displayMode.description%"
+        },
+        "bddPilot.tree.presentation": {
+          "type": "string",
+          "enum": [
+            "nativePrecision",
+            "classic"
+          ],
+          "default": "nativePrecision",
+          "enumDescriptions": [
+            "%bddPilot.configuration.tree.presentation.enum.nativePrecision%",
+            "%bddPilot.configuration.tree.presentation.enum.classic%"
+          ],
+          "description": "%bddPilot.configuration.tree.presentation.description%"
         },
         "bddPilot.tree.groupBy": {
           "type": "string",

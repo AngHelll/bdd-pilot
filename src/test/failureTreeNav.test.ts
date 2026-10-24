@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { describe, it } from "node:test";
 import { DomainGroup } from "../core/gherkin/model";
 import {
+  collectFailedLeaves,
   containerKeysToExpandForFailures,
   findFirstFailedLeaf,
   findFirstFailedLeafForBucket,
@@ -161,5 +162,34 @@ describe("failureTreeNav", () => {
     assert.strictEqual(isAutoShowOutputMode("onFailure"), true);
     assert.strictEqual(isAutoShowOutputMode("always"), true);
     assert.strictEqual(isAutoShowOutputMode("raw"), false);
+  });
+
+  it("collectFailedLeaves keeps discovery order and honors the include predicate", () => {
+    const feature = domains[0].features[0];
+    const outline = feature.scenarios[1];
+    const leaves = collectFailedLeaves(
+      domains,
+      store({
+        [scenarioKey(feature, feature.scenarios[0])]: "failed",
+        [outlineRowKey(feature, outline, 0)]: "passed",
+        [outlineRowKey(feature, outline, 1)]: "failed",
+      }),
+    );
+    assert.deepStrictEqual(
+      leaves.map((leaf) => leaf.outcomeKey),
+      [scenarioKey(feature, feature.scenarios[0]), outlineRowKey(feature, outline, 1)],
+    );
+    const onlyOutline = collectFailedLeaves(
+      domains,
+      store({
+        [scenarioKey(feature, feature.scenarios[0])]: "failed",
+        [outlineRowKey(feature, outline, 1)]: "failed",
+      }),
+      (key) => key.includes("::row"),
+    );
+    assert.deepStrictEqual(
+      onlyOutline.map((leaf) => leaf.outcomeKey),
+      [outlineRowKey(feature, outline, 1)],
+    );
   });
 });

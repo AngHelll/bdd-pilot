@@ -118,6 +118,7 @@ Pilot auto-detects the test project. Settings you're most likely to touch:
 | `bddPilot.defaultStage` | `test` | Default `STAGE` |
 | `bddPilot.defaultMode` | `debug` | Parallelism: `debug`, `parallel`, or `ci` |
 | `bddPilot.tree.groupBy` | `domain` | Group the tree by `domain` or `tag` |
+| `bddPilot.tree.presentation` | `nativePrecision` | `nativePrecision` (default) or `classic` prefixed labels and previous icons |
 | `bddPilot.run.configuration` | `""` | `Debug`, `Release`, or empty |
 | `bddPilot.run.runSettings` | `""` | Path to a `.runsettings` file |
 | `bddPilot.locale` | `auto` | UI language: `auto`, `en`, or `es` |
@@ -138,6 +139,7 @@ Pilot auto-detects the test project. Settings you're most likely to touch:
 | `bddPilot.run.blameHang` | `off` | `on` passes `--blame-hang` |
 | `bddPilot.run.blameHangTimeout` | `10m` | Timeout for `--blame-hang-timeout` |
 | `bddPilot.run.byStage` | `{}` | Per-stage `configuration` / `runSettings`, e.g. `{ "stg": { "configuration": "Release" } }` |
+| `bddPilot.tree.presentation` | `nativePrecision` | `nativePrecision` (default) or `classic` prefixed labels and previous icons |
 | `bddPilot.tree.displayMode` | `detailed` | `detailed` roll-ups or `compact` |
 | `bddPilot.tree.tagDisplay` | `count` | `hidden`, `count`, `compact`, or `full` |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags in `compact` tag display |

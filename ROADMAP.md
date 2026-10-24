@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.64.1** · **Marketplace: v1.64.1** · **Open VSX: v1.64.1** · **Next: watch** · **804 unit tests**
+> **Current release: v1.65.0** · **Marketplace: v1.64.1** · **Open VSX: v1.64.1** · **Next: publish v1.65.0** · **799 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.1** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.65.0** — Native Precision default and indexed live results |
+| 🎯 Next | publish **v1.65.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.65.0** | Native Precision default, stable tree ids, indexed live results |
 | **1.64.1** | Dashboard chart counts — fixed-width bars with a count, small Clear history control, flaky name opens the feature · spec `dashboard-fit-v1.64.0.md` |
 | **1.64.0** | Dashboard fit — editor-height shell, Runs/Detail tabs, pass/fail/skip chart, flaky Open button, Clear history · spec `dashboard-fit-v1.64.0.md` |
 | **1.63.0** | Dashboard Stage — `editor` (default) / `stage`; header, wide run table, rail; segmented filters; Re-run Failed primary · spec `dashboard-stage-v1.63.0.md` |
@@ -243,6 +245,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.65.0 — Native Precision and indexed live results ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Tree** | `bddPilot.tree.presentation` defaults to Native Precision. Classic remains available. Stable ids and tag navigation stay. Changing only presentation repaints the tree |
+| **Live results** | Each completion looks up candidate scenarios. Outcome keys, match rules, and the 120 ms refresh are unchanged |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 799 unit tests |
 
 ### v1.64.1 — Dashboard chart counts ✅ shipped
 
@@ -1227,4 +1239,4 @@ src/
 
 ---
 
-*Last updated: v1.64.1 Dashboard chart counts shipped Marketplace + Open VSX.*
+*Last updated: v1.65.0 Native Precision and indexed live results on GitHub; Marketplace pending.*

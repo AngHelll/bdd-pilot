@@ -6,13 +6,14 @@ import {
   resolveTreeEmptyKind,
   TreeEmptyKind,
 } from "../core/gherkin/treeEmptyState";
-import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
+import { DomainGroup, FeatureInfo, ScenarioInfo } from "../core/gherkin/model";
 import { PilotLocale } from "../core/i18n";
 import {
   computeRollup,
   containerHealth,
   formatRollupDescription,
   formatRollupDescriptionLocalized,
+  rollupSeverity,
 } from "../core/gherkin/outcomeRollup";
 import {
   buildContainerDescription,
@@ -28,12 +29,11 @@ import {
 import {
   skipReasonLabelForTreeOutcome,
   skipReasonMessage,
-  SkipReason,
 } from "../core/results/skipReason";
 import {
   formatLeafStoryStrip,
-  resolveTreeLeafIconKind,
-  TreeLeafIconKind,
+  resolveLeafIconSpec,
+  TreeLeafIconSpec,
 } from "../core/results/treeLeafVisual";
 import {
   applyScopedTrxResults,
@@ -54,24 +54,63 @@ import {
   buildFeatureTooltipMarkdown,
   buildScenarioDescription,
   buildScenarioTooltipMarkdown,
-  formatExampleIdentityLabel,
-  formatOutlineIdentityLabel,
-  formatScenarioIdentityLabel,
   formatTagDescription,
 } from "../core/gherkin/treeLabels";
+import {
+  containerResultStateLabel,
+  formatTreeAccessibilityLabel,
+  formatTreeLeafLabel,
+  leafResultStateLabel,
+  prependScenarioLevelTooltip,
+  TreeA11yLevel,
+  TreeLeafLevel,
+} from "../core/gherkin/treePresentation";
 import {
   buildDomainStructuralBase,
   buildTagGroupStructuralBase,
   TreeDisplaySettings,
   TreeGroupBy,
 } from "../core/gherkin/treeDisplaySettings";
-import { readTreeDisplaySettings, readTreeGroupBy } from "./treeSettings";
+import {
+  domainTreeItemId,
+  emptyGuideTreeItemId,
+  ExpandRef,
+  featureTreeItemId,
+  PlacedNode,
+  resolveVisibleParent,
+  scenarioNodeIsOutline,
+  summaryTreeItemId,
+  tagFailureExpandRefs,
+  tagIdentityKey,
+  tagTreeItemId,
+  TagPlacement,
+  TREE_ITEM_CONTEXT,
+  visibleExampleItemId,
+  visibleScenarioItemId,
+} from "../core/gherkin/treeIdentity";
+import {
+  DomainNode,
+  EmptyGuideNode,
+  FeatureNode,
+  OutlineRowNode,
+  PilotSummaryNode,
+  ScenarioNode,
+  TagNode,
+  TreeNode,
+} from "../core/gherkin/treeNodes";
+import {
+  collectFailedLeaves,
+  containerKeysToExpandForFailures,
+} from "../core/results/failureTreeNav";
+import { readTreeDisplaySettings, readTreeGroupBy, readTreePresentation } from "./treeSettings";
 import { DurationDisplayMode, formatDuration } from "../core/results/durationFormat";
 import { UnifiedSummary } from "../core/results/resultLoader";
 import {
-  findOutlineExampleMatchInFeature,
-  matchesScenarioInFeature,
-} from "../core/results/scenarioMatch";
+  buildLiveMatchIndex,
+  liveOutcomeKey,
+  LiveMatchIndex,
+  selectLiveMatchCandidates,
+} from "../core/results/liveMatchIndex";
 import { TestOutcome, TrxSummary } from "../core/results/trxParser";
 import { RunTarget } from "../core/runner/filterBuilder";
 import {
@@ -102,53 +141,17 @@ import { OutcomeStore } from "./outcomeStore";
 
 export type { TreeGroupBy, TreeDisplaySettings };
 export { readTreeDisplaySettings, readTreeGroupBy } from "./treeSettings";
-export type TreeNode =
-  | PilotSummaryNode
-  | EmptyGuideNode
-  | DomainNode
-  | TagNode
-  | FeatureNode
-  | ScenarioNode
-  | OutlineRowNode;
-
-export interface PilotSummaryNode {
-  kind: "pilotSummary";
-}
-
-export interface EmptyGuideNode {
-  kind: "emptyGuide";
-  emptyKind: Exclude<TreeEmptyKind, "none">;
-}
-
-export interface DomainNode {
-  kind: "domain";
-  group: DomainGroup;
-}
-
-export interface TagNode {
-  kind: "tag";
-  group: TagGroup;
-}
-
-export interface FeatureNode {
-  kind: "feature";
-  feature: FeatureInfo;
-}
-
-export interface ScenarioNode {
-  kind: "scenario";
-  feature: FeatureInfo;
-  scenario: ScenarioInfo;
-  /** When true, description shows feature name (tag-grouped tree). */
-  underTagGroup?: boolean;
-}
-
-export interface OutlineRowNode {
-  kind: "outlineRow";
-  feature: FeatureInfo;
-  scenario: ScenarioInfo;
-  example: OutlineExample;
-}
+export type {
+  TreeNode,
+  PilotSummaryNode,
+  EmptyGuideNode,
+  DomainNode,
+  TagNode,
+  FeatureNode,
+  ScenarioNode,
+  OutlineRowNode,
+} from "../core/gherkin/treeNodes";
+export { TREE_ITEM_CONTEXT, contextValueAllowsRunAndDebug } from "../core/gherkin/treeIdentity";
 
 export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | undefined>();
@@ -161,6 +164,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private searchQueryDisplay = "";
   private refreshPending = false;
   private fileKeys = new Map<string, string>();
+  private liveMatchIndex: LiveMatchIndex | undefined;
 
   constructor(
     private projectDir: () => string | undefined,
@@ -174,6 +178,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   /** Refreshes the pilot summary row without re-scanning features. */
   refreshPilotSummary(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  /** Repaints the tree from the current model. Does not rescan feature files. */
+  rerender(): void {
     this._onDidChangeTreeData.fire(undefined);
   }
 
@@ -231,49 +240,82 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   /**
-   * Required for TreeView.reveal with expand. Matches getChildren hierarchy
-   * (domain mode; tag-group scenarios use TagNode as parent).
+   * Required for TreeView.reveal. The parent is the one on screen:
+   * domain → feature → scenario → example, or tag → scenario → example.
    */
   getParent(element: TreeNode): TreeNode | undefined {
-    if (
-      element.kind === "pilotSummary" ||
-      element.kind === "emptyGuide" ||
-      element.kind === "domain" ||
-      element.kind === "tag"
-    ) {
+    const parent = resolveVisibleParent(
+      placedNode(element),
+      readTreeGroupBy(),
+      this.domains.map((domain) => ({
+        name: domain.name,
+        features: domain.features.map((feature) => ({ filePath: feature.filePath })),
+      })),
+      this.tagPlacements(),
+    );
+    if (!parent) {
       return undefined;
     }
-    if (element.kind === "feature") {
-      const group = this.domains.find((d) =>
-        d.features.some((f) => f.filePath === element.feature.filePath),
-      );
-      return group ? { kind: "domain", group } : undefined;
-    }
-    if (element.kind === "scenario") {
-      if (element.underTagGroup) {
-        const tag = this.tagGroups.find((g) =>
-          g.scenarios.some(
-            (ref) =>
-              ref.feature.filePath === element.feature.filePath &&
-              ref.scenario.line === element.scenario.line &&
-              ref.scenario.name === element.scenario.name,
-          ),
-        );
-        return tag ? { kind: "tag", group: tag } : undefined;
-      }
-      return { kind: "feature", feature: element.feature };
-    }
-    if (element.kind === "outlineRow") {
-      return {
-        kind: "scenario",
-        feature: element.feature,
-        scenario: element.scenario,
-      };
-    }
-    return undefined;
+    return this.hydrateParent(parent, element);
   }
 
-  /** Resolve a leaf TreeNode for an outcome key (domain-grouped tree). */
+  /**
+   * Containers that collapse-to-failures re-expands. Domain grouping keeps the
+   * existing domain / feature / outline list. Tag grouping expands each tag
+   * that shows a failure, plus outline parents when the failure is an example.
+   */
+  nodesToExpandForFailures(includeOutcomeKey?: (outcomeKey: string) => boolean): TreeNode[] {
+    const domains = this.allDomains;
+    if (readTreeGroupBy() === "tag") {
+      const leaves = collectFailedLeaves(domains, this.outcomeStore, includeOutcomeKey);
+      const refs = tagFailureExpandRefs(
+        leaves.map((leaf) => ({
+          filePath: leaf.feature.filePath,
+          scenarioLine: leaf.scenario.line,
+          rowIndex: leaf.outlineRowIndex,
+        })),
+        this.getTagGroups().map((group) => ({
+          tag: group.tag,
+          scenarios: group.scenarios.map((ref) => ({
+            filePath: ref.feature.filePath,
+            line: ref.scenario.line,
+          })),
+        })),
+      );
+      const nodes: TreeNode[] = [];
+      for (const ref of refs) {
+        const node = this.nodeForExpandRef(ref);
+        if (node) {
+          nodes.push(node);
+        }
+      }
+      return nodes;
+    }
+
+    const containers = containerKeysToExpandForFailures(
+      domains,
+      this.outcomeStore,
+      includeOutcomeKey ? { includeOutcomeKey } : undefined,
+    );
+    const nodes: TreeNode[] = [];
+    for (const container of containers) {
+      let node: TreeNode | undefined;
+      if (container.kind === "domain") {
+        node = this.findDomainNode(container.id);
+      } else if (container.kind === "feature") {
+        node = this.findFeatureNode(container.id);
+      } else {
+        const featurePath = container.id.split("::")[0];
+        node = this.findScenarioOutlineNode(featurePath, container.id);
+      }
+      if (node) {
+        nodes.push(node);
+      }
+    }
+    return nodes;
+  }
+
+  /** Resolve a leaf TreeNode for an outcome key. Tag placement is resolved by getParent. */
   findLeafNodeByOutcomeKey(outcomeKey: string): TreeNode | undefined {
     for (const domain of this.allDomains) {
       for (const feature of domain.features) {
@@ -461,31 +503,28 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
    * Uses throttled refresh to stay light on large parallel runs.
    */
   applyLiveResult(testName: string, outcome: TestOutcome): void {
+    const index = this.liveMatchIndexFor(this.allDomains);
+    const candidates = selectLiveMatchCandidates(index, testName);
     let matched = false;
-    for (const domain of this.allDomains) {
-      for (const feature of domain.features) {
-        for (const scenario of feature.scenarios) {
-          if (scenario.examples && scenario.examples.length > 0) {
-            const example = findOutlineExampleMatchInFeature(
-              testName,
-              feature,
-              scenario,
-              scenario.examples,
-            );
-            if (example) {
-              this.outcomeStore.set(outlineRowKey(feature, scenario, example.rowIndex), outcome);
-              matched = true;
-            }
-          } else if (matchesScenarioInFeature(testName, feature, scenario)) {
-            this.outcomeStore.set(scenarioKey(feature, scenario), outcome);
-            matched = true;
-          }
-        }
+    for (const ref of candidates.scenarios) {
+      const key = liveOutcomeKey(ref.feature, ref.scenario, testName);
+      if (!key) {
+        continue;
       }
+      this.outcomeStore.set(key, outcome);
+      matched = true;
     }
     if (matched) {
       this.scheduleRefresh();
     }
+  }
+
+  /** Rebuilt when discovery replaces the domain array. Example rows are read live. */
+  private liveMatchIndexFor(domains: DomainGroup[]): LiveMatchIndex {
+    if (!this.liveMatchIndex || this.liveMatchIndex.domains !== domains) {
+      this.liveMatchIndex = buildLiveMatchIndex(domains);
+    }
+    return this.liveMatchIndex;
   }
 
   private scheduleRefresh(): void {
@@ -535,11 +574,13 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return [];
     }
     if (node.kind === "tag") {
+      const parentTagKey = tagIdentityKey(node.group.tag);
       return node.group.scenarios.map((ref) => ({
-        kind: "scenario",
+        kind: "scenario" as const,
         feature: ref.feature,
         scenario: ref.scenario,
         underTagGroup: true,
+        parentTagKey,
       }));
     }
     if (node.kind === "domain") {
@@ -554,10 +595,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
     if (node.kind === "scenario" && node.scenario.examples && node.scenario.examples.length > 0) {
       return node.scenario.examples.map((example) => ({
-        kind: "outlineRow",
+        kind: "outlineRow" as const,
         feature: node.feature,
         scenario: node.scenario,
         example,
+        parentTagKey: node.parentTagKey,
       }));
     }
     return [];
@@ -572,6 +614,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const storeFailure = model.storeFailureSnippet;
     const summaryCommand = resolvePilotSummaryCommand(model, locale);
     const item = new vscode.TreeItem(status, vscode.TreeItemCollapsibleState.None);
+    item.id = summaryTreeItemId();
     item.iconPath = new vscode.ThemeIcon(
       resolvePilotSummaryIcon(
         model.running,
@@ -611,7 +654,14 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       tooltip.isTrusted = false;
       item.tooltip = tooltip;
     }
-    item.contextValue = model.running ? "bddPilotSummaryRunning" : "bddPilotSummary";
+    item.contextValue = model.running ? TREE_ITEM_CONTEXT.summaryRunning : TREE_ITEM_CONTEXT.summary;
+    applyExperimentalAccessibility(
+      item,
+      locale,
+      "summary",
+      status,
+      model.running ? t(locale, "tree.a11y.running") : undefined,
+    );
     return item;
   }
 
@@ -647,9 +697,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     const item = new vscode.TreeItem(title, vscode.TreeItemCollapsibleState.None);
+    item.id = emptyGuideTreeItemId(emptyKind);
     item.description = subtitle;
     item.iconPath = new vscode.ThemeIcon(icon);
-    item.contextValue = "bddEmptyGuide";
+    item.contextValue = TREE_ITEM_CONTEXT.empty;
     if (command) {
       item.command = { command, title: subtitle };
     }
@@ -657,6 +708,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       tooltip.isTrusted = true;
       item.tooltip = tooltip;
     }
+    applyExperimentalAccessibility(item, locale, "guide", title);
     return item;
   }
 
@@ -668,11 +720,19 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     );
     const base = buildTagGroupStructuralBase(refs.length);
     const item = new vscode.TreeItem(`@${node.group.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
+    item.id = tagTreeItemId(node.group.tag);
     item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
     item.iconPath = containerIcon("tag", rollup, display.displayMode);
-    item.contextValue = "bddRunnableTag";
+    item.contextValue = TREE_ITEM_CONTEXT.tag;
     item.tooltip = new vscode.MarkdownString(
       [`**@${node.group.tag}**`, "", `${refs.length} scenario(s)`, formatRollupDescription(rollup)].join("\n"),
+    );
+    applyExperimentalAccessibility(
+      item,
+      locale,
+      "tag",
+      `@${node.group.tag}`,
+      containerResultStateLabel(locale, rollupSeverity(rollup)),
     );
     return item;
   }
@@ -683,9 +743,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const rollup = this.rollupFeatureOutcomes(node.group.features);
     const base = buildDomainStructuralBase(node.group.features.length, scenarioCount);
     const item = new vscode.TreeItem(node.group.name, vscode.TreeItemCollapsibleState.Collapsed);
+    item.id = domainTreeItemId(node.group.name);
     item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
     item.iconPath = containerIcon("folder", rollup, display.displayMode);
-    item.contextValue = "bddRunnableDomain";
+    item.contextValue = TREE_ITEM_CONTEXT.domain;
     const rollupText = formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup);
     const tooltip = new vscode.MarkdownString(
       buildDomainTooltipMarkdown(
@@ -697,6 +758,13 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
+    applyExperimentalAccessibility(
+      item,
+      locale,
+      "domain",
+      node.group.name,
+      containerResultStateLabel(locale, rollupSeverity(rollup)),
+    );
     return item;
   }
 
@@ -711,6 +779,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     );
     const locale = this.getLocale();
     const item = new vscode.TreeItem(node.feature.name, vscode.TreeItemCollapsibleState.Collapsed);
+    item.id = featureTreeItemId(node.feature.filePath);
     item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
     const tooltip = new vscode.MarkdownString(
       buildFeatureTooltipMarkdown(
@@ -724,8 +793,15 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
     item.iconPath = containerIcon("file-code", rollup, display.displayMode);
-    item.contextValue = "bddRunnableFeature";
+    item.contextValue = TREE_ITEM_CONTEXT.feature;
     item.resourceUri = vscode.Uri.file(node.feature.filePath);
+    applyExperimentalAccessibility(
+      item,
+      locale,
+      "feature",
+      node.feature.name,
+      containerResultStateLabel(locale, rollupSeverity(rollup)),
+    );
     return item;
   }
 
@@ -740,11 +816,19 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const errorMessage = hasExamples ? undefined : this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
+    const presentation = readTreePresentation();
+    const level: TreeLeafLevel = node.scenario.isOutline || hasExamples ? "outline" : "scenario";
     const item = new vscode.TreeItem(
-      node.scenario.isOutline || hasExamples
-        ? formatOutlineIdentityLabel(node.scenario.name, locale)
-        : formatScenarioIdentityLabel(node.scenario.name, locale),
+      formatTreeLeafLabel(level, node.scenario.name, locale, presentation),
       hasExamples ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+    );
+    item.id = visibleScenarioItemId(
+      node.feature.filePath,
+      node.scenario.line,
+      scenarioNodeIsOutline(node.scenario),
+      node.parentTagKey,
+      readTreeGroupBy(),
+      this.tagPlacements(),
     );
     const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
     const featureHint =
@@ -778,41 +862,58 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const rollupText = rollup
       ? formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup)
       : undefined;
+    const tooltipMarkdown = buildScenarioTooltipMarkdown(
+      {
+        scenarioName: node.scenario.name,
+        featureName: node.feature.name,
+        fileName: path.basename(node.feature.filePath),
+        line: node.scenario.line,
+        featureTags: node.feature.tags,
+        scenarioTags: node.scenario.tags,
+        isOutline: node.scenario.isOutline,
+        outcomeLabel: outcome ? formatOutcomeForTooltip(outcome, locale) : undefined,
+        durationMs,
+        exampleCount: node.scenario.examples?.length,
+        rollupSummary: rollupText,
+        errorSnippet:
+          outcome === "failed" && errorMessage
+            ? truncateErrorSnippet(errorMessage)
+            : undefined,
+        skipReasonLabel: skipReason
+          ? skipReasonMessage(skipReason, locale)
+          : skipReasonLabelForTreeOutcome(outcome, locale),
+      },
+      locale,
+    );
     const tooltip = new vscode.MarkdownString(
-      buildScenarioTooltipMarkdown(
-        {
-          scenarioName: node.scenario.name,
-          featureName: node.feature.name,
-          fileName: path.basename(node.feature.filePath),
-          line: node.scenario.line,
-          featureTags: node.feature.tags,
-          scenarioTags: node.scenario.tags,
-          isOutline: node.scenario.isOutline,
-          outcomeLabel: outcome ? formatOutcomeForTooltip(outcome, locale) : undefined,
-          durationMs,
-          exampleCount: node.scenario.examples?.length,
-          rollupSummary: rollupText,
-          errorSnippet:
-            outcome === "failed" && errorMessage
-              ? truncateErrorSnippet(errorMessage)
-              : undefined,
-          skipReasonLabel: skipReason
-            ? skipReasonMessage(skipReason, locale)
-            : skipReasonLabelForTreeOutcome(outcome, locale),
-        },
-        locale,
-      ),
+      level === "scenario"
+        ? prependScenarioLevelTooltip(tooltipMarkdown, locale, presentation)
+        : tooltipMarkdown,
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
 
-    item.iconPath = treeOutcomeIcon(
-      outcome,
-      skipReason,
-      node.scenario.isOutline && !hasExamples,
-      !this.outcomeStore.isEmpty(),
+    const sessionHasResults = !this.outcomeStore.isEmpty();
+    item.iconPath = themeIconFromSpec(
+      resolveLeafIconSpec({
+        presentation,
+        level,
+        classicBareOutline: node.scenario.isOutline && !hasExamples,
+        outcome,
+        skipReason,
+        sessionHasResults,
+      }),
     );
-    item.contextValue = "bddRunnableScenario";
+    applyExperimentalAccessibility(
+      item,
+      locale,
+      level,
+      node.scenario.name,
+      hasExamples
+        ? containerResultStateLabel(locale, rollup ? rollupSeverity(rollup) : undefined)
+        : leafResultStateLabel(locale, outcome, skipReason),
+    );
+    item.contextValue = TREE_ITEM_CONTEXT.scenario;
     item.command = {
       command: "vscode.open",
       title: "Open Feature",
@@ -834,9 +935,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
+    const presentation = readTreePresentation();
     const item = new vscode.TreeItem(
-      formatExampleIdentityLabel(node.example.label, locale),
+      formatTreeLeafLabel("example", node.example.label, locale, presentation),
       vscode.TreeItemCollapsibleState.None,
+    );
+    item.id = visibleExampleItemId(
+      node.feature.filePath,
+      node.scenario.line,
+      node.example.rowIndex,
+      node.parentTagKey,
+      readTreeGroupBy(),
+      this.tagPlacements(),
     );
     const showPendingHint = !this.outcomeStore.isEmpty() && !outcome && !skipReason;
     item.description =
@@ -877,8 +987,24 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     );
     tooltip.isTrusted = false;
     item.tooltip = tooltip;
-    item.iconPath = treeOutcomeIcon(outcome, skipReason, false, !this.outcomeStore.isEmpty());
-    item.contextValue = "bddRunnableScenario";
+    item.iconPath = themeIconFromSpec(
+      resolveLeafIconSpec({
+        presentation,
+        level: "example",
+        classicBareOutline: false,
+        outcome,
+        skipReason,
+        sessionHasResults: !this.outcomeStore.isEmpty(),
+      }),
+    );
+    applyExperimentalAccessibility(
+      item,
+      locale,
+      "example",
+      node.example.label,
+      leafResultStateLabel(locale, outcome, skipReason),
+    );
+    item.contextValue = TREE_ITEM_CONTEXT.scenario;
     item.command = {
       command: "vscode.open",
       title: "Open Feature",
@@ -914,6 +1040,98 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       );
     }
     return [this.outcomeStore.get(scenarioKey(feature, scenario))];
+  }
+
+  private tagPlacements(): TagPlacement[] {
+    return this.tagGroups.map((group) => ({
+      tag: group.tag,
+      scenarios: group.scenarios.map((ref) => ({
+        filePath: ref.feature.filePath,
+        line: ref.scenario.line,
+      })),
+    }));
+  }
+
+  private hydrateParent(parent: PlacedNode, child: TreeNode): TreeNode | undefined {
+    if (parent.kind === "domain" && parent.domainName) {
+      const group = this.domains.find((domain) => domain.name === parent.domainName);
+      return group ? { kind: "domain", group } : undefined;
+    }
+    if (parent.kind === "tag" && parent.tag) {
+      const group = this.tagGroups.find((candidate) => tagIdentityKey(candidate.tag) === parent.tag);
+      return group ? { kind: "tag", group } : undefined;
+    }
+    if (parent.kind === "feature" && child.kind === "scenario") {
+      return { kind: "feature", feature: child.feature };
+    }
+    if (parent.kind === "scenario" && child.kind === "outlineRow") {
+      return {
+        kind: "scenario",
+        feature: child.feature,
+        scenario: child.scenario,
+        underTagGroup: readTreeGroupBy() === "tag",
+        parentTagKey: parent.parentTagKey,
+      };
+    }
+    return undefined;
+  }
+
+  private nodeForExpandRef(ref: ExpandRef): TreeNode | undefined {
+    if (ref.kind === "tag") {
+      const group = this.getTagGroups().find((candidate) => tagIdentityKey(candidate.tag) === ref.tagKey);
+      return group ? { kind: "tag", group } : undefined;
+    }
+    if (!ref.filePath || ref.line === undefined) {
+      return undefined;
+    }
+    for (const domain of this.allDomains) {
+      for (const feature of domain.features) {
+        if (feature.filePath !== ref.filePath) {
+          continue;
+        }
+        const scenario = feature.scenarios.find((candidate) => candidate.line === ref.line);
+        if (scenario) {
+          return {
+            kind: "scenario",
+            feature,
+            scenario,
+            underTagGroup: true,
+            parentTagKey: ref.tagKey,
+          };
+        }
+      }
+    }
+    return undefined;
+  }
+}
+
+function placedNode(element: TreeNode): PlacedNode {
+  switch (element.kind) {
+    case "pilotSummary":
+      return { kind: "pilotSummary" };
+    case "emptyGuide":
+      return { kind: "emptyGuide" };
+    case "domain":
+      return { kind: "domain", domainName: element.group.name };
+    case "tag":
+      return { kind: "tag", tag: tagIdentityKey(element.group.tag) };
+    case "feature":
+      return { kind: "feature", filePath: element.feature.filePath };
+    case "scenario":
+      return {
+        kind: "scenario",
+        filePath: element.feature.filePath,
+        line: element.scenario.line,
+        parentTagKey: element.parentTagKey,
+      };
+    case "outlineRow":
+      return {
+        kind: "outlineRow",
+        filePath: element.feature.filePath,
+        line: element.scenario.line,
+        rowIndex: element.example.rowIndex,
+        parentTagKey: element.parentTagKey,
+      };
   }
 }
 
@@ -960,40 +1178,32 @@ function rollupToOutcome(rollup: ReturnType<typeof computeRollup> | undefined): 
   return undefined;
 }
 
-function treeOutcomeIcon(
-  outcome: TestOutcome | undefined,
-  skipReason: SkipReason | undefined,
-  isOutline: boolean,
-  sessionHasResults: boolean,
-): vscode.ThemeIcon {
-  const kind = resolveTreeLeafIconKind(outcome, skipReason, isOutline);
-  // Keep classic beaker/list-tree until a run has produced outcomes in this session.
-  if (kind === "pending" && !sessionHasResults) {
-    return new vscode.ThemeIcon(isOutline ? "list-tree" : "beaker");
+function themeIconFromSpec(spec: TreeLeafIconSpec): vscode.ThemeIcon {
+  switch (spec.color) {
+    case "passed":
+      return new vscode.ThemeIcon(spec.id, new vscode.ThemeColor("testing.iconPassed"));
+    case "failed":
+      return new vscode.ThemeIcon(spec.id, new vscode.ThemeColor("testing.iconFailed"));
+    case "skipped":
+      return new vscode.ThemeIcon(spec.id, new vscode.ThemeColor("testing.iconSkipped"));
+    default:
+      return new vscode.ThemeIcon(spec.id);
   }
-  if (kind === "outline" && !sessionHasResults) {
-    return new vscode.ThemeIcon("list-tree");
-  }
-  return themeIconForLeafKind(kind);
 }
 
-function themeIconForLeafKind(kind: TreeLeafIconKind): vscode.ThemeIcon {
-  switch (kind) {
-    case "passed":
-      return new vscode.ThemeIcon("pass", new vscode.ThemeColor("testing.iconPassed"));
-    case "failed":
-      return new vscode.ThemeIcon("error", new vscode.ThemeColor("testing.iconFailed"));
-    case "skipped":
-    case "canceled":
-      return new vscode.ThemeIcon("circle-slash", new vscode.ThemeColor("testing.iconSkipped"));
-    case "not_in_trx":
-      return new vscode.ThemeIcon("question", new vscode.ThemeColor("testing.iconSkipped"));
-    case "outline":
-      return new vscode.ThemeIcon("list-tree");
-    case "pending":
-    default:
-      return new vscode.ThemeIcon("circle-outline");
+function applyExperimentalAccessibility(
+  item: vscode.TreeItem,
+  locale: PilotLocale,
+  level: TreeA11yLevel,
+  name: string,
+  state?: string,
+): void {
+  if (readTreePresentation() !== "nativePrecision") {
+    return;
   }
+  item.accessibilityInformation = {
+    label: formatTreeAccessibilityLabel(locale, level, name, state),
+  };
 }
 
 export { outlineRowKey, scenarioKey } from "../core/runner/runScope";

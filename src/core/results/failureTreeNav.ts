@@ -144,6 +144,22 @@ export function collectFailedOutcomeKeys(
   return keys;
 }
 
+export function collectFailedLeaves(
+  domains: readonly DomainGroup[],
+  outcomes: FailedLeafOutcomeReader,
+  includeOutcomeKey?: (outcomeKey: string) => boolean,
+): FirstFailedLeaf[] {
+  const leaves: FirstFailedLeaf[] = [];
+  const include = includeOutcomeKey ?? (() => true);
+  walkFailedLeaves(domains, outcomes, (leaf) => {
+    if (include(leaf.outcomeKey)) {
+      leaves.push(leaf);
+    }
+    return false;
+  });
+  return leaves;
+}
+
 /** Count failed leaves per failure bucket (TRX/store message). */
 export function countFailedLeavesByBucket(
   domains: readonly DomainGroup[],

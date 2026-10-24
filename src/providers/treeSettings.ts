@@ -5,12 +5,25 @@ import {
   TreeDisplaySettings,
   TreeGroupBy,
 } from "../core/gherkin/treeDisplaySettings";
+import {
+  DEFAULT_TREE_PRESENTATION,
+  parseTreePresentation,
+  TreePresentation,
+} from "../core/gherkin/treePresentation";
 
-export type { TreeDisplaySettings, TreeGroupBy };
+export type { TreeDisplaySettings, TreeGroupBy, TreePresentation };
 
 export function readTreeGroupBy(): TreeGroupBy {
   const raw = vscode.workspace.getConfiguration("bddPilot").get<string>("tree.groupBy", "domain");
   return parseTreeGroupBy(raw);
+}
+
+export function readTreePresentation(): TreePresentation {
+  const raw = vscode.workspace.getConfiguration("bddPilot").get<string>(
+    "tree.presentation",
+    DEFAULT_TREE_PRESENTATION,
+  );
+  return parseTreePresentation(raw);
 }
 
 export function readTreeDisplaySettings(): TreeDisplaySettings {

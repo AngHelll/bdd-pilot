@@ -6,6 +6,12 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.65.0] — 2026-10-24
+
+### Changed
+- **Tree presentation** — `bddPilot.tree.presentation` defaults to `nativePrecision`: scenario, outline, and example names have no prefix, idle rows use a distinct icon, and each row has a screen-reader label. Set `classic` to keep the prefixed labels and previous icons. An existing explicit `classic` value is left as-is. Changing only this setting repaints the tree.
+- **Live results** — each completion looks up candidate scenarios instead of scanning the whole tree. Outcome keys, match rules, and the 120 ms refresh are unchanged.
+
 ## [1.64.1] — 2026-10-23
 
 ### Changed

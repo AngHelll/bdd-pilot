@@ -4,6 +4,7 @@ import { ExecutionProfile } from "../core/config/profiles";
 import { buildModeHubPickItems, buildStageHubPickItems } from "../core/config/hubPickItems";
 import { ParallelismMode, Stage, isMode, isStage } from "../core/config/types";
 import { shouldConfirmSearchRunCap } from "../core/gherkin/treeSearch";
+import { shouldRediscoverFeatures } from "../core/gherkin/treePresentation";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { MessageKey } from "../core/i18n";
 import { getLastMappingReport } from "../core/results/lastMappingReport";
@@ -14,7 +15,6 @@ import {
 import { scenarioHistoryKey } from "../core/results/runHistory";
 import { formatDuration } from "../core/results/durationFormat";
 import {
-  containerKeysToExpandForFailures,
   countFailedLeavesByBucket,
   findFirstFailedLeaf,
   findFirstFailedLeafForBucket,
@@ -107,6 +107,35 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     }, DEBUG_TERMINATE_GRACE_MS);
   };
 
+  const revealTreeNode = async (node: TreeNode | undefined, select: boolean): Promise<void> => {
+    if (!node) {
+      return;
+    }
+    try {
+      await deps.treeView.reveal(node, { expand: true, select, focus: select });
+    } catch {
+      // Tree may be filtered, or the host cannot resolve the handle.
+    }
+  };
+
+  const expandFailureContainers = async (
+    includeOutcomeKey?: (outcomeKey: string) => boolean,
+  ): Promise<boolean> => {
+    const nodes = deps.treeProvider.nodesToExpandForFailures(includeOutcomeKey);
+    if (nodes.length === 0) {
+      return false;
+    }
+    try {
+      await vscode.commands.executeCommand("workbench.actions.treeView.bddPilot.tests.collapseAll");
+    } catch {
+      // Command id can vary by host; continue with expands.
+    }
+    for (const node of nodes) {
+      await revealTreeNode(node, false);
+    }
+    return true;
+  };
+
   return [
     vscode.commands.registerCommand("bddPilot.refresh", () => deps.refreshAll()),
 
@@ -125,13 +154,7 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
         return;
       }
       const node = deps.treeProvider.findLeafNodeByOutcomeKey(leaf.outcomeKey);
-      if (node) {
-        try {
-          await deps.treeView.reveal(node, { select: true, focus: true, expand: true });
-        } catch {
-          // Tree may be filtered/empty — still open the feature.
-        }
-      }
+      await revealTreeNode(node, true);
       try {
         await openFeatureAtLine(leaf.featurePath, leaf.scenarioLine);
       } catch {
@@ -175,46 +198,15 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
         store.get(key) === "failed" &&
         classifyFailedLeafFromStore(store, key) === selected.bucket;
 
-      const containers = containerKeysToExpandForFailures(domains, store, { includeOutcomeKey });
-      if (containers.length === 0) {
+      const expanded = await expandFailureContainers(includeOutcomeKey);
+      if (!expanded) {
         void vscode.window.showInformationMessage(deps.tr("toast.noFailedScenariosFocus"));
         return;
-      }
-      try {
-        await vscode.commands.executeCommand(
-          "workbench.actions.treeView.bddPilot.tests.collapseAll",
-        );
-      } catch {
-        // Command id can vary by host; continue with expands.
-      }
-      for (const container of containers) {
-        let node: TreeNode | undefined;
-        if (container.kind === "domain") {
-          node = deps.treeProvider.findDomainNode(container.id);
-        } else if (container.kind === "feature") {
-          node = deps.treeProvider.findFeatureNode(container.id);
-        } else {
-          const featurePath = container.id.split("::")[0];
-          node = deps.treeProvider.findScenarioOutlineNode(featurePath, container.id);
-        }
-        if (node) {
-          try {
-            await deps.treeView.reveal(node, { expand: true, select: false, focus: false });
-          } catch {
-            // ignore expand failures for filtered nodes
-          }
-        }
       }
       const first = findFirstFailedLeafForBucket(domains, store, selected.bucket);
       if (first) {
         const leafNode = deps.treeProvider.findLeafNodeByOutcomeKey(first.outcomeKey);
-        if (leafNode) {
-          try {
-            await deps.treeView.reveal(leafNode, { expand: true, select: true, focus: true });
-          } catch {
-            // ignore
-          }
-        }
+        await revealTreeNode(leafNode, true);
         try {
           await openFeatureAtLine(first.featurePath, first.scenarioLine);
         } catch {
@@ -226,46 +218,15 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     vscode.commands.registerCommand("bddPilot.collapseToFailures", async () => {
       const domains = deps.treeProvider.getDomains();
       const store = deps.treeProvider.getOutcomeStore();
-      const containers = containerKeysToExpandForFailures(domains, store);
-      if (containers.length === 0) {
+      const expanded = await expandFailureContainers();
+      if (!expanded) {
         void vscode.window.showInformationMessage(deps.tr("toast.noFailedScenariosFocus"));
         return;
-      }
-      try {
-        await vscode.commands.executeCommand(
-          "workbench.actions.treeView.bddPilot.tests.collapseAll",
-        );
-      } catch {
-        // Command id can vary by host; continue with expands.
-      }
-      for (const container of containers) {
-        let node: TreeNode | undefined;
-        if (container.kind === "domain") {
-          node = deps.treeProvider.findDomainNode(container.id);
-        } else if (container.kind === "feature") {
-          node = deps.treeProvider.findFeatureNode(container.id);
-        } else {
-          const featurePath = container.id.split("::")[0];
-          node = deps.treeProvider.findScenarioOutlineNode(featurePath, container.id);
-        }
-        if (node) {
-          try {
-            await deps.treeView.reveal(node, { expand: true, select: false, focus: false });
-          } catch {
-            // ignore expand failures for filtered nodes
-          }
-        }
       }
       const first = findFirstFailedLeaf(domains, store);
       if (first) {
         const leafNode = deps.treeProvider.findLeafNodeByOutcomeKey(first.outcomeKey);
-        if (leafNode) {
-          try {
-            await deps.treeView.reveal(leafNode, { expand: true, select: true, focus: true });
-          } catch {
-            // ignore
-          }
-        }
+        await revealTreeNode(leafNode, true);
       }
     }),
 
@@ -595,10 +556,15 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     }),
 
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("bddPilot")) {
-        deps.refreshAll();
-        deps.refreshUi();
+      if (!e.affectsConfiguration("bddPilot")) {
+        return;
       }
+      if (!shouldRediscoverFeatures((section) => e.affectsConfiguration(section))) {
+        deps.treeProvider.rerender();
+        return;
+      }
+      deps.refreshAll();
+      deps.refreshUi();
     }),
 
     vscode.workspace.onDidSaveTextDocument((doc) => {

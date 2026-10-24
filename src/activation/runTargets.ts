@@ -6,7 +6,7 @@ import {
   ScenarioNode,
   TagNode,
   TreeNode,
-} from "../providers/testTreeProvider";
+} from "../core/gherkin/treeNodes";
 
 export function toRunTarget(node: TreeNode | undefined): RunTarget | undefined {
   if (!node) {
