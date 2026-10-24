@@ -15,6 +15,7 @@ import {
   formatTreeAccessibilityLabel,
   formatTreeLeafLabel,
   leafResultStateLabel,
+  nativeAccessibilityLabel,
   DEFAULT_TREE_PRESENTATION,
   parseTreePresentation,
   prependScenarioLevelTooltip,
@@ -103,6 +104,113 @@ describe("treePresentation", () => {
     );
     assert.strictEqual(formatTreeAccessibilityLabel("en", "summary", "3 of 5", "Running"), "Summary. Running. 3 of 5.");
     assert.strictEqual(formatTreeAccessibilityLabel("es", "guide", "Selecciona un proyecto"), "Aviso. Selecciona un proyecto.");
+  });
+
+  it("speaks duration between state and name and distinguishes unknown from not run", () => {
+    assert.strictEqual(leafResultStateLabel("en", "unknown", undefined), "unknown result");
+    assert.strictEqual(leafResultStateLabel("es", "unknown", undefined), "resultado desconocido");
+    assert.strictEqual(leafResultStateLabel("en", undefined, undefined), "not run");
+    assert.strictEqual(leafResultStateLabel("es", undefined, undefined), "sin ejecutar");
+    assert.strictEqual(
+      formatTreeAccessibilityLabel(
+        "en",
+        "scenario",
+        "Pay with a saved card",
+        leafResultStateLabel("en", "passed", undefined),
+        "1.2 s",
+      ),
+      "Scenario. Passed. 1.2 s. Pay with a saved card.",
+    );
+    assert.strictEqual(
+      formatTreeAccessibilityLabel(
+        "es",
+        "scenario",
+        "Pagar con tarjeta",
+        leafResultStateLabel("es", "failed", undefined),
+        "450 ms",
+      ),
+      "Escenario. Fallido. 450 ms. Pagar con tarjeta.",
+    );
+    assert.strictEqual(
+      formatTreeAccessibilityLabel(
+        "en",
+        "scenario",
+        "Pay with a saved card",
+        leafResultStateLabel("en", "failed", undefined),
+      ),
+      "Scenario. Failed. Pay with a saved card.",
+    );
+    assert.strictEqual(
+      formatTreeAccessibilityLabel(
+        "en",
+        "scenario",
+        "Pay",
+        leafResultStateLabel("en", "unknown", undefined),
+      ),
+      "Scenario. Unknown result. Pay.",
+    );
+    assert.strictEqual(
+      formatTreeAccessibilityLabel(
+        "es",
+        "example",
+        "a=1",
+        leafResultStateLabel("es", "unknown", undefined),
+        "20 ms",
+      ),
+      "Ejemplo. Resultado desconocido. 20 ms. a=1.",
+    );
+    assert.strictEqual(
+      formatTreeAccessibilityLabel(
+        "en",
+        "outline",
+        "Add two numbers",
+        leafResultStateLabel("en", "failed", undefined),
+      ),
+      "Outline. Failed. Add two numbers.",
+    );
+  });
+
+  it("classic has no accessibility label and native precision speaks the duration", () => {
+    assert.strictEqual(
+      nativeAccessibilityLabel("classic", "en", "scenario", "Pay with a saved card", "passed", "1.2 s"),
+      undefined,
+    );
+    assert.strictEqual(
+      nativeAccessibilityLabel("classic", "es", "scenario", "Pagar", "fallido", "450 ms"),
+      undefined,
+    );
+    assert.strictEqual(
+      nativeAccessibilityLabel(
+        "nativePrecision",
+        "es",
+        "scenario",
+        "Pagar con tarjeta",
+        leafResultStateLabel("es", "passed", undefined),
+        "1.2 s",
+      ),
+      "Escenario. Correcto. 1.2 s. Pagar con tarjeta.",
+    );
+  });
+
+  it("tooltip keeps the error and the exact duration", () => {
+    const md = buildScenarioTooltipMarkdown(
+      {
+        scenarioName: "Pay with a saved card",
+        featureName: "Checkout",
+        fileName: "Checkout.feature",
+        line: 12,
+        featureTags: [],
+        scenarioTags: ["payment"],
+        isOutline: false,
+        outcomeLabel: "fallido",
+        durationMs: 1200,
+        errorSnippet: "Expected true but was false",
+      },
+      "es",
+    );
+    assert.match(md, /Error: Expected true but was false/);
+    assert.match(md, /Duration: 1\.2 s \(1200 ms\)/);
+    assert.match(md, /Last run: \*\*fallido\*\*/);
   });
 
   it("states the scenario level in the tooltip only for native precision", () => {

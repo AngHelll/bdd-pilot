@@ -68,6 +68,13 @@ describe("treeContainerLabels", () => {
     assert.ok(msg.includes("6 tags"));
   });
 
+  it("buildOutlineParentDescription does not add a duration", () => {
+    const detailedMsg = buildOutlineParentDescription("detailed", failedRollup, 4, "en", "@smoke");
+    const compactMsg = buildOutlineParentDescription("compact", failedRollup, 4, "es");
+    assert.strictEqual(detailedMsg, "2 failed · 3 passed · @smoke");
+    assert.strictEqual(compactMsg, "2 fallidos · 3 correctos · 4 filas");
+  });
+
   it("effectiveLeafTagDisplay hides tags in compact", () => {
     assert.strictEqual(effectiveLeafTagDisplay("compact", "count"), "hidden");
     assert.strictEqual(effectiveLeafTagDisplay("detailed", "count"), "count");

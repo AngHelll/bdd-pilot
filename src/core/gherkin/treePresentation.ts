@@ -129,28 +129,39 @@ export function formatTreeLeafLabel(
 }
 
 /**
- * Spoken label: level, state, and name.
+ * Spoken label: level, state, duration, name.
  * State words come from the existing outcome catalog and are capitalized for the sentence.
+ * Duration is the same token shown on the row, included only when the caller has one.
  */
 export function formatTreeAccessibilityLabel(
   locale: PilotLocale,
   level: TreeA11yLevel,
   name: string,
   state?: string,
+  duration?: string,
 ): string {
-  const levelLabel = t(locale, A11Y_LEVEL_KEY[level]);
-  const nameLabel = name.trim();
-  const stateLabel = state?.trim() ? capitalizeToken(state.trim()) : undefined;
-  if (stateLabel && nameLabel) {
-    return `${levelLabel}. ${stateLabel}. ${nameLabel}.`;
+  const parts = [
+    t(locale, A11Y_LEVEL_KEY[level]),
+    state?.trim() ? capitalizeToken(state.trim()) : undefined,
+    duration?.trim() || undefined,
+    name.trim() || undefined,
+  ].filter((part): part is string => part !== undefined && part.length > 0);
+  return `${parts.join(". ")}.`;
+}
+
+/** Native Precision speaks the row. Classic keeps the prefixed label and has no extra accessibility label. */
+export function nativeAccessibilityLabel(
+  presentation: TreePresentation,
+  locale: PilotLocale,
+  level: TreeA11yLevel,
+  name: string,
+  state?: string,
+  duration?: string,
+): string | undefined {
+  if (presentation !== "nativePrecision") {
+    return undefined;
   }
-  if (stateLabel) {
-    return `${levelLabel}. ${stateLabel}.`;
-  }
-  if (nameLabel) {
-    return `${levelLabel}. ${nameLabel}.`;
-  }
-  return `${levelLabel}.`;
+  return formatTreeAccessibilityLabel(locale, level, name, state, duration);
 }
 
 /** Plain scenarios lose the "Scenario:" prefix, so the hover states the level once. */
@@ -178,6 +189,9 @@ export function leafResultStateLabel(
   }
   if (outcome === "passed" || outcome === "failed" || outcome === "skipped") {
     return formatOutcomeForTooltip(outcome, locale);
+  }
+  if (outcome === "unknown") {
+    return t(locale, "skip.unknown");
   }
   return t(locale, "tree.leafPending");
 }

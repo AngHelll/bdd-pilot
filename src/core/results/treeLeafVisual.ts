@@ -13,6 +13,19 @@ import { TestOutcome } from "./trxParser";
 /** Description snippet cap (tooltip may stay longer via existing helpers). */
 const STORY_SNIPPET_MAX = 100;
 
+/**
+ * Duration the tree row may show. Missing, non-finite, and negative values stay blank
+ * so a live result without `durationMs` cannot render an invented duration.
+ * A finite value already stored is returned as-is; `OutcomeStore.set` still keeps a
+ * previous duration when a later write omits `durationMs`.
+ */
+export function treeRowDurationMs(durationMs: number | undefined): number | undefined {
+  if (durationMs === undefined || !Number.isFinite(durationMs) || durationMs < 0) {
+    return undefined;
+  }
+  return durationMs;
+}
+
 /** Visual kind for BDD tree / TE leaf icons (providers map to ThemeIcon). */
 export type TreeLeafIconKind =
   | "passed"
@@ -161,6 +174,11 @@ export interface LeafStoryStripInput {
   showPendingHint?: boolean;
   /** Test Explorer includes the localized outcome word; the BDD tree uses the icon. */
   includeOutcomeLabel?: boolean;
+  /**
+   * When false, the row keeps duration and tags and leaves the failure snippet
+   * to the tooltip. The default preserves the Test Explorer row.
+   */
+  includeErrorSnippet?: boolean;
 }
 
 function isNarrativeSkip(reason: SkipReason | undefined): boolean {
@@ -170,13 +188,16 @@ function isNarrativeSkip(reason: SkipReason | undefined): boolean {
 /**
  * Unified leaf description for BDD tree and Test Explorer.
  * Priority: failed+snippet → narrative skip → pending hint → base parts.
+ * The tree passes `includeErrorSnippet: false` so the icon carries pass/fail
+ * and a compact failure cannot drop the duration.
  */
 export function formatLeafStoryStrip(input: LeafStoryStripInput): string | undefined {
   const compact = input.displayMode === "compact";
+  const includeErrorSnippet = input.includeErrorSnippet !== false;
   const cleaned = input.errorSnippet ? sanitizeErrorForStore(input.errorSnippet) : undefined;
   const snippet = cleaned ? truncateErrorSnippet(cleaned, STORY_SNIPPET_MAX) : undefined;
   const failedStrip =
-    input.outcome === "failed" && snippet
+    includeErrorSnippet && input.outcome === "failed" && snippet
       ? joinDescriptionParts(formatOutcomeForTooltip("failed", input.locale), snippet)
       : undefined;
   const omitTags = compact && (!!failedStrip || isNarrativeSkip(input.skipReason));

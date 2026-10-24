@@ -33,6 +33,7 @@ import {
 import {
   formatLeafStoryStrip,
   resolveLeafIconSpec,
+  treeRowDurationMs,
   TreeLeafIconSpec,
 } from "../core/results/treeLeafVisual";
 import {
@@ -58,9 +59,9 @@ import {
 } from "../core/gherkin/treeLabels";
 import {
   containerResultStateLabel,
-  formatTreeAccessibilityLabel,
   formatTreeLeafLabel,
   leafResultStateLabel,
+  nativeAccessibilityLabel,
   prependScenarioLevelTooltip,
   TreeA11yLevel,
   TreeLeafLevel,
@@ -812,7 +813,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const key = scenarioKey(node.feature, node.scenario);
     const outcome = hasExamples ? rollupToOutcome(rollup) : this.outcomeStore.get(key);
     const skipReason = hasExamples ? undefined : this.outcomeStore.getSkipReason(key);
-    const durationMs = hasExamples ? undefined : this.outcomeStore.getDuration(key);
+    const durationMs = treeRowDurationMs(
+      hasExamples ? undefined : this.outcomeStore.getDuration(key),
+    );
     const errorMessage = hasExamples ? undefined : this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
@@ -856,6 +859,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
           durationPart: formatDurationLabel(durationMs, display.durationDisplay),
           featureHint,
           showPendingHint,
+          includeErrorSnippet: false,
         }) ?? "";
     }
 
@@ -912,6 +916,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       hasExamples
         ? containerResultStateLabel(locale, rollup ? rollupSeverity(rollup) : undefined)
         : leafResultStateLabel(locale, outcome, skipReason),
+      hasExamples ? undefined : formatDurationLabel(durationMs, display.durationDisplay),
     );
     item.contextValue = TREE_ITEM_CONTEXT.scenario;
     item.command = {
@@ -930,7 +935,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const key = outlineRowKey(node.feature, node.scenario, node.example.rowIndex);
     const outcome = this.outcomeStore.get(key);
     const skipReason = this.outcomeStore.getSkipReason(key);
-    const durationMs = this.outcomeStore.getDuration(key);
+    const durationMs = treeRowDurationMs(this.outcomeStore.getDuration(key));
     const errorMessage = this.outcomeStore.getErrorMessage(key);
     const tags = effectiveScenarioTags(node.feature, node.scenario);
 
@@ -959,6 +964,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         tagsPart: formatTagDescription(tags, leafTags, display.compactTagLimit) || undefined,
         durationPart: formatDurationLabel(durationMs, display.durationDisplay),
         showPendingHint,
+        includeErrorSnippet: false,
       }) ?? "";
 
     const tooltip = new vscode.MarkdownString(
@@ -1003,6 +1009,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       "example",
       node.example.label,
       leafResultStateLabel(locale, outcome, skipReason),
+      formatDurationLabel(durationMs, display.durationDisplay),
     );
     item.contextValue = TREE_ITEM_CONTEXT.scenario;
     item.command = {
@@ -1136,7 +1143,8 @@ function placedNode(element: TreeNode): PlacedNode {
 }
 
 function formatDurationLabel(durationMs: number | undefined, mode: DurationDisplayMode): string | undefined {
-  return durationMs !== undefined ? formatDuration(durationMs, mode) : undefined;
+  const presentable = treeRowDurationMs(durationMs);
+  return presentable !== undefined ? formatDuration(presentable, mode) : undefined;
 }
 
 function containerIcon(
@@ -1197,13 +1205,20 @@ function applyExperimentalAccessibility(
   level: TreeA11yLevel,
   name: string,
   state?: string,
+  duration?: string,
 ): void {
-  if (readTreePresentation() !== "nativePrecision") {
+  const label = nativeAccessibilityLabel(
+    readTreePresentation(),
+    locale,
+    level,
+    name,
+    state,
+    duration,
+  );
+  if (!label) {
     return;
   }
-  item.accessibilityInformation = {
-    label: formatTreeAccessibilityLabel(locale, level, name, state),
-  };
+  item.accessibilityInformation = { label };
 }
 
 export { outlineRowKey, scenarioKey } from "../core/runner/runScope";

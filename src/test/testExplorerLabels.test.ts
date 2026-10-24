@@ -14,6 +14,7 @@ import {
 } from "../core/gherkin/testExplorerLabels";
 import { DEFAULT_COMPACT_TAG_LIMIT, DEFAULT_TAG_DISPLAY } from "../core/gherkin/treeLabels";
 import { DEFAULT_DURATION_DISPLAY } from "../core/results/durationFormat";
+import { formatLeafStoryStrip } from "../core/results/treeLeafVisual";
 
 const display = {
   displayMode: "detailed" as const,
@@ -104,6 +105,58 @@ describe("testExplorerLabels", () => {
       "Expected true",
     );
     assert.strictEqual(compact, "failed · Expected true");
+  });
+
+  it("Test Explorer description stays unchanged when the tree omits the error snippet", () => {
+    const explorerDetailed = buildTestExplorerLeafDescription(
+      "failed",
+      450,
+      display,
+      "en",
+      "Login",
+      undefined,
+      false,
+      "Expected true",
+    );
+    const explorerCompact = buildTestExplorerLeafDescription(
+      "failed",
+      450,
+      compactDisplay,
+      "en",
+      "Login",
+      undefined,
+      false,
+      "Expected true",
+    );
+    const explorerSpanish = buildTestExplorerLeafDescription(
+      "failed",
+      undefined,
+      display,
+      "es",
+      "Login",
+    );
+    const defaultStrip = formatLeafStoryStrip({
+      outcome: "failed",
+      errorSnippet: "Expected true",
+      displayMode: "compact",
+      locale: "en",
+      tagsPart: "Login",
+      durationPart: "450 ms",
+      includeOutcomeLabel: true,
+    });
+    const treeCompact = formatLeafStoryStrip({
+      outcome: "failed",
+      errorSnippet: "Expected true",
+      displayMode: "compact",
+      locale: "en",
+      durationPart: "450 ms",
+      includeErrorSnippet: false,
+    });
+    assert.strictEqual(explorerDetailed, "failed · Expected true · 450 ms · Login");
+    assert.strictEqual(explorerCompact, "failed · Expected true");
+    assert.strictEqual(explorerSpanish, "fallido · Login");
+    assert.strictEqual(defaultStrip, explorerCompact);
+    assert.strictEqual(treeCompact, "450 ms");
   });
 
   it("buildTestExplorerScenarioDescription reads getErrorMessage from the store", () => {

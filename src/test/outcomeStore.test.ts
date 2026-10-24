@@ -57,6 +57,14 @@ describe("OutcomeStore", () => {
     assert.strictEqual(store.get("/x/Sample.feature::5::Many::row1"), "passed");
   });
 
+  it("keeps a previous duration when a later set omits durationMs", () => {
+    const store = new OutcomeStore();
+    store.set("k", "passed", 1250);
+    store.set("k", "failed");
+    assert.strictEqual(store.get("k"), "failed");
+    assert.strictEqual(store.getDuration("k"), 1250);
+  });
+
   it("stores sanitized error messages and clears on clearAll", () => {
     const store = new OutcomeStore();
     store.set("k", "failed", 100, "password=secret");
