@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.65.0** · **Marketplace: v1.64.1** · **Open VSX: v1.64.1** · **Next: publish v1.65.0** · **799 unit tests**
+> **Current release: v1.66.0** · **Marketplace: v1.64.1** · **Open VSX: v1.64.1** · **Next: publish v1.66.0** · **813 unit tests**
 
 ---
 
@@ -10,8 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.1** |
-| 📦 GitHub (pending Marketplace) | **v1.65.0** — Native Precision default and indexed live results |
-| 🎯 Next | publish **v1.65.0** |
+| 📦 GitHub (pending Marketplace) | **v1.66.0** — Execution awareness on scenario rows |
+| 🎯 Next | publish **v1.66.0** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -245,6 +245,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.66.0 — Execution awareness ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Tree** | A finished scenario or example keeps its status icon and shows its duration on the row when the result includes one. The error snippet stays in the tooltip |
+| **Accessibility** | Native Precision speaks node type, state, duration, and name. Unknown is distinct from not run. Classic has no extra accessibility label |
+| **Test Explorer** | Row text is unchanged |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 813 unit tests |
 
 ### v1.65.0 — Native Precision and indexed live results ✅ shipped (Marketplace pending)
 
@@ -1239,4 +1250,4 @@ src/
 
 ---
 
-*Last updated: v1.65.0 Native Precision and indexed live results on GitHub; Marketplace pending.*
+*Last updated: v1.66.0 execution awareness on GitHub; Marketplace pending.*

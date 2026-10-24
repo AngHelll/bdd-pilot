@@ -14,7 +14,7 @@ The official Reqnroll extension targets Visual Studio. On VS Code and Cursor you
 ## Why Pilot
 
 - **Run by domain, feature, scenario, `@tag`, or a single Scenario Outline row.** Pilot builds the filter for you.
-- **See results on the scenario, not the test method.** TRX and Cucumber JSON outcomes land on each `.feature` row, with the error snippet on hover.
+- **See results on the scenario, not the test method.** Pass, fail, and duration show on the row. The error snippet stays on hover.
 - **Know why it failed.** Missing SDK, private NuGet feed, broken Playwright drivers, and pending steps are diagnosed in plain words.
 - **Switch environments safely.** Pick `STAGE` (`dev` / `test` / `stg` / `prod`) from the status bar; `stg` and `prod` ask for confirmation, and `prod` stays blocked until you opt in.
 - **Hand the failure to your AI assistant.** Copy a sanitized failure summary for Copilot or Cursor, or let the agent read it through the built-in MCP tools.

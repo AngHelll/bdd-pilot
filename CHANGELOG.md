@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.66.0] — 2026-10-24
+
+### Changed
+- **Execution awareness** — A finished scenario or example keeps its status icon and shows its duration on the row when the result includes one. The error snippet stays in the tooltip. Native Precision screen readers hear the node type, state, duration, and name. An unknown result is announced as unknown, distinct from a scenario that has not run. Compact mode keeps the duration when a scenario fails. Test Explorer rows are unchanged.
+
 ## [1.65.0] — 2026-10-24
 
 ### Changed
