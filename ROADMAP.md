@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.63.0** · **Marketplace: v1.62.0** · **Open VSX: v1.62.0** · **Next: publish v1.63.0** · **798 unit tests**
+> **Current release: v1.63.0** · **Marketplace: v1.63.0** · **Open VSX: v1.63.0** · **Next: watch** · **798 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.62.0** |
-| 📦 GitHub (pending Marketplace) | **v1.63.0** — Dashboard Stage |
-| 🎯 Next | publish **v1.63.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.63.0** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -243,14 +242,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.63.0 — Dashboard Stage ✅ shipped (Marketplace pending)
+### v1.63.0 — Dashboard Stage ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Dashboard** | Header, wide recent-runs table, and a rail (diagnostic, last known, actions, flaky). Segmented filters. Re-run Failed is the only primary action. The open panel patches in place so scroll stays |
 | **Theme** | `bddPilot.dashboard.theme`: `editor` (default, follows VS Code) or `stage` (Forge One dark palette). Outcome color is pass / fail / warning / muted |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.63.0 (Marketplace + Open VSX) |
 | **Tests** | 798 unit tests |
 
 ### v1.62.0 — Microsoft Testing Platform (opt-in) ✅ shipped
@@ -1203,4 +1202,4 @@ src/
 
 ---
 
-*Last updated: v1.63.0 Dashboard Stage on GitHub; Marketplace pending.*
+*Last updated: v1.63.0 Dashboard Stage shipped Marketplace + Open VSX.*
