@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.66.0** · **Marketplace: v1.64.1** · **Open VSX: v1.64.1** · **Next: publish v1.66.0** · **813 unit tests**
+> **Current release: v1.66.0** · **Marketplace: v1.66.0** · **Open VSX: v1.66.0** · **Next: —** · **813 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.1** |
-| 📦 GitHub (pending Marketplace) | **v1.66.0** — Execution awareness on scenario rows |
-| 🎯 Next | publish **v1.66.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.66.0** |
+| 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -246,7 +245,7 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.66.0 — Execution awareness ✅ shipped (Marketplace pending)
+### v1.66.0 — Execution awareness ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -254,17 +253,17 @@ _Nothing queued._
 | **Accessibility** | Native Precision speaks node type, state, duration, and name. Unknown is distinct from not run. Classic has no extra accessibility label |
 | **Test Explorer** | Row text is unchanged |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.66.0 (Marketplace + Open VSX) |
 | **Tests** | 813 unit tests |
 
-### v1.65.0 — Native Precision and indexed live results ✅ shipped (Marketplace pending)
+### v1.65.0 — Native Precision and indexed live results ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Tree** | `bddPilot.tree.presentation` defaults to Native Precision. Classic remains available. Stable ids and tag navigation stay. Changing only presentation repaints the tree |
 | **Live results** | Each completion looks up candidate scenarios. Outcome keys, match rules, and the 120 ms refresh are unchanged |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.65.0 (Marketplace + Open VSX) |
 | **Tests** | 799 unit tests |
 
 ### v1.64.1 — Dashboard chart counts ✅ shipped
@@ -1250,4 +1249,4 @@ src/
 
 ---
 
-*Last updated: v1.66.0 execution awareness on GitHub; Marketplace pending.*
+*Last updated: v1.66.0 execution awareness published to Marketplace and Open VSX.*
