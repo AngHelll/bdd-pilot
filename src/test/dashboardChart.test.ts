@@ -37,6 +37,11 @@ describe("dashboardChart", () => {
     assert.deepStrictEqual(bars[0]?.segments, []);
     const svg = renderDashboardHistoryChart(bars, "Last 2 runs", () => "counts");
     assert.match(svg, /data-kind="empty"/);
+    assert.match(svg, /data-count="0"/);
+    assert.match(svg, /data-count="2"/);
+    assert.match(svg, /width="44"/);
+    assert.match(svg, /preserveAspectRatio="xMinYMid meet"/);
+    assert.doesNotMatch(svg, /preserveAspectRatio="none"/);
     assert.match(svg, /role="img"/);
     assert.doesNotMatch(svg, /<button/);
   });

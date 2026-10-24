@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.64.1] — 2026-10-23
+
+### Changed
+- **Dashboard chart** — Each visible run keeps a fixed width and shows its count. A run with failures colors that count as a failure. Clear history stays a small control beside the totals. The flaky scenario name opens the feature; it is no longer a separate Open button or a link.
+
 ## [1.64.0] — 2026-10-23
 
 ### Changed

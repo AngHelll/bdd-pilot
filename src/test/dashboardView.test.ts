@@ -166,7 +166,7 @@ describe("dashboardView", () => {
     assert.match(busy, /data-command="clearHistory"[^>]*disabled/);
   });
 
-  it("keeps the flaky name as text and opens from a secondary button", () => {
+  it("opens a flaky scenario from its name without a link", () => {
     const scenario = {
       featurePath: "/tmp/pay.feature",
       scenarioLine: 4,
@@ -190,13 +190,13 @@ describe("dashboardView", () => {
       }),
     ];
     const rail = regions({ history }).rail;
-    assert.match(rail, /<td>Guest pays<\/td>/);
-    assert.doesNotMatch(rail, /flaky-open-btn/);
     assert.match(
       rail,
-      /class="action-btn" data-feature-path="\/tmp\/pay\.feature" data-scenario-line="4"/,
+      /class="case-open" data-feature-path="\/tmp\/pay\.feature" data-scenario-line="4"[^>]*>Guest pays</,
     );
-    assert.doesNotMatch(rail, /action-btn--primary" data-feature-path/);
+    assert.doesNotMatch(rail, /<a[\s>]/);
+    assert.doesNotMatch(rail, /flaky-open-btn/);
+    assert.doesNotMatch(rail, /action-btn[^"]*" data-feature-path/);
   });
 
   it("builds one shell with both themes and the current regions", () => {

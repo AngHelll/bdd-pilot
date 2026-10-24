@@ -23,6 +23,9 @@ export interface DashboardHistoryBar {
 }
 
 const CHART_HEIGHT = 56;
+const LABEL_BAND = 16;
+const SLOT = 22;
+const BAR_WIDTH = 12;
 
 /**
  * `newestFirst` is the table order. Bars are returned oldest-first so the
@@ -67,19 +70,26 @@ export function renderDashboardHistoryChart(
     return "";
   }
 
-  const slot = 10;
-  const width = bars.length * slot;
+  const plotHeight = CHART_HEIGHT - LABEL_BAND;
+  const width = bars.length * SLOT;
   const groups = bars
     .map((bar, index) => {
-      const x = index * slot;
+      const x = index * SLOT + (SLOT - BAR_WIDTH) / 2;
+      const count = bar.passed + bar.failed + bar.skipped;
       const title = `<title>${escapeXml(barTitle(bar))}</title>`;
+      const countFill = bar.failed > 0 ? "var(--pilot-danger)" : "var(--pilot-muted)";
+      const countLabel = `<text data-count="${count}" x="${x + BAR_WIDTH / 2}" y="12" text-anchor="middle" fill="${countFill}" font-size="10">${count}</text>`;
       if (bar.heightFraction === 0) {
-        return `<g data-bar="${index}">${title}<rect data-kind="empty" x="${x}" y="${CHART_HEIGHT - 2}" width="8" height="2" fill="var(--pilot-muted)"></rect></g>`;
+        return `<g data-bar="${index}">${title}${countLabel}<rect data-kind="empty" x="${x}" y="${CHART_HEIGHT - 2}" width="${BAR_WIDTH}" height="2" fill="var(--pilot-muted)"></rect></g>`;
       }
       let y = CHART_HEIGHT;
       const rects = bar.segments
         .map((segment) => {
-          const height = Math.max(1, Math.round(segment.fraction * CHART_HEIGHT));
+          const room = y - LABEL_BAND;
+          const height = Math.min(room, Math.max(2, Math.round(segment.fraction * plotHeight)));
+          if (height <= 0) {
+            return "";
+          }
           y -= height;
           const fill =
             segment.kind === "pass"
@@ -87,14 +97,14 @@ export function renderDashboardHistoryChart(
               : segment.kind === "fail"
                 ? "var(--pilot-danger)"
                 : "var(--pilot-muted)";
-          return `<rect data-kind="${segment.kind}" x="${x}" y="${y}" width="8" height="${height}" fill="${fill}"></rect>`;
+          return `<rect data-kind="${segment.kind}" x="${x}" y="${y}" width="${BAR_WIDTH}" height="${height}" fill="${fill}"></rect>`;
         })
         .join("");
-      return `<g data-bar="${index}">${title}${rects}</g>`;
+      return `<g data-bar="${index}">${title}${countLabel}${rects}</g>`;
     })
     .join("");
 
-  return `<svg class="history-chart" role="img" aria-label="${escapeXml(label)}" viewBox="0 0 ${width} ${CHART_HEIGHT}" height="${CHART_HEIGHT}" preserveAspectRatio="none">${groups}</svg>`;
+  return `<svg class="history-chart" role="img" aria-label="${escapeXml(label)}" viewBox="0 0 ${width} ${CHART_HEIGHT}" width="${width}" height="${CHART_HEIGHT}" preserveAspectRatio="xMinYMid meet">${groups}</svg>`;
 }
 
 function escapeXml(value: string): string {

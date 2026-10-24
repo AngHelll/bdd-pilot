@@ -146,7 +146,7 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
   const clearButton =
     history.length === 0
       ? ""
-      : `<button type="button" class="action-btn" data-command="clearHistory"${clearDisabled}>${escapeHtml(t(locale, "dashboard.clearHistory"))}</button>`;
+      : `<button type="button" class="action-btn action-btn--aside" data-command="clearHistory"${clearDisabled}>${escapeHtml(t(locale, "dashboard.clearHistory"))}</button>`;
 
   return {
     header: `<div class="dash-top">
@@ -382,19 +382,18 @@ function scopeCell(entry: RunHistoryEntry, locale: PilotLocale): string {
 function flakyTable(rows: FlakyDashboardRow[], locale: PilotLocale): string {
   const body = rows
     .map((row) => {
-      const scenarioCell = escapeHtml(row.scenarioName);
-      const openCell = row.canOpen
-        ? `<td><button type="button" class="action-btn" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}" aria-label="${escapeAttr(t(locale, "dashboard.flakyOpenLabel", { name: row.scenarioName }))}">${escapeHtml(t(locale, "dashboard.flakyOpen"))}</button></td>`
-        : "<td></td>";
+      const scenarioCell = row.canOpen
+        ? `<button type="button" class="case-open" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}" aria-label="${escapeAttr(t(locale, "dashboard.flakyOpenLabel", { name: row.scenarioName }))}">${escapeHtml(row.scenarioName)}</button>`
+        : escapeHtml(row.scenarioName);
       const avgDuration =
         row.averageDurationMs !== undefined ? formatDuration(row.averageDurationMs, "auto") : "—";
       const errorCell = row.lastErrorSnippet
         ? `<td class="flaky-error" title="${escapeAttr(row.lastErrorSnippet.slice(0, 500))}">${escapeHtml(row.lastErrorSnippet)}</td>`
         : `<td class="muted">${escapeHtml(t(locale, "dashboard.flakyNoError"))}</td>`;
-      return `<tr><td>${scenarioCell}</td><td>${Math.round(row.failureRate * 100)}%</td><td class="mono">${escapeHtml(avgDuration)}</td>${errorCell}${openCell}</tr>`;
+      return `<tr><td>${scenarioCell}</td><td>${Math.round(row.failureRate * 100)}%</td><td class="mono">${escapeHtml(avgDuration)}</td>${errorCell}</tr>`;
     })
     .join("");
-  return `<table><thead><tr><th>${escapeHtml(t(locale, "dashboard.colScenario"))}</th><th>${escapeHtml(t(locale, "dashboard.colFailureRate"))}</th><th>${escapeHtml(t(locale, "dashboard.colAvgDuration"))}</th><th>${escapeHtml(t(locale, "dashboard.colLastError"))}</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+  return `<table><thead><tr><th>${escapeHtml(t(locale, "dashboard.colScenario"))}</th><th>${escapeHtml(t(locale, "dashboard.colFailureRate"))}</th><th>${escapeHtml(t(locale, "dashboard.colAvgDuration"))}</th><th>${escapeHtml(t(locale, "dashboard.colLastError"))}</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 /** acquireVsCodeApi() once. Clicks are delegated so a patch can replace the regions. */

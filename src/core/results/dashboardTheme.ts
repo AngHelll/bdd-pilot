@@ -100,7 +100,7 @@ h2 { font-size: 0.95em; font-weight: 600; margin: 18px 0 8px; }
   text-overflow: ellipsis;
 }
 .dash-top { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; justify-content: space-between; }
-.history-chart { display: block; width: 100%; height: 56px; margin-top: 10px; }
+.history-chart { display: block; width: auto; max-width: 100%; height: 56px; margin-top: 10px; }
 .rehydrate-chip {
   display: inline-block;
   margin: 0 0 12px;
@@ -110,7 +110,8 @@ h2 { font-size: 0.95em; font-weight: 600; margin: 18px 0 8px; }
   color: var(--pilot-text-2);
   font-size: 12px;
 }
-.stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; align-items: center; }
+.action-btn--aside { align-self: center; padding: 4px 10px; font-weight: 600; }
 .stat {
   background: var(--pilot-surface);
   border: 1px solid var(--pilot-border);
@@ -211,6 +212,19 @@ th { color: var(--pilot-text-2); font-weight: 600; }
 .diagnostic-card.diag-warning .diag-title { color: var(--pilot-warn); }
 .diag-title { font-weight: 600; margin: 0 0 6px; }
 .flaky-error { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.case-open {
+  font: inherit;
+  font-weight: 600;
+  color: var(--pilot-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  text-align: left;
+  cursor: pointer;
+}
+.case-open:hover { background: var(--pilot-surface-3); border-color: var(--pilot-border); }
 `.trim();
 }
 

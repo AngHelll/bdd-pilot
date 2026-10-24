@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.64.0** · **Marketplace: v1.64.0** · **Open VSX: v1.64.0** · **Next: watch** · **804 unit tests**
+> **Current release: v1.64.1** · **Marketplace: v1.64.0** · **Open VSX: v1.64.0** · **Next: publish v1.64.1** · **804 unit tests**
 
 ---
 
@@ -10,7 +10,8 @@
 | Status | Item |
 |--------|------|
 | ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.0** |
-| 🎯 Next | watch |
+| 📦 GitHub (pending Marketplace) | **v1.64.1** — Dashboard chart counts |
+| 🎯 Next | publish **v1.64.1** |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -53,6 +54,7 @@ Semver stays conservative until Marketplace + stable API:
 | **1.7.2** | Diagnostics on tree summary row — top-1 from last run snapshot · spec `diagnostics-tree-summary-v1.7.2.md` |
 | **1.7.3** | README refresh + dashboard last-run diagnostic (A+B) · spec `readme-dashboard-v1.7.3.md` |
 | **1.50.0** | Hard cancel + abort watchdog — process tree kill, lock always released, debug Cancel · spec `hard-cancel-watchdog-v1.50.md` |
+| **1.64.1** | Dashboard chart counts — fixed-width bars with a count, small Clear history control, flaky name opens the feature · spec `dashboard-fit-v1.64.0.md` |
 | **1.64.0** | Dashboard fit — editor-height shell, Runs/Detail tabs, pass/fail/skip chart, flaky Open button, Clear history · spec `dashboard-fit-v1.64.0.md` |
 | **1.63.0** | Dashboard Stage — `editor` (default) / `stage`; header, wide run table, rail; segmented filters; Re-run Failed primary · spec `dashboard-stage-v1.63.0.md` |
 | **1.62.0** | Microsoft Testing Platform (opt-in) — `global.json` or `DOTNET_TEST_RUNNER`; `--report-trx` and xUnit MTP filters; VSTest argv unchanged; fixture `samples/mtp-bdd` · spec `mtp-runner-v1.62.0.md` |
@@ -242,6 +244,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.64.1 — Dashboard chart counts ✅ shipped (Marketplace pending)
+
+| Area | Change |
+|------|--------|
+| **Chart** | Each visible run keeps a fixed width and shows its count. A failure colors that count |
+| **History** | Clear history stays a small control beside the totals |
+| **Flaky** | The scenario name opens the feature. It is not a link and not a separate Open button |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Pending publish |
+| **Tests** | 804 unit tests |
 
 ### v1.64.0 — Dashboard fit ✅ shipped
 
@@ -1215,4 +1228,4 @@ src/
 
 ---
 
-*Last updated: v1.64.0 Dashboard fit shipped Marketplace + Open VSX.*
+*Last updated: v1.64.1 Dashboard chart counts on GitHub; Marketplace pending.*
