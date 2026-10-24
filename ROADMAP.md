@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.64.1** · **Marketplace: v1.64.0** · **Open VSX: v1.64.0** · **Next: publish v1.64.1** · **804 unit tests**
+> **Current release: v1.64.1** · **Marketplace: v1.64.1** · **Open VSX: v1.64.1** · **Next: watch** · **804 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.0** |
-| 📦 GitHub (pending Marketplace) | **v1.64.1** — Dashboard chart counts |
-| 🎯 Next | publish **v1.64.1** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.64.1** |
+| 🎯 Next | watch |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -245,7 +244,7 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.64.1 — Dashboard chart counts ✅ shipped (Marketplace pending)
+### v1.64.1 — Dashboard chart counts ✅ shipped
 
 | Area | Change |
 |------|--------|
@@ -253,7 +252,7 @@ _Nothing queued._
 | **History** | Clear history stays a small control beside the totals |
 | **Flaky** | The scenario name opens the feature. It is not a link and not a separate Open button |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.64.1 (Marketplace + Open VSX) |
 | **Tests** | 804 unit tests |
 
 ### v1.64.0 — Dashboard fit ✅ shipped
@@ -1228,4 +1227,4 @@ src/
 
 ---
 
-*Last updated: v1.64.1 Dashboard chart counts on GitHub; Marketplace pending.*
+*Last updated: v1.64.1 Dashboard chart counts shipped Marketplace + Open VSX.*
