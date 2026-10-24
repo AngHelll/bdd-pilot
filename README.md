@@ -51,7 +51,7 @@ Pilot works **alongside** Test Explorer, not instead of it: Test Explorer for un
 
 ### Run what you click
 
-- **Tree view** grouped by domain (`Features/` folders) or by `@tag`, with pass / fail / skip and duration on every row.
+- **Tree view** grouped by domain (`Features/` folders) or by `@tag`, with pass / fail / skip and duration on every row. Clicking an example row opens that Examples line.
 - **CodeLens** Run / Debug above each Feature, Scenario, and Scenario Outline example row.
 - **Native Test Explorer** integration with Run and Debug profiles.
 - **Search** the tree by name, tag, or path, then **Run filtered**.

@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.67.0] — 2026-10-24
+
+### Fixed
+- **Example navigation** — Clicking an Examples row opens that data line, and the tooltip shows the same line. A scenario and a Scenario Outline header still open their own line. Tree item ids are unchanged.
+
 ## [1.66.0] — 2026-10-24
 
 ### Changed
