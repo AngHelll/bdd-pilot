@@ -68,7 +68,8 @@ jobs:
       - name: Smoke feature filter (FullyQualifiedName~SmokeFeature)
         run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter "FullyQualifiedName~SmokeFeature" --verbosity minimal
       - name: Outline row filter (one Examples row)
-        run: dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter 'DisplayName~first: "1", second: "2", result: "3"' --verbosity minimal
+        run: |
+          dotnet test samples/xunit-v3-bdd/XunitV3Bdd.csproj --no-build --filter 'DisplayName~first: "1", second: "2", result: "3"' --verbosity minimal
 
   sample-smoke-mtp:
     runs-on: ubuntu-latest
@@ -95,6 +96,7 @@ jobs:
       - name: Smoke-tag TRX was written
         run: test -s TestResults/trait.trx
       - name: Outline row (one Examples row)
-        run: dotnet test --no-build --filter-display-name '*first: "1", second: "2", result: "3"*' --results-directory TestResults --report-trx --report-trx-filename row.trx
+        run: |
+          dotnet test --no-build --filter-display-name '*first: "1", second: "2", result: "3"*' --results-directory TestResults --report-trx --report-trx-filename row.trx
       - name: Outline-row TRX was written
         run: test -s TestResults/row.trx
