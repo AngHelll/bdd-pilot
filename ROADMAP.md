@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.67.0** · **Marketplace: v1.67.0** · **Open VSX: v1.67.0** · **Next: —** · **816 unit tests**
+> **Current release: v1.68.0** · **Marketplace: v1.68.0** · **Open VSX: v1.68.0** · **Next: —** · **830 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.67.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.68.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,18 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.68.0 — Concise tree rows and last-run dashboard ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Tree** | A folder shows only its failure count. A passed scenario shows a duration greater than zero. A failed scenario shows a short error when it fits, otherwise the word failed. Tags and the full diagnostic stay on the hover |
+| **Examples** | Clicking an Examples row still opens that data line |
+| **Dashboard** | The latest run is the primary count. Recorded history is a secondary line. Example names use `header=value` and omit `exampleTags` |
+| **Settings** | `displayMode` and `tagDisplay` describe folder-icon tint and Test Explorer text. Pilot row text does not change with those settings |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.68.0 (Marketplace + Open VSX) |
+| **Tests** | 830 unit tests |
 
 ### v1.67.0 — Example row navigation ✅ shipped
 
@@ -1259,4 +1271,4 @@ src/
 
 ---
 
-*Last updated: v1.67.0 example row navigation published to Marketplace and Open VSX.*
+*Last updated: v1.68.0 concise tree rows and last-run dashboard published to Marketplace and Open VSX.*
