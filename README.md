@@ -140,8 +140,8 @@ Pilot auto-detects the test project. Settings you're most likely to touch:
 | `bddPilot.run.blameHangTimeout` | `10m` | Timeout for `--blame-hang-timeout` |
 | `bddPilot.run.byStage` | `{}` | Per-stage `configuration` / `runSettings`, e.g. `{ "stg": { "configuration": "Release" } }` |
 | `bddPilot.tree.presentation` | `nativePrecision` | `nativePrecision` (default) or `classic` prefixed labels and previous icons |
-| `bddPilot.tree.displayMode` | `detailed` | `detailed` roll-ups or `compact` |
-| `bddPilot.tree.tagDisplay` | `count` | `hidden`, `count`, `compact`, or `full` |
+| `bddPilot.tree.displayMode` | `detailed` | Folder icon tint, and Test Explorer description density. Pilot tree text stays the same |
+| `bddPilot.tree.tagDisplay` | `count` | Test Explorer tag text: `hidden`, `count`, `compact`, or `full`. Pilot rows keep tags in the tooltip |
 | `bddPilot.tree.compactTagLimit` | `2` | Max tags in `compact` tag display |
 | `bddPilot.tree.durationDisplay` | `auto` | `auto`, `ms`, `seconds`, or `compact` |
 | `bddPilot.tree.searchRunCap` | `80` | Confirm Run filtered above this many matches (`0` = never) |

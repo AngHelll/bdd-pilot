@@ -1,13 +1,15 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
 import { computeDashboardTotals } from "../core/results/dashboardFormat";
+import { formatDashboardScenarioLabel } from "../core/results/dashboardExampleLabel";
 import {
   buildDashboardRegions,
   dashboardPaintKind,
   DashboardViewInput,
   renderDashboardShell,
 } from "../core/results/dashboardView";
-import { RunHistoryEntry } from "../core/results/runHistory";
+import { buildFlakyDashboardRows } from "../core/results/flakyDashboard";
+import { RunHistoryEntry, scenarioHistoryKey } from "../core/results/runHistory";
 
 function entry(partial: Partial<RunHistoryEntry> & Pick<RunHistoryEntry, "id" | "stage">): RunHistoryEntry {
   return {
@@ -70,7 +72,8 @@ describe("dashboardView", () => {
     const canceled = regions({
       history: [entry({ id: "1", stage: "test", status: "canceled", passed: 0, total: 0 })],
     }).header;
-    assert.match(canceled, /<strong>1<\/strong> <span>canceled<\/span>/);
+    assert.match(canceled, /History · 1 run · 0 passed · 0 failed · 1 canceled/);
+    assert.doesNotMatch(canceled, /stats--latest/);
   });
 
   it("marks only Re-run Failed as the primary action, including when disabled", () => {
@@ -122,13 +125,13 @@ describe("dashboardView", () => {
       filter: { stage: "stg", outcome: "all", runKind: "all" },
     });
     assert.strictEqual(computeDashboardTotals(history).runs, 25);
-    assert.match(filtered.header, /<strong>25<\/strong>/);
+    assert.match(filtered.header, /History · 25 runs · 24 passed · 1 failed/);
     assert.strictEqual(tbodyRows(filtered.main), 1);
 
     const all = regions({ history });
     assert.strictEqual(tbodyRows(all.main), 20);
     assert.strictEqual(all.header.match(/data-bar="/g)?.length, 20);
-    assert.match(all.header, /<strong>25<\/strong>/);
+    assert.match(all.header, /History · 25 runs · 24 passed · 1 failed/);
     assert.strictEqual(filtered.header.match(/data-bar="/g)?.length, 1);
     assert.match(filtered.header, /data-command="clearHistory"/);
     const none = regions({
@@ -136,7 +139,7 @@ describe("dashboardView", () => {
       filter: { stage: "missing", outcome: "all", runKind: "all" },
     });
     assert.doesNotMatch(none.header, /<svg/);
-    assert.match(none.header, /<strong>25<\/strong>/);
+    assert.match(none.header, /History · 25 runs · 24 passed · 1 failed/);
   });
 
   it("draws a chart only for the visible runs and keeps full totals", () => {
@@ -145,7 +148,7 @@ describe("dashboardView", () => {
       entry({ id: "new", stage: "stg", timestamp: 2, passed: 0, failed: 2, skipped: 1, total: 3 }),
     ];
     const shown = regions({ history });
-    assert.match(shown.header, /<strong>2<\/strong>/);
+    assert.match(shown.header, /History · 2 runs · 1 passed · 2 failed/);
     assert.match(shown.header, /<svg/);
     const bars = shown.header.match(/data-bar="(\d)"/g) ?? [];
     assert.deepStrictEqual(bars, ['data-bar="0"', 'data-bar="1"']);
@@ -222,5 +225,72 @@ describe("dashboardView", () => {
     assert.match(html, /type: "ready"/);
     assert.doesNotMatch(html, /font-src/);
     assert.match(html, /No Gherkin runs recorded yet/);
+    assert.match(html, /text-overflow: ellipsis/);
+  });
+
+  it("shows the resolved latest run before history and keeps example navigation", () => {
+    const raw = 'Add two numbers(first: "5", second: "7", result: "12", exampleTags: [])';
+    const scenario = {
+      featurePath: "/tmp/pay.feature",
+      scenarioLine: 12,
+      scenarioName: raw,
+      outcome: "failed" as const,
+    };
+    const history = [
+      entry({
+        id: "1",
+        stage: "test",
+        timestamp: 1,
+        passed: 10,
+        failed: 1,
+        skipped: 0,
+        total: 11,
+        scenarios: [{ ...scenario, outcome: "failed" }],
+      }),
+      entry({
+        id: "2",
+        stage: "test",
+        timestamp: 2,
+        passed: 12,
+        failed: 0,
+        skipped: 1,
+        total: 13,
+        scenarios: [{ ...scenario, outcome: "passed" }],
+      }),
+    ];
+    const built = regions({
+      history,
+      context: {
+        lastKnown: {
+          passed: 1,
+          failed: 0,
+          skipped: 2,
+          provenance: "fromRehydrate",
+          durationMs: Number.NaN,
+        },
+      },
+    });
+    const latestAt = built.header.indexOf("stats--latest");
+    const historyAt = built.header.indexOf("history-totals");
+    assert.ok(latestAt >= 0 && historyAt > latestAt);
+    assert.match(built.header, /class="pass">1</);
+    assert.match(built.header, /class="skip">2</);
+    assert.match(built.header, /Restored from TestResults \(not a new test run\)/);
+    assert.doesNotMatch(built.header, /Last run duration/);
+    assert.match(built.header, /History · 2 runs · 22 passed · 1 failed/);
+    assert.doesNotMatch(built.rail, /class="card last-known"/);
+
+    const rows = buildFlakyDashboardRows(history);
+    assert.strictEqual(rows[0]?.scenarioName, raw);
+    assert.strictEqual(rows[0]?.key, scenarioHistoryKey("/tmp/pay.feature", 12, raw));
+    assert.strictEqual(rows[0]?.featurePath, "/tmp/pay.feature");
+    assert.strictEqual(rows[0]?.scenarioLine, 12);
+
+    const visible = formatDashboardScenarioLabel(raw);
+    assert.ok(built.rail.includes('data-feature-path="/tmp/pay.feature"'));
+    assert.ok(built.rail.includes('data-scenario-line="12"'));
+    assert.ok(built.rail.includes(`title="${visible.title}"`));
+    assert.ok(built.rail.includes(`>${visible.label}<`));
+    assert.doesNotMatch(built.rail, /exampleTags/);
   });
 });

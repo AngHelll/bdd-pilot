@@ -212,6 +212,14 @@ th { color: var(--pilot-text-2); font-weight: 600; }
 .diagnostic-card.diag-warning .diag-title { color: var(--pilot-warn); }
 .diag-title { font-weight: 600; margin: 0 0 6px; }
 .flaky-error { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.case-open, .example-label {
+  display: inline-block;
+  max-width: 42em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
 .case-open {
   font: inherit;
   font-weight: 600;
@@ -224,6 +232,8 @@ th { color: var(--pilot-text-2); font-weight: 600; }
   text-align: left;
   cursor: pointer;
 }
+.history-totals { color: var(--pilot-text-2); font-size: 12px; margin: 8px 0 0; }
+.latest-provenance { margin: 6px 0 0; }
 .case-open:hover { background: var(--pilot-surface-3); border-color: var(--pilot-border); }
 `.trim();
 }

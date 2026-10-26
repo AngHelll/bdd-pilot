@@ -6,6 +6,13 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.68.0] — 2026-10-26
+
+### Changed
+- **Tree rows** — A folder shows only its failure count. A passed scenario shows a duration greater than zero. A failed scenario shows a short error when it fits, otherwise the word failed. Tags, path, duration, and the full diagnostic stay on the hover. Clicking an Examples row still opens that data line.
+- **Dashboard** — The latest run is the primary count (passed, failed, skipped). Recorded history is a secondary line. Flaky example names use the same `header=value` form as the tree and omit `exampleTags`.
+- **Settings copy** — `bddPilot.tree.displayMode` and `bddPilot.tree.tagDisplay` describe folder-icon tint and Test Explorer text. Pilot row text no longer changes with those settings.
+
 ## [1.67.0] — 2026-10-24
 
 ### Fixed

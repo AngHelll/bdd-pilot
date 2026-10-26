@@ -16,9 +16,10 @@ import {
   rollupSeverity,
 } from "../core/gherkin/outcomeRollup";
 import {
-  buildContainerDescription,
-  buildOutlineParentDescription,
-  effectiveLeafTagDisplay,
+  conciseContainerDescription,
+  conciseLeafDescription,
+} from "../core/gherkin/conciseTreeDescription";
+import {
   shouldTintContainerIcon,
   TreeDisplayMode,
 } from "../core/gherkin/treeContainerLabels";
@@ -31,7 +32,6 @@ import {
   skipReasonMessage,
 } from "../core/results/skipReason";
 import {
-  formatLeafStoryStrip,
   resolveLeafIconSpec,
   treeRowDurationMs,
   TreeLeafIconSpec,
@@ -42,7 +42,6 @@ import {
   TreeMappingReport,
 } from "../core/results/trxTreeMapping";
 import { groupByTag, TagGroup } from "../core/gherkin/groupByTag";
-import { effectiveScenarioTags } from "../core/gherkin/tags";
 import {
   collectFilteredRunTargets,
   filterDomainsBySearch,
@@ -50,12 +49,9 @@ import {
   tagGroupMatchesSearch,
 } from "../core/gherkin/treeSearch";
 import {
-  buildFeatureDescription,
   buildDomainTooltipMarkdown,
   buildFeatureTooltipMarkdown,
-  buildScenarioDescription,
   buildScenarioTooltipMarkdown,
-  formatTagDescription,
   treeLeafNavigationLine,
 } from "../core/gherkin/treeLabels";
 import {
@@ -68,8 +64,6 @@ import {
   TreeLeafLevel,
 } from "../core/gherkin/treePresentation";
 import {
-  buildDomainStructuralBase,
-  buildTagGroupStructuralBase,
   TreeDisplaySettings,
   TreeGroupBy,
 } from "../core/gherkin/treeDisplaySettings";
@@ -720,10 +714,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const rollup = computeRollup(
       refs.flatMap((ref) => this.collectScenarioOutcomeValues(ref.feature, ref.scenario)),
     );
-    const base = buildTagGroupStructuralBase(refs.length);
     const item = new vscode.TreeItem(`@${node.group.tag}`, vscode.TreeItemCollapsibleState.Collapsed);
     item.id = tagTreeItemId(node.group.tag);
-    item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
+    assignConciseDescription(item, conciseContainerDescription(rollup, locale));
     item.iconPath = containerIcon("tag", rollup, display.displayMode);
     item.contextValue = TREE_ITEM_CONTEXT.tag;
     item.tooltip = new vscode.MarkdownString(
@@ -743,10 +736,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const locale = this.getLocale();
     const scenarioCount = node.group.features.reduce((n, f) => n + f.scenarios.length, 0);
     const rollup = this.rollupFeatureOutcomes(node.group.features);
-    const base = buildDomainStructuralBase(node.group.features.length, scenarioCount);
     const item = new vscode.TreeItem(node.group.name, vscode.TreeItemCollapsibleState.Collapsed);
     item.id = domainTreeItemId(node.group.name);
-    item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
+    assignConciseDescription(item, conciseContainerDescription(rollup, locale));
     item.iconPath = containerIcon("folder", rollup, display.displayMode);
     item.contextValue = TREE_ITEM_CONTEXT.domain;
     const rollupText = formatRollupDescriptionLocalized(rollup, locale) ?? formatRollupDescription(rollup);
@@ -773,16 +765,10 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private featureItem(node: FeatureNode, display: TreeDisplaySettings): vscode.TreeItem {
     const scenarioCount = node.feature.scenarios.length;
     const rollup = this.rollupFeatureOutcomes([node.feature]);
-    const base = buildFeatureDescription(
-      scenarioCount,
-      node.feature.tags,
-      display.tagDisplay,
-      display.compactTagLimit,
-    );
     const locale = this.getLocale();
     const item = new vscode.TreeItem(node.feature.name, vscode.TreeItemCollapsibleState.Collapsed);
     item.id = featureTreeItemId(node.feature.filePath);
-    item.description = buildContainerDescription(display.displayMode, rollup, base, locale);
+    assignConciseDescription(item, conciseContainerDescription(rollup, locale));
     const tooltip = new vscode.MarkdownString(
       buildFeatureTooltipMarkdown(
         node.feature.name,
@@ -818,7 +804,6 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       hasExamples ? undefined : this.outcomeStore.getDuration(key),
     );
     const errorMessage = hasExamples ? undefined : this.outcomeStore.getErrorMessage(key);
-    const tags = effectiveScenarioTags(node.feature, node.scenario);
 
     const presentation = readTreePresentation();
     const level: TreeLeafLevel = node.scenario.isOutline || hasExamples ? "outline" : "scenario";
@@ -834,34 +819,26 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       readTreeGroupBy(),
       this.tagPlacements(),
     );
-    const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
-    const featureHint =
-      display.displayMode === "detailed" && node.underTagGroup ? node.feature.name : undefined;
     if (hasExamples) {
-      const tagBase = buildScenarioDescription(tags, display.tagDisplay, display.compactTagLimit);
-      item.description = buildOutlineParentDescription(
-        display.displayMode,
-        rollup,
-        node.scenario.examples!.length,
-        locale,
-        tagBase,
+      assignConciseDescription(
+        item,
+        rollup ? conciseContainerDescription(rollup, locale) : "",
       );
     } else {
       const showPendingHint =
         !this.outcomeStore.isEmpty() && !outcome && !skipReason;
-      item.description =
-        formatLeafStoryStrip({
+      assignConciseDescription(
+        item,
+        conciseLeafDescription({
           outcome,
           skipReason,
           errorSnippet: errorMessage,
-          displayMode: display.displayMode,
           locale,
-          tagsPart: formatTagDescription(tags, leafTags, display.compactTagLimit) || undefined,
-          durationPart: formatDurationLabel(durationMs, display.durationDisplay),
-          featureHint,
+          durationMs,
+          durationDisplay: display.durationDisplay,
           showPendingHint,
-          includeErrorSnippet: false,
-        }) ?? "";
+        }),
+      );
     }
 
     const rollupText = rollup
@@ -938,9 +915,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const skipReason = this.outcomeStore.getSkipReason(key);
     const durationMs = treeRowDurationMs(this.outcomeStore.getDuration(key));
     const errorMessage = this.outcomeStore.getErrorMessage(key);
-    const tags = effectiveScenarioTags(node.feature, node.scenario);
 
-    const leafTags = effectiveLeafTagDisplay(display.displayMode, display.tagDisplay);
     const presentation = readTreePresentation();
     const navigationLine = treeLeafNavigationLine(node.scenario.line, node.example.line);
     const item = new vscode.TreeItem(
@@ -956,18 +931,18 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       this.tagPlacements(),
     );
     const showPendingHint = !this.outcomeStore.isEmpty() && !outcome && !skipReason;
-    item.description =
-      formatLeafStoryStrip({
+    assignConciseDescription(
+      item,
+      conciseLeafDescription({
         outcome,
         skipReason,
         errorSnippet: errorMessage,
-        displayMode: display.displayMode,
         locale,
-        tagsPart: formatTagDescription(tags, leafTags, display.compactTagLimit) || undefined,
-        durationPart: formatDurationLabel(durationMs, display.durationDisplay),
+        durationMs,
+        durationDisplay: display.durationDisplay,
         showPendingHint,
-        includeErrorSnippet: false,
-      }) ?? "";
+      }),
+    );
 
     const tooltip = new vscode.MarkdownString(
       buildScenarioTooltipMarkdown(
@@ -1143,6 +1118,15 @@ function placedNode(element: TreeNode): PlacedNode {
         rowIndex: element.example.rowIndex,
         parentTagKey: element.parentTagKey,
       };
+  }
+}
+
+function assignConciseDescription(
+  item: vscode.TreeItem,
+  description: string | undefined,
+): void {
+  if (description) {
+    item.description = description;
   }
 }
 

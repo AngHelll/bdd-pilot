@@ -12,8 +12,12 @@ import {
   filterRunHistory,
   listHistoryStages,
 } from "./dashboardHistoryFilter";
+import { formatDashboardScenarioLabel } from "./dashboardExampleLabel";
 import {
-  formatLastKnownCounts,
+  presentHistoryTotalsLine,
+  presentLatestRun,
+} from "./dashboardLatestRun";
+import {
   formatTrxDivergenceTooltip,
   isCanceledRun,
   LastKnownSnapshot,
@@ -105,11 +109,6 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
   const flaky = buildFlakyDashboardRows(history);
   const stages = listHistoryStages(history);
 
-  const canceledStat =
-    totals.canceled > 0
-      ? `<div class="stat"><strong>${totals.canceled}</strong> <span>${escapeHtml(t(locale, "dashboard.statCanceled"))}</span></div>`
-      : "";
-
   const rehydrateChip = context.rehydrateNotice
     ? `<p class="rehydrate-chip">${escapeHtml(
         t(locale, "dashboard.rehydrateNotice", { file: context.rehydrateNotice.trxFileName }),
@@ -147,6 +146,8 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
     history.length === 0
       ? ""
       : `<button type="button" class="action-btn action-btn--aside" data-command="clearHistory"${clearDisabled}>${escapeHtml(t(locale, "dashboard.clearHistory"))}</button>`;
+  const latest = presentLatestRun(context.lastKnown);
+  const historyLine = presentHistoryTotalsLine(totals, locale);
 
   return {
     header: `<div class="dash-top">
@@ -155,20 +156,16 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
     <p class="subtitle">${escapeHtml(t(locale, "dashboard.subtitle"))}</p>
     ${rehydrateChip}
   </div>
-  <div class="stats">
-    <div class="stat"><strong>${totals.runs}</strong> <span>${escapeHtml(t(locale, "dashboard.statRuns"))}</span></div>
-    <div class="stat"><strong class="pass">${totals.passed}</strong> <span>${escapeHtml(t(locale, "dashboard.statPassed"))}</span></div>
-    <div class="stat"><strong class="fail">${totals.failed}</strong> <span>${escapeHtml(t(locale, "dashboard.statFailed"))}</span></div>
-    ${canceledStat}
-    ${clearButton}
-  </div>
+  ${latest ? renderLatestStats(latest, locale) : ""}
+  ${clearButton}
 </div>
+${latest ? renderLatestMeta(latest, locale) : ""}
+${historyLine ? `<p class="history-totals">${escapeHtml(historyLine)}</p>` : ""}
 ${chart}`,
     main: `<h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
 ${renderHistoryFilterBar(stages, filter, locale)}
 ${recentSection}`,
     rail: `${context.primaryDiagnostic ? renderPrimaryDiagnosticSection(context.primaryDiagnostic, locale) : ""}
-${context.lastKnown ? renderLastKnownSection(context.lastKnown, locale) : ""}
 ${context.actions ? renderActionsSection(context.actions, locale) : ""}
 <h2>${escapeHtml(t(locale, "dashboard.flakyTitle"))}</h2>
 ${flakySection}`,
@@ -307,21 +304,33 @@ function renderActionsSection(actions: DashboardActionsViewModel, locale: PilotL
   <p class="hint muted">${targetLine}</p>`;
 }
 
-function renderLastKnownSection(snapshot: LastKnownSnapshot, locale: PilotLocale): string {
-  const body = formatLastKnownCounts(snapshot, locale) ?? t(locale, "dashboard.lastKnownEmpty");
-  const trxTitle = snapshot.trx
+function renderLatestStats(
+  latest: NonNullable<ReturnType<typeof presentLatestRun>>,
+  locale: PilotLocale,
+): string {
+  const trxTitle = latest.trxDiverges
     ? ` title="${escapeAttr(formatTrxDivergenceTooltip(locale))}"`
     : "";
+  return `<div class="stats stats--latest"${trxTitle}>
+    <div class="stat"><strong class="pass">${latest.passed}</strong> <span>${escapeHtml(t(locale, "dashboard.latestPassed"))}</span></div>
+    <div class="stat"><strong class="fail">${latest.failed}</strong> <span>${escapeHtml(t(locale, "dashboard.latestFailed"))}</span></div>
+    <div class="stat"><strong class="skip">${latest.skipped}</strong> <span>${escapeHtml(t(locale, "dashboard.latestSkipped"))}</span></div>
+  </div>`;
+}
 
+function renderLatestMeta(
+  latest: NonNullable<ReturnType<typeof presentLatestRun>>,
+  locale: PilotLocale,
+): string {
   let provenance: string;
-  switch (snapshot.provenance) {
+  switch (latest.provenance) {
     case "fromRehydrate":
       provenance = t(locale, "dashboard.lastKnownFromRehydrate");
       break;
     case "fromHistory":
       provenance = t(locale, "dashboard.lastKnownFromHistory", {
-        when: snapshot.historyTimestamp
-          ? new Date(snapshot.historyTimestamp).toLocaleString()
+        when: latest.historyTimestamp
+          ? new Date(latest.historyTimestamp).toLocaleString()
           : "—",
       });
       break;
@@ -329,21 +338,14 @@ function renderLastKnownSection(snapshot: LastKnownSnapshot, locale: PilotLocale
       provenance = t(locale, "dashboard.lastKnownFromLiveSession");
   }
 
-  const durationLine =
-    snapshot.durationMs !== undefined
-      ? `<p class="hint mono">${escapeHtml(
-          t(locale, "dashboard.lastRunDuration", {
-            duration: formatDuration(snapshot.durationMs, "auto"),
-          }),
-        )}</p>`
-      : "";
+  const durationLine = latest.durationLabel
+    ? `<p class="hint mono">${escapeHtml(
+        t(locale, "dashboard.lastRunDuration", { duration: latest.durationLabel }),
+      )}</p>`
+    : "";
 
-  return `<h2>${escapeHtml(t(locale, "dashboard.lastKnownTitle"))}</h2>
-  <div class="card last-known">
-    <p${trxTitle}>${escapeHtml(body)}</p>
-    <p class="hint muted">${escapeHtml(provenance)}</p>
-    ${durationLine}
-  </div>`;
+  return `<p class="hint latest-provenance">${escapeHtml(provenance)}</p>
+${durationLine}`;
 }
 
 function recentRunsTable(runs: RunHistoryEntry[], locale: PilotLocale): string {
@@ -382,9 +384,10 @@ function scopeCell(entry: RunHistoryEntry, locale: PilotLocale): string {
 function flakyTable(rows: FlakyDashboardRow[], locale: PilotLocale): string {
   const body = rows
     .map((row) => {
+      const visible = formatDashboardScenarioLabel(row.scenarioName);
       const scenarioCell = row.canOpen
-        ? `<button type="button" class="case-open" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}" aria-label="${escapeAttr(t(locale, "dashboard.flakyOpenLabel", { name: row.scenarioName }))}">${escapeHtml(row.scenarioName)}</button>`
-        : escapeHtml(row.scenarioName);
+        ? `<button type="button" class="case-open" data-feature-path="${escapeAttr(row.featurePath)}" data-scenario-line="${row.scenarioLine}" title="${escapeAttr(visible.title)}" aria-label="${escapeAttr(t(locale, "dashboard.flakyOpenLabel", { name: visible.title }))}">${escapeHtml(visible.label)}</button>`
+        : `<span class="example-label" title="${escapeAttr(visible.title)}">${escapeHtml(visible.label)}</span>`;
       const avgDuration =
         row.averageDurationMs !== undefined ? formatDuration(row.averageDurationMs, "auto") : "—";
       const errorCell = row.lastErrorSnippet
