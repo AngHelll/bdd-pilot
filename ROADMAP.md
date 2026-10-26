@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.67.0** · **Marketplace: v1.66.0** · **Open VSX: v1.66.0** · **Next: publish v1.67.0** · **816 unit tests**
+> **Current release: v1.67.0** · **Marketplace: v1.67.0** · **Open VSX: v1.67.0** · **Next: —** · **816 unit tests**
 
 ---
 
@@ -9,9 +9,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.66.0** |
-| 📦 GitHub (pending Marketplace) | **v1.67.0** — Example row navigation |
-| 🎯 Next | publish **v1.67.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.67.0** |
+| 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
 
@@ -246,14 +245,14 @@ Use before clicking **Publish** on Marketplace:
 
 _Nothing queued._
 
-### v1.67.0 — Example row navigation ✅ shipped (Marketplace pending)
+### v1.67.0 — Example row navigation ✅ shipped
 
 | Area | Change |
 |------|--------|
 | **Tree** | Clicking an Examples row opens that data line. The tooltip shows the same line. A scenario and a Scenario Outline header still open their own line |
 | **Identity** | Tree item ids are unchanged |
 | **API** | Sin cambio (`PilotRunApiV1` intacto) |
-| **Marketplace** | Pending publish |
+| **Marketplace** | Published v1.67.0 (Marketplace + Open VSX) |
 | **Tests** | 816 unit tests |
 
 ### v1.66.0 — Execution awareness ✅ shipped
@@ -1260,4 +1259,4 @@ src/
 
 ---
 
-*Last updated: v1.67.0 example row navigation on GitHub; Marketplace pending.*
+*Last updated: v1.67.0 example row navigation published to Marketplace and Open VSX.*
