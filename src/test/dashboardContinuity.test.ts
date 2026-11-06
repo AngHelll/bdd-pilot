@@ -6,7 +6,7 @@ import {
   truncateScopeFilter,
 } from "../core/results/dashboardFormat";
 import { RUN_SCOPE_ALL_TESTS_LABEL } from "../core/diagnostics/aiFailureContext";
-import { resolveLastKnownSnapshot } from "../core/results/dashboardLastKnown";
+import { formatLastKnownCounts, resolveLastKnownSnapshot } from "../core/results/dashboardLastKnown";
 import { RunHistoryEntry, flakyRate, scenarioHistoryKey } from "../core/results/runHistory";
 
 describe("dashboard continuity", () => {
@@ -49,7 +49,7 @@ describe("dashboard continuity", () => {
     const snap = resolveLastKnownSnapshot(
       { passed: 3, failed: 1, skipped: 0, withResults: 4 },
       true,
-      makeEntry("h", { passed: 9, failed: 0 }),
+      makeEntry("h", { passed: 9, failed: 0, timestamp: 1_700_000_000_000, durationMs: 1500 }),
       undefined,
     );
     assert.deepStrictEqual(snap, {
@@ -57,8 +57,43 @@ describe("dashboard continuity", () => {
       failed: 1,
       skipped: 0,
       provenance: "fromLiveSession",
+      historyTimestamp: 1_700_000_000_000,
+      durationMs: 1500,
       trx: { passed: 9, failed: 0, skipped: 0 },
     });
+  });
+
+  it("resolveLastKnownSnapshot keeps a zero live duration and drops an invalid one", () => {
+    const zero = resolveLastKnownSnapshot(
+      { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      true,
+      makeEntry("z", { timestamp: 20, durationMs: 0 }),
+      undefined,
+    );
+    assert.strictEqual(zero?.durationMs, 0);
+    assert.strictEqual(zero?.historyTimestamp, 20);
+
+    const invalid = resolveLastKnownSnapshot(
+      { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      true,
+      makeEntry("n", { timestamp: 21, durationMs: Number.NaN }),
+      undefined,
+    );
+    assert.strictEqual(invalid?.historyTimestamp, 21);
+    assert.strictEqual(invalid?.durationMs, undefined);
+    assert.strictEqual(invalid?.passed, 1);
+  });
+
+  it("resolveLastKnownSnapshot leaves a live session without history unclocked", () => {
+    const snap = resolveLastKnownSnapshot(
+      { passed: 1, failed: 0, skipped: 0, withResults: 1 },
+      true,
+      undefined,
+      undefined,
+    );
+    assert.strictEqual(snap?.provenance, "fromLiveSession");
+    assert.strictEqual(snap?.historyTimestamp, undefined);
+    assert.strictEqual(snap?.durationMs, undefined);
   });
 
   it("resolveLastKnownSnapshot omits trx when mapped matches history", () => {
@@ -84,7 +119,7 @@ describe("dashboard continuity", () => {
     const snap = resolveLastKnownSnapshot(
       { passed: 1, failed: 0, skipped: 0, withResults: 1 },
       true,
-      undefined,
+      makeEntry("h", { timestamp: 9, durationMs: 100 }),
       {
         trxFileName: "bdd-pilot-1.trx",
         mtimeMs: 1,
@@ -95,6 +130,19 @@ describe("dashboard continuity", () => {
       },
     );
     assert.strictEqual(snap?.provenance, "fromRehydrate");
+    assert.strictEqual(snap?.historyTimestamp, undefined);
+    assert.strictEqual(snap?.durationMs, undefined);
+  });
+
+  it("formatLastKnownCounts ignores a copied clock", () => {
+    const counts = { passed: 1, failed: 2, skipped: 0, provenance: "fromLiveSession" as const };
+    const plain = formatLastKnownCounts(counts, "en");
+    const clocked = formatLastKnownCounts(
+      { ...counts, durationMs: 500, historyTimestamp: 10 },
+      "en",
+    );
+    assert.ok(plain);
+    assert.strictEqual(clocked, plain);
   });
 
   it("flakyRate ignores status field on unrelated entries", () => {

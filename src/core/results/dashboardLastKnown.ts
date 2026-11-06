@@ -1,5 +1,6 @@
 import { formatRollupDescriptionLocalized, OutcomeRollup } from "../gherkin/outcomeRollup";
 import { PilotLocale, t } from "../i18n";
+import { reliableRunDurationMs } from "./dashboardLatestRun";
 import { RehydrateNotice } from "./rehydrateNotice";
 import { RunHistoryEntry, RunHistoryStatus } from "./runHistory";
 
@@ -26,6 +27,17 @@ export function trxCountsDiverge(mapped: TrxCountTriple, trx: TrxCountTriple): b
   return mapped.passed !== trx.passed || mapped.failed !== trx.failed || mapped.skipped !== trx.skipped;
 }
 
+/** Wall clock of the same history entry. A restore does not use this. */
+function liveSessionClock(
+  entry: RunHistoryEntry,
+): Pick<LastKnownSnapshot, "durationMs" | "historyTimestamp"> {
+  const durationMs = reliableRunDurationMs(entry.durationMs);
+  return {
+    historyTimestamp: entry.timestamp,
+    ...(durationMs === undefined ? {} : { durationMs }),
+  };
+}
+
 function countsFromHistory(lastHistory: RunHistoryEntry): TrxCountTriple {
   return {
     passed: lastHistory.passed,
@@ -47,10 +59,12 @@ export function resolveLastKnownSnapshot(
       skipped: storeRollup.skipped,
     };
     const trx = lastHistory ? countsFromHistory(lastHistory) : undefined;
+    const provenance = rehydrateNotice ? "fromRehydrate" : "fromLiveSession";
     return {
       ...mapped,
-      provenance: rehydrateNotice ? "fromRehydrate" : "fromLiveSession",
+      provenance,
       trx: trx && trxCountsDiverge(mapped, trx) ? trx : undefined,
+      ...(provenance === "fromLiveSession" && lastHistory ? liveSessionClock(lastHistory) : {}),
     };
   }
 

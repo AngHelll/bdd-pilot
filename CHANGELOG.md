@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.71.0] — 2026-11-06
+
+### Changed
+- **Dashboard** — The latest-run header shows the time and duration already stored on that history entry. Under them, the first stored failure of that entry shows its name, feature file, duration, and message, and opens the feature when the record has a path and a line.
+
 ## [1.70.0] — 2026-11-06
 
 ### Fixed

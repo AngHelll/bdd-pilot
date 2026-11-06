@@ -14,6 +14,7 @@ import {
 } from "./dashboardHistoryFilter";
 import { formatDashboardScenarioLabel } from "./dashboardExampleLabel";
 import {
+  presentFirstStoredFailure,
   presentHistoryTotalsLine,
   presentLatestRun,
 } from "./dashboardLatestRun";
@@ -147,6 +148,7 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
       ? ""
       : `<button type="button" class="action-btn action-btn--aside" data-command="clearHistory"${clearDisabled}>${escapeHtml(t(locale, "dashboard.clearHistory"))}</button>`;
   const latest = presentLatestRun(context.lastKnown);
+  const firstFailure = presentFirstStoredFailure(context.lastKnown, history.at(-1), locale);
   const historyLine = presentHistoryTotalsLine(totals, locale);
 
   return {
@@ -160,6 +162,7 @@ export function buildDashboardRegions(input: DashboardViewInput): DashboardRegio
   ${clearButton}
 </div>
 ${latest ? renderLatestMeta(latest, locale) : ""}
+${firstFailure ? renderFirstStoredFailure(firstFailure, locale) : ""}
 ${historyLine ? `<p class="history-totals">${escapeHtml(historyLine)}</p>` : ""}
 ${chart}`,
     main: `<h2>${escapeHtml(t(locale, "dashboard.recentRuns"))}</h2>
@@ -338,6 +341,14 @@ function renderLatestMeta(
       provenance = t(locale, "dashboard.lastKnownFromLiveSession");
   }
 
+  const whenLine =
+    latest.provenance === "fromLiveSession" && typeof latest.historyTimestamp === "number"
+      ? `<p class="hint mono">${escapeHtml(
+          t(locale, "dashboard.lastRunWhen", {
+            when: new Date(latest.historyTimestamp).toLocaleString(),
+          }),
+        )}</p>`
+      : "";
   const durationLine = latest.durationLabel
     ? `<p class="hint mono">${escapeHtml(
         t(locale, "dashboard.lastRunDuration", { duration: latest.durationLabel }),
@@ -345,7 +356,35 @@ function renderLatestMeta(
     : "";
 
   return `<p class="hint latest-provenance">${escapeHtml(provenance)}</p>
+${whenLine}
 ${durationLine}`;
+}
+
+function renderFirstStoredFailure(
+  failure: NonNullable<ReturnType<typeof presentFirstStoredFailure>>,
+  locale: PilotLocale,
+): string {
+  const name = failure.canOpen
+    ? `<button type="button" class="case-open" data-feature-path="${escapeAttr(failure.featurePath ?? "")}" data-scenario-line="${failure.scenarioLine}" title="${escapeAttr(failure.title)}" aria-label="${escapeAttr(t(locale, "dashboard.flakyOpenLabel", { name: failure.title }))}">${escapeHtml(failure.label)}</button>`
+    : `<span class="example-label" title="${escapeAttr(failure.title)}">${escapeHtml(failure.label)}</span>`;
+  const feature = failure.featureBasename
+    ? `<p class="hint" title="${escapeAttr(failure.featurePath ?? "")}">${escapeHtml(failure.featureBasename)}</p>`
+    : "";
+  const duration = failure.durationLabel
+    ? `<p class="hint mono">${escapeHtml(
+        t(locale, "dashboard.firstFailureDuration", { duration: failure.durationLabel }),
+      )}</p>`
+    : "";
+  const error = failure.errorSnippet
+    ? `<p class="hint" title="${escapeAttr(failure.errorFull ?? "")}">${escapeHtml(failure.errorSnippet)}</p>`
+    : "";
+  return `<section class="card first-failure">
+  <h2 class="fail">${escapeHtml(failure.heading)}</h2>
+  <p>${name}</p>
+  ${feature}
+  ${duration}
+  ${error}
+</section>`;
 }
 
 function recentRunsTable(runs: RunHistoryEntry[], locale: PilotLocale): string {

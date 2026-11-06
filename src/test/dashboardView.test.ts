@@ -8,6 +8,7 @@ import {
   DashboardViewInput,
   renderDashboardShell,
 } from "../core/results/dashboardView";
+import { Diagnostic } from "../core/diagnostics/analyzer";
 import { buildFlakyDashboardRows } from "../core/results/flakyDashboard";
 import { RunHistoryEntry, scenarioHistoryKey } from "../core/results/runHistory";
 
@@ -292,5 +293,142 @@ describe("dashboardView", () => {
     assert.ok(built.rail.includes(`title="${visible.title}"`));
     assert.ok(built.rail.includes(`>${visible.label}<`));
     assert.doesNotMatch(built.rail, /exampleTags/);
+    assert.doesNotMatch(built.header, /first-failure/);
+    assert.doesNotMatch(built.header, /Last run:/);
+  });
+
+  it("shows the live clock and the first stored failure above history", () => {
+    const raw = 'Add two numbers(first: "5", second: "7", result: "12", exampleTags: [])';
+    const message = `Expected <script>alert(1)</script> ${"x".repeat(200)}`;
+    const history = [
+      entry({
+        id: "older",
+        stage: "test",
+        timestamp: 1,
+        passed: 0,
+        failed: 1,
+        scenarios: [
+          {
+            featurePath: "/tmp/old.feature",
+            scenarioLine: 2,
+            scenarioName: "Older failure",
+            outcome: "failed",
+            errorMessage: "old",
+          },
+        ],
+      }),
+      entry({
+        id: "latest",
+        stage: "test",
+        timestamp: Date.UTC(2026, 10, 6, 18, 0, 0),
+        durationMs: 1600,
+        passed: 1,
+        failed: 2,
+        scenarios: [
+          {
+            featurePath: "/tmp/pay.feature",
+            scenarioLine: 4,
+            scenarioName: "Pays",
+            outcome: "passed",
+          },
+          {
+            featurePath: "/tmp/pay.feature",
+            scenarioLine: 12,
+            scenarioName: raw,
+            outcome: "failed",
+            durationMs: 0,
+            errorMessage: message,
+          },
+          {
+            featurePath: "/tmp/other.feature",
+            scenarioLine: 30,
+            scenarioName: "Second",
+            outcome: "failed",
+            errorMessage: "second",
+          },
+        ],
+      }),
+    ];
+    const diagnostic: Diagnostic = {
+      code: "TEST_RUN_FAILED",
+      severity: "error",
+      title: "The test run failed.",
+      hint: "Review the failing scenarios.",
+    };
+    const built = regions({
+      history,
+      context: {
+        lastKnown: {
+          passed: 1,
+          failed: 2,
+          skipped: 0,
+          provenance: "fromLiveSession",
+          durationMs: 1600,
+          historyTimestamp: Date.UTC(2026, 10, 6, 18, 0, 0),
+        },
+        primaryDiagnostic: diagnostic,
+      },
+    });
+    const whenAt = built.header.indexOf("Last run:");
+    const durationAt = built.header.indexOf("Last run duration:");
+    const cardAt = built.header.indexOf("first-failure");
+    const historyAt = built.header.indexOf("history-totals");
+    assert.ok(whenAt >= 0 && durationAt > whenAt && cardAt > durationAt && historyAt > cardAt);
+    assert.match(built.header, /From current session outcomes/);
+    assert.match(built.header, /Last run duration: 1\.6 s/);
+    assert.match(built.header, /First stored failure · 1 of 2/);
+    assert.match(built.header, /data-feature-path="\/tmp\/pay\.feature"/);
+    assert.match(built.header, /data-scenario-line="12"/);
+    assert.match(built.header, /Duration: 0 ms/);
+    assert.match(built.header, /title="\/tmp\/pay\.feature"/);
+    assert.match(built.header, />pay\.feature</);
+    assert.match(built.header, /Expected &lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+    assert.match(built.header, /title="Expected &lt;script&gt;alert\(1\)&lt;\/script&gt; x+/);
+    assert.doesNotMatch(built.header, /exampleTags/);
+    assert.doesNotMatch(built.header, /Older failure/);
+    assert.match(built.rail, /Last run diagnostic/);
+    assert.match(built.rail, /TEST_RUN_FAILED/);
+    assert.doesNotMatch(built.rail, /first-failure/);
+    assert.doesNotMatch(built.header, /Last run diagnostic/);
+  });
+
+  it("keeps one clock on a recorded run and omits an open button without a line", () => {
+    const built = regions({
+      history: [
+        entry({
+          id: "recorded",
+          stage: "test",
+          timestamp: Date.UTC(2026, 0, 2, 3, 4, 5),
+          durationMs: 500,
+          passed: 0,
+          failed: 1,
+          scenarios: [
+            {
+              featurePath: "",
+              scenarioLine: 0,
+              scenarioName: "Unmapped.Failure",
+              outcome: "failed",
+            },
+          ],
+        }),
+      ],
+      context: {
+        lastKnown: {
+          passed: 0,
+          failed: 1,
+          skipped: 0,
+          provenance: "fromHistory",
+          durationMs: 500,
+          historyTimestamp: Date.UTC(2026, 0, 2, 3, 4, 5),
+        },
+      },
+    });
+    assert.match(built.header, /From last recorded run \(/);
+    assert.match(built.header, /Last run duration: 500 ms/);
+    assert.strictEqual(built.header.match(/Last run duration/g)?.length, 1);
+    assert.doesNotMatch(built.header, /Last run:/);
+    assert.match(built.header, /class="example-label"/);
+    assert.doesNotMatch(built.header, /data-feature-path/);
+    assert.doesNotMatch(built.header, /data-scenario-line/);
   });
 });
