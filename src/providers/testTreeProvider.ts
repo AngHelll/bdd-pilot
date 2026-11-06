@@ -955,6 +955,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
           scenarioTags: node.scenario.tags,
           isOutline: true,
           exampleRowLabel: node.example.label,
+          exampleTags: node.example.tags,
           outcomeLabel: outcome ? formatOutcomeForTooltip(outcome, locale) : undefined,
           durationMs,
           errorSnippet:

@@ -9,6 +9,8 @@ export interface OutlineExample {
   values: string[];
   /** Short label for tree rows, e.g. `contract_id=invalid-guid`. */
   label: string;
+  /** Tags on the Examples block that produced this row, without the leading '@'. */
+  tags?: string[];
 }
 
 export interface ScenarioInfo {

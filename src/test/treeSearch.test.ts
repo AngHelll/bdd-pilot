@@ -41,6 +41,20 @@ describe("treeSearch", () => {
     assert.ok(!matchesSearch("@smoke", feature, { ...scenario, name: "smoke test", tags: [] }));
   });
 
+  it("@tag search ignores tags that belong only to an Examples row", () => {
+    const outline = feature.scenarios[1];
+    const taggedRow = {
+      ...outline,
+      examples: [
+        { rowIndex: 0, line: 12, headers: ["id"], values: ["a"], label: "row A", tags: ["wip"] },
+      ],
+    };
+    const unrelated = { name: "Unrelated", tags: [] as string[], line: 20, isOutline: false };
+    assert.ok(!matchesSearch("@wip", feature, taggedRow));
+    assert.ok(!matchesSearch("@wip", feature, unrelated));
+    assert.ok(matchesSearch("wip", feature, taggedRow));
+  });
+
   it("substring search matches scenario name without tag", () => {
     assert.ok(matchesSearch("signs", feature, feature.scenarios[0]));
   });

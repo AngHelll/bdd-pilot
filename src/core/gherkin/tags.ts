@@ -1,4 +1,4 @@
-import { FeatureInfo, ScenarioInfo } from "./model";
+import { FeatureInfo, OutlineExample, ScenarioInfo } from "./model";
 
 /** Feature-level tags followed by scenario tags, deduplicated case-insensitively. */
 export function effectiveScenarioTags(feature: FeatureInfo, scenario: ScenarioInfo): string[] {
@@ -12,6 +12,11 @@ export function effectiveScenarioTags(feature: FeatureInfo, scenario: ScenarioIn
     }
   }
   return merged;
+}
+
+/** Tags of the Examples block that produced this row. They do not belong to the scenario. */
+export function outlineExampleTags(example: OutlineExample | undefined): string[] {
+  return example?.tags ? [...example.tags] : [];
 }
 
 /** Scenario-only tags (excluding feature inheritance). */

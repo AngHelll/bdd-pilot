@@ -96,6 +96,8 @@ export interface ScenarioTooltipParts {
   /** Localized skip reason (runner / unknown) for tree tooltip. */
   skipReasonLabel?: string;
   exampleRowLabel?: string;
+  /** Tags on this Examples row. They are not scenario tags. */
+  exampleTags?: readonly string[];
 }
 
 /**
@@ -126,6 +128,9 @@ export function buildScenarioTooltipMarkdown(parts: ScenarioTooltipParts, locale
   }
   if (parts.scenarioTags.length > 0) {
     lines.push("", `Scenario tags: ${formatTagsMarkdown(parts.scenarioTags)}`);
+  }
+  if (parts.exampleTags && parts.exampleTags.length > 0) {
+    lines.push("", `Example tags: ${formatTagsMarkdown(parts.exampleTags)}`);
   }
 
   if (parts.exampleRowLabel) {

@@ -7,7 +7,7 @@ import { outlineRowKey, scenarioKey } from "../runner/runScope";
 import { TagGroup } from "./groupByTag";
 import { DomainGroup, FeatureInfo, ScenarioInfo } from "./model";
 import { computeRollup } from "./outcomeRollup";
-import { effectiveScenarioTags } from "./tags";
+import { effectiveScenarioTags, outlineExampleTags } from "./tags";
 import {
   buildContainerDescription,
   buildOutlineParentDescription,
@@ -93,7 +93,16 @@ export function buildTestExplorerOutlineRowDescription(
   const key = outlineRowKey(feature, scenario, rowIndex);
   const outcome = store.get(key);
   const durationMs = store.getDuration(key);
-  const tags = effectiveScenarioTags(feature, scenario);
+  const example = scenario.examples?.find((row) => row.rowIndex === rowIndex);
+  const tags = [...effectiveScenarioTags(feature, scenario)];
+  const seen = new Set(tags.map((tag) => tag.toLowerCase()));
+  for (const tag of outlineExampleTags(example)) {
+    const tagKey = tag.toLowerCase();
+    if (!seen.has(tagKey)) {
+      seen.add(tagKey);
+      tags.push(tag);
+    }
+  }
   const tagPart = buildScenarioDescription(
     tags,
     effectiveLeafTagDisplay(display.displayMode, display.tagDisplay),

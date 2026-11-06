@@ -14,6 +14,8 @@ interface OutlineParseState {
   /** Set only while the current Examples table is being read. DataTables stay outside it. */
   readingExamples: boolean;
   headers: string[] | null;
+  /** Tags consumed from the line immediately above the current Examples block. */
+  blockTags: string[];
   stepLines: string[];
 }
 
@@ -99,6 +101,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
         scenario: activeScenario,
         readingExamples: false,
         headers: null,
+        blockTags: [],
         stepLines: activeStepLines,
       };
       continue;
@@ -123,6 +126,8 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
     }
 
     if (outlineState && EXAMPLES_RE.test(line)) {
+      outlineState.blockTags = pendingTags;
+      pendingTags = [];
       outlineState.readingExamples = true;
       outlineState.headers = null;
       const inline = EXAMPLES_RE.exec(line)?.[1]?.trim();
@@ -141,6 +146,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
     if (outlineState?.readingExamples) {
       outlineState.readingExamples = false;
       outlineState.headers = null;
+      outlineState.blockTags = [];
     }
 
     pendingTags = [];
@@ -175,6 +181,7 @@ function parseExampleRow(state: OutlineParseState, line: string, lineNumber: num
     headers: [...headers],
     values: headers.map((_, idx) => values[idx] ?? ""),
     label: buildExampleLabel(headers, values),
+    tags: [...state.blockTags],
   };
 
   if (!state.scenario.examples) {

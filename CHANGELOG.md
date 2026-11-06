@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.70.0] — 2026-11-06
+
+### Fixed
+- **Examples tags** — A tag written immediately before an Examples block stays on that block and its rows. It is not copied onto the outline or the next scenario. A later Examples block without its own tag does not inherit it. Run by tag still selects scenarios that declare the tag, not those rows.
+
 ## [1.69.0] — 2026-11-06
 
 ### Fixed

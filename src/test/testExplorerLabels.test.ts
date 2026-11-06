@@ -206,6 +206,33 @@ describe("testExplorerLabels", () => {
     assert.strictEqual(desc, "1 failed · @Smoke");
   });
 
+  it("buildTestExplorerOutlineRowDescription shows Examples tags on that row only", () => {
+    const scenario: ScenarioInfo = {
+      name: "Tagged rows",
+      tags: [],
+      line: 3,
+      isOutline: true,
+      examples: [
+        { rowIndex: 0, line: 7, headers: ["value"], values: ["a"], label: "value=a", tags: ["smoke"] },
+        { rowIndex: 1, line: 11, headers: ["value"], values: ["b"], label: "value=b", tags: [] },
+      ],
+    };
+    const f: FeatureInfo = {
+      name: "Example tags",
+      filePath: "/f/ExampleTags.feature",
+      tags: [],
+      scenarios: [scenario],
+    };
+    const store = new MemoryStore();
+    store.set("/f/ExampleTags.feature::3::Tagged rows::row0", "passed", 10);
+    store.set("/f/ExampleTags.feature::3::Tagged rows::row1", "passed", 10);
+
+    const tagged = buildTestExplorerOutlineRowDescription(f, scenario, store, display, "en", 0);
+    const plain = buildTestExplorerOutlineRowDescription(f, scenario, store, display, "en", 1);
+    assert.ok(tagged?.includes("@smoke"));
+    assert.ok(!plain?.includes("@smoke"));
+  });
+
   it("buildTestExplorerOutlineRowDescription includes tag summary", () => {
     const scenario = plainScenario("Row scenario", 3);
     const f = feature("Feat", [scenario]);

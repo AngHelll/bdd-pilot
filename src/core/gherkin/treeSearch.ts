@@ -66,7 +66,7 @@ export function matchesSearch(query: string, feature: FeatureInfo, scenario?: Sc
     ...feature.tags.map((t) => `@${t}`),
     scenario?.name ?? "",
     ...(scenario ? effectiveScenarioTags(feature, scenario).map((t) => `@${t}`) : []),
-    ...(scenario?.examples?.map((ex) => ex.label) ?? []),
+    ...(scenario?.examples?.flatMap((ex) => [ex.label, ...(ex.tags ?? []).map((tag) => `@${tag}`)]) ?? []),
   ]
     .join(" ")
     .toLowerCase();

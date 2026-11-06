@@ -67,4 +67,23 @@ describe("treeLabels", () => {
     assert.match(md, /`@WM-5874`/);
     assert.match(md, /Last run: \*\*failed\*\*/);
   });
+
+  it("tooltip shows Examples tags on the row and not as scenario tags", () => {
+    const md = buildScenarioTooltipMarkdown(
+      {
+        scenarioName: "Tagged rows",
+        featureName: "Example tags",
+        fileName: "ExampleTags.feature",
+        line: 7,
+        featureTags: [],
+        scenarioTags: [],
+        isOutline: true,
+        exampleRowLabel: "value=a",
+        exampleTags: ["smoke"],
+      },
+      "en",
+    );
+    assert.match(md, /Example tags: `@smoke`/);
+    assert.ok(!md.includes("Scenario tags"));
+  });
 });

@@ -208,6 +208,39 @@ describe("gherkin parser", () => {
     assert.strictEqual(headerOnly.scenarios[0].examples, undefined);
     assert.strictEqual(headerOnly.scenarios.length, 1);
   });
+
+  it("keeps Examples tags on that block and off the next scenario", () => {
+    const content = [
+      "Feature: Example tags",
+      "  Scenario Outline: Tagged rows",
+      "    Given value <value>",
+      "    @smoke",
+      "    Examples:",
+      "      | value |",
+      "      | a     |",
+      "    Examples:",
+      "      | value |",
+      "      | b     |",
+      "    @other",
+      "    Examples:",
+      "      | value |",
+      "      | c     |",
+      "  @owned",
+      "  Scenario: Unrelated",
+      "    Given something else",
+    ].join("\n");
+
+    const feature = parseFeature("/x/ExampleTags.feature", content);
+    const outline = feature.scenarios[0];
+    const unrelated = feature.scenarios[1];
+    const rows = outline.examples ?? [];
+
+    assert.deepStrictEqual(outline.tags, []);
+    assert.deepStrictEqual(rows.map((row) => row.tags), [["smoke"], [], ["other"]]);
+    assert.deepStrictEqual(unrelated.tags, ["owned"]);
+    assert.ok(!effectiveScenarioTags(feature, outline).includes("smoke"));
+    assert.ok(!effectiveScenarioTags(feature, unrelated).includes("smoke"));
+  });
 });
 
 describe("parseTableRow", () => {

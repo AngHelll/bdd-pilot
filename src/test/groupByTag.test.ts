@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { describe, it } from "node:test";
 import { groupByTag, tagsMatch } from "../core/gherkin/groupByTag";
 import { DomainGroup, FeatureInfo } from "../core/gherkin/model";
+import { parseFeature } from "../core/gherkin/parser";
 
 function feature(name: string, tags: string[], scenarios: FeatureInfo["scenarios"]): FeatureInfo {
   return {
@@ -55,6 +56,28 @@ describe("groupByTag", () => {
     const smoke = groups.find((g) => g.tag === "smoke")!;
     const keys = smoke.scenarios.map((s) => `${s.feature.filePath}:${s.scenario.line}`);
     assert.strictEqual(new Set(keys).size, keys.length);
+  });
+
+  it("does not place the scenario after a tagged Examples block under that tag", () => {
+    const parsed = parseFeature(
+      "/x/ExampleTags.feature",
+      [
+        "Feature: Example tags",
+        "  Scenario Outline: Tagged rows",
+        "    Given value <value>",
+        "    @smoke",
+        "    Examples:",
+        "      | value |",
+        "      | a     |",
+        "  Scenario: Unrelated",
+        "    Given something else",
+      ].join("\n"),
+    );
+    const names = groupByTag([{ name: "General", features: [parsed] }])
+      .filter((group) => group.tag.toLowerCase() === "smoke")
+      .flatMap((group) => group.scenarios.map((ref) => ref.scenario.name));
+
+    assert.deepStrictEqual(names, []);
   });
 
   it("tagsMatch is case-insensitive", () => {
