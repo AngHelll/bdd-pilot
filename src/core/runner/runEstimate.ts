@@ -2,6 +2,7 @@ import { DomainGroup, FeatureInfo, ScenarioInfo } from "../gherkin/model";
 import { tagsMatch } from "../gherkin/groupByTag";
 import { effectiveScenarioTags } from "../gherkin/tags";
 import { discoverDomains } from "../gherkin/discovery";
+import { resolveFeatureInDomains, resolveScenarioInDomains } from "../gherkin/resolveRunTarget";
 import { RunTarget } from "./filterBuilder";
 
 /**
@@ -49,10 +50,14 @@ function countForTarget(target: RunTarget, domains: DomainGroup[]): number | und
       return countAllTests(domains);
     case "domain":
       return target.group.features.reduce((sum, f) => sum + countFeatureTests(f), 0);
-    case "feature":
-      return countFeatureTests(target.feature);
-    case "scenario":
-      return countScenarioTests(target.scenario);
+    case "feature": {
+      const feature = resolveFeatureInDomains(target.feature, domains) ?? target.feature;
+      return countFeatureTests(feature);
+    }
+    case "scenario": {
+      const match = resolveScenarioInDomains(target.feature, target.scenario, domains);
+      return countScenarioTests(match?.scenario ?? target.scenario);
+    }
     case "outlineRow":
       return 1;
     case "tag": {

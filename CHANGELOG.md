@@ -6,6 +6,13 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.69.0] — 2026-11-06
+
+### Fixed
+- **Feature header Run** — Run on the Feature line counts the discovered scenarios and rows. A feature that is not in the tree asks you to save, refresh, and select the project. An empty feature still does not start. The lens title is Run Feature.
+- **Outline row filter** — A row filter includes the scenario method, so two outlines that share an example value stay apart. Several rows are combined as complete clauses. Identical rows in one scenario are announced and are not expanded to the whole scenario.
+- **Examples tables** — A step DataTable or a DocString is not read as Examples. Rows come from each Examples table, including more than one block in the same outline.
+
 ## [1.68.0] — 2026-10-26
 
 ### Changed

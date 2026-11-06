@@ -583,10 +583,17 @@ describe("RunService.runExecution characterization", { concurrency: false }, () 
     const result = await runService.runExecution(executionRequest(projectDir, [target]));
     const recorded = result.historyEntry?.scenarios[0];
     assert.ok(recorded);
-    assert.strictEqual(result.historyEntry?.filter, 'DisplayName~sku: %22widget%22');
-    assert.strictEqual(lastDotnetFilter, 'DisplayName~sku: %22widget%22');
+    assert.strictEqual(
+      result.historyEntry?.filter,
+      "(FullyQualifiedName~OrdersFeature.AddItem&DisplayName~sku: %22widget%22)",
+    );
+    assert.strictEqual(
+      lastDotnetFilter,
+      "(FullyQualifiedName~OrdersFeature.AddItem&DisplayName~sku: %22widget%22)",
+    );
     const commandLine = runService.getLastEffectiveDotnetCommand()?.commandLine ?? "";
     assert.ok(commandLine.includes("DisplayName~sku: %22widget%22"));
+    assert.ok(commandLine.includes("FullyQualifiedName~OrdersFeature.AddItem"));
     assert.strictEqual(recorded.featurePath, orders.filePath);
     assert.strictEqual(recorded.scenarioLine, 8);
     assert.notStrictEqual(recorded.scenarioLine, example.line);

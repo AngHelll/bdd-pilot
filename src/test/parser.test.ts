@@ -90,6 +90,124 @@ describe("gherkin parser", () => {
     const scenario = feature.scenarios[0];
     assert.deepStrictEqual(effectiveScenarioTags(feature, scenario), ["Smoke", "P1"]);
   });
+
+  it("reads Examples rows and ignores a step DataTable", () => {
+    const content = [
+      "Feature: Table boundaries",
+      "  Scenario Outline: Read items",
+      "    When I query with:",
+      "      | key  | value  |",
+      "      | kind | <kind> |",
+      "    Then the query succeeds",
+      "    Examples:",
+      "      | kind |",
+      "      | a    |",
+      "      | b    |",
+    ].join("\n");
+
+    const outline = parseFeature("/x/Tables.feature", content).scenarios[0];
+    assert.strictEqual(outline.examples?.length, 2);
+    assert.deepStrictEqual(
+      outline.examples?.map((row) => row.values[0]),
+      ["a", "b"],
+    );
+    assert.deepStrictEqual(
+      outline.examples?.map((row) => row.line),
+      [9, 10],
+    );
+    assert.deepStrictEqual(
+      outline.examples?.map((row) => row.rowIndex),
+      [0, 1],
+    );
+  });
+
+  it("keeps rows from every Examples block", () => {
+    const content = [
+      "Feature: Blocks",
+      "  Scenario Outline: Twice",
+      "    When <k>",
+      "    Examples:",
+      "      | k |",
+      "      | a |",
+      "    Examples:",
+      "      | k |",
+      "      | b |",
+    ].join("\n");
+
+    const rows = parseFeature("/x/Blocks.feature", content).scenarios[0].examples ?? [];
+    assert.deepStrictEqual(
+      rows.map((row) => row.values[0]),
+      ["a", "b"],
+    );
+    assert.deepStrictEqual(
+      rows.map((row) => row.rowIndex),
+      [0, 1],
+    );
+    assert.deepStrictEqual(
+      rows.map((row) => row.line),
+      [6, 9],
+    );
+  });
+
+  it("ignores tables on several steps before Examples", () => {
+    const content = [
+      "Feature: Steps",
+      "  Scenario Outline: Two tables",
+      "    When first:",
+      "      | a | b |",
+      "      | 1 | 2 |",
+      "    And second:",
+      "      | c |",
+      "      | 3 |",
+      "    Examples:",
+      "      | kind |",
+      "      | only |",
+    ].join("\n");
+
+    const rows = parseFeature("/x/Steps.feature", content).scenarios[0].examples ?? [];
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].values[0], "only");
+    assert.strictEqual(rows[0].line, 11);
+  });
+
+  it("ignores pipes inside a DocString", () => {
+    const content = [
+      "Feature: Doc",
+      "  Scenario Outline: Quoted",
+      "    When body:",
+      '      """',
+      "      | not | a | row |",
+      '      """',
+      "    Examples:",
+      "      | kind |",
+      "      | real |",
+    ].join("\n");
+
+    const rows = parseFeature("/x/Doc.feature", content).scenarios[0].examples ?? [];
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].values[0], "real");
+    assert.strictEqual(rows[0].line, 9);
+  });
+
+  it("does not invent rows for an empty or header-only Examples", () => {
+    const empty = parseFeature(
+      "/x/Empty.feature",
+      ["Feature: Empty", "  Scenario Outline: None", "    When go", "    Examples:", "  Scenario: After", "    Then ok"].join(
+        "\n",
+      ),
+    );
+    assert.strictEqual(empty.scenarios[0].examples, undefined);
+    assert.strictEqual(empty.scenarios[1].name, "After");
+
+    const headerOnly = parseFeature(
+      "/x/Header.feature",
+      ["Feature: Header", "  Scenario Outline: Just header", "    When go", "    Examples:", "      | kind |", "    Then still here"].join(
+        "\n",
+      ),
+    );
+    assert.strictEqual(headerOnly.scenarios[0].examples, undefined);
+    assert.strictEqual(headerOnly.scenarios.length, 1);
+  });
 });
 
 describe("parseTableRow", () => {

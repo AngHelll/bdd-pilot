@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { DomainGroup } from "../core/gherkin/model";
+import { DomainGroup, OutlineExample, ScenarioInfo } from "../core/gherkin/model";
 import {
   ACTIVATE_ENRICH_IDLE_MS,
   FEATURE_ENRICH_DEBOUNCE_MS,
@@ -93,5 +93,85 @@ describe("runEstimate", () => {
       },
     ]);
     assert.strictEqual(tagTotal, 1);
+  });
+
+  it("counts a feature header stub the same as the discovered feature", () => {
+    const rows: OutlineExample[] = [
+      { rowIndex: 0, line: 8, headers: ["x"], values: ["a"], label: "x=a" },
+      { rowIndex: 1, line: 9, headers: ["x"], values: ["b"], label: "x=b" },
+    ];
+    const outline: ScenarioInfo = {
+      name: "Many",
+      line: 4,
+      tags: [],
+      isOutline: true,
+      examples: rows,
+    };
+    const feature = {
+      name: "Alpha",
+      filePath: "/tmp/Alpha.feature",
+      tags: ["smoke"],
+      scenarios: [
+        { name: "One", line: 2, tags: [], isOutline: false },
+        outline,
+      ],
+    };
+    const domains: DomainGroup[] = [{ name: "Sample", features: [feature] }];
+    const missingDir = path.join(os.tmpdir(), "bdd-pilot-est-header-stub");
+    const header = estimateTestCount(
+      [{ kind: "feature", feature: { ...feature, scenarios: [] } }],
+      missingDir,
+      domains,
+    );
+    const fromTree = estimateTestCount([{ kind: "feature", feature }], missingDir, domains);
+    assert.strictEqual(header, 3);
+    assert.strictEqual(header, fromTree);
+  });
+
+  it("counts every outline row when the scenario stub omits examples", () => {
+    const outline: ScenarioInfo = {
+      name: "Many",
+      line: 4,
+      tags: [],
+      isOutline: true,
+      examples: [
+        { rowIndex: 0, line: 8, headers: ["x"], values: ["a"], label: "x=a" },
+        { rowIndex: 1, line: 9, headers: ["x"], values: ["b"], label: "x=b" },
+      ],
+    };
+    const feature = {
+      name: "Alpha",
+      filePath: "/tmp/Alpha.feature",
+      tags: [],
+      scenarios: [outline],
+    };
+    const domains: DomainGroup[] = [{ name: "Sample", features: [feature] }];
+    const total = estimateTestCount(
+      [
+        {
+          kind: "scenario",
+          feature: { ...feature, scenarios: [] },
+          scenario: { ...outline, examples: undefined },
+        },
+      ],
+      path.join(os.tmpdir(), "bdd-pilot-est-outline-stub"),
+      domains,
+    );
+    assert.strictEqual(total, 2);
+  });
+
+  it("counts a discovered feature with no scenarios as zero", () => {
+    const feature = {
+      name: "Empty",
+      filePath: "/tmp/Empty.feature",
+      tags: [],
+      scenarios: [],
+    };
+    const total = estimateTestCount(
+      [{ kind: "feature", feature }],
+      path.join(os.tmpdir(), "bdd-pilot-est-empty-feature"),
+      [{ name: "Sample", features: [feature] }],
+    );
+    assert.strictEqual(total, 0);
   });
 });

@@ -96,7 +96,7 @@ function makeFeatureLenses(
     kind: "feature",
     feature: { name: feature.name, filePath: uri.fsPath, tags: feature.tags, scenarios: [] },
   };
-  return makeRunLenses(range, target, locale, false, false);
+  return makeRunLenses(range, target, locale, false, false, true);
 }
 
 function makeScenarioLenses(
@@ -145,17 +145,22 @@ function makeRunLenses(
   locale: PilotLocale,
   allRows: boolean,
   outlineRow: boolean,
+  featureHeader = false,
 ): vscode.CodeLens[] {
   const runTitle = outlineRow
     ? t(locale, "codeLens.runRow")
     : allRows
       ? t(locale, "codeLens.runAllRows")
-      : t(locale, "codeLens.run");
+      : featureHeader
+        ? t(locale, "codeLens.runFeature")
+        : t(locale, "codeLens.run");
   const debugTitle = outlineRow
     ? t(locale, "codeLens.debugRow")
     : allRows
       ? t(locale, "codeLens.debugAllRows")
-      : t(locale, "codeLens.debug");
+      : featureHeader
+        ? t(locale, "codeLens.debugFeature")
+        : t(locale, "codeLens.debug");
 
   return [
     new vscode.CodeLens(range, {

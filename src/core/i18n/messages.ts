@@ -172,6 +172,8 @@ const EN = {
 
   "codeLens.run": "$(play) Run",
   "codeLens.debug": "$(debug) Debug",
+  "codeLens.runFeature": "$(play) Run Feature",
+  "codeLens.debugFeature": "$(debug) Debug Feature",
   "codeLens.runRow": "$(play) Run row",
   "codeLens.debugRow": "$(debug) Debug row",
   "codeLens.runAllRows": "$(play) Run all rows",
@@ -207,6 +209,10 @@ const EN = {
     "BDD Pilot: could not locate the .NET test project. Use 'Select Test Project' or set 'bddPilot.projectPath'.",
   "toast.discoverEmptyScope":
     "No Gherkin leaves in this scope. The run will not start.",
+  "toast.runTargetUnresolved":
+    "This feature is not in the discovered tree. Save the file, refresh BDD Pilot, and select the test project. The run will not start.",
+  "toast.outlineRowIdentical":
+    "Two rows in this scenario have the same values. The run includes every identical row, not the whole scenario.",
   "toast.discoverListedZero":
     "The filter listed 0 tests (Gherkin scope is non-empty). The run will continue.",
   "toast.noProjectsFound":
@@ -641,6 +647,8 @@ const ES: Record<keyof typeof EN, string> = {
 
   "codeLens.run": "$(play) Ejecutar",
   "codeLens.debug": "$(debug) Depurar",
+  "codeLens.runFeature": "$(play) Ejecutar feature",
+  "codeLens.debugFeature": "$(debug) Depurar feature",
   "codeLens.runRow": "$(play) Ejecutar fila",
   "codeLens.debugRow": "$(debug) Depurar fila",
   "codeLens.runAllRows": "$(play) Ejecutar todas las filas",
@@ -676,6 +684,10 @@ const ES: Record<keyof typeof EN, string> = {
     "BDD Pilot: no se encontró el proyecto .NET de tests. Usa 'Select Test Project' o configura 'bddPilot.projectPath'.",
   "toast.discoverEmptyScope":
     "No hay hojas Gherkin en este alcance. La ejecución no se iniciará.",
+  "toast.runTargetUnresolved":
+    "Este feature no está en el árbol descubierto. Guarda el archivo, actualiza BDD Pilot y selecciona el proyecto de tests. La ejecución no se iniciará.",
+  "toast.outlineRowIdentical":
+    "Dos filas de este escenario tienen los mismos valores. La ejecución incluye cada fila idéntica, no el escenario completo.",
   "toast.discoverListedZero":
     "El filtro no listó tests (el alcance Gherkin no está vacío). La ejecución continúa.",
   "toast.noProjectsFound":

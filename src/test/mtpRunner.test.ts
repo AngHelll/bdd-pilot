@@ -157,6 +157,20 @@ describe("MTP buildArgs", () => {
     assert.ok(mixed.includes("/*/*/*GreetingsFeature*"));
   });
 
+  it("ANDs method and display name for one outline row", () => {
+    const args = buildArgs({
+      ...base,
+      filter:
+        "(FullyQualifiedName~RowSelectionFeature.FirstOperation&DisplayName~period: %22day%22)",
+    });
+    assert.strictEqual(
+      args[args.indexOf("--filter-method") + 1],
+      "*RowSelectionFeature.FirstOperation*",
+    );
+    assert.strictEqual(args[args.indexOf("--filter-display-name") + 1], '*period: "day"*');
+    assert.ok(!args.includes("--filter"));
+  });
+
   it("does not combine a display-name filter with a query filter", () => {
     const args = buildArgs({
       ...base,

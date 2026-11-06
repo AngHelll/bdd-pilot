@@ -3,7 +3,7 @@ import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
 import { ParallelismMode, Stage } from "../core/config/types";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { resolveRunKind, RunKind } from "../core/results/runHistory";
-import { RunTarget, buildCombinedFilter } from "../core/runner/filterBuilder";
+import { RunTarget, buildCombinedFilter, selectionHasIndistinguishableOutlineRow } from "../core/runner/filterBuilder";
 import { formatRunCanceledLine } from "../core/runner/processTree";
 import {
   detectBuildFileLock,
@@ -24,6 +24,7 @@ import {
   TestCompletionEvent,
 } from "../core/runner/liveProgress";
 import { estimateTestCount } from "../core/runner/runEstimate";
+import { resolveExecutableTargets } from "../core/gherkin/resolveRunTarget";
 import { MessageKey } from "../core/i18n";
 import { ProjectContext } from "../providers/testController";
 import { LocaleService } from "../providers/localeService";
@@ -124,10 +125,19 @@ export function createRunExecutor(deps: RunExecutionDeps) {
 
     const domains = deps.treeProvider.getDomains();
     let runTargets = opts?.rawFilter ? [] : resolveRunTargets(target);
-    let totalExpected =
-      opts?.rawFilter || opts?.debug
-        ? undefined
-        : estimateTestCount(runTargets, project.discoveryRoot, domains);
+    if (!opts?.rawFilter) {
+      const resolution = resolveExecutableTargets(runTargets, domains);
+      if (resolution.status === "unresolved") {
+        void vscode.window.showInformationMessage(deps.tr("toast.runTargetUnresolved"));
+        releaseRunLock();
+        return;
+      }
+      runTargets = resolution.targets;
+    }
+    const estimated = opts?.rawFilter
+      ? undefined
+      : estimateTestCount(runTargets, project.discoveryRoot, domains);
+    let totalExpected = opts?.debug ? undefined : estimated;
 
     const isPlainRunAll =
       !opts?.rawFilter &&
@@ -149,12 +159,18 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         return;
       }
       if (nudge.action === "scoped") {
-        runTargets = resolveRunTargets(nudge.target);
+        const scoped = resolveExecutableTargets(resolveRunTargets(nudge.target), domains);
+        if (scoped.status === "unresolved") {
+          void vscode.window.showInformationMessage(deps.tr("toast.runTargetUnresolved"));
+          releaseRunLock();
+          return;
+        }
+        runTargets = scoped.targets;
         totalExpected = estimateTestCount(runTargets, project.discoveryRoot, domains);
       }
     }
 
-    if (totalExpected === 0) {
+    if ((opts?.debug ? estimated : totalExpected) === 0) {
       const emptyLine = formatDiscoverTimeLine(classifyDiscoverTime({ gherkin: 0 }));
       if (emptyLine) {
         writeRunTerminal(`[bdd-pilot] ${emptyLine}\n`);
@@ -166,6 +182,14 @@ export function createRunExecutor(deps: RunExecutionDeps) {
 
     if (opts?.debug && deps.treeProvider.needsTheoryDiscovery()) {
       await deps.enrichTheoryRows();
+    }
+
+    if (
+      !opts?.rawFilter &&
+      settings.filterMapping.outlineRowFilter !== "scenarioOnly" &&
+      selectionHasIndistinguishableOutlineRow(runTargets, domains)
+    ) {
+      void vscode.window.showInformationMessage(deps.tr("toast.outlineRowIdentical"));
     }
 
     const sessionRunKind = resolveRunKind({ debug: opts?.debug, runKind: opts?.runKind });

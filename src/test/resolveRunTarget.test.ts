@@ -2,6 +2,7 @@ import * as assert from "assert";
 import * as path from "path";
 import { describe, it } from "node:test";
 import {
+  resolveExecutableTargets,
   resolveFeatureInDomains,
   resolveScenarioInDomains,
 } from "../core/gherkin/resolveRunTarget";
@@ -70,6 +71,65 @@ describe("resolveRunTarget", () => {
       domains,
     );
     assert.deepStrictEqual(byNameOnly, { feature, scenario: scenarioB });
+  });
+
+  it("replaces a header stub with the discovered feature", () => {
+    const feature = makeFeature("/proj/Features/Sample.feature", "Sample", [scenarioA]);
+    const domains: DomainGroup[] = [{ name: "Trading", features: [feature] }];
+    const stub = makeFeature("/proj/Features/Sample.feature", "Sample", []);
+
+    const resolved = resolveExecutableTargets([{ kind: "feature", feature: stub }], domains);
+    assert.deepStrictEqual(resolved, {
+      status: "ready",
+      targets: [{ kind: "feature", feature }],
+    });
+  });
+
+  it("keeps a discovered feature with no scenarios distinct from a miss", () => {
+    const empty = makeFeature("/proj/Features/Empty.feature", "Empty", []);
+    const domains: DomainGroup[] = [{ name: "Trading", features: [empty] }];
+
+    const resolved = resolveExecutableTargets([{ kind: "feature", feature: empty }], domains);
+    assert.deepStrictEqual(resolved, {
+      status: "ready",
+      targets: [{ kind: "feature", feature: empty }],
+    });
+
+    const missing = resolveExecutableTargets(
+      [{ kind: "feature", feature: makeFeature("/proj/Missing.feature", "Missing", []) }],
+      domains,
+    );
+    assert.deepStrictEqual(missing, { status: "unresolved" });
+  });
+
+  it("restores outline examples stripped from a scenario stub", () => {
+    const outline: ScenarioInfo = {
+      name: "Many",
+      tags: [],
+      line: 4,
+      isOutline: true,
+      examples: [
+        { rowIndex: 0, line: 8, headers: ["x"], values: ["a"], label: "x=a" },
+        { rowIndex: 1, line: 9, headers: ["x"], values: ["b"], label: "x=b" },
+      ],
+    };
+    const feature = makeFeature("/proj/Features/Sample.feature", "Sample", [outline]);
+    const domains: DomainGroup[] = [{ name: "Trading", features: [feature] }];
+
+    const resolved = resolveExecutableTargets(
+      [
+        {
+          kind: "scenario",
+          feature: makeFeature(feature.filePath, feature.name, []),
+          scenario: { ...outline, examples: undefined },
+        },
+      ],
+      domains,
+    );
+    assert.deepStrictEqual(resolved, {
+      status: "ready",
+      targets: [{ kind: "scenario", feature, scenario: outline }],
+    });
   });
 
   it("matches win32-style paths via normalize on Windows", () => {

@@ -1,4 +1,5 @@
 import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "../gherkin/model";
+import { resolveScenarioInDomains } from "../gherkin/resolveRunTarget";
 import {
   DEFAULT_FILTER_MAPPING,
   FilterMappingConfig,
@@ -55,7 +56,12 @@ export function buildFilter(
       if (mapping.outlineRowFilter === "scenarioOnly") {
         return buildScenarioFilter(target.feature, target.scenario, mapping);
       }
-      return buildOutlineRowFilter(target.example) ?? buildScenarioFilter(target.feature, target.scenario, mapping);
+      const cells = buildOutlineRowFilter(target.example);
+      const scenarioFilter = buildScenarioFilter(target.feature, target.scenario, mapping);
+      if (!cells) {
+        return scenarioFilter;
+      }
+      return `(${scenarioFilter}&${cells})`;
     }
   }
 }
@@ -115,4 +121,40 @@ export function featureClassName(
  */
 export function sanitizeIdentifier(name: string): string {
   return toReqnrollIdentifierPart(name);
+}
+
+/**
+ * True when another Examples row in the same scenario produces the same cell
+ * filter. The run keeps the row clause and does not widen to the scenario.
+ */
+export function selectionHasIndistinguishableOutlineRow(
+  targets: RunTarget[],
+  domains: DomainGroup[] = [],
+): boolean {
+  for (const target of targets) {
+    if (target.kind !== "outlineRow") {
+      continue;
+    }
+    const scenario =
+      resolveScenarioInDomains(target.feature, target.scenario, domains)?.scenario ??
+      target.scenario;
+    if (outlineRowCellsCollide(scenario, target.example)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function outlineRowCellsCollide(scenario: ScenarioInfo, example: OutlineExample): boolean {
+  const selected = buildOutlineRowFilter(example);
+  if (!selected) {
+    return false;
+  }
+  let matches = 0;
+  for (const row of scenario.examples ?? []) {
+    if (buildOutlineRowFilter(row) === selected) {
+      matches += 1;
+    }
+  }
+  return matches > 1;
 }

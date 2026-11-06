@@ -11,6 +11,8 @@ const TAG_RE = /(^|\s)@[^\s@]+/g;
 
 interface OutlineParseState {
   scenario: ScenarioInfo;
+  /** Set only while the current Examples table is being read. DataTables stay outside it. */
+  readingExamples: boolean;
   headers: string[] | null;
   stepLines: string[];
 }
@@ -37,6 +39,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
   let outlineState: OutlineParseState | undefined;
   let activeScenario: ScenarioInfo | undefined;
   let activeStepLines: string[] = [];
+  let docFence: string | undefined;
 
   const finalizeScenario = (scenario: ScenarioInfo | undefined, stepLines: string[]): void => {
     if (!scenario) {
@@ -52,7 +55,20 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
     const raw = lines[i];
     const line = raw.trim();
 
+    if (docFence) {
+      if (line.startsWith(docFence)) {
+        docFence = undefined;
+      }
+      continue;
+    }
+
     if (line.length === 0 || line.startsWith("#")) {
+      continue;
+    }
+
+    const openedFence = docStringFence(line);
+    if (openedFence) {
+      docFence = openedFence;
       continue;
     }
 
@@ -81,6 +97,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
       pendingTags = [];
       outlineState = {
         scenario: activeScenario,
+        readingExamples: false,
         headers: null,
         stepLines: activeStepLines,
       };
@@ -106,6 +123,7 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
     }
 
     if (outlineState && EXAMPLES_RE.test(line)) {
+      outlineState.readingExamples = true;
       outlineState.headers = null;
       const inline = EXAMPLES_RE.exec(line)?.[1]?.trim();
       if (inline && inline.includes("|")) {
@@ -114,14 +132,15 @@ export function parseFeature(filePath: string, content: string): FeatureInfo {
       continue;
     }
 
-    if (outlineState && line.includes("|")) {
+    if (outlineState?.readingExamples && line.includes("|")) {
       parseExampleRow(outlineState, line, i + 1);
       continue;
     }
 
-    // Steps, Background, etc. — stop Examples parsing for this outline.
-    if (outlineState && outlineState.headers !== null) {
-      outlineState = undefined;
+    // A step or other line ends the current Examples table and leaves the outline open.
+    if (outlineState?.readingExamples) {
+      outlineState.readingExamples = false;
+      outlineState.headers = null;
     }
 
     pendingTags = [];
@@ -190,6 +209,16 @@ export function buildExampleLabel(headers: string[], values: string[]): string {
     return `${pairs[0].header}=${pairs[0].value}, ${pairs[1].header}=${pairs[1].value}`;
   }
   return `${pairs[0].header}=${pairs[0].value}, ${pairs[1].header}=${pairs[1].value} +${pairs.length - 2}`;
+}
+
+function docStringFence(line: string): string | undefined {
+  if (line.startsWith('"""')) {
+    return '"""';
+  }
+  if (line.startsWith("```")) {
+    return "```";
+  }
+  return undefined;
 }
 
 function isStepLine(raw: string): boolean {

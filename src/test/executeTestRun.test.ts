@@ -369,7 +369,10 @@ describe("executeTestRun", () => {
     };
     const result = await executeTestRun(input(projectDir, [target], scriptedRun(script)));
 
-    assert.strictEqual(script.seenFilter, 'DisplayName~sku: %22widget%22');
+    assert.strictEqual(
+      script.seenFilter,
+      "(FullyQualifiedName~OrdersFeature.AddItem&DisplayName~sku: %22widget%22)",
+    );
     assert.strictEqual(result.matchedScenarios.length, 1);
     assert.strictEqual(result.matchedScenarios[0].scenarioLine, 8);
     assert.strictEqual(result.matchedScenarios[0].scenarioName, "Add item");
