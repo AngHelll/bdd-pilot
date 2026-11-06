@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.68.0** · **Marketplace: v1.68.0** · **Open VSX: v1.68.0** · **Next: —** · **830 unit tests**
+> **Current release: v1.69.0** · **Marketplace: v1.69.0** · **Open VSX: v1.69.0** · **Next: —** · **845 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.68.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.69.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.69.0 — Feature run, outline row filter, and Examples tables ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Feature Run** | Run on the Feature line counts the discovered scenarios and rows. A missing feature asks to save, refresh, and select the project. An empty feature still does not start. The lens title is Run Feature |
+| **Outline row** | The row filter includes the scenario method, so two outlines that share a value stay apart. Identical rows in one scenario are announced and are not expanded to the whole scenario |
+| **Examples** | A step DataTable or a DocString is not read as Examples. Each Examples block keeps its rows |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.69.0 (Marketplace + Open VSX) |
+| **Tests** | 845 unit tests |
 
 ### v1.68.0 — Concise tree rows and last-run dashboard ✅ shipped
 
@@ -1271,4 +1282,4 @@ src/
 
 ---
 
-*Last updated: v1.68.0 concise tree rows and last-run dashboard published to Marketplace and Open VSX.*
+*Last updated: v1.69.0 feature run, outline row filter, and Examples tables published to Marketplace and Open VSX.*
