@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.70.0** · **Marketplace: v1.70.0** · **Open VSX: v1.70.0** · **Next: —** · **850 unit tests**
+> **Current release: v1.71.0** · **Marketplace: v1.71.0** · **Open VSX: v1.71.0** · **Next: —** · **857 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.70.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.71.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,15 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.71.0 — Last-run clock and first stored failure ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Dashboard** | The latest-run header shows the time and duration already stored on that history entry. Under them, the first stored failure shows its name, feature file, duration, and message, and opens the feature when the record has a path and a line |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.71.0 (Marketplace + Open VSX) |
+| **Tests** | 857 unit tests |
 
 ### v1.70.0 — Examples block tags ✅ shipped
 
@@ -1292,4 +1301,4 @@ src/
 
 ---
 
-*Last updated: v1.70.0 Examples block tags published to Marketplace and Open VSX.*
+*Last updated: v1.71.0 last-run clock and first stored failure published to Marketplace and Open VSX.*
