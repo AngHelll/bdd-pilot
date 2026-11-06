@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.69.0** · **Marketplace: v1.69.0** · **Open VSX: v1.69.0** · **Next: —** · **845 unit tests**
+> **Current release: v1.70.0** · **Marketplace: v1.70.0** · **Open VSX: v1.70.0** · **Next: —** · **850 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.69.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.70.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.70.0 — Examples block tags ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Examples tags** | A tag written immediately before an Examples block stays on that block and its rows. It is not copied onto the outline or the next scenario. A later block without its own tag does not inherit it |
+| **Run by tag** | Still selects scenarios that declare the tag, not rows tagged only on Examples |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.70.0 (Marketplace + Open VSX) |
+| **Tests** | 850 unit tests |
 
 ### v1.69.0 — Feature run, outline row filter, and Examples tables ✅ shipped
 
@@ -1282,4 +1292,4 @@ src/
 
 ---
 
-*Last updated: v1.69.0 feature run, outline row filter, and Examples tables published to Marketplace and Open VSX.*
+*Last updated: v1.70.0 Examples block tags published to Marketplace and Open VSX.*
