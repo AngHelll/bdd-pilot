@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.71.0** · **Marketplace: v1.71.0** · **Open VSX: v1.71.0** · **Next: —** · **857 unit tests**
+> **Current release: v1.72.0** · **Marketplace: v1.72.0** · **Open VSX: v1.72.0** · **Next: —** · **860 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.71.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.72.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.72.0 — Run-not-started signal ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Summary** | When a requested run does not start, the idle summary label is one line (`Tests did not start · …`) with a warning icon until a run actually begins. Step lists stay in the terminal |
+| **Prompts** | Binding warn and block are one sentence. Dismiss, Cancel, block OK, and stage decline do not add a second toast |
+| **Discover** | `listed=0` reports `0 tests listed` on the progress line and the summary row. The notification title stays the running title. The run is not blocked |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.72.0 (Marketplace + Open VSX) |
+| **Tests** | 860 unit tests |
 
 ### v1.71.0 — Last-run clock and first stored failure ✅ shipped
 
@@ -1301,4 +1312,4 @@ src/
 
 ---
 
-*Last updated: v1.71.0 last-run clock and first stored failure published to Marketplace and Open VSX.*
+*Last updated: v1.72.0 run-not-started signal published to Marketplace and Open VSX.*
