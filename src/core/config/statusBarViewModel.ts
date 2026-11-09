@@ -18,6 +18,8 @@ export interface CompactStatusBarInput {
   envStatus?: StageEnvFileStatus;
   /** Preformatted "Release · stg.runsettings" parts joined; omit line when empty. */
   runFlagsSummary?: string;
+  /** Short live count (`7/19` or `{n} done`). Omitted from the label when absent. */
+  liveCount?: string;
 }
 
 export function readStatusBarDisplayMode(value: string | undefined): StatusBarDisplayMode {
@@ -78,7 +80,16 @@ export function formatCompactStatusBarLabel(input: CompactStatusBarInput): strin
     ? truncateStatusBarProjectLabel(input.projectLabel)
     : t(input.locale, "statusBar.compactProjectNotSet");
   const segments = `${input.stage} · ${input.mode} · ${project}`;
-  return `$(beaker) Pilot  ${segments}`;
+  const base = `$(beaker) Pilot  ${segments}`;
+  if (input.running && input.liveCount) {
+    return `${base} · ${input.liveCount}`;
+  }
+  return base;
+}
+
+/** Detailed-mode running item. The count replaces "Running…" when a run has one. */
+export function formatDetailedRunningLabel(locale: PilotLocale, liveCount?: string): string {
+  return `$(loading~spin) ${liveCount ?? t(locale, "statusBar.running")}`;
 }
 
 export function formatCompactStatusBarTooltip(input: CompactStatusBarInput): string {

@@ -3,6 +3,7 @@ import {
   CompactStatusBarInput,
   formatCompactStatusBarLabel,
   formatCompactStatusBarTooltip,
+  formatDetailedRunningLabel,
   formatDetailedStageTooltip,
   StatusBarDisplayMode,
   statusBarNeedsWarning,
@@ -30,6 +31,15 @@ export class StatusBar implements vscode.Disposable {
   private readonly modeItem: vscode.StatusBarItem;
   private readonly runningItem: vscode.StatusBarItem;
   private readonly projectItem: vscode.StatusBarItem;
+  private liveCount: string | undefined;
+  private displayMode: StatusBarDisplayMode = "compact";
+  private lastStage: Stage | undefined;
+  private lastMode: ParallelismMode | undefined;
+  private lastLocale: PilotLocale | undefined;
+  private lastProjectLabel: string | undefined;
+  private lastActivity: StatusBarActivity | undefined;
+  private lastEnvStatus: StageEnvFileStatus | undefined;
+  private lastRunFlagsSummary: string | undefined;
 
   constructor() {
     this.hubItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -54,14 +64,62 @@ export class StatusBar implements vscode.Disposable {
     envStatus?: StageEnvFileStatus,
     runFlagsSummary?: string,
   ): void {
-    if (displayMode === "compact") {
-      this.updateCompact(stage, mode, locale, projectLabel, activity, envStatus, runFlagsSummary);
+    this.displayMode = displayMode;
+    this.lastStage = stage;
+    this.lastMode = mode;
+    this.lastLocale = locale;
+    this.lastProjectLabel = projectLabel;
+    this.lastActivity = activity;
+    this.lastEnvStatus = envStatus;
+    this.lastRunFlagsSummary = runFlagsSummary;
+    if (!activity?.running || activity.debugging) {
+      this.liveCount = undefined;
+    }
+    this.paint();
+  }
+
+  /** Live count for the current non-debug run. Does not rebuild the rest of the UI. */
+  setLiveCount(count: string | undefined): void {
+    if (!this.lastActivity?.running || this.lastActivity.debugging) {
+      this.liveCount = undefined;
+    } else {
+      this.liveCount = count;
+    }
+    if (this.lastStage !== undefined && this.lastMode !== undefined && this.lastLocale !== undefined) {
+      this.paint();
+    }
+  }
+
+  private paint(): void {
+    if (
+      this.lastStage === undefined ||
+      this.lastMode === undefined ||
+      this.lastLocale === undefined
+    ) {
+      return;
+    }
+    if (this.displayMode === "compact") {
+      this.updateCompact(
+        this.lastStage,
+        this.lastMode,
+        this.lastLocale,
+        this.lastProjectLabel,
+        this.lastActivity,
+        this.lastEnvStatus,
+        this.lastRunFlagsSummary,
+      );
       this.hideDetailed();
       return;
     }
-
     this.hubItem.hide();
-    this.updateDetailed(stage, mode, locale, projectLabel, activity, envStatus);
+    this.updateDetailed(
+      this.lastStage,
+      this.lastMode,
+      this.lastLocale,
+      this.lastProjectLabel,
+      this.lastActivity,
+      this.lastEnvStatus,
+    );
   }
 
   private updateCompact(
@@ -79,6 +137,7 @@ export class StatusBar implements vscode.Disposable {
       locale,
       projectLabel,
       running: activity?.running,
+      liveCount: activity?.debugging ? undefined : this.liveCount,
       solutionSelected: activity?.solutionSelected,
       debugging: activity?.debugging,
       envStatus,
@@ -113,7 +172,10 @@ export class StatusBar implements vscode.Disposable {
     this.modeItem.show();
 
     if (activity?.running) {
-      this.runningItem.text = `$(loading~spin) ${t(locale, "statusBar.running")}`;
+      this.runningItem.text = formatDetailedRunningLabel(
+        locale,
+        activity.debugging ? undefined : this.liveCount,
+      );
       this.runningItem.tooltip = activity.debugging
         ? t(locale, "statusBar.debugRunningTooltip")
         : t(locale, "statusBar.runningTooltip");

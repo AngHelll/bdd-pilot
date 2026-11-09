@@ -184,13 +184,7 @@ export function formatProgressMessage(state: LiveProgressState, locale: PilotLoc
   const quiet = isQuietProgress(state);
   let message =
     failed > 0 ? `${t(locale, "progress.failurePrefix", { count: String(failed) })}${body}` : body;
-  let nameSource: string | undefined;
-  if (failed > 0) {
-    nameSource = state.lastFailedTestName;
-  } else if (quiet) {
-    nameSource = state.lastTestName;
-  }
-  const shortName = shortTestLabel(nameSource);
+  const shortName = shortTestLabel(state.lastTestName);
   if (shortName) {
     message = `${message}${sep}${shortName}`;
   }
@@ -198,6 +192,21 @@ export function formatProgressMessage(state: LiveProgressState, locale: PilotLoc
     return `${t(locale, "progress.quietPrefix")}${message}`;
   }
   return message;
+}
+
+/** Short status-bar count. Undefined until a total or a finished test exists. */
+export function formatProgressCount(
+  state: LiveProgressState,
+  locale: PilotLocale = "en",
+): string | undefined {
+  const { completed, totalExpected } = state;
+  if (totalExpected !== undefined && totalExpected > 0) {
+    return `${Math.min(completed, totalExpected)}/${totalExpected}`;
+  }
+  if (completed > 0) {
+    return t(locale, "progress.doneCount", { count: completed });
+  }
+  return undefined;
 }
 
 function isQuietProgress(state: LiveProgressState): boolean {

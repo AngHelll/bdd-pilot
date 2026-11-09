@@ -4,6 +4,7 @@ import {
   LiveProgressParser,
   LiveProgressState,
   PROGRESS_QUIET_AFTER_MS,
+  formatProgressCount,
   formatProgressMessage,
   parseResultLine,
 } from "../core/runner/liveProgress";
@@ -108,7 +109,7 @@ describe("liveProgress", () => {
     assert.match(state.lastFailedTestName ?? "", /Test2$/);
   });
 
-  it("keeps the last failure name after a later pass", () => {
+  it("names the latest test after a failure, and keeps the failure prefix", () => {
     const parser = new LiveProgressParser(3);
     parser.feed(
       "[xUnit.net]     Failed A.Test2 [2 ms]\n[xUnit.net]     Passed A.Test3 [1 ms]\n",
@@ -117,14 +118,14 @@ describe("liveProgress", () => {
     assert.match(state.lastTestName ?? "", /Test3$/);
     assert.strictEqual(
       formatProgressMessage(state),
-      "! 1 failed — 2/3 · 1 passed · 1 failed · Test2",
+      "! 1 failed — 2/3 · 1 passed · 1 failed · Test3",
     );
   });
 
-  it("omits the test name when every result passed", () => {
+  it("names the latest test when every result passed", () => {
     const parser = new LiveProgressParser(2);
     parser.feed("[xUnit.net]     Passed A.Test1 [1 ms]\n");
-    assert.strictEqual(formatProgressMessage(parser.getState()), "1/2 · 1 passed");
+    assert.strictEqual(formatProgressMessage(parser.getState()), "1/2 · 1 passed · Test1");
   });
 
   it("formatProgressMessage prefixes failures in Spanish", () => {
@@ -144,6 +145,7 @@ describe("liveProgress", () => {
         failed: 1,
         completed: 1,
         totalExpected: 2,
+        lastTestName: `Feature.${segment}`,
         lastFailedTestName: `Feature.${segment}`,
       }),
     );
@@ -158,6 +160,7 @@ describe("liveProgress", () => {
           failed: 1,
           completed: 1,
           totalExpected: 2,
+          lastTestName: "Feature.",
           lastFailedTestName: "Feature.",
         }),
       ),
@@ -175,7 +178,7 @@ describe("liveProgress", () => {
         lastTestName: "A.Test1",
       }),
     );
-    assert.strictEqual(message, "1/4 · 1 passed");
+    assert.strictEqual(message, "1/4 · 1 passed · Test1");
   });
 
   it("prefixes waiting with the last finished name when results go quiet", () => {
@@ -191,7 +194,7 @@ describe("liveProgress", () => {
     assert.strictEqual(message, "waiting — 2/4 · 2 passed · Test2");
   });
 
-  it("prefixes waiting in Spanish and keeps only the failure name", () => {
+  it("prefixes waiting in Spanish and names the latest test", () => {
     const message = formatProgressMessage(
       progressState({
         passed: 1,
@@ -206,7 +209,7 @@ describe("liveProgress", () => {
     );
     assert.strictEqual(
       message,
-      "en espera — ! 1 fallidos — 2/4 · 1 correctos · 1 fallidos · Test2",
+      "en espera — ! 1 fallidos — 2/4 · 1 correctos · 1 fallidos · Test3",
     );
   });
 
@@ -227,7 +230,7 @@ describe("liveProgress", () => {
           lastTestName: "A.Test3",
         }),
       ),
-      "3/3 · 3 passed",
+      "3/3 · 3 passed · Test3",
     );
   });
 
@@ -237,6 +240,16 @@ describe("liveProgress", () => {
 
   it("formatProgressMessage shows localized starting text", () => {
     assert.strictEqual(formatProgressMessage(new LiveProgressParser().getState(), "es"), "Iniciando…");
+  });
+
+  it("formatProgressCount is the fraction, then a done count, and nothing before either", () => {
+    assert.strictEqual(formatProgressCount(progressState({ totalExpected: 19, completed: 7 })), "7/19");
+    assert.strictEqual(
+      formatProgressCount(progressState({ completed: 3, passed: 3 }), "es"),
+      "3 listos",
+    );
+    assert.strictEqual(formatProgressCount(progressState()), undefined);
+    assert.strictEqual(formatProgressCount(progressState({ totalExpected: 0, completed: 2 })), "2 done");
   });
 
   it("handles split lines across chunks", () => {

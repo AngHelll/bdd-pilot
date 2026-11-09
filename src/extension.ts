@@ -10,7 +10,7 @@ import { RehydrateNotice } from "./core/results/rehydrateNotice";
 import { RunHistoryEntry } from "./core/results/runHistory";
 import { createPilotRunApi, PilotRunApiV1 } from "./api";
 import { RunTarget } from "./core/runner/filterBuilder";
-import { LiveProgressState } from "./core/runner/liveProgress";
+import { formatProgressCount, LiveProgressState } from "./core/runner/liveProgress";
 import { pickPrimaryDiagnostic } from "./core/diagnostics/primaryDiagnostic";
 import { resolveDashboardPrimaryDiagnostic } from "./core/results/dashboardDiagnostic";
 import { PostRunFeedbackRequest } from "./core/feedback/postRunFeedback";
@@ -93,12 +93,18 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     progressSummaryRefreshTimer = setTimeout(() => {
       progressSummaryRefreshTimer = undefined;
       treeProvider.refreshPilotSummary();
+      const count =
+        listedZeroHold || !activeLiveProgress || runService.isDebugActive()
+          ? undefined
+          : formatProgressCount(activeLiveProgress, localeService.getLocale());
+      statusBar.setLiveCount(count);
     }, 120);
   };
 
   const clearActiveLiveProgress = (): void => {
     activeLiveProgress = undefined;
     listedZeroHold = false;
+    statusBar.setLiveCount(undefined);
     if (progressSummaryRefreshTimer) {
       clearTimeout(progressSummaryRefreshTimer);
       progressSummaryRefreshTimer = undefined;

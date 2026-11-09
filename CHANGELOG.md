@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.73.0] — 2026-11-09
+
+### Changed
+- **Live progress** — The progress line names the test that just finished, including a pass. After a failure, `! N failed` stays and the name moves to the latest test. The compact status bar shows ` · N/M` during the run and drops it when the run ends. xUnit v3 passes still arrive with the TRX.
+
 ## [1.72.0] — 2026-11-09
 
 ### Changed

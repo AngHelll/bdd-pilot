@@ -2,6 +2,7 @@ import * as assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   formatCompactStatusBarLabel,
+  formatDetailedRunningLabel,
   formatCompactStatusBarTooltip,
   formatDetailedStageTooltip,
   readStatusBarDisplayMode,
@@ -51,6 +52,24 @@ describe("statusBarViewModel", () => {
     });
     assert.strictEqual(label, "$(beaker) Pilot  dev · debug · App.Tests");
     assert.ok(!label.includes("loading~spin"));
+  });
+
+  it("formatCompactStatusBarLabel appends the live count without a spinner", () => {
+    const label = formatCompactStatusBarLabel({
+      stage: "stg",
+      mode: "parallel",
+      locale: "en",
+      projectLabel: "App.Tests",
+      running: true,
+      liveCount: "7/19",
+    });
+    assert.strictEqual(label, "$(beaker) Pilot  stg · parallel · App.Tests · 7/19");
+    assert.ok(!label.includes("loading~spin"));
+  });
+
+  it("formatDetailedRunningLabel uses the count when a run has one", () => {
+    assert.strictEqual(formatDetailedRunningLabel("en", "7/19"), "$(loading~spin) 7/19");
+    assert.strictEqual(formatDetailedRunningLabel("es"), "$(loading~spin) Ejecutando…");
   });
 
   it("formatCompactStatusBarTooltip includes sections and action hint", () => {
