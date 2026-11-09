@@ -1,6 +1,9 @@
 import * as assert from "assert";
 import { describe, it } from "node:test";
-import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
+import {
+  formatRunNotStartedLines,
+  formatRunNotStartedNotice,
+} from "../core/bindings/runPreflight";
 import {
   shouldLogAmbiguousIssues,
   shouldPromptForUnboundIssues,
@@ -31,6 +34,25 @@ describe("runPreflight", () => {
     assert.strictEqual(
       evaluateRun("prod", ["stg", "prod"], { allowProductionRuns: true }).requiresConfirmation,
       true,
+    );
+  });
+
+  it("formats the summary notice for a gate decline with and without a count", () => {
+    assert.strictEqual(
+      formatRunNotStartedNotice("en", { reason: "gate-declined", unboundCount: 3 }),
+      "Tests did not start · 3 steps have no binding",
+    );
+    assert.strictEqual(
+      formatRunNotStartedNotice("es", { reason: "gate-declined" }),
+      "No inició · steps sin binding",
+    );
+    assert.strictEqual(
+      formatRunNotStartedNotice("es", { reason: "stage-declined" }),
+      "No inició · stage sin confirmar",
+    );
+    assert.strictEqual(
+      formatRunNotStartedNotice("en", { reason: "empty-scope" }),
+      "Tests did not start · no scenarios in this scope",
     );
   });
 

@@ -275,6 +275,77 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(resolvePilotSummaryIcon(false, false, warnDiag), "info");
     assert.strictEqual(resolvePilotSummaryIcon(false, false, undefined, true), "warning");
     assert.strictEqual(resolvePilotSummaryIcon(true, false, errorDiag), "loading~spin");
+    assert.strictEqual(resolvePilotSummaryIcon(false, false, undefined, false, true), "warning");
+    assert.strictEqual(resolvePilotSummaryIcon(true, false, undefined, false, true), "loading~spin");
+  });
+
+  it("formatPilotSummaryLabel shows the not-started notice and keeps identity", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 2, failed: 1, skipped: 0, withResults: 3 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: {
+        trxFileName: "bdd-pilot-1.trx",
+        mtimeMs: 1,
+        passed: 2,
+        failed: 1,
+        skipped: 0,
+        total: 3,
+      },
+      running: false,
+      stage: "stg",
+      notStarted: { reason: "gate-declined", unboundCount: 3 },
+    });
+    assert.strictEqual(
+      formatPilotSummaryLabel(vm, "en"),
+      "Tests did not start · 3 steps have no binding",
+    );
+    assert.strictEqual(formatPilotSummaryDescription(vm, "en"), "Pilot · STAGE stg · by domain");
+    assert.strictEqual(
+      formatPilotSummaryLabel(
+        buildPilotSummaryViewModel({
+          storeRollup: undefined,
+          storeNonEmpty: false,
+          lastHistory: undefined,
+          rehydrateNotice: undefined,
+          running: false,
+          notStarted: { reason: "gate-declined", unboundCount: 3 },
+        }),
+        "es",
+      ),
+      "No inició · 3 steps sin binding",
+    );
+  });
+
+  it("formatPilotSummaryLabel prefers the running line over a not-started notice", () => {
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: undefined,
+      storeNonEmpty: false,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      notStarted: { reason: "gate-declined", unboundCount: 3 },
+      listedZeroHold: true,
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.ok(label.includes("Running Gherkin…"));
+    assert.ok(label.includes("0 tests listed"));
+    assert.ok(!label.includes("did not start"));
+    assert.ok(!label.includes("No inició"));
+    const es = formatPilotSummaryLabel(
+      buildPilotSummaryViewModel({
+        storeRollup: undefined,
+        storeNonEmpty: false,
+        lastHistory: undefined,
+        rehydrateNotice: undefined,
+        running: true,
+        listedZeroHold: true,
+      }),
+      "es",
+    );
+    assert.ok(es.includes("Ejecutando Gherkin…"));
+    assert.ok(es.includes("0 tests listados"));
+    assert.ok(!es.includes("No inició"));
   });
 
   it("resolvePilotSummaryCommand uses cancel while running", () => {

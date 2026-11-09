@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { buildDashboardActionsViewModel } from "./core/results/dashboardActions";
+import { RunNotStartedNotice } from "./core/bindings/runPreflight";
 import { buildPilotSummaryViewModel, PilotSummaryViewModel } from "./core/results/pilotSummaryViewModel";
 import { getLastMappingReport } from "./core/results/lastMappingReport";
 import { TREE_SEARCH_WORKSPACE_KEY } from "./core/gherkin/treeSearch";
@@ -75,6 +76,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   let managedLockOwner: AbortController | undefined;
   let backgroundEnrichAbort: AbortController | undefined;
   let activeLiveProgress: LiveProgressState | undefined;
+  let runNotStartedNotice: RunNotStartedNotice | undefined;
+  let listedZeroHold = false;
   let progressSummaryRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
   const runService = new RunService(() =>
@@ -95,6 +98,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   const clearActiveLiveProgress = (): void => {
     activeLiveProgress = undefined;
+    listedZeroHold = false;
     if (progressSummaryRefreshTimer) {
       clearTimeout(progressSummaryRefreshTimer);
       progressSummaryRefreshTimer = undefined;
@@ -130,6 +134,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       storeFailureSnippet,
       liveProgress: activeLiveProgress,
       unmappedCount: getLastMappingReport()?.unmapped,
+      notStarted: runNotStartedNotice,
+      listedZeroHold,
       stage: currentStage,
       groupBy: readTreeGroupBy(),
     });
@@ -454,6 +460,19 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     options?: { canceled?: boolean; rawFilter?: boolean },
   ) => rehydrate.applyRunSummaryToTree(summary, targets, options);
 
+  const setRunNotStartedNotice = (notice: RunNotStartedNotice): void => {
+    runNotStartedNotice = notice;
+    listedZeroHold = false;
+    treeProvider.refreshPilotSummary();
+  };
+  const clearRunNotStartedNotice = (): void => {
+    runNotStartedNotice = undefined;
+  };
+  const setListedZeroHold = (hold: boolean): void => {
+    listedZeroHold = hold;
+    scheduleProgressSummaryRefresh();
+  };
+
   managed = createManagedController({
     getProjectContext: () => projectHub.getProjectContext(),
     getStage: () => currentStage,
@@ -472,6 +491,8 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       applyRunSummaryToTree(summary, ctx.targets, { canceled: ctx.canceled });
     },
     onPostRunFeedback: notifyPostRunFeedback,
+    setRunNotStartedNotice,
+    clearRunNotStartedNotice,
     acquireRunLock: () => {
       if (activeRun || runService.isDebugActive()) {
         return false;
@@ -554,6 +575,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     applyRunSummaryToTree,
     notifyPostRunFeedback,
     persistHistory,
+    setRunNotStartedNotice,
+    clearRunNotStartedNotice,
+    setListedZeroHold,
   });
 
   const dashboardCommands = createDashboardCommands({

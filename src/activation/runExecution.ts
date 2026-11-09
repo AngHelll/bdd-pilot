@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
-import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
+import {
+  formatRunNotStartedLines,
+  formatRunNotStartedNotice,
+  RunNotStartedNotice,
+} from "../core/bindings/runPreflight";
 import { ParallelismMode, Stage } from "../core/config/types";
 import { PostRunFeedbackRequest } from "../core/feedback/postRunFeedback";
 import { resolveRunKind, RunKind } from "../core/results/runHistory";
@@ -36,7 +40,7 @@ import {
   readSettings,
   readSuggestScopedWhenLarge,
 } from "./extensionSettings";
-import { writeRunTerminal } from "./runTerminal";
+import { warnWithTerminalAction, writeRunTerminal } from "./runTerminal";
 import { resolveRunTargets } from "./runTargets";
 import { promptScopedRunNudgeIfNeeded } from "./scopedRunNudgeUi";
 
@@ -65,6 +69,9 @@ export interface RunExecutionDeps {
   ) => void;
   notifyPostRunFeedback: (request: PostRunFeedbackRequest) => void;
   persistHistory: () => void;
+  setRunNotStartedNotice: (notice: RunNotStartedNotice) => void;
+  clearRunNotStartedNotice: () => void;
+  setListedZeroHold: (hold: boolean) => void;
 }
 
 export function createRunExecutor(deps: RunExecutionDeps) {
@@ -107,6 +114,15 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       deps.refreshUi();
     }
 
+    const noteDidNotStart = (notice: RunNotStartedNotice): void => {
+      deps.setRunNotStartedNotice(notice);
+      const noticeLocale = deps.localeService.getLocale();
+      warnWithTerminalAction(
+        formatRunNotStartedNotice(noticeLocale, notice),
+        deps.tr("action.showOutput"),
+      );
+    };
+
     const settings = readSettings();
     const currentStage = deps.getStage();
     const currentMode = deps.getMode();
@@ -128,7 +144,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     if (!opts?.rawFilter) {
       const resolution = resolveExecutableTargets(runTargets, domains);
       if (resolution.status === "unresolved") {
-        void vscode.window.showInformationMessage(deps.tr("toast.runTargetUnresolved"));
+        noteDidNotStart({ reason: "unresolved-target" });
         releaseRunLock();
         return;
       }
@@ -161,7 +177,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       if (nudge.action === "scoped") {
         const scoped = resolveExecutableTargets(resolveRunTargets(nudge.target), domains);
         if (scoped.status === "unresolved") {
-          void vscode.window.showInformationMessage(deps.tr("toast.runTargetUnresolved"));
+          noteDidNotStart({ reason: "unresolved-target" });
           releaseRunLock();
           return;
         }
@@ -175,7 +191,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       if (emptyLine) {
         writeRunTerminal(`[bdd-pilot] ${emptyLine}\n`);
       }
-      void vscode.window.showInformationMessage(deps.tr("toast.discoverEmptyScope"));
+      noteDidNotStart({ reason: "empty-scope" });
       releaseRunLock();
       return;
     }
@@ -215,12 +231,18 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       },
     });
     if (!preflight.proceed) {
+      deps.setRunNotStartedNotice({
+        reason: preflight.reason,
+        unboundCount: preflight.unboundCount,
+      });
       releaseRunLock();
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
         writeRunTerminal(`${line}\n`);
       }
       return;
     }
+
+    deps.clearRunNotStartedNotice();
 
     const resolveRunCancelProgress = (
       lastProgressState: LiveProgressState | undefined,
@@ -297,6 +319,9 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             return;
           }
           if (event) {
+            if (holdListedZeroNotice) {
+              deps.setListedZeroHold(false);
+            }
             holdListedZeroNotice = false;
           }
           const message = formatProgressMessage(state, deps.localeService.getLocale());
@@ -376,9 +401,10 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             }
             const classified = classifyDiscoverTime({ listed, gherkin: totalExpected });
             if (classified.kind === "zero") {
-              const listedZeroMessage = deps.tr("toast.discoverListedZero");
+              const listedZeroMessage = deps.tr("progress.listedZero");
               lastMessage = listedZeroMessage;
               holdListedZeroNotice = true;
+              deps.setListedZeroHold(true);
               progress.report({ message: listedZeroMessage });
             }
           }

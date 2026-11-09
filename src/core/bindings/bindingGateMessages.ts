@@ -38,23 +38,23 @@ export function formatBindingGateAmbiguousOutput(
   return `${summary}\n${formatDetailLines(locale, ambiguousIssues).join("\n")}`;
 }
 
-export interface BindingGateUnboundPromptOptions {
-  preflightTitle?: boolean;
+/** Unbound step lines for the terminal. The notification stays a single sentence. */
+export function formatBindingGateUnboundTerminal(
+  locale: PilotLocale,
+  unboundIssues: BindingGateIssue[],
+): string {
+  const header = t(locale, "bindingGate.outputHeader");
+  return `${header}\n${formatDetailLines(locale, unboundIssues).join("\n")}`;
 }
 
-/** Unbound issues for pre-run warn notification or block modal. */
+/** One sentence for the warn notification or the block modal. */
 export function formatBindingGateUnboundPrompt(
   locale: PilotLocale,
   unboundIssues: BindingGateIssue[],
-  options?: BindingGateUnboundPromptOptions,
+  kind: "warn" | "block" = "warn",
 ): string {
-  const summary = t(locale, "bindingGate.promptUnboundSummary", {
-    count: String(unboundIssues.length),
+  const count = String(unboundIssues.length);
+  return t(locale, kind === "block" ? "bindingGate.promptBlock" : "bindingGate.promptWarn", {
+    count,
   });
-  const body = `${summary}\n\n${formatDetailLines(locale, unboundIssues).join("\n")}`;
-  if (options?.preflightTitle) {
-    const title = t(locale, "bindingGate.preflightTitle");
-    return `${title}\n\n${body}`;
-  }
-  return body;
 }

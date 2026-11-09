@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.72.0] — 2026-11-09
+
+### Changed
+- **Run not started** — If a run does not start, the summary row keeps one line (`Tests did not start · …`) and a warning icon until a run actually begins. Binding warnings are one sentence; the step list stays in the terminal, and closing the warning does not add a second toast. An empty scope, a missing feature, and a blocked production run use that same sentence, with Show terminal. When the filter lists 0 tests, the progress line and the summary row say `0 tests listed` while the run continues.
+
 ## [1.71.0] — 2026-11-06
 
 ### Changed

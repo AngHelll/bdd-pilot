@@ -617,6 +617,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         model.debugging ?? false,
         diagnostic,
         !!storeFailure,
+        !!model.notStarted,
       ),
     );
     item.command = {
@@ -628,6 +629,9 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       item.description = description;
     }
     const tooltipParts: string[] = [];
+    if (!model.running && model.notStarted) {
+      tooltipParts.push(t(locale, "tree.notStartedDetail"));
+    }
     if (model.running) {
       tooltipParts.push(summaryCommand.title);
     } else if (filterActive && model.searchQuery) {

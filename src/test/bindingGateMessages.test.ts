@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   formatBindingGateAmbiguousOutput,
   formatBindingGateUnboundPrompt,
+  formatBindingGateUnboundTerminal,
 } from "../core/bindings/bindingGateMessages";
 import { BindingGateIssue } from "../core/bindings/evaluateBindingGate";
 
@@ -23,13 +24,30 @@ describe("bindingGateMessages", () => {
     status: "ambiguous",
   };
 
-  it("formats unbound prompt with 1-based line numbers", () => {
+  it("formats unbound prompt as one sentence without step lines", () => {
     const message = formatBindingGateUnboundPrompt("en", [unbound]);
-    assert.match(message, /1 unbound step/);
+    assert.strictEqual(
+      message,
+      "1 steps have no binding. Tests will not start unless you choose Run anyway.",
+    );
+    assert.doesNotMatch(message, /When I pay/);
+    assert.doesNotMatch(message, /\+1 more/);
+    assert.doesNotMatch(message, /Before running tests/);
+  });
+
+  it("formats the block prompt as one sentence", () => {
+    const message = formatBindingGateUnboundPrompt("es", [unbound], "block");
+    assert.strictEqual(message, "1 steps sin binding. No inicia.");
+    assert.doesNotMatch(message, /When I pay/);
+    assert.doesNotMatch(message, /Antes de ejecutar tests/);
+  });
+
+  it("keeps unbound step lines on the terminal text", () => {
+    const message = formatBindingGateUnboundTerminal("en", [unbound]);
+    assert.match(message, /\[bdd-pilot\] Binding check:/);
     assert.match(message, /\[unbound\]/);
     assert.match(message, /line 10/);
     assert.match(message, /When I pay/);
-    assert.doesNotMatch(message, /ambiguous/i);
   });
 
   it("formats ambiguous output without unbound summary", () => {
@@ -47,7 +65,7 @@ describe("bindingGateMessages", () => {
     assert.doesNotMatch(message, /\[ambiguous\]/);
   });
 
-  it("truncates unbound prompt with +N more", () => {
+  it("truncates unbound terminal lines with +N more", () => {
     const issues: BindingGateIssue[] = Array.from({ length: 10 }, (_, i) => ({
       featurePath: `/f${i}.feature`,
       line0: i,
@@ -55,18 +73,10 @@ describe("bindingGateMessages", () => {
       stepText: `step ${i}`,
       status: "unbound" as const,
     }));
-    const message = formatBindingGateUnboundPrompt("en", issues);
-    assert.match(message, /\+2 more/);
-  });
-
-  it("prefixes unbound prompt with preflight title when requested", () => {
-    const message = formatBindingGateUnboundPrompt("en", [unbound], { preflightTitle: true });
-    assert.match(message, /^Before running tests\n\n/);
-    assert.match(message, /1 unbound step/);
-  });
-
-  it("uses Spanish preflight title", () => {
-    const message = formatBindingGateUnboundPrompt("es", [unbound], { preflightTitle: true });
-    assert.match(message, /^Antes de ejecutar tests\n\n/);
+    const terminal = formatBindingGateUnboundTerminal("en", issues);
+    assert.match(terminal, /\+2 more/);
+    const prompt = formatBindingGateUnboundPrompt("en", issues);
+    assert.doesNotMatch(prompt, /step 0/);
+    assert.doesNotMatch(prompt, /\+2 more/);
   });
 });

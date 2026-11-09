@@ -81,3 +81,12 @@ export function showRunTerminal(preserveFocus = true): void {
   ensure();
   terminal?.show(preserveFocus);
 }
+
+/** Non-modal warning. The action reveals the terminal; dismissing leaves the summary line. */
+export function warnWithTerminalAction(message: string, actionLabel: string): void {
+  void vscode.window.showWarningMessage(message, actionLabel).then((choice) => {
+    if (choice === actionLabel) {
+      showRunTerminal(true);
+    }
+  });
+}

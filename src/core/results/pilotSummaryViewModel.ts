@@ -5,6 +5,7 @@ import { TreeEmptyKind } from "../gherkin/treeEmptyState";
 import { Diagnostic } from "../diagnostics/analyzer";
 import { diagnosticHint } from "../diagnostics/diagnosticCatalog";
 import { PilotLocale, t } from "../i18n";
+import { formatRunNotStartedNotice, RunNotStartedNotice } from "../bindings/runPreflight";
 import { LiveProgressState, formatProgressMessage } from "../runner/liveProgress";
 import {
   resolveLastKnownSnapshot,
@@ -40,6 +41,10 @@ export interface PilotSummaryViewModel {
   stage?: string;
   /** Tree grouping. Identity defaults to domain when omitted. */
   groupBy?: TreeGroupBy;
+  /** Session notice when the last requested run did not start. Hidden while running. */
+  notStarted?: RunNotStartedNotice;
+  /** Discover listed 0 tests; hold the short progress line until the first result. */
+  listedZeroHold?: boolean;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -57,6 +62,8 @@ export interface BuildPilotSummaryOptions {
   unmappedCount?: number;
   stage?: string;
   groupBy?: TreeGroupBy;
+  notStarted?: RunNotStartedNotice;
+  listedZeroHold?: boolean;
 }
 
 export { formatTrxDivergenceTooltip, LastKnownSnapshot };
@@ -80,6 +87,8 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     unmappedCount: options.running ? undefined : options.unmappedCount,
     stage: options.stage,
     groupBy: options.groupBy,
+    notStarted: options.running ? undefined : options.notStarted,
+    listedZeroHold: options.running ? options.listedZeroHold : undefined,
   };
 }
 
@@ -99,12 +108,16 @@ export function resolvePilotSummaryIcon(
   debugging: boolean,
   diagnostic?: Diagnostic,
   hasStoreFailures?: boolean,
+  notStarted?: boolean,
 ): string {
   if (running) {
     if (debugging) {
       return "debug-alt";
     }
     return "loading~spin";
+  }
+  if (notStarted) {
+    return "warning";
   }
   if (diagnostic?.severity === "error" || hasStoreFailures) {
     return "warning";
@@ -233,13 +246,21 @@ function resolveLiveProgressSummaryText(
 
 /** Tree row label for the global pilot summary (Capa 1). */
 export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: PilotLocale): string {
+  if (!model.running && model.notStarted) {
+    return formatRunNotStartedNotice(locale, model.notStarted);
+  }
+
   const parts: string[] = [];
 
   if (model.running) {
     parts.push(t(locale, "tree.summaryRunning"));
-    const liveText = resolveLiveProgressSummaryText(model, locale);
-    if (liveText) {
-      parts.push(liveText);
+    if (model.listedZeroHold) {
+      parts.push(t(locale, "progress.listedZero"));
+    } else {
+      const liveText = resolveLiveProgressSummaryText(model, locale);
+      if (liveText) {
+        parts.push(liveText);
+      }
     }
   } else if (model.lastKnown) {
     const rehydrate = model.rehydrateNotice ? t(locale, "tree.summaryRehydrate") : undefined;

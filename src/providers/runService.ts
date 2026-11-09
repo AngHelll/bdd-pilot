@@ -71,6 +71,7 @@ import { resolveBindingGateUx } from "../core/bindings/resolveBindingGateUx";
 import {
   formatBindingGateAmbiguousOutput,
   formatBindingGateUnboundPrompt,
+  formatBindingGateUnboundTerminal,
 } from "../core/bindings/bindingGateMessages";
 import {
   resolveUnboundPromptKind,
@@ -78,7 +79,8 @@ import {
   shouldPromptForUnboundIssues,
 } from "../core/bindings/bindingGatePresentation";
 import { BindingGateIssue } from "../core/bindings/evaluateBindingGate";
-import { RunPreflightResult } from "../core/bindings/runPreflight";
+import { formatRunNotStartedNotice, RunPreflightResult } from "../core/bindings/runPreflight";
+import { warnWithTerminalAction } from "../activation/runTerminal";
 import { GuardianSkipReason, tryGetGuardianResolveStep } from "./guardianIntegration";
 
 export interface RunRequest {
@@ -239,9 +241,9 @@ export class RunService {
       return { proceed: false, reason: "stage-declined" };
     }
 
-    const gateProceed = await this.checkBindingGate(req);
-    if (!gateProceed) {
-      return { proceed: false, reason: "gate-declined" };
+    const gate = await this.checkBindingGate(req);
+    if (!gate.proceed) {
+      return { proceed: false, reason: "gate-declined", unboundCount: gate.unboundCount };
     }
 
     return { proceed: true };
@@ -858,8 +860,8 @@ export class RunService {
       allowProductionRuns: req.settings.allowProductionRuns,
     });
     if (decision.denied) {
-      const message = t(req.locale, decision.messageKey ?? "envGuard.prodBlocked");
-      void vscode.window.showWarningMessage(message);
+      const message = formatRunNotStartedNotice(req.locale, { reason: "prod-denied" });
+      warnWithTerminalAction(message, t(req.locale, "action.showOutput"));
       return "denied";
     }
     if (!decision.requiresConfirmation || !decision.messageKey) {
@@ -899,21 +901,23 @@ export class RunService {
     });
   }
 
-  private async checkBindingGate(req: RunRequest): Promise<boolean> {
+  private async checkBindingGate(
+    req: RunRequest,
+  ): Promise<{ proceed: true } | { proceed: false; unboundCount: number }> {
     const mode: BindingGateMode = req.bindingGate ?? "off";
     if (mode === "off") {
-      return true;
+      return { proceed: true };
     }
 
     const locations = collectStepsForRunScope(req.targets, req.domains ?? [], req.rawFilter);
     if (locations.length === 0) {
-      return true;
+      return { proceed: true };
     }
 
     const guardian = await tryGetGuardianResolveStep();
     if (guardian.kind === "skip") {
       this.logBindingGateSkipped(req, guardian.reason);
-      return true;
+      return { proceed: true };
     }
 
     const { unboundIssues, ambiguousIssues } = evaluateBindingGate(
@@ -929,19 +933,19 @@ export class RunService {
     }
 
     if (!shouldPromptForUnboundIssues(unboundIssues)) {
-      return true;
+      return { proceed: true };
     }
 
     const ux = resolveBindingGateUx(mode, unboundIssues, ambiguousIssues);
     const promptKind = resolveUnboundPromptKind(ux);
     if (!promptKind) {
-      return true;
+      return { proceed: true };
     }
 
-    const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues, {
-      preflightTitle: true,
-    });
+    req.onOutput?.(`\n${formatBindingGateUnboundTerminal(req.locale, unboundIssues)}\n`);
+    const declined = { proceed: false as const, unboundCount: unboundIssues.length };
     if (promptKind === "warn-non-modal") {
+      const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues, "warn");
       const runAnyway = t(req.locale, "bindingGate.runAnyway");
       const cancel = t(req.locale, "bindingGate.cancel");
       const choice = await vscode.window.showWarningMessage(
@@ -950,12 +954,13 @@ export class RunService {
         runAnyway,
         cancel,
       );
-      return choice === runAnyway;
+      return choice === runAnyway ? { proceed: true } : declined;
     }
 
+    const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues, "block");
     const ok = t(req.locale, "bindingGate.ok");
     await vscode.window.showWarningMessage(message, { modal: true }, ok);
-    return false;
+    return declined;
   }
 
   private logAmbiguousBindingIssues(req: RunRequest, ambiguousIssues: BindingGateIssue[]): void {

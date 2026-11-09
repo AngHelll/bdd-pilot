@@ -37,7 +37,7 @@ import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgr
 import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { PilotLocale } from "../core/i18n";
 import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
-import { formatRunNotStartedLines } from "../core/bindings/runPreflight";
+import { formatRunNotStartedLines, RunNotStartedNotice } from "../core/bindings/runPreflight";
 import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
@@ -81,6 +81,8 @@ export interface ControllerDeps {
   acquireRunLock(): boolean;
   releaseRunLock(): void;
   abortActiveRun(): void;
+  setRunNotStartedNotice(notice: RunNotStartedNotice): void;
+  clearRunNotStartedNotice(): void;
 }
 
 export interface ManagedController {
@@ -305,6 +307,10 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       },
     });
     if (!preflight.proceed) {
+      deps.setRunNotStartedNotice({
+        reason: preflight.reason,
+        unboundCount: preflight.unboundCount,
+      });
       for (const line of formatRunNotStartedLines(locale, preflight.reason)) {
         writeRunTerminal(`${line}\n`);
       }
@@ -323,6 +329,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     let debugRunHeld = false;
     let lastProgressState: LiveProgressState | undefined;
 
+    deps.clearRunNotStartedNotice();
     scenarioItems.forEach((i) => run.started(i));
 
     if (!debug) {

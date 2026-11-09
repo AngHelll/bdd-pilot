@@ -143,6 +143,7 @@ const EN = {
   "tree.guideSearch.tooltip":
     "The active tree filter hid every scenario. Use **Search Tests** to change or clear the filter.\n\n**Pilot Search** filters which scenarios you can run. **Ctrl+F** (Cmd+F on Mac) only highlights rows in the list — it does not change the run scope.",
   "tree.summaryRunning": "Running Gherkin…",
+  "tree.notStartedDetail": "Detail is in the BDD Pilot terminal.",
   "tree.summaryRehydrate": "Restored (not a new run)",
   "tree.pilotSummaryHint": "Click for Gherkin run history and dashboard",
   "tree.pilotSummaryEditFilter": "Click to edit tree search filter",
@@ -268,6 +269,7 @@ const EN = {
   "prompt.selectProject": "Select test project or solution for BDD Pilot",
 
   "progress.running": "Running tests ({stage}/{mode})",
+  "progress.listedZero": "0 tests listed",
   "progress.discovering": "Discovering outline rows…",
   "progress.debugging": "Debugging tests ({stage})",
   "progress.starting": "Starting…",
@@ -310,6 +312,15 @@ const EN = {
     "Ambiguous bindings do not block this run — tests will execute.",
   "bindingGate.preflightTitle": "Before running tests",
   "bindingGate.promptUnboundSummary": "{count} unbound step(s) in run scope.",
+  "bindingGate.promptWarn":
+    "{count} steps have no binding. Tests will not start unless you choose Run anyway.",
+  "bindingGate.promptBlock": "{count} steps have no binding. Tests will not start.",
+  "runNotStarted.gate": "Tests did not start · {count} steps have no binding",
+  "runNotStarted.gateNoCount": "Tests did not start · steps have no binding",
+  "runNotStarted.stage": "Tests did not start · stage not confirmed",
+  "runNotStarted.prod": "Tests did not start · production is blocked",
+  "runNotStarted.emptyScope": "Tests did not start · no scenarios in this scope",
+  "runNotStarted.unresolved": "Tests did not start · feature is not in the tree",
   "bindingGate.modalMore": "+{count} more",
   "bindingGate.issueUnbound": "[unbound]",
   "bindingGate.issueAmbiguous": "[ambiguous]",
@@ -622,6 +633,7 @@ const ES: Record<keyof typeof EN, string> = {
   "tree.guideSearch.tooltip":
     "El filtro activo ocultó todos los escenarios. Usa **Buscar tests** para cambiar o borrar el filtro.\n\n**Pilot Search** filtra qué escenarios puedes ejecutar. **Ctrl+F** (Cmd+F en Mac) solo resalta filas — no cambia el scope del run.",
   "tree.summaryRunning": "Ejecutando Gherkin…",
+  "tree.notStartedDetail": "El detalle está en la terminal BDD Pilot.",
   "tree.summaryRehydrate": "Restaurado (no es una nueva ejecución)",
   "tree.pilotSummaryHint": "Clic para historial Gherkin y dashboard",
   "tree.pilotSummaryEditFilter": "Clic para editar el filtro del árbol",
@@ -751,6 +763,7 @@ const ES: Record<keyof typeof EN, string> = {
   "prompt.selectProject": "Selecciona proyecto o solución de tests para BDD Pilot",
 
   "progress.running": "Ejecutando tests ({stage}/{mode})",
+  "progress.listedZero": "0 tests listados",
   "progress.discovering": "Descubriendo filas de outline…",
   "progress.debugging": "Depurando tests ({stage})",
   "progress.starting": "Iniciando…",
@@ -793,6 +806,15 @@ const ES: Record<keyof typeof EN, string> = {
     "Los bindings ambiguos no bloquean esta ejecución — los tests se ejecutarán.",
   "bindingGate.preflightTitle": "Antes de ejecutar tests",
   "bindingGate.promptUnboundSummary": "{count} step(s) sin binding en el scope.",
+  "bindingGate.promptWarn":
+    "{count} steps sin binding. No inicia si no eliges Ejecutar igual.",
+  "bindingGate.promptBlock": "{count} steps sin binding. No inicia.",
+  "runNotStarted.gate": "No inició · {count} steps sin binding",
+  "runNotStarted.gateNoCount": "No inició · steps sin binding",
+  "runNotStarted.stage": "No inició · stage sin confirmar",
+  "runNotStarted.prod": "No inició · producción bloqueada",
+  "runNotStarted.emptyScope": "No inició · sin escenarios en este alcance",
+  "runNotStarted.unresolved": "No inició · el feature no está en el árbol",
   "bindingGate.modalMore": "+{count} más",
   "bindingGate.issueUnbound": "[sin binding]",
   "bindingGate.issueAmbiguous": "[ambiguo]",
