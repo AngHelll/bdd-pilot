@@ -374,7 +374,9 @@ describe("treePresentation", () => {
       .sort();
     assert.deepStrictEqual(
       [...FEATURE_DISCOVERY_CONFIGURATION_KEYS].sort(),
-      contributed.filter((key) => key !== TREE_PRESENTATION_CONFIGURATION),
+      contributed.filter(
+        (key) => key !== TREE_PRESENTATION_CONFIGURATION && key !== "bddPilot.run.noBuild",
+      ),
     );
     assert.ok(contributed.includes(TREE_PRESENTATION_CONFIGURATION));
 
@@ -392,6 +394,17 @@ describe("treePresentation", () => {
     );
     assert.strictEqual(
       shouldRediscoverFeatures(affectsChanged([TREE_PRESENTATION_CONFIGURATION, "bddPilot.tree.groupBy"])),
+      true,
+    );
+    assert.strictEqual(shouldRediscoverFeatures(affectsChanged(["bddPilot.run.noBuild"])), false);
+    assert.strictEqual(
+      shouldRediscoverFeatures(
+        affectsChanged([TREE_PRESENTATION_CONFIGURATION, "bddPilot.run.noBuild"]),
+      ),
+      false,
+    );
+    assert.strictEqual(
+      shouldRediscoverFeatures(affectsChanged(["bddPilot.run.noBuild", "bddPilot.projectPath"])),
       true,
     );
   });

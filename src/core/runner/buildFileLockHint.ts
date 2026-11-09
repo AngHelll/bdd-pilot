@@ -3,7 +3,7 @@
  * `dotnet test` overlaps an external `dotnet clean` / `dotnet build`.
  */
 export function detectBuildFileLock(chunk: string): boolean {
-  return /MSB3021|being used by another process/i.test(chunk);
+  return /MSB3021|MSB3026|MSB3027|being used by another process/i.test(chunk);
 }
 
 /** Single Output line when a build/file lock is detected mid-run. */

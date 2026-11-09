@@ -5,7 +5,8 @@ export type RunPreflightDeclineReason = "stage-declined" | "gate-declined" | "pr
 export type RunNotStartedReason =
   | RunPreflightDeclineReason
   | "empty-scope"
-  | "unresolved-target";
+  | "unresolved-target"
+  | "outputs-missing";
 
 export interface RunNotStartedNotice {
   reason: RunNotStartedReason;
@@ -36,6 +37,8 @@ export function formatRunNotStartedNotice(
       return t(locale, "runNotStarted.emptyScope");
     case "unresolved-target":
       return t(locale, "runNotStarted.unresolved");
+    case "outputs-missing":
+      return t(locale, "runNotStarted.outputsMissing");
   }
 }
 

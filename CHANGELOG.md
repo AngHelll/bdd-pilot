@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.74.0] — 2026-11-09
+
+### Changed
+- **Build output readiness** — After `dotnet clean` removes the selected project's assemblies, the summary row says the next run rebuilds. With `no-build` on, Run does not start `dotnet` and offers **Run and build** for that launch only. The setting stays on. While a run is blocked by a file lock (MSB3021, MSB3026, MSB3027), the summary row says the build files are in use. An external build that restores the assemblies clears the notice. Scenario icons and run history stay.
+
 ## [1.73.0] — 2026-11-09
 
 ### Changed

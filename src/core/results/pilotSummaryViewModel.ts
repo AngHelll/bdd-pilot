@@ -6,6 +6,7 @@ import { Diagnostic } from "../diagnostics/analyzer";
 import { diagnosticHint } from "../diagnostics/diagnosticCatalog";
 import { PilotLocale, t } from "../i18n";
 import { formatRunNotStartedNotice, RunNotStartedNotice } from "../bindings/runPreflight";
+import { formatOutputsRemovedLabel } from "../runner/buildOutputReadiness";
 import { LiveProgressState, formatProgressMessage } from "../runner/liveProgress";
 import {
   resolveLastKnownSnapshot,
@@ -45,6 +46,12 @@ export interface PilotSummaryViewModel {
   notStarted?: RunNotStartedNotice;
   /** Discover listed 0 tests; hold the short progress line until the first result. */
   listedZeroHold?: boolean;
+  /** Idle notice: `bin/` has no dll. Hidden while running. */
+  outputsRemoved?: boolean;
+  /** Current `run.noBuild`, used only to pick the removed phrase. */
+  noBuild?: boolean;
+  /** MSB3021/3026/3027 seen on the active run. Dies with the run. */
+  buildContended?: boolean;
 }
 
 export interface BuildPilotSummaryOptions {
@@ -64,6 +71,9 @@ export interface BuildPilotSummaryOptions {
   groupBy?: TreeGroupBy;
   notStarted?: RunNotStartedNotice;
   listedZeroHold?: boolean;
+  outputsRemoved?: boolean;
+  noBuild?: boolean;
+  buildContended?: boolean;
 }
 
 export { formatTrxDivergenceTooltip, LastKnownSnapshot };
@@ -89,6 +99,9 @@ export function buildPilotSummaryViewModel(options: BuildPilotSummaryOptions): P
     groupBy: options.groupBy,
     notStarted: options.running ? undefined : options.notStarted,
     listedZeroHold: options.running ? options.listedZeroHold : undefined,
+    outputsRemoved: options.running ? undefined : options.outputsRemoved,
+    noBuild: options.noBuild,
+    buildContended: options.running ? options.buildContended : undefined,
   };
 }
 
@@ -109,6 +122,7 @@ export function resolvePilotSummaryIcon(
   diagnostic?: Diagnostic,
   hasStoreFailures?: boolean,
   notStarted?: boolean,
+  outputsRemoved?: boolean,
 ): string {
   if (running) {
     if (debugging) {
@@ -116,7 +130,7 @@ export function resolvePilotSummaryIcon(
     }
     return "loading~spin";
   }
-  if (notStarted) {
+  if (notStarted || outputsRemoved) {
     return "warning";
   }
   if (diagnostic?.severity === "error" || hasStoreFailures) {
@@ -250,11 +264,17 @@ export function formatPilotSummaryLabel(model: PilotSummaryViewModel, locale: Pi
     return formatRunNotStartedNotice(locale, model.notStarted);
   }
 
+  if (!model.running && model.outputsRemoved) {
+    return formatOutputsRemovedLabel(locale, model.noBuild ?? false);
+  }
+
   const parts: string[] = [];
 
   if (model.running) {
     parts.push(t(locale, "tree.summaryRunning"));
-    if (model.listedZeroHold) {
+    if (model.buildContended) {
+      parts.push(t(locale, "tree.buildFilesInUse"));
+    } else if (model.listedZeroHold) {
       parts.push(t(locale, "progress.listedZero"));
     } else {
       const liveText = resolveLiveProgressSummaryText(model, locale);

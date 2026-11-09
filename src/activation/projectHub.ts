@@ -39,6 +39,8 @@ export interface ProjectHubDeps {
   tryRehydrateOutcomes: () => void;
   /** Same busy source as tree badge / bddPilot.running. */
   isRunActive: () => boolean;
+  /** Retarget build-output watch after the execution project changes. */
+  onExecutionTargetChanged?: () => void;
 }
 
 export function createProjectHub(deps: ProjectHubDeps) {
@@ -90,6 +92,7 @@ export function createProjectHub(deps: ProjectHubDeps) {
       deps.tryRehydrateOutcomes();
       deps.refreshPilotSurfaces();
     }
+    deps.onExecutionTargetChanged?.();
   }
 
   async function openStatusBarHub(): Promise<void> {

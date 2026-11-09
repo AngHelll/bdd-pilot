@@ -13,6 +13,11 @@ describe("detectBuildFileLock", () => {
     );
   });
 
+  it("matches MSB3026 and MSB3027", () => {
+    assert.strictEqual(detectBuildFileLock("warning MSB3026: Could not copy"), true);
+    assert.strictEqual(detectBuildFileLock("error MSB3027: Could not copy"), true);
+  });
+
   it("matches file-in-use phrasing", () => {
     assert.strictEqual(
       detectBuildFileLock("The process cannot access the file because it is being used by another process."),

@@ -277,6 +277,8 @@ describe("pilotSummaryViewModel", () => {
     assert.strictEqual(resolvePilotSummaryIcon(true, false, errorDiag), "loading~spin");
     assert.strictEqual(resolvePilotSummaryIcon(false, false, undefined, false, true), "warning");
     assert.strictEqual(resolvePilotSummaryIcon(true, false, undefined, false, true), "loading~spin");
+    assert.strictEqual(resolvePilotSummaryIcon(false, false, undefined, false, false, true), "warning");
+    assert.strictEqual(resolvePilotSummaryIcon(true, false, undefined, false, false, true), "loading~spin");
   });
 
   it("formatPilotSummaryLabel shows the not-started notice and keeps identity", () => {
@@ -315,6 +317,81 @@ describe("pilotSummaryViewModel", () => {
       ),
       "No inició · 3 steps sin binding",
     );
+  });
+
+  it("formatPilotSummaryLabel replaces last-run counts when build outputs were removed", () => {
+    const base = {
+      storeRollup: { passed: 4, failed: 1, skipped: 0, withResults: 5 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: false,
+      stage: "test",
+      outputsRemoved: true,
+    };
+    const removed = buildPilotSummaryViewModel({ ...base, noBuild: false });
+    assert.strictEqual(
+      formatPilotSummaryLabel(removed, "en"),
+      "Build outputs removed · next run rebuilds",
+    );
+    assert.ok(!formatPilotSummaryLabel(removed, "en").includes("passed"));
+    assert.strictEqual(formatPilotSummaryDescription(removed, "en"), "Pilot · STAGE test · by domain");
+    assert.strictEqual(
+      formatPilotSummaryLabel(buildPilotSummaryViewModel({ ...base, noBuild: true }), "es"),
+      "Sin salidas · no-build activo",
+    );
+    const notStarted = buildPilotSummaryViewModel({
+      ...base,
+      noBuild: true,
+      notStarted: { reason: "gate-declined", unboundCount: 2 },
+    });
+    assert.strictEqual(
+      formatPilotSummaryLabel(notStarted, "en"),
+      "Tests did not start · 2 steps have no binding",
+    );
+    const missing = buildPilotSummaryViewModel({
+      ...base,
+      notStarted: { reason: "outputs-missing" },
+    });
+    assert.strictEqual(
+      formatPilotSummaryLabel(missing, "en"),
+      "Tests did not start · no build outputs",
+    );
+    assert.strictEqual(formatPilotSummaryLabel(missing, "es"), "No inició · sin salidas de build");
+  });
+
+  it("formatPilotSummaryLabel shows the file-lock phrase instead of live progress", () => {
+    const parser = new LiveProgressParser(8);
+    parser.feed("[xUnit.net]     Failed A.Test1 [1 ms]\n");
+    const vm = buildPilotSummaryViewModel({
+      storeRollup: { passed: 1, failed: 1, skipped: 0, withResults: 2 },
+      storeNonEmpty: true,
+      lastHistory: undefined,
+      rehydrateNotice: undefined,
+      running: true,
+      liveProgress: parser.getState(),
+      listedZeroHold: true,
+      buildContended: true,
+    });
+    const label = formatPilotSummaryLabel(vm, "en");
+    assert.strictEqual(label, "Running Gherkin… · Build files are in use");
+    assert.ok(!label.includes("0 tests listed"));
+    assert.ok(!label.includes("1/8"));
+    assert.strictEqual(
+      formatPilotSummaryLabel(
+        buildPilotSummaryViewModel({
+          storeRollup: undefined,
+          storeNonEmpty: false,
+          lastHistory: undefined,
+          rehydrateNotice: undefined,
+          running: true,
+          buildContended: true,
+        }),
+        "es",
+      ),
+      "Ejecutando Gherkin… · Archivos de build en uso",
+    );
+    assert.strictEqual(resolvePilotSummaryIcon(true, false), "loading~spin");
   });
 
   it("formatPilotSummaryLabel prefers the running line over a not-started notice", () => {

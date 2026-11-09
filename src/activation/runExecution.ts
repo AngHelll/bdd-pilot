@@ -14,6 +14,10 @@ import {
   formatBuildFileLockHintLine,
 } from "../core/runner/buildFileLockHint";
 import {
+  assessBuildOutputs,
+  shouldBlockForMissingOutputs,
+} from "../core/runner/buildOutputReadiness";
+import {
   DISCOVER_LIST_TIMEOUT_MS,
   classifyDiscoverTime,
   formatDiscoverTimeLine,
@@ -72,6 +76,10 @@ export interface RunExecutionDeps {
   setRunNotStartedNotice: (notice: RunNotStartedNotice) => void;
   clearRunNotStartedNotice: () => void;
   setListedZeroHold: (hold: boolean) => void;
+  suspendOutputWatch: () => void;
+  resumeOutputWatch: () => void;
+  noteExecutionEntered: () => void;
+  noteBuildContended: () => void;
 }
 
 export function createRunExecutor(deps: RunExecutionDeps) {
@@ -95,18 +103,28 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     // Claim busy lock before preflight / project select so multi-click Run cannot re-enter.
     const controller = new AbortController();
     let runLockHeld = false;
-    const releaseRunLock = () => {
-      if (!runLockHeld) {
+    let outputWatchResumed = false;
+    const resumeOutputWatch = (): void => {
+      if (outputWatchResumed) {
         return;
       }
-      runLockHeld = false;
-      // Identity-safe: do not clear a newer run started after force-unlock.
-      if (deps.getActiveRun() === controller) {
-        deps.setActiveRun(undefined);
-        deps.clearActiveLiveProgress();
-        deps.refreshUi();
-      }
+      outputWatchResumed = true;
+      deps.resumeOutputWatch();
     };
+    const releaseRunLock = () => {
+      if (runLockHeld) {
+        runLockHeld = false;
+        // Identity-safe: do not clear a newer run started after force-unlock.
+        if (deps.getActiveRun() === controller) {
+          deps.setActiveRun(undefined);
+          deps.clearActiveLiveProgress();
+        }
+      }
+      resumeOutputWatch();
+      deps.refreshUi();
+    };
+    deps.suspendOutputWatch();
+    try {
     if (!opts?.debug) {
       runLockHeld = true;
       deps.setActiveRun(controller);
@@ -242,7 +260,28 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       return;
     }
 
+    let executionSettings = settings;
+    if (
+      shouldBlockForMissingOutputs({
+        noBuild: settings.runNoBuild,
+        testTarget: project.testTarget,
+        assessment: assessBuildOutputs(project.projectDir),
+      })
+    ) {
+      const phrase = formatRunNotStartedNotice(locale, { reason: "outputs-missing" });
+      writeRunTerminal(`${phrase}\n`);
+      const runAndBuild = deps.tr("action.runAndBuild");
+      const choice = await vscode.window.showWarningMessage(phrase, runAndBuild);
+      if (choice !== runAndBuild) {
+        deps.setRunNotStartedNotice({ reason: "outputs-missing" });
+        releaseRunLock();
+        return;
+      }
+      executionSettings = { ...settings, runNoBuild: false };
+    }
+
     deps.clearRunNotStartedNotice();
+    deps.noteExecutionEntered();
 
     const resolveRunCancelProgress = (
       lastProgressState: LiveProgressState | undefined,
@@ -413,6 +452,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             if (!fileLockHinted && detectBuildFileLock(chunk)) {
               fileLockHinted = true;
               writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);
+              deps.noteBuildContended();
             }
             writeRunTerminal(chunk);
           };
@@ -422,7 +462,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
             rawFilter: opts?.rawFilter,
             stage: currentStage,
             mode: currentMode,
-            settings,
+            settings: executionSettings,
             projectDir: project.projectDir,
             testTarget: project.testTarget,
             debug: opts?.debug,
@@ -486,6 +526,9 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         }
       },
     );
+    } finally {
+      resumeOutputWatch();
+    }
   };
 }
 

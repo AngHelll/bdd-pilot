@@ -30,6 +30,7 @@ import {
   activateEnrichDelayMs,
 } from "./core/runner/activateEnrich";
 import { createFeatureFileSync, theoryDiscoveryKeys } from "./core/gherkin/featureFileSync";
+import { createBuildOutputWatch } from "./activation/buildOutputWatch";
 import { registerFeatureCodeLens } from "./providers/codeLensProvider";
 import { DashboardContext, DashboardPanel } from "./providers/dashboardPanel";
 import { LocaleService } from "./providers/localeService";
@@ -77,6 +78,10 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   let backgroundEnrichAbort: AbortController | undefined;
   let activeLiveProgress: LiveProgressState | undefined;
   let runNotStartedNotice: RunNotStartedNotice | undefined;
+  let outputsRemoved = false;
+  let buildContended = false;
+  // eslint-disable-next-line prefer-const -- assigned once after featureSync exists
+  let outputWatch!: ReturnType<typeof createBuildOutputWatch>;
   let listedZeroHold = false;
   let progressSummaryRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -103,6 +108,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   const clearActiveLiveProgress = (): void => {
     activeLiveProgress = undefined;
+    buildContended = false;
     listedZeroHold = false;
     statusBar.setLiveCount(undefined);
     if (progressSummaryRefreshTimer) {
@@ -142,6 +148,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
       unmappedCount: getLastMappingReport()?.unmapped,
       notStarted: runNotStartedNotice,
       listedZeroHold,
+      outputsRemoved,
+      noBuild: readSettings().runNoBuild,
+      buildContended,
       stage: currentStage,
       groupBy: readTreeGroupBy(),
     });
@@ -424,6 +433,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     refreshPilotSurfaces,
     tryRehydrateOutcomes: () => rehydrate.tryRehydrateOutcomes(),
     isRunActive: () => !!activeRun || runService.isDebugActive(),
+    onExecutionTargetChanged: () => outputWatch.sync(),
   });
 
   const copyFailureContextForAi = createCopyFailureContextForAi({
@@ -474,6 +484,18 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   const clearRunNotStartedNotice = (): void => {
     runNotStartedNotice = undefined;
   };
+  const clearOutputsMissingNotice = (): void => {
+    if (runNotStartedNotice?.reason !== "outputs-missing") {
+      return;
+    }
+    runNotStartedNotice = undefined;
+  };
+  const onNoBuildChanged = (): void => {
+    if (runNotStartedNotice?.reason === "outputs-missing" && !readSettings().runNoBuild) {
+      runNotStartedNotice = undefined;
+      treeProvider.refreshPilotSummary();
+    }
+  };
   const setListedZeroHold = (hold: boolean): void => {
     listedZeroHold = hold;
     scheduleProgressSummaryRefresh();
@@ -499,6 +521,16 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     onPostRunFeedback: notifyPostRunFeedback,
     setRunNotStartedNotice,
     clearRunNotStartedNotice,
+    suspendOutputWatch: () => outputWatch.suspend(),
+    resumeOutputWatch: () => outputWatch.resume(),
+    noteExecutionEntered: () => outputWatch.noteExecutionEntered(),
+    noteBuildContended: () => {
+      if (buildContended) {
+        return;
+      }
+      buildContended = true;
+      scheduleProgressSummaryRefresh();
+    },
     acquireRunLock: () => {
       if (activeRun || runService.isDebugActive()) {
         return false;
@@ -533,9 +565,29 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     scheduleEnrich: () => scheduleEnrichTheoryRows(),
   });
 
+  outputWatch = createBuildOutputWatch({
+    getProject: () => {
+      const project = projectHub.getProjectContext();
+      if (!project) {
+        return undefined;
+      }
+      return { projectDir: project.projectDir, testTarget: project.testTarget };
+    },
+    isLocked: () => !!activeRun || runService.isDebugActive(),
+    invalidateTheoryCache: () => featureSync.invalidateTheoryCache(),
+    setRemoved: (removed) => {
+      outputsRemoved = removed;
+    },
+    clearOutputsMissingNotice,
+    refreshSummary: () => treeProvider.refreshPilotSummary(),
+    onNoBuildChanged,
+  });
+  outputWatch.sync();
+
   const handleDebugSessionEnded = () => {
     const debugResult = runService.finishDebugSession();
     if (!debugResult) {
+      outputWatch.recheck();
       featureSync.flushDeferredEnrich();
       return;
     }
@@ -548,6 +600,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }
 
     managed.finalizePendingDebugRun(debugResult.summary, debugResult.completionKind, "");
+    outputWatch.recheck();
     refreshUi();
     featureSync.flushDeferredEnrich();
   };
@@ -584,6 +637,16 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     setRunNotStartedNotice,
     clearRunNotStartedNotice,
     setListedZeroHold,
+    suspendOutputWatch: () => outputWatch.suspend(),
+    resumeOutputWatch: () => outputWatch.resume(),
+    noteExecutionEntered: () => outputWatch.noteExecutionEntered(),
+    noteBuildContended: () => {
+      if (buildContended) {
+        return;
+      }
+      buildContended = true;
+      scheduleProgressSummaryRefresh();
+    },
   });
 
   const dashboardCommands = createDashboardCommands({
@@ -630,6 +693,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     statusBar,
     { dispose: cancelScheduledEnrich },
     { dispose: () => featureSync.dispose() },
+    { dispose: () => outputWatch.dispose() },
     treeView,
     managed.controller,
     codeLens.disposable,
@@ -689,6 +753,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   deactivateCleanup = () => {
     cancelScheduledEnrich();
+    outputWatch.dispose();
     featureSync.dispose();
     abortBackgroundEnrich();
     if (activeRun) {

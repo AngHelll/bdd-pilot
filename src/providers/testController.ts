@@ -37,7 +37,15 @@ import { LiveProgressState, TestCompletionEvent } from "../core/runner/liveProgr
 import { outlineRowKey, scenarioKey, collectOutcomeKeysForTargets } from "../core/runner/runScope";
 import { PilotLocale } from "../core/i18n";
 import { BindingGateMode } from "../core/bindings/resolveBindingGateUx";
-import { formatRunNotStartedLines, RunNotStartedNotice } from "../core/bindings/runPreflight";
+import {
+  formatRunNotStartedLines,
+  formatRunNotStartedNotice,
+  RunNotStartedNotice,
+} from "../core/bindings/runPreflight";
+import {
+  assessBuildOutputs,
+  shouldBlockForMissingOutputs,
+} from "../core/runner/buildOutputReadiness";
 import { ProjectTargetKind } from "../core/config/projectResolution";
 import { RunService } from "./runService";
 import { OutcomeStore } from "./outcomeStore";
@@ -83,6 +91,10 @@ export interface ControllerDeps {
   abortActiveRun(): void;
   setRunNotStartedNotice(notice: RunNotStartedNotice): void;
   clearRunNotStartedNotice(): void;
+  suspendOutputWatch(): void;
+  resumeOutputWatch(): void;
+  noteExecutionEntered(): void;
+  noteBuildContended(): void;
 }
 
 export interface ManagedController {
@@ -268,6 +280,9 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     debug: boolean,
   ): Promise<void> {
     const run = controller.createTestRun(request);
+    deps.suspendOutputWatch();
+    let debugRunHeld = false;
+    try {
     const project = deps.getProjectContext();
     const roots = collectRunRoots(request, controller);
     const scenarioItems = collectRunLeaves(roots, itemData, request.exclude ?? []);
@@ -318,6 +333,27 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       return;
     }
 
+    const requestedSettings = deps.getSettings();
+    let executionSettings = requestedSettings;
+    if (
+      shouldBlockForMissingOutputs({
+        noBuild: requestedSettings.runNoBuild,
+        testTarget: project.testTarget,
+        assessment: assessBuildOutputs(project.projectDir),
+      })
+    ) {
+      const phrase = formatRunNotStartedNotice(locale, { reason: "outputs-missing" });
+      writeRunTerminal(`${phrase}\n`);
+      const runAndBuild = t(locale, "action.runAndBuild");
+      const choice = await vscode.window.showWarningMessage(phrase, runAndBuild);
+      if (choice !== runAndBuild) {
+        deps.setRunNotStartedNotice({ reason: "outputs-missing" });
+        run.end();
+        return;
+      }
+      executionSettings = { ...requestedSettings, runNoBuild: false };
+    }
+
     if (!deps.acquireRunLock()) {
       scenarioItems.forEach((i) =>
         run.errored(i, new vscode.TestMessage("Another test run is already in progress.")),
@@ -326,10 +362,10 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       return;
     }
 
-    let debugRunHeld = false;
     let lastProgressState: LiveProgressState | undefined;
 
     deps.clearRunNotStartedNotice();
+    deps.noteExecutionEntered();
     scenarioItems.forEach((i) => run.started(i));
 
     if (!debug) {
@@ -360,6 +396,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         if (!fileLockHinted && detectBuildFileLock(chunk)) {
           fileLockHinted = true;
           writeRunTerminal(`${formatBuildFileLockHintLine()}\n`);
+          deps.noteBuildContended();
         }
         writeRunTerminal(chunk);
         run.appendOutput(chunk.replace(/\r?\n/g, "\r\n"));
@@ -369,7 +406,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
         targets,
         stage: deps.getStage(),
         mode: deps.getMode(),
-        settings: deps.getSettings(),
+        settings: executionSettings,
         projectDir: project.projectDir,
         testTarget: project.testTarget,
         debug,
@@ -482,7 +519,13 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     } finally {
       if (!debugRunHeld) {
         deps.releaseRunLock();
+        deps.resumeOutputWatch();
         run.end();
+      }
+    }
+    } finally {
+      if (!debugRunHeld) {
+        deps.resumeOutputWatch();
       }
     }
   }
@@ -521,6 +564,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
 
     pending.run.end();
     deps.releaseRunLock();
+    deps.resumeOutputWatch();
   }
 
   return {

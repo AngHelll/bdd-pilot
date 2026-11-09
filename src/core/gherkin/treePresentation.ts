@@ -30,6 +30,7 @@ export const TREE_PRESENTATION_CONFIGURATION = "bddPilot.tree.presentation";
 /**
  * bddPilot settings whose change still rescans feature files.
  * `tree.presentation` is absent on purpose: it only changes how rows are painted.
+ * `run.noBuild` is absent on purpose: it only changes the output-readiness phrase.
  */
 export const FEATURE_DISCOVERY_CONFIGURATION_KEYS = [
   "bddPilot.locale",
@@ -44,7 +45,6 @@ export const FEATURE_DISCOVERY_CONFIGURATION_KEYS = [
   "bddPilot.diagnostics.extendedRules",
   "bddPilot.dotnetPath",
   "bddPilot.run.configuration",
-  "bddPilot.run.noBuild",
   "bddPilot.run.suggestScopedWhenLarge",
   "bddPilot.run.runSettings",
   "bddPilot.run.cliVerbosity",
@@ -96,17 +96,23 @@ export function parseTreePresentation(raw: string | undefined): TreePresentation
 
 /**
  * True when a configuration event must rescan features.
- * A change that touches only `bddPilot.tree.presentation` returns false.
+ * A change that touches only `bddPilot.tree.presentation` or only `bddPilot.run.noBuild` returns false.
  * Any other bddPilot change, including one combined with presentation, returns true.
  */
 export function shouldRediscoverFeatures(affects: (section: string) => boolean): boolean {
   if (!affects("bddPilot")) {
     return false;
   }
+  if (FEATURE_DISCOVERY_CONFIGURATION_KEYS.some((key) => affects(key))) {
+    return true;
+  }
+  if (affects("bddPilot.run.noBuild")) {
+    return false;
+  }
   if (!affects(TREE_PRESENTATION_CONFIGURATION)) {
     return true;
   }
-  return FEATURE_DISCOVERY_CONFIGURATION_KEYS.some((key) => affects(key));
+  return false;
 }
 
 /** Visible tree label. Classic keeps the shared prefixed formatters; Native Precision shows the name. */

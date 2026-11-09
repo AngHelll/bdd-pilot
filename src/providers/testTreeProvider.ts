@@ -132,6 +132,8 @@ import {
   resolvePilotSummaryIcon,
   resolveSummaryDiagnostic,
 } from "../core/results/pilotSummaryViewModel";
+import { formatRunNotStartedNotice } from "../core/bindings/runPreflight";
+import { formatOutputsRemovedLabel } from "../core/runner/buildOutputReadiness";
 import { t } from "../core/i18n";
 import { OutcomeStore } from "./outcomeStore";
 
@@ -618,6 +620,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         diagnostic,
         !!storeFailure,
         !!model.notStarted,
+        !!model.outputsRemoved,
       ),
     );
     item.command = {
@@ -631,6 +634,11 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     const tooltipParts: string[] = [];
     if (!model.running && model.notStarted) {
       tooltipParts.push(t(locale, "tree.notStartedDetail"));
+      if (model.notStarted.reason === "outputs-missing") {
+        tooltipParts.push(formatRunNotStartedNotice(locale, model.notStarted));
+      }
+    } else if (!model.running && model.outputsRemoved) {
+      tooltipParts.push(formatOutputsRemovedLabel(locale, model.noBuild ?? false));
     }
     if (model.running) {
       tooltipParts.push(summaryCommand.title);
