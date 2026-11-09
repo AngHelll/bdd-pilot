@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.72.0** · **Marketplace: v1.72.0** · **Open VSX: v1.72.0** · **Next: —** · **860 unit tests**
+> **Current release: v1.73.0** · **Marketplace: v1.73.0** · **Open VSX: v1.73.0** · **Next: —** · **863 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.72.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.73.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.73.0 — Live progress name ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Progress** | The progress line names the test that just finished, including a pass. After a failure, `! N failed` stays and the name moves to the latest test |
+| **Status bar** | The compact hub shows ` · N/M` during the run and drops it when the run ends. No new spinner. Detailed mode puts that count on the spinning item |
+| **xUnit v3** | Passes still arrive with the TRX. No new live pass pattern and no verbosity change |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.73.0 (Marketplace + Open VSX) |
+| **Tests** | 863 unit tests |
 
 ### v1.72.0 — Run-not-started signal ✅ shipped
 
@@ -1312,4 +1323,4 @@ src/
 
 ---
 
-*Last updated: v1.72.0 run-not-started signal published to Marketplace and Open VSX.*
+*Last updated: v1.73.0 live progress name published to Marketplace and Open VSX.*
