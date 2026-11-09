@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.73.0** · **Marketplace: v1.73.0** · **Open VSX: v1.73.0** · **Next: —** · **863 unit tests**
+> **Current release: v1.74.0** · **Marketplace: v1.74.0** · **Open VSX: v1.74.0** · **Next: —** · **874 unit tests**
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.73.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.74.0** |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -244,6 +244,17 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.74.0 — Build output readiness ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Idle** | After the selected csproj loses every dll under `bin/`, the summary row says the next run rebuilds. With `no-build` on, it says no-build is on. Scenario icons and history stay |
+| **Run** | `no-build` plus missing outputs does not start `dotnet`. One warning offers **Run and build** for that launch only. The setting is unchanged |
+| **Lock** | MSB3026 and MSB3027 join the existing file-lock hint. While the run continues, the summary row says the build files are in use |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.74.0 (Marketplace + Open VSX) |
+| **Tests** | 874 unit tests |
 
 ### v1.73.0 — Live progress name ✅ shipped
 
@@ -1323,4 +1334,4 @@ src/
 
 ---
 
-*Last updated: v1.73.0 live progress name published to Marketplace and Open VSX.*
+*Last updated: v1.74.0 build output readiness published to Marketplace and Open VSX.*
