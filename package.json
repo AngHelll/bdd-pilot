@@ -2,7 +2,7 @@
   "name": "bdd-pilot",
   "displayName": "BDD Pilot",
   "description": "Run Reqnroll and SpecFlow scenarios from VS Code and Cursor: one-click dotnet test by feature, scenario or @tag, results mapped to each scenario, plain-language failure diagnosis.",
-  "version": "1.74.0",
+  "version": "1.75.0",
   "publisher": "anghelll",
   "icon": "media/icon.png",
   "galleryBanner": {
@@ -19,7 +19,7 @@
     "url": "https://github.com/AngHelll/bdd-pilot/issues"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.145.3"
   },
   "categories": [
     "Testing",
@@ -804,7 +804,7 @@
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^20.14.0",
-    "@types/vscode": "^1.90.0",
+    "@types/vscode": "^1.145.3",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
     "@vscode/vsce": "^3.9.2",

@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.75.0] — 2026-11-14
+
+### Changed
+- **Host baseline** — Install requires VS Code 1.145.3+ (CVE-2026-120779). CI compiles with Node 22.23.5 (CVE-2026-123871).
+
 ## [1.74.0] — 2026-11-09
 
 ### Changed

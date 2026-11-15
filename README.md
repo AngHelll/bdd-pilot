@@ -174,7 +174,7 @@ steps:
 
 ## Requirements
 
-- VS Code 1.90+ or Cursor
+- VS Code 1.145.3+ or Cursor
 - .NET SDK, with any NuGet feeds your project needs already reachable and authenticated
 
 ## Learn more
