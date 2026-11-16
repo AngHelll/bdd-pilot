@@ -1,7 +1,20 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.74.0** · **Marketplace: v1.74.0** · **Open VSX: v1.74.0** · **Next: —** · **874 unit tests**
+> **Current release: v1.75.0** · **Marketplace: v1.75.0** · **Open VSX: v1.75.0** · **Next: —** · **874 unit tests**  
+> **Host (2026-11-14):** VS Code ≥1.145.3 · Node 26.13.1 / 22.23.5 · .NET runtime 8.0.34 + SDK 8.0.428 (plan → .NET 10 LTS)
+
+---
+
+## Host / toolchain (seguridad 2026-11)
+
+| Componente | Mínimo | Por qué |
+|------------|--------|---------|
+| **VS Code** | **≥1.145.3** | CVE-2026-120779 — MCP / Workspace Trust; validar VSIX aquí. |
+| **Node** | **26.13.1** o **22.23.5** | CVE-2026-123871 — proxy credentials en errores de CI. |
+| **.NET** (runners / `dotnet test`) | runtime **8.0.34** · SDK **8.0.428** | Parche 10 nov; .NET 8 fuera de soporte. **Migrar** samples/hosts a **net10.0** LTS. |
+
+Samples ya en `net10.0` donde aplica; runners y máquinas de dogfood deben llevar el runtime 8 parcheado hasta cerrar la migración.
 
 ---
 
@@ -9,7 +22,8 @@
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.74.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.75.0** |
+| 🔐 Ops | Host OK · **CI Node 22.23.5** aplicado · .NET samples 10.0.x — ver sección Host |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
 | 🏁 Goal | **v1.x** — ecosystem APIs (Run ✅ · gate ✅ · Jarvis Capa B ✅) · dotnet flags ✅ · MCP post-v1.0 |
@@ -215,7 +229,7 @@ Use before clicking **Publish** on Marketplace:
 #### Technical
 - [x] `npm run compile && npm run lint && npm run test:unit` pass in CI
 - [x] Sample BDD project smoke in CI (0.3.0-2)
-- [x] `engines.vscode` matches tested version *(dogfood v0.3.5; `^1.90.0` OK on Cursor/VS Code tested)*
+- [x] `engines.vscode` matches tested version *(dogfood v1.75.0; `^1.145.3`)*
 
 #### Post-publish
 - [x] Pin Marketplace version to tagged release *(v1.4.0 publish)*
@@ -244,6 +258,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.75.0 — Host security baseline ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Install** | `engines.vscode` is `^1.145.3`. README requires VS Code 1.145.3+ or a Cursor build on that engine |
+| **CI** | The build job uses Node 22.23.5 |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.75.0 (Marketplace + Open VSX) |
+| **Tests** | 874 unit tests |
 
 ### v1.74.0 — Build output readiness ✅ shipped
 
@@ -1334,4 +1358,4 @@ src/
 
 ---
 
-*Last updated: v1.74.0 build output readiness published to Marketplace and Open VSX.*
+*Last updated: v1.75.0 host baseline published to Marketplace and Open VSX.*
