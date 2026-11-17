@@ -1,7 +1,7 @@
 # BDD Pilot — Roadmap
 
 > Living document: what shipped, what is in progress, and what comes next.  
-> **Current release: v1.75.0** · **Marketplace: v1.75.0** · **Open VSX: v1.75.0** · **Next: —** · **874 unit tests**  
+> **Current release: v1.76.0** · **Marketplace: v1.76.0** · **Open VSX: v1.76.0** · **Next: —** · **884 unit tests**  
 > **Host (2026-11-14):** VS Code ≥1.145.3 · Node 26.13.1 / 22.23.5 · .NET runtime 8.0.34 + SDK 8.0.428 (plan → .NET 10 LTS)
 
 ---
@@ -22,7 +22,7 @@ Samples ya en `net10.0` donde aplica; runners y máquinas de dogfood deben lleva
 
 | Status | Item |
 |--------|------|
-| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.75.0** |
+| ✅ Shipped (GitHub + Marketplace + Open VSX) | v0.1.0 → **v1.76.0** |
 | 🔐 Ops | Host OK · **CI Node 22.23.5** aplicado · .NET samples 10.0.x — ver sección Host |
 | 🎯 Next | — |
 | 🎯 Ecosystem | Jarvis cross-ext ✅ |
@@ -229,7 +229,7 @@ Use before clicking **Publish** on Marketplace:
 #### Technical
 - [x] `npm run compile && npm run lint && npm run test:unit` pass in CI
 - [x] Sample BDD project smoke in CI (0.3.0-2)
-- [x] `engines.vscode` matches tested version *(dogfood v1.75.0; `^1.145.3`)*
+- [x] `engines.vscode` matches tested version *(dogfood v1.76.0; `^1.145.3`)*
 
 #### Post-publish
 - [x] Pin Marketplace version to tagged release *(v1.4.0 publish)*
@@ -258,6 +258,16 @@ Use before clicking **Publish** on Marketplace:
 ### Unreleased *(main branch)*
 
 _Nothing queued._
+
+### v1.76.0 — Lifecycle diagnostics ✅ shipped
+
+| Area | Change |
+|------|--------|
+| **Diagnostics** | `bddPilot.diagnostics.lifecycleTrace` writes local JSON lines to the BDD Pilot output channel. Off by default. Nothing leaves the machine |
+| **Discovery** | Enabling only that setting does not rescan features |
+| **API** | Sin cambio (`PilotRunApiV1` intacto) |
+| **Marketplace** | Published v1.76.0 (Marketplace + Open VSX) |
+| **Tests** | 884 unit tests |
 
 ### v1.75.0 — Host security baseline ✅ shipped
 
@@ -1358,4 +1368,4 @@ src/
 
 ---
 
-*Last updated: v1.75.0 host baseline published to Marketplace and Open VSX.*
+*Last updated: v1.76.0 lifecycle diagnostics published to Marketplace and Open VSX.*
