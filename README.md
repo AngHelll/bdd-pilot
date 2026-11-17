@@ -2,8 +2,8 @@
 
 **Run Reqnroll and SpecFlow scenarios from VS Code and Cursor — one click, the right `dotnet test` filter, readable results.**
 
-[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/anghelll.bdd-pilot?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/anghelll.bdd-pilot)](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot)
+[![VS Marketplace](https://vsmarketplacebadges.dev/version/anghelll.bdd-pilot.svg)](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot)
+[![Installs](https://vsmarketplacebadges.dev/installs/anghelll.bdd-pilot.svg)](https://marketplace.visualstudio.com/items?itemName=anghelll.bdd-pilot)
 [![Open VSX](https://img.shields.io/open-vsx/v/anghelll/bdd-pilot?label=Open%20VSX)](https://open-vsx.org/extension/anghelll/bdd-pilot)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
