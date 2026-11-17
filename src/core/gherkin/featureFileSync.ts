@@ -4,6 +4,7 @@ import { groupByDomain } from "./grouping";
 import { DomainGroup, FeatureInfo, OutlineExample, ScenarioInfo } from "./model";
 import { parseFeature } from "./parser";
 import { scenarioNeedsTheoryDiscovery } from "./theoryExamples";
+import { isTraceEnabled, trace } from "../observability/lifecycleTrace";
 
 /** Coalesce auto-save of the same feature before touching the tree. */
 export const FEATURE_SAVE_REFRESH_DEBOUNCE_MS = 300;
@@ -276,6 +277,7 @@ export function createFeatureFileSync(deps: FeatureFileSyncDeps): FeatureFileSyn
     let changedAny = false;
     let sawReapply = false;
     let sawSpawn = false;
+    let sawDefer = false;
     for (const { filePath, text } of batch) {
       const result = applyText(filePath, text);
       if (result.changed) {
@@ -287,18 +289,49 @@ export function createFeatureFileSync(deps: FeatureFileSyncDeps): FeatureFileSyn
         sawSpawn = true;
       } else if (result.action === "defer") {
         enrichDeferred = true;
+        sawDefer = true;
       }
+    }
+    if (isTraceEnabled()) {
+      trace("discovery.sync.finished", {
+        cause: "save",
+        kind: "incremental",
+        files: batch.length,
+        changed: changedAny,
+        reapply: sawReapply,
+        spawn: sawSpawn,
+        deferred: sawDefer,
+        runActive: deps.isRunActive(),
+      });
     }
     finishBatch(changedAny, sawReapply, sawSpawn);
   };
 
   return {
     onSaved(filePath: string, text: string): void {
-      pending.set(normalizeFeaturePath(filePath), { filePath, text });
+      const key = normalizeFeaturePath(filePath);
+      if (isTraceEnabled()) {
+        trace("discovery.sync.requested", {
+          cause: "save",
+          kind: "incremental",
+          file: path.basename(filePath),
+          coalesced: pending.has(key),
+          runActive: deps.isRunActive(),
+        });
+      }
+      pending.set(key, { filePath, text });
       arm();
     },
 
     onDeleted(paths: string[]): void {
+      if (isTraceEnabled()) {
+        trace("discovery.sync.requested", {
+          cause: "delete",
+          kind: "incremental",
+          files: paths.length,
+          runActive: deps.isRunActive(),
+        });
+      }
       let changed = false;
       for (const filePath of paths) {
         const pathKey = normalizeFeaturePath(filePath);
@@ -315,6 +348,14 @@ export function createFeatureFileSync(deps: FeatureFileSyncDeps): FeatureFileSyn
 
     onRenamed(moves: Array<{ oldPath: string; newPath: string }>): void {
       const projectDir = deps.getProjectDir();
+      if (isTraceEnabled()) {
+        trace("discovery.sync.requested", {
+          cause: "rename",
+          kind: "incremental",
+          files: moves.length,
+          runActive: deps.isRunActive(),
+        });
+      }
       if (!projectDir) {
         return;
       }
@@ -377,10 +418,20 @@ export function createFeatureFileSync(deps: FeatureFileSyncDeps): FeatureFileSyn
         return;
       }
       enrichDeferred = false;
+      if (isTraceEnabled()) {
+        trace("enrich.deferred.flush", { cause: "run-released" });
+      }
       deps.scheduleEnrich();
     },
 
     invalidateTheoryCache(): void {
+      if (isTraceEnabled() && (pending.size > 0 || enrichDeferred)) {
+        trace("discovery.sync.dropped", {
+          cause: "invalidate",
+          files: pending.size,
+          deferred: enrichDeferred,
+        });
+      }
       theoryKeys.clear();
       listedNames = undefined;
       enrichDeferred = false;

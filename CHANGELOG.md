@@ -6,6 +6,11 @@ Versioning: [Semver](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.76.0] — 2026-11-17
+
+### Added
+- **Lifecycle diagnostics** — Setting `bddPilot.diagnostics.lifecycleTrace` writes local JSON lines to the BDD Pilot output channel. Off by default. Nothing leaves the machine. Enabling only that setting does not rescan features.
+
 ## [1.75.0] — 2026-11-14
 
 ### Changed

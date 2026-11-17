@@ -1,4 +1,5 @@
 import { PilotLocale, t, MessageKey } from "../i18n";
+import { LIFECYCLE_TRACE_CONFIGURATION } from "../observability/lifecycleTrace";
 import {
   formatExampleIdentityLabel,
   formatOutlineIdentityLabel,
@@ -96,8 +97,10 @@ export function parseTreePresentation(raw: string | undefined): TreePresentation
 
 /**
  * True when a configuration event must rescan features.
- * A change that touches only `bddPilot.tree.presentation` or only `bddPilot.run.noBuild` returns false.
+ * A change that touches only `bddPilot.tree.presentation`, only `bddPilot.run.noBuild`,
+ * or only `bddPilot.diagnostics.lifecycleTrace` returns false.
  * Any other bddPilot change, including one combined with presentation, returns true.
+ * The lifecycle-trace setting is excluded so turning diagnostics on does not rescan.
  */
 export function shouldRediscoverFeatures(affects: (section: string) => boolean): boolean {
   if (!affects("bddPilot")) {
@@ -107,6 +110,9 @@ export function shouldRediscoverFeatures(affects: (section: string) => boolean):
     return true;
   }
   if (affects("bddPilot.run.noBuild")) {
+    return false;
+  }
+  if (affects(LIFECYCLE_TRACE_CONFIGURATION)) {
     return false;
   }
   if (!affects(TREE_PRESENTATION_CONFIGURATION)) {

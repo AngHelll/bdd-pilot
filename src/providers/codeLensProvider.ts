@@ -4,6 +4,7 @@ import { FeatureInfo, OutlineExample, ScenarioInfo } from "../core/gherkin/model
 import { parseFeature } from "../core/gherkin/parser";
 import { RunTarget } from "../core/runner/filterBuilder";
 import { codeLensRunsEnabled } from "./codeLensTargets";
+import { isTraceEnabled, trace } from "../core/observability/lifecycleTrace";
 
 export type CodeLensRunHandler = (target: RunTarget, debug: boolean) => void | Promise<void>;
 
@@ -66,7 +67,12 @@ export function registerFeatureCodeLens(options: FeatureCodeLensOptions): CodeLe
 
   return {
     disposable: vscode.Disposable.from(registration, changeEmitter),
-    refresh: () => changeEmitter.fire(),
+    refresh: () => {
+      if (isTraceEnabled()) {
+        trace("presentation.codeLens.refresh");
+      }
+      changeEmitter.fire();
+    },
   };
 }
 

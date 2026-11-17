@@ -33,7 +33,7 @@ export interface ProjectHubDeps {
   setStage: (stage: Stage) => void;
   getMode: () => ParallelismMode;
   setMode: (mode: ParallelismMode) => void;
-  refreshAll: (immediateEnrich?: boolean) => void;
+  refreshAll: (immediateEnrich?: boolean, cause?: string) => void;
   refreshUi: () => void;
   refreshPilotSurfaces: () => void;
   tryRehydrateOutcomes: () => void;
@@ -84,7 +84,7 @@ export function createProjectHub(deps: ProjectHubDeps) {
     if (!settings.projectPath.trim()) {
       await deps.context.workspaceState.update(PROJECT_KEY, toStoredSelection(project));
     }
-    deps.refreshAll();
+    deps.refreshAll(true, "project");
     deps.refreshUi();
     const newProjectDir = getProjectContext()?.projectDir;
     if (newProjectDir && newProjectDir !== previousProjectDir) {

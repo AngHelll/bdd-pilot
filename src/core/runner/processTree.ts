@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { isTraceEnabled, signalMeta, trace } from "../observability/lifecycleTrace";
 
 /** Wait after SIGTERM / taskkill before escalating to SIGKILL. */
 export const ABORT_KILL_GRACE_MS = 3000;
@@ -128,13 +129,16 @@ export function startAbortKillWatchdog(
     started = true;
     const term = buildProcessTreeKillPlan(platform, getPid(), "term");
     if (term.kind === "skip") {
+      traceKillRequest(signal, getPid(), "skipped");
       hooks.onForce();
       hooks.onGiveUp();
       return;
     }
+    traceKillRequest(signal, getPid(), "SIGTERM");
     execute(term);
     graceTimer = setTimeoutFn(() => {
       hooks.onForce();
+      traceKillRequest(signal, getPid(), "SIGKILL");
       execute(buildProcessTreeKillPlan(platform, getPid(), "kill"));
       forceTimer = setTimeoutFn(() => {
         hooks.onGiveUp();
@@ -163,4 +167,22 @@ export function startAbortKillWatchdog(
   }
 
   return dispose;
+}
+
+function traceKillRequest(
+  signal: AbortSignal,
+  pid: number | undefined,
+  phase: "SIGTERM" | "SIGKILL" | "skipped",
+): void {
+  if (!isTraceEnabled()) {
+    return;
+  }
+  const meta = signalMeta(signal);
+  trace(phase === "skipped" ? "process.signal.skipped" : "process.signal.requested", {
+    phase,
+    pid,
+    operationId: meta?.operationId,
+    controllerId: meta?.controllerId,
+    reason: phase === "skipped" ? "no-pid" : undefined,
+  });
 }

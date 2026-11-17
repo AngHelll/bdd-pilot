@@ -57,12 +57,31 @@ import { createRehydrateHandlers } from "./activation/rehydrate";
 import { createRunExecutor } from "./activation/runExecution";
 import { registerMcpServerProvider } from "./activation/mcpServerProvider";
 import { HISTORY_KEY } from "./activation/storageKeys";
+import { syncLifecycleTrace } from "./activation/lifecycleTraceSink";
+import {
+  ambientOperation,
+  beginEnrichObservation,
+  controllerIdOf,
+  endEnrichObservation,
+  flushPresentation,
+  isTraceEnabled,
+  liveProcessSnapshot,
+  nextId,
+  noteDiscoveryCause,
+  trace,
+  trackController,
+} from "./core/observability/lifecycleTrace";
 
 /** Wired in activate so deactivate can abort enrich / clear busy lock. */
 let deactivateCleanup: (() => void) | undefined;
 
 export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   const output = vscode.window.createOutputChannel("BDD Pilot");
+  syncLifecycleTrace(output);
+  const activateStarted = isTraceEnabled() ? performance.now() : 0;
+  if (activateStarted) {
+    trace("activate.start");
+  }
   const localeService = new LocaleService();
   const tr = (key: Parameters<LocaleService["tr"]>[0], params?: Parameters<LocaleService["tr"]>[1]) =>
     localeService.tr(key, params);
@@ -103,6 +122,10 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
           ? undefined
           : formatProgressCount(activeLiveProgress, localeService.getLocale());
       statusBar.setLiveCount(count);
+      flushPresentation({
+        cause: "live-progress",
+        treeVisible: treeView.visible,
+      });
     }, 120);
   };
 
@@ -240,9 +263,15 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }
   };
 
-  const abortBackgroundEnrich = (): void => {
+  const abortBackgroundEnrich = (cause = "abort"): void => {
     if (!backgroundEnrichAbort) {
       return;
+    }
+    if (isTraceEnabled()) {
+      trace("enrich.cancel.requested", {
+        cause,
+        controllerId: controllerIdOf(backgroundEnrichAbort),
+      });
     }
     backgroundEnrichAbort.abort();
     backgroundEnrichAbort = undefined;
@@ -250,6 +279,13 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   const forceReleaseRunLock = (): void => {
     const current = activeRun;
+    if (isTraceEnabled()) {
+      trace("run.lock.force", {
+        hadLock: !!current,
+        controllerId: current ? controllerIdOf(current) : undefined,
+        live: liveProcessSnapshot(),
+      });
+    }
     if (!current) {
       abortBackgroundEnrich();
       featureSync.flushDeferredEnrich();
@@ -276,73 +312,125 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   // eslint-disable-next-line prefer-const
   let managed!: ReturnType<typeof createManagedController>;
 
-  const enrichTheoryRows = async (signal?: AbortSignal): Promise<void> => {
-    const ctx = projectHub.getProjectContext();
-    if (!ctx) {
-      return;
-    }
-    const settings = readSettings();
-    abortBackgroundEnrich();
-
+  const enrichTheoryRows = async (
+    signal?: AbortSignal,
+    cause = "background",
+    operationId = "",
+  ): Promise<void> => {
+    const tracing = isTraceEnabled();
+    const op = tracing ? operationId || nextId("e") : "";
+    const overlap = tracing ? beginEnrichObservation().overlapping : false;
+    let outcome = "success";
     let localController: AbortController | undefined;
-    let effectiveSignal = signal;
-    if (!effectiveSignal) {
-      localController = new AbortController();
-      backgroundEnrichAbort = localController;
-      effectiveSignal = localController.signal;
+    if (tracing) {
+      trace("enrich.start", {
+        operationId: op,
+        cause,
+        overlapping: overlap,
+        signalRole: signal ? "caller" : "background",
+      });
     }
-
-    const theoryKeysBefore = theoryDiscoveryKeys(treeProvider.getDomains());
-    if (readTestRunner(ctx.projectDir, process.env) === "mtp") {
-      return;
-    }
-    let listedNames: string[] | undefined;
     try {
-      const enriched = await treeProvider.enrichTheoryRows(
-        () =>
-          listDotnetTestsWithBudget(
-            {
-              dotnetPath: settings.dotnetPath,
-              projectDir: ctx.projectDir,
-              testTarget: ctx.testTarget,
-            },
-            DISCOVER_LIST_TIMEOUT_MS,
-            effectiveSignal,
-          ).then((names) => {
-            listedNames = names;
-            return names;
-          }),
-        effectiveSignal,
-      );
-      if (listedNames) {
-        featureSync.noteTheoryList(listedNames, theoryKeysBefore);
+      const ctx = projectHub.getProjectContext();
+      if (!ctx) {
+        outcome = "skipped";
+        return;
       }
-      if (enriched) {
-        managed.refresh();
+      const settings = readSettings();
+      abortBackgroundEnrich("replaced");
+
+      let effectiveSignal = signal;
+      if (!effectiveSignal) {
+        localController = new AbortController();
+        backgroundEnrichAbort = localController;
+        effectiveSignal = localController.signal;
+        if (tracing) {
+          trackController(localController, { operationId: op, role: "enrich" });
+        }
       }
+
+      const theoryKeysBefore = theoryDiscoveryKeys(treeProvider.getDomains());
+      if (readTestRunner(ctx.projectDir, process.env) === "mtp") {
+        outcome = "skipped";
+        return;
+      }
+      let listedNames: string[] | undefined;
+      try {
+        const enriched = await treeProvider.enrichTheoryRows(
+          () =>
+            listDotnetTestsWithBudget(
+              {
+                dotnetPath: settings.dotnetPath,
+                projectDir: ctx.projectDir,
+                testTarget: ctx.testTarget,
+              },
+              DISCOVER_LIST_TIMEOUT_MS,
+              effectiveSignal,
+            ).then((names) => {
+              listedNames = names;
+              return names;
+            }),
+          effectiveSignal,
+        );
+        if (listedNames) {
+          featureSync.noteTheoryList(listedNames, theoryKeysBefore);
+        }
+        if (enriched) {
+          managed.refresh();
+        } else {
+          outcome = "empty";
+        }
+      } finally {
+        if (localController && backgroundEnrichAbort === localController) {
+          backgroundEnrichAbort = undefined;
+        }
+      }
+    } catch (err) {
+      outcome = signal?.aborted || localController?.signal.aborted ? "cancelled" : "error";
+      throw err;
     } finally {
-      if (localController && backgroundEnrichAbort === localController) {
-        backgroundEnrichAbort = undefined;
+      if (tracing) {
+        endEnrichObservation();
+        trace("enrich.finish", {
+          operationId: op,
+          cause,
+          result: outcome,
+          overlapping: overlap,
+        });
       }
     }
   };
 
-  function refreshAll(immediateEnrich = true) {
+  function refreshAll(immediateEnrich = true, cause = "refresh") {
+    if (isTraceEnabled()) {
+      noteDiscoveryCause(cause);
+      trace("discovery.refresh.requested", {
+        cause,
+        immediateEnrich,
+        runActive: !!activeRun || runService.isDebugActive(),
+        debugActive: runService.isDebugActive(),
+      });
+    }
     featureSync.invalidateTheoryCache();
     refreshTreeSurfaces();
     if (immediateEnrich) {
       cancelScheduledEnrich();
-      void enrichTheoryRows();
+      void enrichTheoryRows(undefined, cause);
     } else {
-      scheduleEnrichTheoryRows();
+      scheduleEnrichTheoryRows(FEATURE_ENRICH_DEBOUNCE_MS, cause);
     }
   }
 
-  const scheduleEnrichTheoryRows = (delayMs: number = FEATURE_ENRICH_DEBOUNCE_MS) => {
+  const scheduleEnrichTheoryRows = (delayMs: number = FEATURE_ENRICH_DEBOUNCE_MS, cause = "feature") => {
+    const coalesced = enrichTheoryTimer !== undefined;
     cancelScheduledEnrich();
+    const operationId = isTraceEnabled() ? nextId("e") : "";
+    if (operationId) {
+      trace("enrich.scheduled", { operationId, delayMs, cause, coalesced });
+    }
     enrichTheoryTimer = setTimeout(() => {
       enrichTheoryTimer = undefined;
-      void enrichTheoryRows();
+      void enrichTheoryRows(undefined, cause, operationId);
     }, delayMs);
   };
 
@@ -389,6 +477,9 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     void vscode.commands.executeCommand("setContext", "bddPilot.running", running);
     updateSearchContext();
     updateTreeGroupByContext();
+    if (isTraceEnabled()) {
+      trace("presentation.statusBar.update", { running, debugging });
+    }
     const feedbackKey = `${running}:${debugging}`;
     if (lastExecutionFeedbackKey !== feedbackKey) {
       lastExecutionFeedbackKey = feedbackKey;
@@ -533,17 +624,47 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     },
     acquireRunLock: () => {
       if (activeRun || runService.isDebugActive()) {
+        if (isTraceEnabled()) {
+          trace("run.lock.rejected", {
+            source: "testExplorer",
+            operationId: ambientOperation(),
+            ownerControllerId: activeRun ? controllerIdOf(activeRun) : undefined,
+            debugActive: runService.isDebugActive(),
+          });
+        }
         return false;
       }
       const controller = new AbortController();
       managedLockOwner = controller;
       activeRun = controller;
+      if (isTraceEnabled()) {
+        const controllerId = trackController(controller, {
+          operationId: ambientOperation(),
+          role: "run-lock",
+        });
+        trace("run.lock.acquire", {
+          source: "testExplorer",
+          operationId: ambientOperation(),
+          controllerId,
+        });
+      }
       clearActiveLiveProgress();
       refreshUi();
       return true;
     },
     releaseRunLock: () => {
-      if (activeRun === managedLockOwner) {
+      const matched = activeRun === managedLockOwner;
+      if (isTraceEnabled()) {
+        trace("run.lock.release", {
+          source: "testExplorer",
+          operationId: ambientOperation(),
+          matched,
+          ownerControllerId: activeRun ? controllerIdOf(activeRun) : undefined,
+          managedControllerId: managedLockOwner ? controllerIdOf(managedLockOwner) : undefined,
+          live: liveProcessSnapshot(),
+        });
+      }
+      if (matched) {
         activeRun = undefined;
         clearActiveLiveProgress();
         refreshUi();
@@ -562,7 +683,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     renameFeature: (oldPath, newPath) => treeProvider.renameFeatureFile(oldPath, newPath),
     refreshManaged: () => managed.refresh(),
     reapplyTheory: (names) => treeProvider.enrichTheoryRows(() => Promise.resolve(names)),
-    scheduleEnrich: () => scheduleEnrichTheoryRows(),
+    scheduleEnrich: () => scheduleEnrichTheoryRows(FEATURE_ENRICH_DEBOUNCE_MS, "feature-save"),
   });
 
   outputWatch = createBuildOutputWatch({
@@ -674,7 +795,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
 
   localeService.onDidChangeLocale(() => {
     refreshUi();
-    refreshAll();
+    refreshAll(true, "locale");
     codeLens.refresh();
     dashboard.refreshLocale(localeService.getLocale(), buildDashboardContext());
   });
@@ -683,7 +804,7 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     rehydrate.tryRehydrateOutcomes();
     const delayMs = activateEnrichDelayMs(treeProvider.needsTheoryDiscovery());
     if (delayMs !== undefined) {
-      scheduleEnrichTheoryRows(delayMs);
+      scheduleEnrichTheoryRows(delayMs, "activate");
     }
   }
 
@@ -737,6 +858,12 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
     }),
   );
 
+  if (isTraceEnabled()) {
+    trace("activate.services.ready", {
+      projectReady: projectHub.getResolvedProject() !== undefined,
+    });
+    noteDiscoveryCause("activate");
+  }
   treeProvider.refresh();
   managed.refresh();
   refreshUi();
@@ -752,17 +879,48 @@ export function activate(context: vscode.ExtensionContext): PilotRunApiV1 {
   registerMcpServerProvider(context);
 
   deactivateCleanup = () => {
+    if (isTraceEnabled()) {
+      trace("deactivate.start", {
+        runActive: !!activeRun,
+        debugActive: runService.isDebugActive(),
+        enrichActive: !!backgroundEnrichAbort,
+        runControllerId: activeRun ? controllerIdOf(activeRun) : undefined,
+        enrichControllerId: backgroundEnrichAbort ? controllerIdOf(backgroundEnrichAbort) : undefined,
+        live: liveProcessSnapshot(),
+      });
+    }
     cancelScheduledEnrich();
     outputWatch.dispose();
     featureSync.dispose();
-    abortBackgroundEnrich();
+    abortBackgroundEnrich("deactivate");
     if (activeRun) {
+      if (isTraceEnabled()) {
+        trace("cancel.requested", {
+          source: "deactivate",
+          controllerId: controllerIdOf(activeRun),
+        });
+      }
       activeRun.abort();
       activeRun = undefined;
       managedLockOwner = undefined;
       clearActiveLiveProgress();
     }
+    if (isTraceEnabled()) {
+      flushPresentation({ cause: "deactivate" });
+      trace("deactivate.end", {
+        live: liveProcessSnapshot(),
+        treeVisible: treeView.visible,
+        note: "process exit after host shutdown is not observable",
+      });
+    }
   };
+
+  if (activateStarted) {
+    trace("activate.end", {
+      durationMs: Math.round(performance.now() - activateStarted),
+      projectReady: projectHub.getResolvedProject() !== undefined,
+    });
+  }
 
   return createPilotRunApi({
     runService,

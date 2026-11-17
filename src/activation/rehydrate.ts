@@ -26,6 +26,7 @@ import { readAiSettings, readOutcomeRehydrateSettings } from "./extensionSetting
 import { loadRunResults } from "../core/results/resultLoader";
 import { selectEligiblePilotTrx } from "../core/results/pilotTrxDiscovery";
 import { SKIP_REASON_SNAPSHOT_KEY } from "./storageKeys";
+import { isTraceEnabled, trace } from "../core/observability/lifecycleTrace";
 
 export interface RehydrateDeps {
   context: vscode.ExtensionContext;
@@ -90,6 +91,13 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       deps.refreshPilotSurfaces();
     }
     deps.refreshManaged();
+    if (isTraceEnabled()) {
+      trace("results.published", {
+        mode: options?.rawFilter || targets.length === 0 ? "unscoped" : "scoped",
+        total: summary.total,
+        canceled: options?.canceled === true,
+      });
+    }
   }
 
   function tryRestoreSkipReasons(trxAbsolutePath: string, maxAgeMs: number | undefined): void {
@@ -109,19 +117,38 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
   }
 
   function tryRehydrateOutcomes(): void {
+    const tracing = isTraceEnabled();
+    const started = tracing ? performance.now() : 0;
+    if (tracing) {
+      trace("rehydrate.start");
+    }
+    const finish = (result: string): void => {
+      if (!tracing) {
+        return;
+      }
+      trace("rehydrate.finish", {
+        result,
+        durationMs: Math.round(performance.now() - started),
+      });
+    };
+
     const rehydrate = readOutcomeRehydrateSettings();
     if (!rehydrate.enabled) {
+      finish("disabled");
       return;
     }
     if (deps.isRunActive()) {
+      finish("run-active");
       return;
     }
     if (!deps.outcomeStore.isEmpty()) {
+      finish("store-not-empty");
       return;
     }
 
     const ctx = deps.getProjectContext();
     if (!ctx) {
+      finish("no-project");
       return;
     }
 
@@ -132,11 +159,13 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       historyTrxAbsolutePath: historyTrx,
     });
     if (!latest) {
+      finish("no-trx");
       return;
     }
 
     const summary = loadRunResults(ctx.projectDir, latest.absolutePath);
     if (!summary || summary.total === 0) {
+      finish("empty");
       return;
     }
 
@@ -181,6 +210,7 @@ export function createRehydrateHandlers(deps: RehydrateDeps) {
       workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
       history: historyMeta,
     });
+    finish("applied");
   }
 
   return { tryRehydrateOutcomes, applyRunSummaryToTree, logTreeMapping };

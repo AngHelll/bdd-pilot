@@ -1,4 +1,12 @@
 import { spawn } from "child_process";
+import {
+  isTraceEnabled,
+  noteProcessExit,
+  noteProcessStart,
+  noteProcessUnobserved,
+  signalMeta,
+  trackController,
+} from "../observability/lifecycleTrace";
 import { shouldDetachForProcessGroup, startAbortKillWatchdog } from "./processTree";
 import { DotnetTestRunner } from "./testRunner";
 import { extractListedTestNames } from "./theoryDisplayName";
@@ -48,6 +56,7 @@ export function listDotnetTests(req: ListTestsRequest, signal?: AbortSignal): Pr
       stdio: ["ignore", "pipe", "pipe"],
       detached: shouldDetachForProcessGroup(process.platform),
     });
+    noteProcessStart(signal, { pid: child.pid, kind: "list-tests" });
 
     let settled = false;
     let stdout = "";
@@ -83,15 +92,20 @@ export function listDotnetTests(req: ListTestsRequest, signal?: AbortSignal): Pr
           signal,
           {
             onForce: () => undefined,
-            onGiveUp: () => finishReject(new Error("list-tests canceled")),
+            onGiveUp: () => {
+              noteProcessUnobserved(signal, "watchdog-gave-up");
+              finishReject(new Error("list-tests canceled"));
+            },
           },
         )
       : (): void => undefined;
 
     child.on("error", (err) => {
+      noteProcessUnobserved(signal, "spawn-error");
       finishReject(err);
     });
-    child.on("close", (code) => {
+    child.on("close", (code, osSignal) => {
+      noteProcessExit(signal, { exitCode: code, osSignal });
       if (signal?.aborted) {
         finishReject(new Error("list-tests canceled"));
         return;
@@ -112,6 +126,14 @@ export async function listDotnetTestsWithBudget(
   signal?: AbortSignal,
 ): Promise<string[]> {
   const controller = new AbortController();
+  if (isTraceEnabled()) {
+    const parent = signalMeta(signal);
+    trackController(controller, {
+      operationId: parent?.operationId,
+      role: "list-tests",
+      parentControllerId: parent?.controllerId,
+    });
+  }
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const onOuterAbort = (): void => controller.abort();
   signal?.addEventListener("abort", onOuterAbort, { once: true });

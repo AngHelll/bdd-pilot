@@ -110,6 +110,7 @@
   "bddPilot.configuration.run.blameHangTimeout.description": "Timeout para --blame-hang-timeout cuando run.blameHang está on (p. ej. 10m, 30s). Por defecto 10m.",
   "bddPilot.configuration.run.byStage.description": "Overrides opcionales por STAGE para run.configuration y run.runSettings (claves: dev, test, stg, prod). No carga archivos .env — solo esos dos flags (no cliVerbosity/blame). Ejemplo: { \"stg\": { \"configuration\": \"Release\", \"runSettings\": \"config/stg.runsettings\" } }.",
   "bddPilot.configuration.diagnostics.extendedRules.description": "Activa diagnósticos extendidos post-run (credenciales cloud, X-Ray, errores HTTP API). Desactivado por defecto para proyectos genéricos.",
+  "bddPilot.configuration.diagnostics.lifecycleTrace.description": "Escribe diagnóstico local del ciclo de vida en JSON lines en el canal de salida BDD Pilot. Desactivado por defecto. No sale de la máquina.",
   "bddPilot.configuration.feedback.diagnosticsInOutput.description": "Se conserva por compatibilidad. Los diagnósticos Pilot no se imprimen; el chip del summary y el toast llevan la pista principal.",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.off": "No añadir diagnósticos Pilot (el log dotnet no cambia).",
   "bddPilot.configuration.feedback.diagnosticsInOutput.enum.summary": "Resumen de una línea del diagnóstico principal (+N más si aplica).",

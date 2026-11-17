@@ -9,6 +9,7 @@ import { RunTarget, buildCombinedFilter } from "./filterBuilder";
 import { FilterMappingConfig } from "./filterMapping";
 import { LiveProgressParser, LiveProgressState, TestCompletionEvent } from "./liveProgress";
 import { matchRunTarget } from "./matchRunTarget";
+import { isTraceEnabled, operationIdFrom, trace, withResultContext } from "../observability/lifecycleTrace";
 import {
   buildArgs,
   runDotnetTest as defaultRunDotnetTest,
@@ -189,6 +190,7 @@ export async function executeTestRun(input: ExecuteTestRunInput): Promise<Execut
   const loadedEnv = loadStageEnv(input.projectDir, input.stage);
   const trxFileName = createRunTrxFileName();
   input.onRunStarted?.();
+  const traceStartedAt = isTraceEnabled() ? Date.now() : undefined;
   const progressParser = new LiveProgressParser(input.totalExpected);
   const dotnetReq = buildDotnetTestRequest({
     settings: input.settings,
@@ -227,7 +229,22 @@ export async function executeTestRun(input: ExecuteTestRunInput): Promise<Execut
     input.signal ?? new AbortController().signal,
   );
 
-  const summary = loadRunResults(input.projectDir, result.trxPath);
+  const summary = withResultContext(
+    { operationId: operationIdFrom(input.signal), runStartedAt: traceStartedAt },
+    () => loadRunResults(input.projectDir, result.trxPath),
+  );
+  const matchStarted = isTraceEnabled() ? performance.now() : 0;
+  const matchedScenarios = summary
+    ? matchScenarioRecords(input.targets, summary, input.domains ?? [])
+    : [];
+  if (matchStarted) {
+    trace("results.matched", {
+      operationId: operationIdFrom(input.signal),
+      durationMs: Math.round(performance.now() - matchStarted),
+      matched: matchedScenarios.length,
+      total: summary?.total ?? 0,
+    });
+  }
   return {
     filter,
     exitCode: result.exitCode,
@@ -238,9 +255,7 @@ export async function executeTestRun(input: ExecuteTestRunInput): Promise<Execut
     summary,
     outputBuffer,
     liveState: progressParser.getState(),
-    matchedScenarios: summary
-      ? matchScenarioRecords(input.targets, summary, input.domains ?? [])
-      : [],
+    matchedScenarios,
   };
 }
 

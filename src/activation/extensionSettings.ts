@@ -179,3 +179,7 @@ export function readAutoShowOutput(): AutoShowOutputMode {
     .get<string>("feedback.autoShowOutput", "off");
   return isAutoShowOutputMode(value) ? value : "off";
 }
+
+export function readLifecycleTraceEnabled(): boolean {
+  return vscode.workspace.getConfiguration("bddPilot").get<boolean>("diagnostics.lifecycleTrace", false) === true;
+}

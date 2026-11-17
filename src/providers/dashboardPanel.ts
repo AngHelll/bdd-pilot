@@ -24,6 +24,7 @@ import {
 } from "../core/results/dashboardView";
 import { RehydrateNotice } from "../core/results/rehydrateNotice";
 import { RunHistoryEntry } from "../core/results/runHistory";
+import { isTraceEnabled, trace } from "../core/observability/lifecycleTrace";
 
 export interface DashboardContext {
   lastKnown?: LastKnownSnapshot;
@@ -56,6 +57,13 @@ export class DashboardPanel {
     this.lastHistory = history;
     this.lastContext = context;
     this.lastLocale = locale;
+    if (isTraceEnabled()) {
+      trace("presentation.dashboard.update", {
+        visible: this.panel?.visible === true,
+        panelOpen: this.panel !== undefined,
+        runs: history.length,
+      });
+    }
     if (this.panel) {
       this.panel.reveal();
       this.paint();
@@ -103,6 +111,13 @@ export class DashboardPanel {
     this.lastHistory = history;
     this.lastContext = context;
     this.lastLocale = locale;
+    if (isTraceEnabled()) {
+      trace("presentation.dashboard.update", {
+        visible: this.panel?.visible === true,
+        panelOpen: this.panel !== undefined,
+        runs: history.length,
+      });
+    }
     this.paint();
   }
 

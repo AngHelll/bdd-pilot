@@ -1,4 +1,13 @@
 import * as vscode from "vscode";
+import {
+  controllerIdOf,
+  isTraceEnabled,
+  nextId,
+  notePresentation,
+  setAmbientOperation,
+  trace,
+  trackController,
+} from "../core/observability/lifecycleTrace";
 import { ParallelismMode, RunnerSettings, Stage } from "../core/config/types";
 import { TagGroup } from "../core/gherkin/groupByTag";
 import { FeatureInfo, OutlineExample, ScenarioInfo, DomainGroup } from "../core/gherkin/model";
@@ -138,15 +147,25 @@ export function createManagedController(deps: ControllerDeps): ManagedController
   );
 
   function buildTree(): void {
+    const started = isTraceEnabled() ? performance.now() : 0;
     controller.items.replace([]);
     const ctx = deps.getProjectContext();
-    if (!ctx) {
-      return;
+    if (ctx) {
+      if (deps.getTreeGroupBy() === "tag") {
+        buildTagTree();
+      } else {
+        buildDomainTree();
+      }
     }
-    if (deps.getTreeGroupBy() === "tag") {
-      buildTagTree();
-    } else {
-      buildDomainTree();
+    if (started) {
+      let roots = 0;
+      controller.items.forEach(() => {
+        roots += 1;
+      });
+      trace("presentation.testExplorer.rebuild", {
+        durationMs: Math.round(performance.now() - started),
+        roots,
+      });
     }
   }
 
@@ -279,6 +298,16 @@ export function createManagedController(deps: ControllerDeps): ManagedController
     token: vscode.CancellationToken,
     debug: boolean,
   ): Promise<void> {
+    const operationId = isTraceEnabled() ? nextId(debug ? "dbg" : "r") : "";
+    if (operationId) {
+      setAmbientOperation(operationId);
+      trace("run.requested", {
+        operationId,
+        source: "testExplorer",
+        debug,
+        includes: request.include?.length ?? 0,
+      });
+    }
     const run = controller.createTestRun(request);
     deps.suspendOutputWatch();
     let debugRunHeld = false;
@@ -381,7 +410,17 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       deps.getDomains(),
     );
     const signal = new AbortController();
+    if (operationId) {
+      trackController(signal, { operationId, role: debug ? "debug" : "run" });
+    }
     token.onCancellationRequested(() => {
+      if (isTraceEnabled()) {
+        trace("cancel.requested", {
+          source: "testExplorer.token",
+          operationId: operationId || undefined,
+          processControllerId: controllerIdOf(signal),
+        });
+      }
       signal.abort();
       deps.abortActiveRun();
     });
@@ -433,6 +472,7 @@ export function createManagedController(deps: ControllerDeps): ManagedController
             deps.getLocale(),
             readTreeDisplaySettings(),
           );
+          notePresentation("live.progress");
         },
         onOutput: writeStream,
       });
@@ -524,6 +564,9 @@ export function createManagedController(deps: ControllerDeps): ManagedController
       }
     }
     } finally {
+      if (operationId) {
+        setAmbientOperation(undefined);
+      }
       if (!debugRunHeld) {
         deps.resumeOutputWatch();
       }

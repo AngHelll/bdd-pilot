@@ -1,6 +1,12 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import {
+  isTraceEnabled,
+  operationIdFrom,
+  trace,
+  trackController,
+} from "../core/observability/lifecycleTrace";
+import {
   formatRunTargetScopeLabels,
   LastRunSnapshot,
 } from "../core/diagnostics/aiFailureContext";
@@ -233,20 +239,38 @@ export class RunService {
   }
 
   async runPreflight(req: RunRequest): Promise<RunPreflightResult> {
+    const tracing = isTraceEnabled();
+    const started = tracing ? performance.now() : 0;
+    const operationId = tracing ? operationIdFrom(req.signal) : undefined;
+    if (tracing) {
+      trace("preflight.start", { operationId, debug: req.debug === true });
+    }
+    const report = (result: RunPreflightResult): RunPreflightResult => {
+      if (tracing) {
+        trace("preflight.finish", {
+          operationId,
+          proceed: result.proceed,
+          reason: result.proceed ? undefined : result.reason,
+          durationMs: Math.round(performance.now() - started),
+        });
+      }
+      return result;
+    };
+
     const stageGate = await this.checkStageConfirmation(req);
     if (stageGate === "denied") {
-      return { proceed: false, reason: "prod-denied" };
+      return report({ proceed: false, reason: "prod-denied" });
     }
     if (stageGate === "declined") {
-      return { proceed: false, reason: "stage-declined" };
+      return report({ proceed: false, reason: "stage-declined" });
     }
 
     const gate = await this.checkBindingGate(req);
     if (!gate.proceed) {
-      return { proceed: false, reason: "gate-declined", unboundCount: gate.unboundCount };
+      return report({ proceed: false, reason: "gate-declined", unboundCount: gate.unboundCount });
     }
 
-    return { proceed: true };
+    return report({ proceed: true });
   }
 
   async run(req: RunRequest): Promise<RunServiceResult> {
@@ -304,6 +328,7 @@ export class RunService {
     if (historyEntry) {
       this.history = trimHistory(this.history, HISTORY_MAX);
       this._onHistory.fire(this.history);
+      this.traceHistory(req, historyEntry);
     }
     if (!executed.canceled) {
       this.updateFailedRunSnapshot(
@@ -367,6 +392,7 @@ export class RunService {
       if (historyEntry) {
         this.history = trimHistory(this.history, HISTORY_MAX);
         this._onHistory.fire(this.history);
+        this.traceHistory(pending.req, historyEntry);
       }
       this.updateFailedRunSnapshot(
         pending.req,
@@ -452,6 +478,9 @@ export class RunService {
 
   private async runDebug(req: RunRequest, filter?: string): Promise<RunServiceResult> {
     if (this.debugActive) {
+      if (isTraceEnabled()) {
+        trace("debug.rejected", { reason: "debug-active", operationId: operationIdFrom(req.signal) });
+      }
       return { exitCode: null, canceled: true, trxPath: "", outputBuffer: "" };
     }
 
@@ -484,6 +513,18 @@ export class RunService {
     this.rememberEffectiveCommand(req.settings.dotnetPath, buildArgs(dotnetReq, argsOptions), "debug");
 
     const controller = new AbortController();
+    if (isTraceEnabled()) {
+      const controllerId = trackController(controller, {
+        operationId: operationIdFrom(req.signal),
+        role: "debug",
+        parentControllerId: undefined,
+      });
+      trace("debug.lock.acquire", {
+        operationId: operationIdFrom(req.signal),
+        controllerId,
+        source: "debug",
+      });
+    }
     const pending: PendingDebugSession = { trxPath, req, filter, controller };
     this.pendingDebug = pending;
     this.debugActive = true;
@@ -547,11 +588,35 @@ export class RunService {
 
   /** Cancel while debugging: kill the `dotnet test` tree and detach Pilot sessions. */
   cancelDebug(): void {
+    if (isTraceEnabled()) {
+      trace("cancel.requested", {
+        source: "debug",
+        intent: "stopDebug",
+        controllerId: this.pendingDebug
+          ? trackController(this.pendingDebug.controller, { role: "debug" })
+          : undefined,
+      });
+    }
     this.pendingDebug?.controller.abort();
     const session = vscode.debug.activeDebugSession;
     if (session?.name === BDD_PILOT_DEBUG_SESSION_NAME) {
       void vscode.debug.stopDebugging(session);
     }
+  }
+
+  private traceHistory(req: RunRequest, entry: RunHistoryEntry): void {
+    if (!isTraceEnabled()) {
+      return;
+    }
+    trace("history.updated", {
+      operationId: operationIdFrom(req.signal),
+      status: entry.status,
+      total: entry.total,
+      passed: entry.passed,
+      failed: entry.failed,
+      skipped: entry.skipped,
+      runKind: entry.runKind,
+    });
   }
 
   private recordHistory(
@@ -904,20 +969,40 @@ export class RunService {
   private async checkBindingGate(
     req: RunRequest,
   ): Promise<{ proceed: true } | { proceed: false; unboundCount: number }> {
+    const tracing = isTraceEnabled();
+    const started = tracing ? performance.now() : 0;
+    const operationId = tracing ? operationIdFrom(req.signal) : undefined;
+    if (tracing) {
+      trace("bindingGate.start", { operationId, mode: req.bindingGate ?? "off" });
+    }
+    const report = (
+      result: { proceed: true } | { proceed: false; unboundCount: number },
+    ): { proceed: true } | { proceed: false; unboundCount: number } => {
+      if (tracing) {
+        trace("bindingGate.finish", {
+          operationId,
+          proceed: result.proceed,
+          unboundCount: "unboundCount" in result ? result.unboundCount : 0,
+          durationMs: Math.round(performance.now() - started),
+        });
+      }
+      return result;
+    };
+
     const mode: BindingGateMode = req.bindingGate ?? "off";
     if (mode === "off") {
-      return { proceed: true };
+      return report({ proceed: true });
     }
 
     const locations = collectStepsForRunScope(req.targets, req.domains ?? [], req.rawFilter);
     if (locations.length === 0) {
-      return { proceed: true };
+      return report({ proceed: true });
     }
 
     const guardian = await tryGetGuardianResolveStep();
     if (guardian.kind === "skip") {
       this.logBindingGateSkipped(req, guardian.reason);
-      return { proceed: true };
+      return report({ proceed: true });
     }
 
     const { unboundIssues, ambiguousIssues } = evaluateBindingGate(
@@ -933,13 +1018,13 @@ export class RunService {
     }
 
     if (!shouldPromptForUnboundIssues(unboundIssues)) {
-      return { proceed: true };
+      return report({ proceed: true });
     }
 
     const ux = resolveBindingGateUx(mode, unboundIssues, ambiguousIssues);
     const promptKind = resolveUnboundPromptKind(ux);
     if (!promptKind) {
-      return { proceed: true };
+      return report({ proceed: true });
     }
 
     req.onOutput?.(`\n${formatBindingGateUnboundTerminal(req.locale, unboundIssues)}\n`);
@@ -954,13 +1039,13 @@ export class RunService {
         runAnyway,
         cancel,
       );
-      return choice === runAnyway ? { proceed: true } : declined;
+      return report(choice === runAnyway ? { proceed: true } : declined);
     }
 
     const message = formatBindingGateUnboundPrompt(req.locale, unboundIssues, "block");
     const ok = t(req.locale, "bindingGate.ok");
     await vscode.window.showWarningMessage(message, { modal: true }, ok);
-    return declined;
+    return report(declined);
   }
 
   private logAmbiguousBindingIssues(req: RunRequest, ambiguousIssues: BindingGateIssue[]): void {

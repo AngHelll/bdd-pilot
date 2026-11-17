@@ -1,6 +1,11 @@
 import { spawn } from "child_process";
 import * as path from "path";
 import { ModeProfile, Stage } from "../config/types";
+import {
+  noteProcessExit,
+  noteProcessStart,
+  noteProcessUnobserved,
+} from "../observability/lifecycleTrace";
 import { appendMtpFilterArgs } from "./mtpFilter";
 import {
   isCanceledOnClose,
@@ -217,6 +222,7 @@ export function runDotnetTest(
       env,
       detached: shouldDetachForProcessGroup(process.platform),
     });
+    noteProcessStart(signal, { pid: child.pid, kind: "dotnet-test" });
 
     disposeWatchdog = startAbortKillWatchdog(
       () => child.pid,
@@ -226,6 +232,7 @@ export function runDotnetTest(
           forced = true;
         },
         onGiveUp: () => {
+          noteProcessUnobserved(signal, "watchdog-gave-up");
           settle({ exitCode: null, canceled: true, forced: true, trxPath });
         },
       },
@@ -236,17 +243,20 @@ export function runDotnetTest(
 
     child.on("error", (err) => {
       if ((err as NodeJS.ErrnoException).name === "AbortError" || signal.aborted) {
+        noteProcessUnobserved(signal, "spawn-aborted");
         settle({ exitCode: null, canceled: true, forced, trxPath });
         return;
       }
       if (!settled) {
+        noteProcessUnobserved(signal, "spawn-error");
         settled = true;
         disposeWatchdog();
         reject(err);
       }
     });
 
-    child.on("close", (code) => {
+    child.on("close", (code, osSignal) => {
+      noteProcessExit(signal, { exitCode: code, forced, osSignal });
       settle({
         exitCode: code,
         canceled: isCanceledOnClose(signal.aborted),

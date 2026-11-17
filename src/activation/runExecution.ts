@@ -47,6 +47,16 @@ import {
 import { warnWithTerminalAction, writeRunTerminal } from "./runTerminal";
 import { resolveRunTargets } from "./runTargets";
 import { promptScopedRunNudgeIfNeeded } from "./scopedRunNudgeUi";
+import {
+  controllerIdOf,
+  isTraceEnabled,
+  nextId,
+  notePresentation,
+  setAmbientOperation,
+  targetCensus,
+  trace,
+  trackController,
+} from "../core/observability/lifecycleTrace";
 
 export interface RunExecutionDeps {
   context: vscode.ExtensionContext;
@@ -65,7 +75,7 @@ export interface RunExecutionDeps {
   refreshUi: () => void;
   getProjectContext: () => ProjectContext | undefined;
   selectProject: () => Promise<unknown>;
-  enrichTheoryRows: (signal?: AbortSignal) => Promise<void>;
+  enrichTheoryRows: (signal?: AbortSignal, cause?: string) => Promise<void>;
   applyRunSummaryToTree: (
     summary: import("../core/results/resultLoader").UnifiedSummary,
     targets: RunTarget[],
@@ -87,7 +97,28 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     target: RunTarget | RunTarget[],
     opts?: { debug?: boolean; rawFilter?: string; runKind?: RunKind },
   ): Promise<void> {
+    const operationId = isTraceEnabled() ? nextId(opts?.debug ? "dbg" : "r") : "";
+    if (operationId) {
+      setAmbientOperation(operationId);
+      trace("run.requested", {
+        operationId,
+        source: "command",
+        debug: opts?.debug === true,
+        runActive: !!deps.getActiveRun(),
+        debugActive: deps.runService.isDebugActive(),
+        ...targetCensus(Array.isArray(target) ? target : [target]),
+      });
+    }
     if (deps.getActiveRun() || deps.runService.isDebugActive()) {
+      if (operationId) {
+        trace("run.rejected", {
+          operationId,
+          source: "command",
+          reason: deps.runService.isDebugActive() ? "debug-active" : "run-active",
+          ownerControllerId: controllerIdOf(deps.getActiveRun()),
+        });
+        setAmbientOperation(undefined);
+      }
       if (opts?.debug) {
         void vscode.window.showWarningMessage(
           deps.runService.isDebugActive()
@@ -102,6 +133,12 @@ export function createRunExecutor(deps: RunExecutionDeps) {
 
     // Claim busy lock before preflight / project select so multi-click Run cannot re-enter.
     const controller = new AbortController();
+    if (operationId) {
+      trackController(controller, {
+        operationId,
+        role: opts?.debug ? "debug-request" : "run",
+      });
+    }
     let runLockHeld = false;
     let outputWatchResumed = false;
     const resumeOutputWatch = (): void => {
@@ -116,8 +153,24 @@ export function createRunExecutor(deps: RunExecutionDeps) {
         runLockHeld = false;
         // Identity-safe: do not clear a newer run started after force-unlock.
         if (deps.getActiveRun() === controller) {
+          if (operationId) {
+            trace("run.lock.release", {
+              operationId,
+              source: "command",
+              matched: true,
+              controllerId: controllerIdOf(controller),
+            });
+          }
           deps.setActiveRun(undefined);
           deps.clearActiveLiveProgress();
+        } else if (operationId) {
+          trace("run.lock.release", {
+            operationId,
+            source: "command",
+            matched: false,
+            controllerId: controllerIdOf(controller),
+            ownerControllerId: controllerIdOf(deps.getActiveRun()),
+          });
         }
       }
       resumeOutputWatch();
@@ -128,6 +181,13 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     if (!opts?.debug) {
       runLockHeld = true;
       deps.setActiveRun(controller);
+      if (operationId) {
+        trace("run.lock.acquire", {
+          operationId,
+          source: "command",
+          controllerId: controllerIdOf(controller),
+        });
+      }
       deps.clearActiveLiveProgress();
       deps.refreshUi();
     }
@@ -215,7 +275,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     }
 
     if (opts?.debug && deps.treeProvider.needsTheoryDiscovery()) {
-      await deps.enrichTheoryRows();
+      await deps.enrichTheoryRows(undefined, "debug");
     }
 
     if (
@@ -244,6 +304,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
       bindingGate: readBindingGate(),
       domains: deps.treeProvider.getDomains(),
       analyzeOptions: readAnalyzeOptions(locale),
+      signal: controller.signal,
       onOutput: (chunk) => {
         writeRunTerminal(chunk);
       },
@@ -373,6 +434,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           }
           if (event) {
             deps.treeProvider.applyLiveResult(event.testName, event.outcome);
+            notePresentation("live.progress");
             armQuietTimer();
           }
         };
@@ -381,7 +443,7 @@ export function createRunExecutor(deps: RunExecutionDeps) {
           if (!opts?.debug && deps.treeProvider.needsTheoryDiscovery()) {
             progress.report({ message: deps.tr("progress.discovering") });
             try {
-              await deps.enrichTheoryRows(controller.signal);
+              await deps.enrichTheoryRows(controller.signal, "run");
             } catch {
               // list-tests canceled — handled below via signal.aborted
             }
@@ -528,6 +590,9 @@ export function createRunExecutor(deps: RunExecutionDeps) {
     );
     } finally {
       resumeOutputWatch();
+      if (operationId) {
+        setAmbientOperation(undefined);
+      }
     }
   };
 }

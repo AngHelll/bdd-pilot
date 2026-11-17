@@ -136,6 +136,7 @@ import { formatRunNotStartedNotice } from "../core/bindings/runPreflight";
 import { formatOutputsRemovedLabel } from "../core/runner/buildOutputReadiness";
 import { t } from "../core/i18n";
 import { OutcomeStore } from "./outcomeStore";
+import { consumeDiscoveryCause, isTraceEnabled, notePresentation, trace } from "../core/observability/lifecycleTrace";
 
 export type { TreeGroupBy, TreeDisplaySettings };
 export { readTreeDisplaySettings, readTreeGroupBy } from "./treeSettings";
@@ -174,14 +175,19 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     private readonly onSearchQueryChanged?: (displayQuery: string) => void,
   ) {}
 
+  private emitTreeData(): void {
+    notePresentation("tree.data");
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
   /** Refreshes the pilot summary row without re-scanning features. */
   refreshPilotSummary(): void {
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
   }
 
   /** Repaints the tree from the current model. Does not rescan feature files. */
   rerender(): void {
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
   }
 
   setProjectDir(): void {
@@ -189,10 +195,32 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   refresh(): void {
+    const tracing = isTraceEnabled();
+    const started = tracing ? performance.now() : 0;
+    const cause = tracing ? consumeDiscoveryCause() : "";
     const dir = this.projectDir();
     this.allDomains = dir ? discoverDomains(dir) : [];
     this.fileKeys = indexFeatureFileKeys(this.allDomains);
     this.applySearch();
+    if (!tracing) {
+      return;
+    }
+    let features = 0;
+    let scenarios = 0;
+    for (const domain of this.allDomains) {
+      features += domain.features.length;
+      for (const feature of domain.features) {
+        scenarios += feature.scenarios.length;
+      }
+    }
+    trace("discovery.scan", {
+      cause,
+      kind: "full",
+      durationMs: Math.round(performance.now() - started),
+      features,
+      scenarios,
+      hasRoot: !!dir,
+    });
   }
 
   /** Replaces one parsed feature. Returns false when its file identity did not change. */
@@ -442,13 +470,13 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     this.tagGroups = groupByTag(filtered).filter((group) =>
       tagGroupMatchesSearch(group.tag, group.scenarios.length, this.searchQuery),
     );
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
   }
 
   /** Applies TRX/Cucumber results, decorating scenarios and outline rows. */
   applyResults(summary: TrxSummary | UnifiedSummary): void {
     applyTrxMatchesToStore(this.outcomeStore, this.allDomains, summary);
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
   }
 
   /**
@@ -466,7 +494,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       targets,
       options,
     );
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
     return stats;
   }
 
@@ -480,7 +508,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
   clearResults(): void {
     this.outcomeStore.clearAll();
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
   }
 
   clearResultsForRunScope(targets: RunTarget[]): void {
@@ -493,7 +521,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return;
     }
     this.outcomeStore.clearForRunScope(targets, this.allDomains);
-    this._onDidChangeTreeData.fire(undefined);
+    this.emitTreeData();
   }
 
   /**
@@ -532,7 +560,7 @@ export class TestTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     this.refreshPending = true;
     setTimeout(() => {
       this.refreshPending = false;
-      this._onDidChangeTreeData.fire(undefined);
+      this.emitTreeData();
     }, 120);
   }
 

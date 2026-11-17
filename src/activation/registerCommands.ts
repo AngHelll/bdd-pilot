@@ -43,6 +43,14 @@ import {
 import { MODE_KEY, STAGE_KEY } from "./storageKeys";
 import { ExecuteRunFn } from "./dashboardCommands";
 import { toRunTarget } from "./runTargets";
+import { syncLifecycleTrace } from "./lifecycleTraceSink";
+import {
+  LIFECYCLE_TRACE_CONFIGURATION,
+  controllerIdOf,
+  flushPresentation,
+  isTraceEnabled,
+  trace,
+} from "../core/observability/lifecycleTrace";
 
 async function openFeatureAtLine(featurePath: string, line: number): Promise<void> {
   const uri = vscode.Uri.file(featurePath);
@@ -71,8 +79,8 @@ export interface RegisterCommandsDeps {
   getActiveRun: () => AbortController | undefined;
   abortActiveRun: () => void;
   forceReleaseRunLock: () => void;
-  abortBackgroundEnrich: () => void;
-  refreshAll: (immediateEnrich?: boolean) => void;
+  abortBackgroundEnrich: (cause?: string) => void;
+  refreshAll: (immediateEnrich?: boolean, cause?: string) => void;
   refreshUi: () => void;
   onFeatureDocumentSaved: (filePath: string, text: string) => void;
   onFeatureFilesDeleted: (paths: string[]) => void;
@@ -137,7 +145,7 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
   };
 
   return [
-    vscode.commands.registerCommand("bddPilot.refresh", () => deps.refreshAll()),
+    vscode.commands.registerCommand("bddPilot.refresh", () => deps.refreshAll(true, "manual")),
 
     vscode.commands.registerCommand("bddPilot.showOutput", () => showRunTerminal(true)),
 
@@ -426,13 +434,22 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
     }),
 
     vscode.commands.registerCommand("bddPilot.cancel", () => {
-      deps.abortBackgroundEnrich();
+      deps.abortBackgroundEnrich("pilot-command");
       const active = deps.getActiveRun();
       const intent = resolveCancelIntent({
         hasActiveRun: !!active,
         runAlreadyAborted: active?.signal.aborted === true,
         debugActive: deps.runService.isDebugActive(),
       });
+      if (isTraceEnabled()) {
+        trace("cancel.requested", {
+          source: "pilot-command",
+          intent,
+          controllerId: active ? controllerIdOf(active) : undefined,
+          signalAborted: active?.signal.aborted === true,
+          debugActive: deps.runService.isDebugActive(),
+        });
+      }
       if (intent === "abort") {
         deps.abortActiveRun();
         writeRunTerminal("\n[bdd-pilot] Cancellation requested...\n");
@@ -559,11 +576,15 @@ export function registerExtensionCommands(deps: RegisterCommandsDeps): vscode.Di
       if (!e.affectsConfiguration("bddPilot")) {
         return;
       }
+      if (e.affectsConfiguration(LIFECYCLE_TRACE_CONFIGURATION)) {
+        syncLifecycleTrace(deps.output);
+      }
       if (!shouldRediscoverFeatures((section) => e.affectsConfiguration(section))) {
         deps.treeProvider.rerender();
+        flushPresentation({ cause: "configuration", treeVisible: deps.treeView.visible });
         return;
       }
-      deps.refreshAll();
+      deps.refreshAll(true, "configuration");
       deps.refreshUi();
     }),
 
